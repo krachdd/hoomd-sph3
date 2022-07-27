@@ -73,9 +73,9 @@ struct pdata_flag
     //! The enum
     enum Enum
         {
-        pressure_tensor = 0,       //!< Bit id in PDataFlags for the full virial
+        // pressure_tensor = 0,       //!< Bit id in PDataFlags for the full virial
         rotational_kinetic_energy, //!< Bit id in PDataFlags for the rotational kinetic energy
-        external_field_virial      //!< Bit id in PDataFlags for the external virial contribution of
+        // external_field_virial      //!< Bit id in PDataFlags for the external virial contribution of
                                    //!< volume change
         };
     };
@@ -222,24 +222,38 @@ template<class Real> struct PYBIND11_EXPORT SnapshotParticleData
     static pybind11::object getVelNP(pybind11::object self);
     //! Get accel as a Python object
     static pybind11::object getAccelNP(pybind11::object self);
+    //! Get accel as a Python object
+    static pybind11::object getAux1NP(pybind11::object self);
+    //! Get accel as a Python object
+    static pybind11::object getAux2NP(pybind11::object self);
+    //! Get accel as a Python object
+    static pybind11::object getAux3NP(pybind11::object self);
+    //! Get accel as a Python object
+    static pybind11::object getAux4NP(pybind11::object self);
+    //! Get accel as a Python object
+    static pybind11::object getDpeNP(pybind11::object self);
+    //! Get accel as a Python object
+    static pybind11::object getDpedtNP(pybind11::object self);
     //! Get type as a Python object
     static pybind11::object getTypeNP(pybind11::object self);
     //! Get mass as a Python object
     static pybind11::object getMassNP(pybind11::object self);
     //! Get charge as a Python object
-    static pybind11::object getChargeNP(pybind11::object self);
+    static pybind11::object getSlengthNP(pybind11::object self);
+    //! Get charge as a Python object
+    // static pybind11::object getChargeNP(pybind11::object self);
     //! Get diameter as a Python object
-    static pybind11::object getDiameterNP(pybind11::object self);
+    // static pybind11::object getDiameterNP(pybind11::object self);
     //! Get image as a Python object
     static pybind11::object getImageNP(pybind11::object self);
     //! Get body as a Python object
     static pybind11::object getBodyNP(pybind11::object self);
     //! Get orientation as a Python object
-    static pybind11::object getOrientationNP(pybind11::object self);
+    // static pybind11::object getOrientationNP(pybind11::object self);
     //! Get moment of inertia as a numpy array
-    static pybind11::object getMomentInertiaNP(pybind11::object self);
+    // static pybind11::object getMomentInertiaNP(pybind11::object self);
     //! Get angular momentum as a numpy array
-    static pybind11::object getAngmomNP(pybind11::object self);
+    // static pybind11::object getAngmomNP(pybind11::object self);
 
     //! Get the type names for python
     pybind11::list getTypes();
@@ -248,19 +262,27 @@ template<class Real> struct PYBIND11_EXPORT SnapshotParticleData
 
     std::vector<vec3<Real>> pos;         //!< positions
     std::vector<vec3<Real>> vel;         //!< velocities
-    std::vector<vec3<Real>> accel;       //!< accelerations
+    std::vector< vec3<Real> > dpe;              //!< densities, pressures, energies
+    std::vector< vec3<Real> > aux1;             //!< auxiliary field 1
+    std::vector< vec3<Real> > aux2;             //!< auxiliary field 2
+    std::vector< vec3<Real> > aux3;             //!< auxiliary field 3
+    std::vector< vec3<Real> > aux4;             //!< auxiliary field 4
+    std::vector<Real> slength;                  //!< smoothing length
+    std::vector< vec3<Real> > accel;            //!< accelerations
+    std::vector< vec3<Real> > dpedt;            //!< density, pressure, energies time rate
     std::vector<unsigned int> type;      //!< types
     std::vector<Real> mass;              //!< masses
-    std::vector<Real> charge;            //!< charges
-    std::vector<Real> diameter;          //!< diameters
+    // std::vector<Real> charge;            //!< charges
+    // std::vector<Real> diameter;          //!< diameters
     std::vector<int3> image;             //!< images
     std::vector<unsigned int> body;      //!< body ids
-    std::vector<quat<Real>> orientation; //!< orientations
-    std::vector<quat<Real>> angmom;      //!< angular momentum quaternion
-    std::vector<vec3<Real>> inertia;     //!< principal moments of inertia
+    // std::vector<quat<Real>> orientation; //!< orientations
+    // std::vector<quat<Real>> angmom;      //!< angular momentum quaternion
+    // std::vector<vec3<Real>> inertia;     //!< principal moments of inertia
 
     unsigned int size;                     //!< number of particles in this snapshot
     std::vector<std::string> type_mapping; //!< Mapping between particle type ids and names
+    std::vector<unsigned int> part_distr;
 
     bool is_accel_set; //!< Flag indicating if accel is set
     };
@@ -274,18 +296,26 @@ struct pdata_element
     {
     Scalar4 pos;          //!< Position
     Scalar4 vel;          //!< Velocity
-    Scalar3 accel;        //!< Acceleration
-    Scalar charge;        //!< Charge
-    Scalar diameter;      //!< Diameter
+    Scalar3 dpe;               //!< Density, pressure and energy
+    Scalar3 aux1;              //!< Auxiliary vector field 1
+    Scalar3 aux2;              //!< Auxiliary vector field 2
+    Scalar3 aux3;              //!< Auxiliary vector field 3
+    Scalar3 aux4;              //!< Auxiliary vector field 4
+    Scalar slength;            //!< Smoothing length
+    Scalar3 accel;             //!< Acceleration
+    Scalar3 dpedt;             //!< Density, pressure and energy rate of change
+    // Scalar charge;        //!< Charge
+    // Scalar diameter;      //!< Diameter
     int3 image;           //!< Image
     unsigned int body;    //!< Body id
-    Scalar4 orientation;  //!< Orientation
-    Scalar4 angmom;       //!< Angular momentum
-    Scalar3 inertia;      //!< Principal moments of inertia
+    // Scalar4 orientation;  //!< Orientation
+    // Scalar4 angmom;       //!< Angular momentum
+    // Scalar3 inertia;      //!< Principal moments of inertia
     unsigned int tag;     //!< global tag
     Scalar4 net_force;    //!< net force
-    Scalar4 net_torque;   //!< net torque
-    Scalar net_virial[6]; //!< net virial
+    Scalar4 net_ratedpe;    //!< net force
+    // Scalar4 net_torque;   //!< net torque
+    // Scalar net_virial[6]; //!< net virial
     };
 
     } // end namespace detail
@@ -448,7 +478,8 @@ class PYBIND11_EXPORT ParticleData
                  unsigned int n_types,
                  std::shared_ptr<ExecutionConfiguration> exec_conf,
                  std::shared_ptr<DomainDecomposition> decomposition
-                 = std::shared_ptr<DomainDecomposition>());
+                 = std::shared_ptr<DomainDecomposition>(),
+                 bool distributed = false);
 
     //! Construct using a ParticleDataSnapshot
     template<class Real>
@@ -456,7 +487,8 @@ class PYBIND11_EXPORT ParticleData
                  const std::shared_ptr<const BoxDim> global_box,
                  std::shared_ptr<ExecutionConfiguration> exec_conf,
                  std::shared_ptr<DomainDecomposition> decomposition
-                 = std::shared_ptr<DomainDecomposition>());
+                 = std::shared_ptr<DomainDecomposition>(),
+                 bool distributed = false);
 
     //! Destructor
     virtual ~ParticleData();
@@ -563,16 +595,17 @@ class PYBIND11_EXPORT ParticleData
         return m_o_image;
         }
 
+
     //! Get the maximum diameter of the particle set
     /*! \return Maximum Diameter Value
      */
     Scalar getMaxDiameter() const
         {
         Scalar maxdiam = 0;
-        ArrayHandle<Scalar> h_diameter(getDiameters(), access_location::host, access_mode::read);
+        ArrayHandle<Scalar> h_slength(getSlengths(), access_location::host, access_mode::read);
         for (unsigned int i = 0; i < m_nparticles; i++)
-            if (h_diameter.data[i] > maxdiam)
-                maxdiam = h_diameter.data[i];
+            if (h_slength.data[i] > maxdiam)
+                maxdiam = h_slength.data[i];
 #ifdef ENABLE_MPI
         if (m_decomposition)
             {
@@ -584,8 +617,60 @@ class PYBIND11_EXPORT ParticleData
                           m_exec_conf->getMPICommunicator());
             }
 #endif
-        return maxdiam;
+        return Scalar(2.0)*maxdiam; // WARUM
         }
+
+
+    //! Get the maximum diameter of the particle set
+    /*! \return Maximum Diameter Value
+     */
+//     Scalar getMaxDiameter() const
+//         {
+//         Scalar maxdiam = 0;
+//         ArrayHandle<Scalar> h_diameter(getDiameters(), access_location::host, access_mode::read);
+//         for (unsigned int i = 0; i < m_nparticles; i++)
+//             if (h_diameter.data[i] > maxdiam)
+//                 maxdiam = h_diameter.data[i];
+// #ifdef ENABLE_MPI
+//         if (m_decomposition)
+//             {
+//             MPI_Allreduce(MPI_IN_PLACE,
+//                           &maxdiam,
+//                           1,
+//                           MPI_HOOMD_SCALAR,
+//                           MPI_MAX,
+//                           m_exec_conf->getMPICommunicator());
+//             }
+// #endif
+//         return maxdiam;
+//         }
+
+    bool constSmoothingLength() const
+        {
+        ArrayHandle<Scalar> h_slength(m_slength, access_location::host, access_mode::read);
+        auto result = std::minmax_element(h_slength.data, h_slength.data+m_slength.getNumElements());
+
+if( std::abs(*result.first - *result.second)< std::numeric_limits<Scalar>::epsilon() * 2. * std::abs(*result.first + *result.second))
+            {
+            #ifdef ENABLE_MPI
+            if (m_decomposition)
+                {
+                int size;
+                MPI_Comm_size(m_exec_conf->getMPICommunicator(), &size);
+                std::vector<Scalar> tmp(size);
+                all_gather_v(*result.first, tmp, m_exec_conf->getMPICommunicator());
+                auto result2 = std::minmax_element(tmp.begin(), tmp.end());
+                *result.first = *result2.first;
+                *result.second = *result2.second;
+                }
+            #endif
+            }
+            else
+                return false;
+
+            return(std::abs(*result.first - *result.second)< std::numeric_limits<Scalar>::epsilon() * 2. * std::abs(*result.first + *result.second));
+        }
+
 
     /*! Returns true if there are bodies in the system
      */
@@ -641,23 +726,41 @@ class PYBIND11_EXPORT ParticleData
         return m_vel;
         }
 
+    //! Return densities, pressures and energies
+    const GlobalArray< Scalar3 >& getDPEs() const { return m_dpe; }
+
+    //! Return auxiliary vector 1
+    const GlobalArray< Scalar3 >& getAuxiliaries1() const { return m_aux1; }
+
+    //! Return auxiliary vector 2
+    const GlobalArray< Scalar3 >& getAuxiliaries2() const { return m_aux2; }
+
+    //! Return auxiliary vector 3
+    const GlobalArray< Scalar3 >& getAuxiliaries3() const { return m_aux3; }
+
+    //! Return auxiliary vector 4
+    const GlobalArray< Scalar3 >& getAuxiliaries4() const { return m_aux4; }
+
+    //! Return smoothing length
+    const GlobalArray< Scalar >& getSlengths() const { return m_slength; }
+
     //! Return accelerations
-    const GlobalArray<Scalar3>& getAccelerations() const
-        {
-        return m_accel;
-        }
+    const GlobalArray< Scalar3 >& getAccelerations() const { return m_accel; }
 
-    //! Return charges
-    const GlobalArray<Scalar>& getCharges() const
-        {
-        return m_charge;
-        }
+    //! Return densities, pressures and energies rate of change
+    const GlobalArray< Scalar3 >& getDPEdts() const { return m_dpedt; }
 
-    //! Return diameters
-    const GlobalArray<Scalar>& getDiameters() const
-        {
-        return m_diameter;
-        }
+    // //! Return charges
+    // const GlobalArray<Scalar>& getCharges() const
+    //     {
+    //     return m_charge;
+    //     }
+
+    // //! Return diameters
+    // const GlobalArray<Scalar>& getDiameters() const
+    //     {
+    //     return m_diameter;
+    //     }
 
     //! Return images
     const GlobalArray<int3>& getImages() const
@@ -682,6 +785,12 @@ class PYBIND11_EXPORT ParticleData
         {
         return m_body;
         }
+
+    //! Get the net force array
+    const GlobalArray< Scalar4 >& getNetForceArray() const { return m_net_force; }
+
+    //! Get the net dpe rate of change array
+    const GlobalArray< Scalar4 >& getNetRateDPEArray() const { return m_net_ratedpe; }
 
     /*!
      * Access methods to stand-by arrays for fast swapping in of reordered particle data
@@ -728,41 +837,69 @@ class PYBIND11_EXPORT ParticleData
         m_vel.swap(m_vel_alt);
         }
 
+    //! Return densities, pressures and energies (alternate array)
+    const GlobalArray< Scalar3 >& getAltDPEs() const { return m_dpe_alt; }
+    //! Swap in densities, pressures and energies
+    inline void swapDPEs() { m_dpe.swap(m_dpe_alt); }
+
+    //! Return auxiliary vector 1 (alternate array)
+    const GlobalArray< Scalar3 >& getAltAuxiliaries1() const { return m_aux1_alt; }
+    //! Swap in auxiliary vector 1
+    inline void swapAuxiliaries1() { m_aux1.swap(m_aux1_alt); }
+
+    //! Return auxiliary vector 2 (alternate array)
+    const GlobalArray< Scalar3 >& getAltAuxiliaries2() const { return m_aux2_alt; }
+    //! Swap in auxiliary vector 2
+    inline void swapAuxiliaries2() { m_aux2.swap(m_aux2_alt); }
+
+    //! Return auxiliary vector 3 (alternate array)
+    const GlobalArray< Scalar3 >& getAltAuxiliaries3() const { return m_aux3_alt; }
+    //! Swap in auxiliary vector 3
+    inline void swapAuxiliaries3() { m_aux3.swap(m_aux3_alt); }
+
+    //! Return auxiliary vector 1 (alternate array)
+    const GlobalArray< Scalar3 >& getAltAuxiliaries4() const { return m_aux4_alt; }
+    //! Swap in auxiliary vector 1
+    inline void swapAuxiliaries4() { m_aux4.swap(m_aux4_alt); }
+
+    //! Return smoothing length (alternate array)
+    const GlobalArray< Scalar >& getAltSlenghts() const { return m_slength_alt; }
+    //! Swap in  smoothing length
+    inline void swapSlengths() { m_slength.swap(m_slength_alt); }
+
     //! Return accelerations (alternate array)
-    const GlobalArray<Scalar3>& getAltAccelerations() const
-        {
-        return m_accel_alt;
-        }
-
+    const GlobalArray< Scalar3 >& getAltAccelerations() const { return m_accel_alt; }
     //! Swap in accelerations
-    inline void swapAccelerations()
-        {
-        m_accel.swap(m_accel_alt);
-        }
+    inline void swapAccelerations() { m_accel.swap(m_accel_alt); }
 
-    //! Return charges (alternate array)
-    const GlobalArray<Scalar>& getAltCharges() const
-        {
-        return m_charge_alt;
-        }
+    //! Return densities, pressures and energies rate of change (alternate array)
+    const GlobalArray< Scalar3 >& getAltDPEdts() const { return m_dpedt_alt; }
+    //! Swap in densities, pressures and energies rate of change
+    inline void swapDPEdts() { m_dpedt.swap(m_dpedt_alt); }
 
-    //! Swap in accelerations
-    inline void swapCharges()
-        {
-        m_charge.swap(m_charge_alt);
-        }
+    // //! Return charges (alternate array)
+    // const GlobalArray<Scalar>& getAltCharges() const
+    //     {
+    //     return m_charge_alt;
+    //     }
 
-    //! Return diameters (alternate array)
-    const GlobalArray<Scalar>& getAltDiameters() const
-        {
-        return m_diameter_alt;
-        }
+    // //! Swap in accelerations
+    // inline void swapCharges()
+    //     {
+    //     m_charge.swap(m_charge_alt);
+    //     }
 
-    //! Swap in diameters
-    inline void swapDiameters()
-        {
-        m_diameter.swap(m_diameter_alt);
-        }
+    // //! Return diameters (alternate array)
+    // const GlobalArray<Scalar>& getAltDiameters() const
+    //     {
+    //     return m_diameter_alt;
+    //     }
+
+    // //! Swap in diameters
+    // inline void swapDiameters()
+    //     {
+    //     m_diameter.swap(m_diameter_alt);
+    //     }
 
     //! Return images (alternate array)
     const GlobalArray<int3>& getAltImages() const
@@ -812,65 +949,70 @@ class PYBIND11_EXPORT ParticleData
         m_net_force.swap(m_net_force_alt);
         }
 
-    //! Get the net virial array (alternate array)
-    const GlobalArray<Scalar>& getAltNetVirial() const
-        {
-        return m_net_virial_alt;
-        }
+    //! Get the net dpe rate of change array (alternate array)
+    const GlobalArray< Scalar4 >& getAltNetRateDPE() const { return m_net_ratedpe_alt; }
+    //! Swap in net dpe rate of change
+    inline void swapNetRateDPE() { m_net_ratedpe.swap(m_net_ratedpe_alt); }
 
-    //! Swap in net virial
-    inline void swapNetVirial()
-        {
-        m_net_virial.swap(m_net_virial_alt);
-        }
+    // //! Get the net virial array (alternate array)
+    // const GlobalArray<Scalar>& getAltNetVirial() const
+    //     {
+    //     return m_net_virial_alt;
+    //     }
 
-    //! Get the net torque array (alternate array)
-    const GlobalArray<Scalar4>& getAltNetTorqueArray() const
-        {
-        return m_net_torque_alt;
-        }
+    // //! Swap in net virial
+    // inline void swapNetVirial()
+    //     {
+    //     m_net_virial.swap(m_net_virial_alt);
+    //     }
 
-    //! Swap in net torque
-    inline void swapNetTorque()
-        {
-        m_net_torque.swap(m_net_torque_alt);
-        }
+    // //! Get the net torque array (alternate array)
+    // const GlobalArray<Scalar4>& getAltNetTorqueArray() const
+    //     {
+    //     return m_net_torque_alt;
+    //     }
 
-    //! Get the orientations (alternate array)
-    const GlobalArray<Scalar4>& getAltOrientationArray() const
-        {
-        return m_orientation_alt;
-        }
+    // //! Swap in net torque
+    // inline void swapNetTorque()
+    //     {
+    //     m_net_torque.swap(m_net_torque_alt);
+    //     }
 
-    //! Swap in orientations
-    inline void swapOrientations()
-        {
-        m_orientation.swap(m_orientation_alt);
-        }
+    // //! Get the orientations (alternate array)
+    // const GlobalArray<Scalar4>& getAltOrientationArray() const
+    //     {
+    //     return m_orientation_alt;
+    //     }
 
-    //! Get the angular momenta (alternate array)
-    const GlobalArray<Scalar4>& getAltAngularMomentumArray() const
-        {
-        return m_angmom_alt;
-        }
+    // //! Swap in orientations
+    // inline void swapOrientations()
+    //     {
+    //     m_orientation.swap(m_orientation_alt);
+    //     }
 
-    //! Get the moments of inertia array (alternate array)
-    const GlobalArray<Scalar3>& getAltMomentsOfInertiaArray() const
-        {
-        return m_inertia_alt;
-        }
+    // //! Get the angular momenta (alternate array)
+    // const GlobalArray<Scalar4>& getAltAngularMomentumArray() const
+    //     {
+    //     return m_angmom_alt;
+    //     }
 
-    //! Swap in angular momenta
-    inline void swapAngularMomenta()
-        {
-        m_angmom.swap(m_angmom_alt);
-        }
+    // //! Get the moments of inertia array (alternate array)
+    // const GlobalArray<Scalar3>& getAltMomentsOfInertiaArray() const
+    //     {
+    //     return m_inertia_alt;
+    //     }
 
-    //! Swap in moments of inertia
-    inline void swapMomentsOfInertia()
-        {
-        m_inertia.swap(m_inertia_alt);
-        }
+    // //! Swap in angular momenta
+    // inline void swapAngularMomenta()
+    //     {
+    //     m_angmom.swap(m_angmom_alt);
+    //     }
+
+    // //! Swap in moments of inertia
+    // inline void swapMomentsOfInertia()
+    //     {
+    //     m_inertia.swap(m_inertia_alt);
+    //     }
 
     //! Connects a function to be called every time the particles are rearranged in memory
     Nano::Signal<void()>& getParticleSortSignal()
@@ -951,35 +1093,40 @@ class PYBIND11_EXPORT ParticleData
         return m_net_force;
         }
 
-    //! Get the net virial array
-    const GlobalArray<Scalar>& getNetVirial() const
+    const GlobalArray<Scalar4>& getNetRateDPE() const
         {
-        return m_net_virial;
+        return m_net_ratedpe;
         }
 
-    //! Get the net torque array
-    const GlobalArray<Scalar4>& getNetTorqueArray() const
-        {
-        return m_net_torque;
-        }
+    // //! Get the net virial array
+    // const GlobalArray<Scalar>& getNetVirial() const
+    //     {
+    //     return m_net_virial;
+    //     }
 
-    //! Get the orientation array
-    const GlobalArray<Scalar4>& getOrientationArray() const
-        {
-        return m_orientation;
-        }
+    // //! Get the net torque array
+    // const GlobalArray<Scalar4>& getNetTorqueArray() const
+    //     {
+    //     return m_net_torque;
+    //     }
 
-    //! Get the angular momentum array
-    const GlobalArray<Scalar4>& getAngularMomentumArray() const
-        {
-        return m_angmom;
-        }
+    // //! Get the orientation array
+    // const GlobalArray<Scalar4>& getOrientationArray() const
+    //     {
+    //     return m_orientation;
+    //     }
 
-    //! Get the angular momentum array
-    const GlobalArray<Scalar3>& getMomentsOfInertiaArray() const
-        {
-        return m_inertia;
-        }
+    // //! Get the angular momentum array
+    // const GlobalArray<Scalar4>& getAngularMomentumArray() const
+    //     {
+    //     return m_angmom;
+    //     }
+
+    // //! Get the angular momentum array
+    // const GlobalArray<Scalar3>& getMomentsOfInertiaArray() const
+    //     {
+    //     return m_inertia;
+    //     }
 
     //! Get the communication flags array
     const GlobalArray<unsigned int>& getCommFlags() const
@@ -998,8 +1145,29 @@ class PYBIND11_EXPORT ParticleData
     //! Get the current velocity of a particle
     Scalar3 getVelocity(unsigned int tag) const;
 
-    //! Get the current acceleration of a particle
+    //! Get the density, pressure and energy of a particle
+    Scalar3 getDensityPressureEnergy(unsigned int tag) const;
+
+    //! Get auxiliary array 1 of a particle
+    Scalar3 getAuxiliaryArray1(unsigned int tag) const;
+
+    //! Get auxiliary array 2 of a particle
+    Scalar3 getAuxiliaryArray2(unsigned int tag) const;
+
+    //! Get auxiliary array 3 of a particle
+    Scalar3 getAuxiliaryArray3(unsigned int tag) const;
+
+    //! Get auxiliary array 4 of a particle
+    Scalar3 getAuxiliaryArray4(unsigned int tag) const;
+
+    //! Get the smoothing length of a particle
+    Scalar getSmoothingLength(unsigned int tag) const;
+
+    //! Get the current rate of change of density, pressure and energy of a particle
     Scalar3 getAcceleration(unsigned int tag) const;
+
+    //! Get the current rate of change of density, pressure and energy of a particle
+    Scalar3 getDPErateofchange(unsigned int tag) const;
 
     //! Get the current image flags of a particle
     int3 getImage(unsigned int tag) const;
@@ -1008,10 +1176,10 @@ class PYBIND11_EXPORT ParticleData
     Scalar getMass(unsigned int tag) const;
 
     //! Get the current diameter of a particle
-    Scalar getDiameter(unsigned int tag) const;
+    // Scalar getDiameter(unsigned int tag) const;
 
     //! Get the current charge of a particle
-    Scalar getCharge(unsigned int tag) const;
+    // Scalar getCharge(unsigned int tag) const;
 
     //! Get the body id of a particle
     unsigned int getBody(unsigned int tag) const;
@@ -1058,23 +1226,29 @@ class PYBIND11_EXPORT ParticleData
             return *m_tag_set.rbegin();
         }
 
-    //! Get the orientation of a particle with a given tag
-    Scalar4 getOrientation(unsigned int tag) const;
+    // //! Get the orientation of a particle with a given tag
+    // Scalar4 getOrientation(unsigned int tag) const;
 
-    //! Get the angular momentum of a particle with a given tag
-    Scalar4 getAngularMomentum(unsigned int tag) const;
+    // //! Get the angular momentum of a particle with a given tag
+    // Scalar4 getAngularMomentum(unsigned int tag) const;
 
-    //! Get the moment of inertia of a particle with a given tag
-    Scalar3 getMomentsOfInertia(unsigned int tag) const;
+    // //! Get the moment of inertia of a particle with a given tag
+    // Scalar3 getMomentsOfInertia(unsigned int tag) const;
 
     //! Get the net force / energy on a given particle
     Scalar4 getPNetForce(unsigned int tag) const;
 
-    //! Get the net torque on a given particle
-    Scalar4 getNetTorque(unsigned int tag) const;
+    // //! Get the net torque on a given particle
+    // Scalar4 getNetTorque(unsigned int tag) const;
 
-    //! Get the net virial for a given particle
-    Scalar getPNetVirial(unsigned int tag, unsigned int component) const;
+    // //! Get the net virial for a given particle
+    // Scalar getPNetVirial(unsigned int tag, unsigned int component) const;
+
+    //! Get the net dpe rate of change on a given particle
+    Scalar4 getNetRateDPE(unsigned int tag) const;
+
+    //! Get the maximum smoothing length of all particles
+    Scalar getMaxSmoothingLength(unsigned int tag) const;
 
     //! Set the current position of a particle
     /*! \param move If true, particle is automatically placed into correct domain
@@ -1087,14 +1261,32 @@ class PYBIND11_EXPORT ParticleData
     //! Set the current image flags of a particle
     void setImage(unsigned int tag, const int3& image);
 
-    //! Set the current charge of a particle
-    void setCharge(unsigned int tag, Scalar charge);
+    //! Set the density, pressure and energy of a particle
+    void setDensityPressureEnergy(unsigned int tag, const Scalar3& dpe);
+
+    //! Set auxiliary array 1 of a particle
+    void setAuxiliaryArray1(unsigned int tag, const Scalar3& aux1);
+
+    //! Set auxiliary array 2 of a particle
+    void setAuxiliaryArray2(unsigned int tag, const Scalar3& aux2);
+
+    //! Set auxiliary array 3 of a particle
+    void setAuxiliaryArray3(unsigned int tag, const Scalar3& aux3);
+
+    //! Set auxiliary array 4 of a particle
+    void setAuxiliaryArray4(unsigned int tag, const Scalar3& aux4);
+
+    //! Set the current smoothing length of a particle
+    void setSmoothingLength(unsigned int tag, Scalar slength);
+
+    // //! Set the current charge of a particle
+    // void setCharge(unsigned int tag, Scalar charge);
 
     //! Set the current mass of a particle
     void setMass(unsigned int tag, Scalar mass);
 
     //! Set the current diameter of a particle
-    void setDiameter(unsigned int tag, Scalar diameter);
+    // void setDiameter(unsigned int tag, Scalar diameter);
 
     //! Set the body id of a particle
     void setBody(unsigned int tag, int body);
@@ -1103,13 +1295,13 @@ class PYBIND11_EXPORT ParticleData
     void setType(unsigned int tag, unsigned int typ);
 
     //! Set the orientation of a particle with a given tag
-    void setOrientation(unsigned int tag, const Scalar4& orientation);
+    // void setOrientation(unsigned int tag, const Scalar4& orientation);
 
     //! Set the orientation of a particle with a given tag
-    void setAngularMomentum(unsigned int tag, const Scalar4& angmom);
+    // void setAngularMomentum(unsigned int tag, const Scalar4& angmom);
 
     //! Set the orientation of a particle with a given tag
-    void setMomentsOfInertia(unsigned int tag, const Scalar3& mom_inertia);
+    // void setMomentsOfInertia(unsigned int tag, const Scalar3& mom_inertia);
 
     //! Get the particle data flags
     PDataFlags getFlags()
@@ -1129,24 +1321,24 @@ class PYBIND11_EXPORT ParticleData
         }
 
     /// Enable pressure computations
-    void setPressureFlag()
-        {
-        m_flags[pdata_flag::pressure_tensor] = 1;
-        }
+    // void setPressureFlag()
+    //     {
+    //     m_flags[pdata_flag::pressure_tensor] = 1;
+    //     }
 
-    //! Set the external contribution to the virial
-    void setExternalVirial(unsigned int i, Scalar v)
-        {
-        assert(i < 6);
-        m_external_virial[i] = v;
-        };
+    // //! Set the external contribution to the virial
+    // void setExternalVirial(unsigned int i, Scalar v)
+    //     {
+    //     assert(i < 6);
+    //     m_external_virial[i] = v;
+    //     };
 
-    //! Get the external contribution to the virial
-    Scalar getExternalVirial(unsigned int i)
-        {
-        assert(i < 6);
-        return m_external_virial[i];
-        }
+    // //! Get the external contribution to the virial
+    // Scalar getExternalVirial(unsigned int i)
+    //     {
+    //     assert(i < 6);
+    //     return m_external_virial[i];
+    //     }
 
     //! Set the external contribution to the potential energy
     void setExternalEnergy(Scalar e)
@@ -1171,9 +1363,19 @@ class PYBIND11_EXPORT ParticleData
     void initializeFromSnapshot(const SnapshotParticleData<Real>& snapshot,
                                 bool ignore_bodies = false);
 
+    #ifdef ENABLE_MPI
+    template <class Real>
+    void initializeFromDistrSnapshot(const SnapshotParticleData<Real> & snapshot, bool ignore_bodies=false);
+    #endif
+
     //! Take a snapshot
     template<class Real>
     std::map<unsigned int, unsigned int> takeSnapshot(SnapshotParticleData<Real>& snapshot);
+
+    #ifdef ENABLE_MPI
+    template <class Real>
+    std::map<unsigned int, unsigned int> takeSnapshotDistr(SnapshotParticleData<Real> &snapshot);
+    #endif
 
     //! Add ghost particles at the end of the local particle data
     void addGhostParticles(const unsigned int nghosts);
@@ -1329,17 +1531,24 @@ class PYBIND11_EXPORT ParticleData
     // per-particle data
     GlobalArray<Scalar4> m_pos;        //!< particle positions and types
     GlobalArray<Scalar4> m_vel;        //!< particle velocities and masses
-    GlobalArray<Scalar3> m_accel;      //!< particle accelerations
-    GlobalArray<Scalar> m_charge;      //!< particle charges
-    GlobalArray<Scalar> m_diameter;    //!< particle diameters
+    GlobalArray<Scalar3> m_dpe;               //!< Density, pressure and energy
+    GlobalArray<Scalar3> m_aux1;              //!< Auxiliary vector field 1
+    GlobalArray<Scalar3> m_aux2;              //!< Auxiliary vector field 2
+    GlobalArray<Scalar3> m_aux3;              //!< Auxiliary vector field 3
+    GlobalArray<Scalar3> m_aux4;              //!< Auxiliary vector field 4
+    GlobalArray<Scalar> m_slength;             //!< Smoothing length
+    GlobalArray<Scalar3> m_accel;             //!< Acceleration
+    GlobalArray<Scalar3> m_dpedt;             //!< Density, pressure and energy rate of change
+    // GlobalArray<Scalar> m_charge;      //!< particle charges
+    // GlobalArray<Scalar> m_diameter;    //!< particle diameters
     GlobalArray<int3> m_image;         //!< particle images
     GlobalArray<unsigned int> m_tag;   //!< particle tags
     GlobalVector<unsigned int> m_rtag; //!< reverse lookup tags
     GlobalArray<unsigned int> m_body;  //!< rigid body ids
-    GlobalArray<Scalar4>
-        m_orientation; //!< Orientation quaternion for each particle (ignored if not anisotropic)
-    GlobalArray<Scalar4> m_angmom;          //!< Angular momementum quaternion for each particle
-    GlobalArray<Scalar3> m_inertia;         //!< Principal moments of inertia for each particle
+    // GlobalArray<Scalar4>
+    //     m_orientation; //!< Orientation quaternion for each particle (ignored if not anisotropic)
+    // GlobalArray<Scalar4> m_angmom;          //!< Angular momementum quaternion for each particle
+    // GlobalArray<Scalar3> m_inertia;         //!< Principal moments of inertia for each particle
     GlobalArray<unsigned int> m_comm_flags; //!< Array of communication flags
 
     std::stack<unsigned int> m_recycled_tags; //!< Global tags of removed particles
@@ -1359,26 +1568,35 @@ class PYBIND11_EXPORT ParticleData
      */
     GlobalArray<Scalar4> m_pos_alt;         //!< particle positions and type (swap-in)
     GlobalArray<Scalar4> m_vel_alt;         //!< particle velocities and masses (swap-in)
-    GlobalArray<Scalar3> m_accel_alt;       //!< particle accelerations (swap-in)
-    GlobalArray<Scalar> m_charge_alt;       //!< particle charges (swap-in)
-    GlobalArray<Scalar> m_diameter_alt;     //!< particle diameters (swap-in)
+    GlobalArray<Scalar3> m_dpe_alt;               //!< Density, pressure and energy (swap-in)
+    GlobalArray<Scalar3> m_aux1_alt;              //!< Auxiliary vector field 1 (swap-in)
+    GlobalArray<Scalar3> m_aux2_alt;              //!< Auxiliary vector field 2 (swap-in)
+    GlobalArray<Scalar3> m_aux3_alt;              //!< Auxiliary vector field 3 (swap-in)
+    GlobalArray<Scalar3> m_aux4_alt;              //!< Auxiliary vector field 4 (swap-in)
+    GlobalArray<Scalar> m_slength_alt;             //!< Smoothing length (swap-in)
+    GlobalArray<Scalar3> m_accel_alt;             //!< Acceleration (swap-in)
+    GlobalArray<Scalar3> m_dpedt_alt;             //!< Density, pressure and energy rate of change (swap-in)
+    // GlobalArray<Scalar> m_charge_alt;       //!< particle charges (swap-in)
+    // GlobalArray<Scalar> m_diameter_alt;     //!< particle diameters (swap-in)
     GlobalArray<int3> m_image_alt;          //!< particle images (swap-in)
     GlobalArray<unsigned int> m_tag_alt;    //!< particle tags (swap-in)
     GlobalArray<unsigned int> m_body_alt;   //!< rigid body ids (swap-in)
-    GlobalArray<Scalar4> m_orientation_alt; //!< orientations (swap-in)
-    GlobalArray<Scalar4> m_angmom_alt;      //!< angular momenta (swap-in)
-    GlobalArray<Scalar3>
-        m_inertia_alt; //!< Principal moments of inertia for each particle (swap-in)
+    // GlobalArray<Scalar4> m_orientation_alt; //!< orientations (swap-in)
+    // GlobalArray<Scalar4> m_angmom_alt;      //!< angular momenta (swap-in)
+    // GlobalArray<Scalar3>
+    //     m_inertia_alt; //!< Principal moments of inertia for each particle (swap-in)
     GlobalArray<Scalar4> m_net_force_alt;  //!< Net force (swap-in)
-    GlobalArray<Scalar> m_net_virial_alt;  //!< Net virial (swap-in)
-    GlobalArray<Scalar4> m_net_torque_alt; //!< Net torque (swap-in)
+    GlobalArray<Scalar4> m_net_ratedpe_alt;  //!< Net ratedpe (swap-in)
+    // GlobalArray<Scalar> m_net_virial_alt;  //!< Net virial (swap-in)
+    // GlobalArray<Scalar4> m_net_torque_alt; //!< Net torque (swap-in)
 
     GlobalArray<Scalar4> m_net_force;  //!< Net force calculated for each particle
-    GlobalArray<Scalar> m_net_virial;  //!< Net virial calculated for each particle (2D GPU array of
-                                       //!< dimensions 6*number of particles)
-    GlobalArray<Scalar4> m_net_torque; //!< Net torque calculated for each particle
+    GlobalArray<Scalar4> m_net_ratedpe;  //!< Net ratedpe calculated for each particle
+    // GlobalArray<Scalar> m_net_virial;  //!< Net virial calculated for each particle (2D GPU array of
+    //                                    //!< dimensions 6*number of particles)
+    // GlobalArray<Scalar4> m_net_torque; //!< Net torque calculated for each particle
 
-    Scalar m_external_virial[6]; //!< External potential contribution to the virial
+    // Scalar m_external_virial[6]; //!< External potential contribution to the virial
     Scalar m_external_energy;    //!< External potential energy
     const float
         m_resize_factor; //!< The numerical factor with which the particle data arrays are resized
@@ -1432,11 +1650,10 @@ class PYBIND11_EXPORT LocalParticleData : public LocalDataAccess<Output, Particl
     {
     public:
     LocalParticleData(ParticleData& data)
-        : LocalDataAccess<Output, ParticleData>(data), m_position_handle(), m_orientation_handle(),
-          m_velocities_handle(), m_angular_momentum_handle(), m_acceleration_handle(),
-          m_inertia_handle(), m_charge_handle(), m_diameter_handle(), m_image_handle(),
-          m_tag_handle(), m_rtag_handle(), m_rigid_body_ids_handle(), m_net_force_handle(),
-          m_net_virial_handle(), m_net_torque_handle()
+        : LocalDataAccess<Output, ParticleData>(data), m_position_handle(), m_dpe_handle(),
+          m_velocities_handle(), m_aux1_handle(), m_aux2_handle(), m_aux3_handle(), m_aux4_handle(), m_dpedt_handle(), m_acceleration_handle(),
+          m_image_handle(), m_slength_handle(), m_net_ratedpe_handle(),
+          m_tag_handle(), m_rtag_handle(), m_rigid_body_ids_handle(), m_net_force_handle()
         {
         }
 
@@ -1479,6 +1696,60 @@ class PYBIND11_EXPORT LocalParticleData : public LocalDataAccess<Output, Particl
                                                          3);
         }
 
+    Output getDPEs(GhostDataFlag flag)
+        {
+        return this->template getBuffer<Scalar3, Scalar>(m_dpe_handle,
+                                                         &ParticleData::getDPEs,
+                                                         flag,
+                                                         true,
+                                                         3);
+        }
+
+    Output getAuxiliaries1(GhostDataFlag flag)
+        {
+        return this->template getBuffer<Scalar3, Scalar>(m_aux1_handle,
+                                                         &ParticleData::getAuxiliaries1,
+                                                         flag,
+                                                         true,
+                                                         3);
+        }
+
+    Output getAuxiliaries2(GhostDataFlag flag)
+        {
+        return this->template getBuffer<Scalar3, Scalar>(m_aux2_handle,
+                                                         &ParticleData::getAuxiliaries2,
+                                                         flag,
+                                                         true,
+                                                         3);
+        }
+
+    Output getAuxiliaries3(GhostDataFlag flag)
+        {
+        return this->template getBuffer<Scalar3, Scalar>(m_aux3_handle,
+                                                         &ParticleData::getAuxiliaries3,
+                                                         flag,
+                                                         true,
+                                                         3);
+        }
+    Output getAuxiliaries4(GhostDataFlag flag)
+        {
+        return this->template getBuffer<Scalar3, Scalar>(m_aux4_handle,
+                                                         &ParticleData::getAuxiliaries4,
+                                                         flag,
+                                                         true,
+                                                         3);
+        }
+
+
+    Output getDPEdts(GhostDataFlag flag)
+        {
+        return this->template getBuffer<Scalar3, Scalar>(m_dpedt_handle,
+                                                         &ParticleData::getDPEdts,
+                                                         flag,
+                                                         true,
+                                                         3);
+        }
+
     Output getMasses(GhostDataFlag flag)
         {
         return this->template getBuffer<Scalar4, Scalar>(m_velocities_handle,
@@ -1489,48 +1760,48 @@ class PYBIND11_EXPORT LocalParticleData : public LocalDataAccess<Output, Particl
                                                          3 * sizeof(Scalar));
         }
 
-    Output getOrientation(GhostDataFlag flag)
-        {
-        return this->template getBuffer<Scalar4, Scalar>(m_orientation_handle,
-                                                         &ParticleData::getOrientationArray,
-                                                         flag,
-                                                         true,
-                                                         4);
-        }
+    // Output getOrientation(GhostDataFlag flag)
+    //     {
+    //     return this->template getBuffer<Scalar4, Scalar>(m_orientation_handle,
+    //                                                      &ParticleData::getOrientationArray,
+    //                                                      flag,
+    //                                                      true,
+    //                                                      4);
+    //     }
+    // 
+    // Output getAngularMomentum(GhostDataFlag flag)
+    //     {
+    //     return this->template getBuffer<Scalar4, Scalar>(m_angular_momentum_handle,
+    //                                                      &ParticleData::getAngularMomentumArray,
+    //                                                      flag,
+    //                                                      true,
+    //                                                      4);
+    //     }
 
-    Output getAngularMomentum(GhostDataFlag flag)
-        {
-        return this->template getBuffer<Scalar4, Scalar>(m_angular_momentum_handle,
-                                                         &ParticleData::getAngularMomentumArray,
-                                                         flag,
-                                                         true,
-                                                         4);
-        }
+    // Output getMomentsOfInertia(GhostDataFlag flag)
+    //     {
+    //     return this->template getBuffer<Scalar3, Scalar>(m_inertia_handle,
+    //                                                      &ParticleData::getMomentsOfInertiaArray,
+    //                                                      flag,
+    //                                                      true,
+    //                                                      3);
+    //     }
 
-    Output getMomentsOfInertia(GhostDataFlag flag)
-        {
-        return this->template getBuffer<Scalar3, Scalar>(m_inertia_handle,
-                                                         &ParticleData::getMomentsOfInertiaArray,
-                                                         flag,
-                                                         true,
-                                                         3);
-        }
+    // Output getCharge(GhostDataFlag flag)
+    //     {
+    //     return this->template getBuffer<Scalar, Scalar>(m_charge_handle,
+    //                                                     &ParticleData::getCharges,
+    //                                                     flag,
+    //                                                     true);
+    //     }
 
-    Output getCharge(GhostDataFlag flag)
-        {
-        return this->template getBuffer<Scalar, Scalar>(m_charge_handle,
-                                                        &ParticleData::getCharges,
-                                                        flag,
-                                                        true);
-        }
-
-    Output getDiameter(GhostDataFlag flag)
-        {
-        return this->template getBuffer<Scalar, Scalar>(m_diameter_handle,
-                                                        &ParticleData::getDiameters,
-                                                        flag,
-                                                        true);
-        }
+    // Output getDiameter(GhostDataFlag flag)
+    //     {
+    //     return this->template getBuffer<Scalar, Scalar>(m_diameter_handle,
+    //                                                     &ParticleData::getDiameters,
+    //                                                     flag,
+    //                                                     true);
+    //     }
 
     Output getImages(GhostDataFlag flag)
         {
@@ -1548,6 +1819,14 @@ class PYBIND11_EXPORT LocalParticleData : public LocalDataAccess<Output, Particl
                                                                     flag,
                                                                     true);
         }
+
+    // Output getSlengths(GhostDataFlag flag)
+    //     {
+    //     return this->template getBuffer<unsigned int, unsigned int>(m_slength_handle,
+    //                                                                 &ParticleData::getSlengths,
+    //                                                                 flag,
+    //                                                                 true);
+    //     }
 
     Output getRTags()
         {
@@ -1571,26 +1850,35 @@ class PYBIND11_EXPORT LocalParticleData : public LocalDataAccess<Output, Particl
                                                          3);
         }
 
-    Output getNetTorque(GhostDataFlag flag)
+    Output getNetRateDPE(GhostDataFlag flag)
         {
-        return this->template getBuffer<Scalar4, Scalar>(m_net_torque_handle,
-                                                         &ParticleData::getNetTorqueArray,
+        return this->template getBuffer<Scalar4, Scalar>(m_net_ratedpe_handle,
+                                                         &ParticleData::getNetRateDPE,
                                                          flag,
                                                          true,
                                                          3);
         }
 
-    Output getNetVirial(GhostDataFlag flag)
-        {
-        return this->template getBuffer<Scalar, Scalar>(
-            m_net_virial_handle,
-            &ParticleData::getNetVirial,
-            flag,
-            true,
-            6,
-            0,
-            std::vector<ssize_t>({6 * sizeof(Scalar), sizeof(Scalar)}));
-        }
+    // Output getNetTorque(GhostDataFlag flag)
+    //     {
+    //     return this->template getBuffer<Scalar4, Scalar>(m_net_torque_handle,
+    //                                                      &ParticleData::getNetTorqueArray,
+    //                                                      flag,
+    //                                                      true,
+    //                                                      3);
+    //     }
+
+    // Output getNetVirial(GhostDataFlag flag)
+    //     {
+    //     return this->template getBuffer<Scalar, Scalar>(
+    //         m_net_virial_handle,
+    //         &ParticleData::getNetVirial,
+    //         flag,
+    //         true,
+    //         6,
+    //         0,
+    //         std::vector<ssize_t>({6 * sizeof(Scalar), sizeof(Scalar)}));
+    //     }
 
     Output getNetEnergy(GhostDataFlag flag)
         {
@@ -1606,20 +1894,28 @@ class PYBIND11_EXPORT LocalParticleData : public LocalDataAccess<Output, Particl
     void clear()
         {
         m_position_handle.reset(nullptr);
-        m_orientation_handle.reset(nullptr);
+        // m_orientation_handle.reset(nullptr);
         m_velocities_handle.reset(nullptr);
-        m_angular_momentum_handle.reset(nullptr);
+        // m_angular_momentum_handle.reset(nullptr);
         m_acceleration_handle.reset(nullptr);
-        m_inertia_handle.reset(nullptr);
-        m_charge_handle.reset(nullptr);
-        m_diameter_handle.reset(nullptr);
+        m_dpe_handle.reset(nullptr);
+        m_aux1_handle.reset(nullptr);
+        m_aux2_handle.reset(nullptr);
+        m_aux3_handle.reset(nullptr);
+        m_aux4_handle.reset(nullptr);
+        m_slength_handle.reset(nullptr);
+        m_dpedt_handle.reset(nullptr);
+        // m_inertia_handle.reset(nullptr);
+        // m_charge_handle.reset(nullptr);
+        // m_diameter_handle.reset(nullptr);
         m_image_handle.reset(nullptr);
         m_tag_handle.reset(nullptr);
         m_rtag_handle.reset(nullptr);
         m_rigid_body_ids_handle.reset(nullptr);
         m_net_force_handle.reset(nullptr);
-        m_net_virial_handle.reset(nullptr);
-        m_net_torque_handle.reset(nullptr);
+        m_net_ratedpe_handle.reset(nullptr);
+        // m_net_virial_handle.reset(nullptr);
+        // m_net_torque_handle.reset(nullptr);
         }
 
     private:
@@ -1628,20 +1924,28 @@ class PYBIND11_EXPORT LocalParticleData : public LocalDataAccess<Output, Particl
     // dropped prematurely. If a move constructor is created for ArrayHandle
     // then the implementation can be simplified.
     std::unique_ptr<ArrayHandle<Scalar4>> m_position_handle;
-    std::unique_ptr<ArrayHandle<Scalar4>> m_orientation_handle;
+    // std::unique_ptr<ArrayHandle<Scalar4>> m_orientation_handle;
     std::unique_ptr<ArrayHandle<Scalar4>> m_velocities_handle;
-    std::unique_ptr<ArrayHandle<Scalar4>> m_angular_momentum_handle;
+    // std::unique_ptr<ArrayHandle<Scalar4>> m_angular_momentum_handle;
     std::unique_ptr<ArrayHandle<Scalar3>> m_acceleration_handle;
-    std::unique_ptr<ArrayHandle<Scalar3>> m_inertia_handle;
-    std::unique_ptr<ArrayHandle<Scalar>> m_charge_handle;
-    std::unique_ptr<ArrayHandle<Scalar>> m_diameter_handle;
+    std::unique_ptr<ArrayHandle<Scalar3>> m_dpe_handle;
+    std::unique_ptr<ArrayHandle<Scalar3>> m_aux1_handle;
+    std::unique_ptr<ArrayHandle<Scalar3>> m_aux2_handle;
+    std::unique_ptr<ArrayHandle<Scalar3>> m_aux3_handle;
+    std::unique_ptr<ArrayHandle<Scalar3>> m_aux4_handle;
+    std::unique_ptr<ArrayHandle<Scalar3>> m_slength_handle;
+    std::unique_ptr<ArrayHandle<Scalar3>> m_dpedt_handle;
+    // std::unique_ptr<ArrayHandle<Scalar3>> m_inertia_handle;
+    // std::unique_ptr<ArrayHandle<Scalar>> m_charge_handle;
+    // std::unique_ptr<ArrayHandle<Scalar>> m_diameter_handle;
     std::unique_ptr<ArrayHandle<int3>> m_image_handle;
     std::unique_ptr<ArrayHandle<unsigned int>> m_tag_handle;
     std::unique_ptr<ArrayHandle<unsigned int>> m_rtag_handle;
     std::unique_ptr<ArrayHandle<unsigned int>> m_rigid_body_ids_handle;
     std::unique_ptr<ArrayHandle<Scalar4>> m_net_force_handle;
-    std::unique_ptr<ArrayHandle<Scalar>> m_net_virial_handle;
-    std::unique_ptr<ArrayHandle<Scalar4>> m_net_torque_handle;
+    std::unique_ptr<ArrayHandle<Scalar4>> m_net_ratedpe_handle;
+    // std::unique_ptr<ArrayHandle<Scalar>> m_net_virial_handle;
+    // std::unique_ptr<ArrayHandle<Scalar4>> m_net_torque_handle;
     };
 
 namespace detail
@@ -1662,19 +1966,27 @@ template<class Output> void export_LocalParticleData(pybind11::module& m, std::s
         .def("getTypes", &LocalParticleData<Output>::getTypes)
         .def("getVelocities", &LocalParticleData<Output>::getVelocities)
         .def("getAcceleration", &LocalParticleData<Output>::getAcceleration)
+        .def("getAuxiliaries1", &LocalParticleData<Output>::getAuxiliaries1)
+        .def("getAuxiliaries2", &LocalParticleData<Output>::getAuxiliaries2)
+        .def("getAuxiliaries3", &LocalParticleData<Output>::getAuxiliaries3)
+        .def("getAuxiliaries4", &LocalParticleData<Output>::getAuxiliaries4)
+        .def("getDPEs", &LocalParticleData<Output>::getDPEs)
+        // .def("getSlengths", &LocalParticleData<Output>::getSlengths)
+        .def("getDPEdts", &LocalParticleData<Output>::getDPEdts)
         .def("getMasses", &LocalParticleData<Output>::getMasses)
-        .def("getOrientation", &LocalParticleData<Output>::getOrientation)
-        .def("getAngularMomentum", &LocalParticleData<Output>::getAngularMomentum)
-        .def("getMomentsOfInertia", &LocalParticleData<Output>::getMomentsOfInertia)
-        .def("getCharge", &LocalParticleData<Output>::getCharge)
-        .def("getDiameter", &LocalParticleData<Output>::getDiameter)
+        // .def("getOrientation", &LocalParticleData<Output>::getOrientation)
+        // .def("getAngularMomentum", &LocalParticleData<Output>::getAngularMomentum)
+        // .def("getMomentsOfInertia", &LocalParticleData<Output>::getMomentsOfInertia)
+        // .def("getCharge", &LocalParticleData<Output>::getCharge)
+        // .def("getDiameter", &LocalParticleData<Output>::getDiameter)
         .def("getImages", &LocalParticleData<Output>::getImages)
         .def("getTags", &LocalParticleData<Output>::getTags)
         .def("getRTags", &LocalParticleData<Output>::getRTags)
         .def("getBodies", &LocalParticleData<Output>::getBodies)
         .def("getNetForce", &LocalParticleData<Output>::getNetForce)
-        .def("getNetVirial", &LocalParticleData<Output>::getNetVirial)
-        .def("getNetTorque", &LocalParticleData<Output>::getNetTorque)
+        // .def("getNetRateDPE", &LocalParticleData<Output>::getNetRateDPE)
+        // .def("getNetVirial", &LocalParticleData<Output>::getNetVirial)
+        // .def("getNetTorque", &LocalParticleData<Output>::getNetTorque)
         .def("getNetEnergy", &LocalParticleData<Output>::getNetEnergy)
         .def("enter", &LocalParticleData<Output>::enter)
         .def("exit", &LocalParticleData<Output>::exit);

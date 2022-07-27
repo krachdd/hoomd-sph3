@@ -2,7 +2,7 @@ set(files __init__.py
           custom_writer.py
           table.py
           gsd.py
-          dcd.py
+          #dcd.py
           )
 
 install(FILES ${files}

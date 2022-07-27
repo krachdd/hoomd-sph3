@@ -25,13 +25,19 @@ namespace hoomd
     {
 std::list<std::string> GSDDumpWriter::particle_chunks {"particles/typeid",
                                                        "particles/mass",
-                                                       "particles/charge",
-                                                       "particles/diameter",
+                                                       "particles/slength"
+                                                       // "particles/charge",
+                                                       // "particles/diameter",
                                                        "particles/body",
-                                                       "particles/moment_inertia",
-                                                       "particles/orientation",
+                                                       // "particles/moment_inertia",
+                                                       // "particles/orientation",
                                                        "particles/velocity",
-                                                       "particles/angmom",
+                                                       "particles/dpe",
+                                                       "particles/auxiliary1",
+                                                       "particles/auxiliary2",
+                                                       "particles/auxiliary3",
+                                                       "particles/auxiliary4",
+                                                       // "particles/angmom",
                                                        "particles/image"};
 
 /*! Constructs the GSDDumpWriter. After construction, settings are set. No file operations are
@@ -207,14 +213,14 @@ void GSDDumpWriter::analyze(uint64_t timestep)
         BondData::Snapshot bdata_snapshot;
         m_sysdef->getBondData()->takeSnapshot(bdata_snapshot);
 
-        AngleData::Snapshot adata_snapshot;
-        m_sysdef->getAngleData()->takeSnapshot(adata_snapshot);
+        // AngleData::Snapshot adata_snapshot;
+        // m_sysdef->getAngleData()->takeSnapshot(adata_snapshot);
 
-        DihedralData::Snapshot ddata_snapshot;
-        m_sysdef->getDihedralData()->takeSnapshot(ddata_snapshot);
+        // DihedralData::Snapshot ddata_snapshot;
+        // m_sysdef->getDihedralData()->takeSnapshot(ddata_snapshot);
 
-        ImproperData::Snapshot idata_snapshot;
-        m_sysdef->getImproperData()->takeSnapshot(idata_snapshot);
+        // ImproperData::Snapshot idata_snapshot;
+        // m_sysdef->getImproperData()->takeSnapshot(idata_snapshot);
 
         ConstraintData::Snapshot cdata_snapshot;
         m_sysdef->getConstraintData()->takeSnapshot(cdata_snapshot);
@@ -224,9 +230,9 @@ void GSDDumpWriter::analyze(uint64_t timestep)
 
         if (root)
             writeTopology(bdata_snapshot,
-                          adata_snapshot,
-                          ddata_snapshot,
-                          idata_snapshot,
+                          // adata_snapshot,
+                          // ddata_snapshot,
+                          // idata_snapshot,
                           cdata_snapshot,
                           pdata_snapshot);
         }
@@ -403,38 +409,13 @@ void GSDDumpWriter::writeAttributes(const SnapshotParticleData<float>& snapshot,
             if (nframes == 0)
                 m_nondefault["particles/mass"] = true;
             }
+        }
 
-        all_default = true;
 
-        for (unsigned int group_idx = 0; group_idx < N; group_idx++)
-            {
-            unsigned int t = m_group->getMemberTag(group_idx);
-
-            // look up tag in snapshot
-            auto it = map.find(t);
-            assert(it != map.end());
-
-            if (snapshot.charge[it->second] != float(0.0))
-                all_default = false;
-            data[group_idx] = float(snapshot.charge[it->second]);
-            }
-
-        if (!all_default || (nframes > 0 && m_nondefault["particles/charge"]))
-            {
-            m_exec_conf->msg->notice(10) << "GSD: writing particles/charge" << endl;
-            retval = gsd_write_chunk(&m_handle,
-                                     "particles/charge",
-                                     GSD_TYPE_FLOAT,
-                                     N,
-                                     1,
-                                     0,
-                                     (void*)&data[0]);
-            GSDUtils::checkError(retval, m_fname);
-            if (nframes == 0)
-                m_nondefault["particles/charge"] = true;
-            }
-
-        all_default = true;
+        {
+        std::vector<float> data(N);
+        data.reserve(1); //! make sure we allocate
+        bool all_default = true;
 
         for (unsigned int group_idx = 0; group_idx < N; group_idx++)
             {
@@ -444,17 +425,21 @@ void GSDDumpWriter::writeAttributes(const SnapshotParticleData<float>& snapshot,
             auto it = map.find(t);
             assert(it != map.end());
 
-            if (snapshot.diameter[it->second] != float(1.0))
-                all_default = false;
+            // if (snapshot.charge[it->second] != float(0.0))
+            //     all_default = false;
+            // data[group_idx] = float(snapshot.charge[it->second]);
+            // }
 
-            data[group_idx] = float(snapshot.diameter[it->second]);
+            if (snapshot.slength[it->second] != float(0.0))
+                all_default = false;
+            data[group_idx] = float(snapshot.slength[it->second]);
             }
 
-        if (!all_default || (nframes > 0 && m_nondefault["particles/diameter"]))
+        if (!all_default || (nframes > 0 && m_nondefault["particles/slength"]))
             {
-            m_exec_conf->msg->notice(10) << "GSD: writing particles/diameter" << endl;
+            m_exec_conf->msg->notice(10) << "GSD: writing particles/slength" << endl;
             retval = gsd_write_chunk(&m_handle,
-                                     "particles/diameter",
+                                     "particles/slength",
                                      GSD_TYPE_FLOAT,
                                      N,
                                      1,
@@ -462,9 +447,67 @@ void GSDDumpWriter::writeAttributes(const SnapshotParticleData<float>& snapshot,
                                      (void*)&data[0]);
             GSDUtils::checkError(retval, m_fname);
             if (nframes == 0)
-                m_nondefault["particles/diameter"] = true;
+                m_nondefault["particles/slength"] = true;
             }
         }
+        // for (unsigned int group_idx = 0; group_idx < N; group_idx++)
+        //     {
+        //     unsigned int t = m_group->getMemberTag(group_idx);
+
+        //     // look up tag in snapshot
+        //     auto it = map.find(t);
+        //     assert(it != map.end());
+
+        //     if (snapshot.charge[it->second] != float(0.0))
+        //         all_default = false;
+        //     data[group_idx] = float(snapshot.charge[it->second]);
+        //     }
+
+        // if (!all_default || (nframes > 0 && m_nondefault["particles/charge"]))
+        //     {
+        //     m_exec_conf->msg->notice(10) << "GSD: writing particles/charge" << endl;
+        //     retval = gsd_write_chunk(&m_handle,
+        //                              "particles/charge",
+        //                              GSD_TYPE_FLOAT,
+        //                              N,
+        //                              1,
+        //                              0,
+        //                              (void*)&data[0]);
+        //     GSDUtils::checkError(retval, m_fname);
+        //     if (nframes == 0)
+        //         m_nondefault["particles/charge"] = true;
+        //     }
+
+
+        // for (unsigned int group_idx = 0; group_idx < N; group_idx++)
+        //     {
+        //     unsigned int t = m_group->getMemberTag(group_idx);
+
+        //     // look up tag in snapshot
+        //     auto it = map.find(t);
+        //     assert(it != map.end());
+
+        //     if (snapshot.diameter[it->second] != float(1.0))
+        //         all_default = false;
+
+        //     data[group_idx] = float(snapshot.diameter[it->second]);
+        //     }
+
+        // if (!all_default || (nframes > 0 && m_nondefault["particles/diameter"]))
+        //     {
+        //     m_exec_conf->msg->notice(10) << "GSD: writing particles/diameter" << endl;
+        //     retval = gsd_write_chunk(&m_handle,
+        //                              "particles/diameter",
+        //                              GSD_TYPE_FLOAT,
+        //                              N,
+        //                              1,
+        //                              0,
+        //                              (void*)&data[0]);
+        //     GSDUtils::checkError(retval, m_fname);
+        //     if (nframes == 0)
+        //         m_nondefault["particles/diameter"] = true;
+        //     }
+        // }
 
         {
         std::vector<int32_t> body(N);
@@ -501,6 +544,132 @@ void GSDDumpWriter::writeAttributes(const SnapshotParticleData<float>& snapshot,
             }
         }
 
+
+        {
+        std::vector<float> data(N);
+        data.reserve(1); //! make sure we allocate
+        bool all_default = true;
+        
+        for (unsigned int group_idx = 0; group_idx < N; group_idx++)
+            {
+            unsigned int t = m_group->getMemberTag(group_idx);
+
+            // look up tag in snapshot
+            auto it = map.find(t);
+            assert(it != map.end());
+
+            if (snapshot.dpe[it->second].x != float(0.0)
+                || snapshot.dpe[it->second].y != float(0.0)
+                || snapshot.dpe[it->second].z != float(0.0))
+                {
+                all_default = false;
+                }
+
+            data[group_idx * 3 + 0] = float(snapshot.dpe[it->second].x);
+            data[group_idx * 3 + 1] = float(snapshot.dpe[it->second].y);
+            data[group_idx * 3 + 2] = float(snapshot.dpe[it->second].z);
+            }
+
+        if (!all_default || (nframes > 0 && m_nondefault["particles/dpe"]))
+            {
+            m_exec_conf->msg->notice(10) << "GSD: writing particles/dpe" << endl;
+            retval = gsd_write_chunk(&m_handle,
+                                     "particles/dpe",
+                                     GSD_TYPE_FLOAT,
+                                     N,
+                                     3,
+                                     0,
+                                     (void*)&data[0]);
+            GSDUtils::checkError(retval, m_fname);
+            if (nframes == 0)
+                m_nondefault["particles/dpe"] = true;
+            }
+        }
+
+        // {
+        // std::vector<float> data(uint64_t(N) * 3);
+        // data.reserve(1); //! make sure we allocate
+        // bool all_default = true;
+
+        // for (unsigned int group_idx = 0; group_idx < N; group_idx++)
+        //     {
+        //     unsigned int t = m_group->getMemberTag(group_idx);
+
+        //     // look up tag in snapshot
+        //     auto it = map.find(t);
+        //     assert(it != map.end());
+
+        //     if (snapshot.inertia[it->second].x != float(0.0)
+        //         || snapshot.inertia[it->second].y != float(0.0)
+        //         || snapshot.inertia[it->second].z != float(0.0))
+        //         {
+        //         all_default = false;
+        //         }
+
+        //     data[group_idx * 3 + 0] = float(snapshot.inertia[it->second].x);
+        //     data[group_idx * 3 + 1] = float(snapshot.inertia[it->second].y);
+        //     data[group_idx * 3 + 2] = float(snapshot.inertia[it->second].z);
+        //     }
+
+        // if (!all_default || (nframes > 0 && m_nondefault["particles/moment_inertia"]))
+        //     {
+        //     m_exec_conf->msg->notice(10) << "GSD: writing particles/moment_inertia" << endl;
+        //     retval = gsd_write_chunk(&m_handle,
+        //                              "particles/moment_inertia",
+        //                              GSD_TYPE_FLOAT,
+        //                              N,
+        //                              3,
+        //                              0,
+        //                              (void*)&data[0]);
+        //     GSDUtils::checkError(retval, m_fname);
+        //     if (nframes == 0)
+        //         m_nondefault["particles/moment_inertia"] = true;
+        //     }
+        // }
+    }
+
+/*! \param snapshot particle data snapshot to write out to the file
+
+    // Writes the data chunks position and orientation in particles/.
+    Writes the data chunks velocity, aux1, aux2, aux3, aux4 and image in particles/.
+*/
+void GSDDumpWriter::writeProperties(const SnapshotParticleData<float>& snapshot,
+                                    const std::map<unsigned int, unsigned int>& map)
+    {
+    uint32_t N = m_group->getNumMembersGlobal();
+    int retval;
+    uint64_t nframes = gsd_get_nframes(&m_handle);
+        {
+        std::vector<float> data(N*3);
+
+        for (unsigned int group_idx = 0; group_idx < N; group_idx++)
+            {
+            unsigned int t = m_group->getMemberTag(group_idx);
+
+            // look up tag in snapshot
+            auto it = map.find(t);
+            assert(it != map.end());
+
+            data[group_idx*3+0] = float(snapshot.pos[it->second].x);
+            data[group_idx*3+1] = float(snapshot.pos[it->second].y);
+            data[group_idx*3+2] = float(snapshot.pos[it->second].z);
+            }
+
+       
+            m_exec_conf->msg->notice(10) << "GSD: writing particles/position" << endl;
+            retval = gsd_write_chunk(&m_handle,
+                                     "particles/position",
+                                     GSD_TYPE_FLOAT,
+                                     N,
+                                     3,
+                                     0,
+                                     (void*)&data[0]);
+            GSDUtils::checkError(retval, m_fname);
+            if (nframes == 0)
+                m_nondefault["particles/position"] = true;
+            
+        }
+
         {
         std::vector<float> data(uint64_t(N) * 3);
         data.reserve(1); //! make sure we allocate
@@ -514,23 +683,23 @@ void GSDDumpWriter::writeAttributes(const SnapshotParticleData<float>& snapshot,
             auto it = map.find(t);
             assert(it != map.end());
 
-            if (snapshot.inertia[it->second].x != float(0.0)
-                || snapshot.inertia[it->second].y != float(0.0)
-                || snapshot.inertia[it->second].z != float(0.0))
+            if (snapshot.dpe[it->second].x != float(0.0)
+                || snapshot.dpe[it->second].y != float(0.0)
+                || snapshot.dpe[it->second].z != float(0.0))
                 {
                 all_default = false;
                 }
 
-            data[group_idx * 3 + 0] = float(snapshot.inertia[it->second].x);
-            data[group_idx * 3 + 1] = float(snapshot.inertia[it->second].y);
-            data[group_idx * 3 + 2] = float(snapshot.inertia[it->second].z);
+            data[group_idx * 3 + 0] = float(snapshot.dpe[it->second].x);
+            data[group_idx * 3 + 1] = float(snapshot.dpe[it->second].y);
+            data[group_idx * 3 + 2] = float(snapshot.dpe[it->second].z);
             }
 
-        if (!all_default || (nframes > 0 && m_nondefault["particles/moment_inertia"]))
+        if (!all_default || (nframes > 0 && m_nondefault["particles/dpe"]))
             {
-            m_exec_conf->msg->notice(10) << "GSD: writing particles/moment_inertia" << endl;
+            m_exec_conf->msg->notice(10) << "GSD: writing particles/dpe" << endl;
             retval = gsd_write_chunk(&m_handle,
-                                     "particles/moment_inertia",
+                                     "particles/dpe",
                                      GSD_TYPE_FLOAT,
                                      N,
                                      3,
@@ -538,16 +707,16 @@ void GSDDumpWriter::writeAttributes(const SnapshotParticleData<float>& snapshot,
                                      (void*)&data[0]);
             GSDUtils::checkError(retval, m_fname);
             if (nframes == 0)
-                m_nondefault["particles/moment_inertia"] = true;
+                m_nondefault["particles/dpe"] = true;
             }
         }
     }
 
 /*! \param snapshot particle data snapshot to write out to the file
 
-    Writes the data chunks position and orientation in particles/.
+    Writes the data chunks velocity, aux1, aux2, aux3, aux4 and image in particles/.
 */
-void GSDDumpWriter::writeProperties(const SnapshotParticleData<float>& snapshot,
+void GSDDumpWriter::writeMomenta(const SnapshotParticleData<float>& snapshot,
                                     const std::map<unsigned int, unsigned int>& map)
     {
     uint32_t N = m_group->getNumMembersGlobal();
@@ -558,33 +727,6 @@ void GSDDumpWriter::writeProperties(const SnapshotParticleData<float>& snapshot,
         std::vector<float> data(uint64_t(N) * 3);
         data.reserve(1); //! make sure we allocate
 
-        for (unsigned int group_idx = 0; group_idx < N; group_idx++)
-            {
-            unsigned int t = m_group->getMemberTag(group_idx);
-
-            // look up tag in snapshot
-            auto it = map.find(t);
-            assert(it != map.end());
-
-            data[group_idx * 3 + 0] = float(snapshot.pos[it->second].x);
-            data[group_idx * 3 + 1] = float(snapshot.pos[it->second].y);
-            data[group_idx * 3 + 2] = float(snapshot.pos[it->second].z);
-            }
-
-        m_exec_conf->msg->notice(10) << "GSD: writing particles/position" << endl;
-        retval = gsd_write_chunk(&m_handle,
-                                 "particles/position",
-                                 GSD_TYPE_FLOAT,
-                                 N,
-                                 3,
-                                 0,
-                                 (void*)&data[0]);
-        GSDUtils::checkError(retval, m_fname);
-        }
-
-        {
-        std::vector<float> data(uint64_t(N) * 4);
-        data.reserve(1); //! make sure we allocate
         bool all_default = true;
 
         for (unsigned int group_idx = 0; group_idx < N; group_idx++)
@@ -595,47 +737,32 @@ void GSDDumpWriter::writeProperties(const SnapshotParticleData<float>& snapshot,
             auto it = map.find(t);
             assert(it != map.end());
 
-            if (snapshot.orientation[it->second].s != float(1.0)
-                || snapshot.orientation[it->second].v.x != float(0.0)
-                || snapshot.orientation[it->second].v.y != float(0.0)
-                || snapshot.orientation[it->second].v.z != float(0.0))
+            if (snapshot.vel[it->second].x != float(0.0) ||
+                snapshot.vel[it->second].y != float(0.0) ||
+                snapshot.vel[it->second].z != float(0.0))
                 {
                 all_default = false;
                 }
 
-            data[group_idx * 4 + 0] = float(snapshot.orientation[it->second].s);
-            data[group_idx * 4 + 1] = float(snapshot.orientation[it->second].v.x);
-            data[group_idx * 4 + 2] = float(snapshot.orientation[it->second].v.y);
-            data[group_idx * 4 + 3] = float(snapshot.orientation[it->second].v.z);
+            data[group_idx*3+0] = float(snapshot.vel[it->second].x);
+            data[group_idx*3+1] = float(snapshot.vel[it->second].y);
+            data[group_idx*3+2] = float(snapshot.vel[it->second].z);
+            
             }
-
-        if (!all_default || (nframes > 0 && m_nondefault["particles/orientation"]))
+        if (! all_default)
             {
-            m_exec_conf->msg->notice(10) << "GSD: writing particles/orientation" << endl;
+            
+            m_exec_conf->msg->notice(10) << "GSD: writing particles/velocity" << endl;
             retval = gsd_write_chunk(&m_handle,
-                                     "particles/orientation",
+                                     "particles/velocity",
                                      GSD_TYPE_FLOAT,
                                      N,
-                                     4,
+                                     3,
                                      0,
                                      (void*)&data[0]);
             GSDUtils::checkError(retval, m_fname);
-            if (nframes == 0)
-                m_nondefault["particles/orientation"] = true;
-            }
+            }   
         }
-    }
-
-/*! \param snapshot particle data snapshot to write out to the file
-
-    Writes the data chunks velocity, angmom, and image in particles/.
-*/
-void GSDDumpWriter::writeMomenta(const SnapshotParticleData<float>& snapshot,
-                                 const std::map<unsigned int, unsigned int>& map)
-    {
-    uint32_t N = m_group->getNumMembersGlobal();
-    int retval;
-    uint64_t nframes = gsd_get_nframes(&m_handle);
 
         {
         std::vector<float> data(uint64_t(N) * 3);
@@ -650,22 +777,23 @@ void GSDDumpWriter::writeMomenta(const SnapshotParticleData<float>& snapshot,
             auto it = map.find(t);
             assert(it != map.end());
 
-            if (snapshot.vel[it->second].x != float(0.0) || snapshot.vel[it->second].y != float(0.0)
-                || snapshot.vel[it->second].z != float(0.0))
+            if ( snapshot.aux1[it->second].x != float(0.0)
+                || snapshot.aux1[it->second].y != float(0.0)
+                || snapshot.aux1[it->second].z != float(0.0))
                 {
                 all_default = false;
                 }
 
-            data[group_idx * 3 + 0] = float(snapshot.vel[it->second].x);
-            data[group_idx * 3 + 1] = float(snapshot.vel[it->second].y);
-            data[group_idx * 3 + 2] = float(snapshot.vel[it->second].z);
+            data[group_idx * 3 + 0] = float(snapshot.aux1[it->second].x);
+            data[group_idx * 3 + 1] = float(snapshot.aux1[it->second].y);
+            data[group_idx * 3 + 2] = float(snapshot.aux1[it->second].z);
             }
 
-        if (!all_default || (nframes > 0 && m_nondefault["particles/velocity"]))
+        if (!all_default || (nframes > 0 && m_nondefault["particles/auxiliary1"]))
             {
-            m_exec_conf->msg->notice(10) << "GSD: writing particles/velocity" << endl;
+            m_exec_conf->msg->notice(10) << "GSD: writing particles/auxiliary1" << endl;
             retval = gsd_write_chunk(&m_handle,
-                                     "particles/velocity",
+                                     "particles/auxiliary1",
                                      GSD_TYPE_FLOAT,
                                      N,
                                      3,
@@ -673,12 +801,12 @@ void GSDDumpWriter::writeMomenta(const SnapshotParticleData<float>& snapshot,
                                      (void*)&data[0]);
             GSDUtils::checkError(retval, m_fname);
             if (nframes == 0)
-                m_nondefault["particles/velocity"] = true;
+                m_nondefault["particles/auxiliary1"] = true;
             }
         }
 
         {
-        std::vector<float> data(uint64_t(N) * 4);
+        std::vector<float> data(uint64_t(N) * 3);
         data.reserve(1); //! make sure we allocate
         bool all_default = true;
 
@@ -690,33 +818,113 @@ void GSDDumpWriter::writeMomenta(const SnapshotParticleData<float>& snapshot,
             auto it = map.find(t);
             assert(it != map.end());
 
-            if (snapshot.angmom[it->second].s != float(0.0)
-                || snapshot.angmom[it->second].v.x != float(0.0)
-                || snapshot.angmom[it->second].v.y != float(0.0)
-                || snapshot.angmom[it->second].v.z != float(0.0))
+            if ( snapshot.aux2[it->second].x != float(0.0)
+                || snapshot.aux2[it->second].y != float(0.0)
+                || snapshot.aux2[it->second].z != float(0.0))
                 {
                 all_default = false;
                 }
 
-            data[group_idx * 4 + 0] = float(snapshot.angmom[it->second].s);
-            data[group_idx * 4 + 1] = float(snapshot.angmom[it->second].v.x);
-            data[group_idx * 4 + 2] = float(snapshot.angmom[it->second].v.y);
-            data[group_idx * 4 + 3] = float(snapshot.angmom[it->second].v.z);
+            data[group_idx * 3 + 0] = float(snapshot.aux2[it->second].x);
+            data[group_idx * 3 + 1] = float(snapshot.aux2[it->second].y);
+            data[group_idx * 3 + 2] = float(snapshot.aux2[it->second].z);
             }
 
-        if (!all_default || (nframes > 0 && m_nondefault["particles/angmom"]))
+        if (!all_default || (nframes > 0 && m_nondefault["particles/auxiliary2"]))
             {
-            m_exec_conf->msg->notice(10) << "GSD: writing particles/angmom" << endl;
+            m_exec_conf->msg->notice(10) << "GSD: writing particles/auxiliary2" << endl;
             retval = gsd_write_chunk(&m_handle,
-                                     "particles/angmom",
+                                     "particles/auxiliary2",
                                      GSD_TYPE_FLOAT,
                                      N,
-                                     4,
+                                     3,
                                      0,
                                      (void*)&data[0]);
             GSDUtils::checkError(retval, m_fname);
             if (nframes == 0)
-                m_nondefault["particles/angmom"] = true;
+                m_nondefault["particles/auxiliary2"] = true;
+            }
+        }
+
+        {
+        std::vector<float> data(uint64_t(N) * 3);
+        data.reserve(1); //! make sure we allocate
+        bool all_default = true;
+
+        for (unsigned int group_idx = 0; group_idx < N; group_idx++)
+            {
+            unsigned int t = m_group->getMemberTag(group_idx);
+
+            // look up tag in snapshot
+            auto it = map.find(t);
+            assert(it != map.end());
+
+            if ( snapshot.aux3[it->second].x != float(0.0)
+                || snapshot.aux3[it->second].y != float(0.0)
+                || snapshot.aux3[it->second].z != float(0.0))
+                {
+                all_default = false;
+                }
+
+            data[group_idx * 3 + 0] = float(snapshot.aux3[it->second].x);
+            data[group_idx * 3 + 1] = float(snapshot.aux3[it->second].y);
+            data[group_idx * 3 + 2] = float(snapshot.aux3[it->second].z);
+            }
+
+        if (!all_default || (nframes > 0 && m_nondefault["particles/auxiliary3"]))
+            {
+            m_exec_conf->msg->notice(10) << "GSD: writing particles/auxiliary3" << endl;
+            retval = gsd_write_chunk(&m_handle,
+                                     "particles/auxiliary3",
+                                     GSD_TYPE_FLOAT,
+                                     N,
+                                     3,
+                                     0,
+                                     (void*)&data[0]);
+            GSDUtils::checkError(retval, m_fname);
+            if (nframes == 0)
+                m_nondefault["particles/auxiliary3"] = true;
+            }
+        }
+
+        {
+        std::vector<float> data(uint64_t(N) * 3);
+        data.reserve(1); //! make sure we allocate
+        bool all_default = true;
+
+        for (unsigned int group_idx = 0; group_idx < N; group_idx++)
+            {
+            unsigned int t = m_group->getMemberTag(group_idx);
+
+            // look up tag in snapshot
+            auto it = map.find(t);
+            assert(it != map.end());
+
+            if ( snapshot.aux4[it->second].x != float(0.0)
+                || snapshot.aux4[it->second].y != float(0.0)
+                || snapshot.aux4[it->second].z != float(0.0))
+                {
+                all_default = false;
+                }
+
+            data[group_idx * 3 + 0] = float(snapshot.aux4[it->second].x);
+            data[group_idx * 3 + 1] = float(snapshot.aux4[it->second].y);
+            data[group_idx * 3 + 2] = float(snapshot.aux4[it->second].z);
+            }
+
+        if (!all_default || (nframes > 0 && m_nondefault["particles/auxiliary4"]))
+            {
+            m_exec_conf->msg->notice(10) << "GSD: writing particles/auxiliary4" << endl;
+            retval = gsd_write_chunk(&m_handle,
+                                     "particles/auxiliary4",
+                                     GSD_TYPE_FLOAT,
+                                     N,
+                                     3,
+                                     0,
+                                     (void*)&data[0]);
+            GSDUtils::checkError(retval, m_fname);
+            if (nframes == 0)
+                m_nondefault["particles/auxiliary4"] = true;
             }
         }
 
@@ -771,9 +979,9 @@ void GSDDumpWriter::writeMomenta(const SnapshotParticleData<float>& snapshot,
     Write out all the snapshot data to the GSD file
 */
 void GSDDumpWriter::writeTopology(BondData::Snapshot& bond,
-                                  AngleData::Snapshot& angle,
-                                  DihedralData::Snapshot& dihedral,
-                                  ImproperData::Snapshot& improper,
+                                  // AngleData::Snapshot& angle,
+                                  // DihedralData::Snapshot& dihedral,
+                                  // ImproperData::Snapshot& improper,
                                   ConstraintData::Snapshot& constraint,
                                   PairData::Snapshot& pair)
     {
@@ -806,93 +1014,93 @@ void GSDDumpWriter::writeTopology(BondData::Snapshot& bond,
                                  (void*)&bond.groups[0]);
         GSDUtils::checkError(retval, m_fname);
         }
-    if (angle.size > 0)
-        {
-        m_exec_conf->msg->notice(10) << "GSD: writing angles/N" << endl;
-        uint32_t N = angle.size;
-        int retval = gsd_write_chunk(&m_handle, "angles/N", GSD_TYPE_UINT32, 1, 1, 0, (void*)&N);
-        GSDUtils::checkError(retval, m_fname);
+    // if (angle.size > 0)
+    //     {
+    //     m_exec_conf->msg->notice(10) << "GSD: writing angles/N" << endl;
+    //     uint32_t N = angle.size;
+    //     int retval = gsd_write_chunk(&m_handle, "angles/N", GSD_TYPE_UINT32, 1, 1, 0, (void*)&N);
+    //     GSDUtils::checkError(retval, m_fname);
 
-        writeTypeMapping("angles/types", angle.type_mapping);
+    //     writeTypeMapping("angles/types", angle.type_mapping);
 
-        m_exec_conf->msg->notice(10) << "GSD: writing angles/typeid" << endl;
-        retval = gsd_write_chunk(&m_handle,
-                                 "angles/typeid",
-                                 GSD_TYPE_UINT32,
-                                 N,
-                                 1,
-                                 0,
-                                 (void*)&angle.type_id[0]);
-        GSDUtils::checkError(retval, m_fname);
+    //     m_exec_conf->msg->notice(10) << "GSD: writing angles/typeid" << endl;
+    //     retval = gsd_write_chunk(&m_handle,
+    //                              "angles/typeid",
+    //                              GSD_TYPE_UINT32,
+    //                              N,
+    //                              1,
+    //                              0,
+    //                              (void*)&angle.type_id[0]);
+    //     GSDUtils::checkError(retval, m_fname);
 
-        m_exec_conf->msg->notice(10) << "GSD: writing angles/group" << endl;
-        retval = gsd_write_chunk(&m_handle,
-                                 "angles/group",
-                                 GSD_TYPE_UINT32,
-                                 N,
-                                 3,
-                                 0,
-                                 (void*)&angle.groups[0]);
-        GSDUtils::checkError(retval, m_fname);
-        }
-    if (dihedral.size > 0)
-        {
-        m_exec_conf->msg->notice(10) << "GSD: writing dihedrals/N" << endl;
-        uint32_t N = dihedral.size;
-        int retval = gsd_write_chunk(&m_handle, "dihedrals/N", GSD_TYPE_UINT32, 1, 1, 0, (void*)&N);
-        GSDUtils::checkError(retval, m_fname);
+    //     m_exec_conf->msg->notice(10) << "GSD: writing angles/group" << endl;
+    //     retval = gsd_write_chunk(&m_handle,
+    //                              "angles/group",
+    //                              GSD_TYPE_UINT32,
+    //                              N,
+    //                              3,
+    //                              0,
+    //                              (void*)&angle.groups[0]);
+    //     GSDUtils::checkError(retval, m_fname);
+    //     }
+    // if (dihedral.size > 0)
+    //     {
+    //     m_exec_conf->msg->notice(10) << "GSD: writing dihedrals/N" << endl;
+    //     uint32_t N = dihedral.size;
+    //     int retval = gsd_write_chunk(&m_handle, "dihedrals/N", GSD_TYPE_UINT32, 1, 1, 0, (void*)&N);
+    //     GSDUtils::checkError(retval, m_fname);
 
-        writeTypeMapping("dihedrals/types", dihedral.type_mapping);
+    //     writeTypeMapping("dihedrals/types", dihedral.type_mapping);
 
-        m_exec_conf->msg->notice(10) << "GSD: writing dihedrals/typeid" << endl;
-        retval = gsd_write_chunk(&m_handle,
-                                 "dihedrals/typeid",
-                                 GSD_TYPE_UINT32,
-                                 N,
-                                 1,
-                                 0,
-                                 (void*)&dihedral.type_id[0]);
-        GSDUtils::checkError(retval, m_fname);
+    //     m_exec_conf->msg->notice(10) << "GSD: writing dihedrals/typeid" << endl;
+    //     retval = gsd_write_chunk(&m_handle,
+    //                              "dihedrals/typeid",
+    //                              GSD_TYPE_UINT32,
+    //                              N,
+    //                              1,
+    //                              0,
+    //                              (void*)&dihedral.type_id[0]);
+    //     GSDUtils::checkError(retval, m_fname);
 
-        m_exec_conf->msg->notice(10) << "GSD: writing dihedrals/group" << endl;
-        retval = gsd_write_chunk(&m_handle,
-                                 "dihedrals/group",
-                                 GSD_TYPE_UINT32,
-                                 N,
-                                 4,
-                                 0,
-                                 (void*)&dihedral.groups[0]);
-        GSDUtils::checkError(retval, m_fname);
-        }
-    if (improper.size > 0)
-        {
-        m_exec_conf->msg->notice(10) << "GSD: writing impropers/N" << endl;
-        uint32_t N = improper.size;
-        int retval = gsd_write_chunk(&m_handle, "impropers/N", GSD_TYPE_UINT32, 1, 1, 0, (void*)&N);
-        GSDUtils::checkError(retval, m_fname);
+    //     m_exec_conf->msg->notice(10) << "GSD: writing dihedrals/group" << endl;
+    //     retval = gsd_write_chunk(&m_handle,
+    //                              "dihedrals/group",
+    //                              GSD_TYPE_UINT32,
+    //                              N,
+    //                              4,
+    //                              0,
+    //                              (void*)&dihedral.groups[0]);
+    //     GSDUtils::checkError(retval, m_fname);
+    //     }
+    // if (improper.size > 0)
+    //     {
+    //     m_exec_conf->msg->notice(10) << "GSD: writing impropers/N" << endl;
+    //     uint32_t N = improper.size;
+    //     int retval = gsd_write_chunk(&m_handle, "impropers/N", GSD_TYPE_UINT32, 1, 1, 0, (void*)&N);
+    //     GSDUtils::checkError(retval, m_fname);
 
-        writeTypeMapping("impropers/types", improper.type_mapping);
+    //     writeTypeMapping("impropers/types", improper.type_mapping);
 
-        m_exec_conf->msg->notice(10) << "GSD: writing impropers/typeid" << endl;
-        retval = gsd_write_chunk(&m_handle,
-                                 "impropers/typeid",
-                                 GSD_TYPE_UINT32,
-                                 N,
-                                 1,
-                                 0,
-                                 (void*)&improper.type_id[0]);
-        GSDUtils::checkError(retval, m_fname);
+    //     m_exec_conf->msg->notice(10) << "GSD: writing impropers/typeid" << endl;
+    //     retval = gsd_write_chunk(&m_handle,
+    //                              "impropers/typeid",
+    //                              GSD_TYPE_UINT32,
+    //                              N,
+    //                              1,
+    //                              0,
+    //                              (void*)&improper.type_id[0]);
+    //     GSDUtils::checkError(retval, m_fname);
 
-        m_exec_conf->msg->notice(10) << "GSD: writing impropers/group" << endl;
-        retval = gsd_write_chunk(&m_handle,
-                                 "impropers/group",
-                                 GSD_TYPE_UINT32,
-                                 N,
-                                 4,
-                                 0,
-                                 (void*)&improper.groups[0]);
-        GSDUtils::checkError(retval, m_fname);
-        }
+    //     m_exec_conf->msg->notice(10) << "GSD: writing impropers/group" << endl;
+    //     retval = gsd_write_chunk(&m_handle,
+    //                              "impropers/group",
+    //                              GSD_TYPE_UINT32,
+    //                              N,
+    //                              4,
+    //                              0,
+    //                              (void*)&improper.groups[0]);
+    //     GSDUtils::checkError(retval, m_fname);
+    //     }
 
     if (constraint.size > 0)
         {

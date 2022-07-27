@@ -57,7 +57,7 @@ from hoomd import data
 from hoomd import filter
 from hoomd import device
 from hoomd import error
-from hoomd import mesh
+# from hoomd import mesh
 from hoomd import update
 from hoomd import communicator
 from hoomd import util
@@ -67,10 +67,12 @@ from hoomd import _hoomd
 from hoomd import tune
 from hoomd import logging
 from hoomd import custom
-if version.md_built:
-    from hoomd import md
-if version.hpmc_built:
-    from hoomd import hpmc
+
+# if version.md_built:
+#     from hoomd import md
+
+# if version.hpmc_built:
+#     from hoomd import hpmc
 # if version.metal_built:
 #     from hoomd import metal
 # if version.mpcd_built:

@@ -8,41 +8,53 @@ install(FILES ${HOOMD_BINARY_DIR}/hoomd/include/HOOMDVersion.h
         )
 
 # translate cmake true/false to Python
-if (BUILD_MD)
-    set(_md_built "True")
+# if (BUILD_MD)
+#     set(_md_built "True")
+# else()
+#     set(_md_built "False")
+# endif()
+
+# if (BUILD_MD)
+#     set(_md_built "True")
+# else()
+#     set(_md_built "False")
+# endif()
+
+if (BUILD_SPH)
+    set(_sph_built "True")
 else()
-    set(_md_built "False")
+    set(_sph_built "False")
 endif()
 
-if (BUILD_MD)
-    set(_md_built "True")
+if (BUILD_SPH)
+    set(_sph_built "True")
 else()
-    set(_md_built "False")
+    set(_sph_built "False")
 endif()
 
-if (BUILD_HPMC)
-    set(_hpmc_built "True")
-else()
-    set(_hpmc_built "False")
-endif()
+# if (BUILD_HPMC)
+#     set(_hpmc_built "True")
+# else()
+#     set(_hpmc_built "False")
+# endif()
 
-if (BUILD_METAL)
-    set(_metal_built "True")
-else()
-    set(_metal_built "False")
-endif()
+# if (BUILD_METAL)
+#     set(_metal_built "True")
+# else()
+#     set(_metal_built "False")
+# endif()
 
-if (BUILD_MPCD)
-    set(_mpcd_built "True")
-else()
-    set(_mpcd_built "False")
-endif()
+# if (BUILD_MPCD)
+#     set(_mpcd_built "True")
+# else()
+#     set(_mpcd_built "False")
+# endif()
 
-if (ENABLE_LLVM)
-    set(_llvm_enabled "True")
-else()
-    set(_llvm_enabled "False")
-endif()
+# if (ENABLE_LLVM)
+#     set(_llvm_enabled "True")
+# else()
+#     set(_llvm_enabled "False")
+# endif()
 
 configure_file (version_config.py.in ${HOOMD_BINARY_DIR}/hoomd/version_config.py)
 install(FILES ${HOOMD_BINARY_DIR}/hoomd/version_config.py
@@ -62,7 +74,7 @@ set(_hoomd_sources Analyzer.cc
                    Communicator.cc
                    CommunicatorGPU.cc
                    Compute.cc
-                   DCDDumpWriter.cc
+#                    DCDDumpWriter.cc
                    DomainDecomposition.cc
                    ExecutionConfiguration.cc
                    ForceCompute.cc
@@ -74,8 +86,8 @@ set(_hoomd_sources Analyzer.cc
                    Initializers.cc
                    Integrator.cc
                    LoadBalancer.cc
-                   MeshGroupData.cc
-                   MeshDefinition.cc
+#                    MeshGroupData.cc
+#                    MeshDefinition.cc
                    Messenger.cc
                    MemoryTraceback.cc
                    MPIConfiguration.cc
@@ -131,7 +143,7 @@ set(_hoomd_headers
     CommunicatorGPU.h
     Communicator.h
     Compute.h
-    DCDDumpWriter.h
+#     DCDDumpWriter.h
     DomainDecomposition.h
     ExecutionConfiguration.h
     Filesystem.h
@@ -161,9 +173,9 @@ set(_hoomd_headers
     managed_allocator.h
     ManagedArray.h
     MemoryTraceback.h
-    MeshGroupData.cuh
-    MeshGroupData.h
-    MeshDefinition.h
+#     MeshGroupData.cuh
+#     MeshGroupData.h
+#     MeshDefinition.h
     Messenger.h
     MPIConfiguration.h
     ParticleData.cuh
@@ -205,7 +217,7 @@ set(_hoomd_cu_sources BondedGroupData.cu
                       CommunicatorGPU.cu
                       Integrator.cu
                       LoadBalancerGPU.cu
-                      MeshGroupData.cu
+#                       MeshGroupData.cu
                       ParticleData.cu
                       ParticleGroup.cu
                       SFCPackTunerGPU.cu)
@@ -357,7 +369,7 @@ set(files box.py
           trigger.py
           snapshot.py
           logging.py
-          mesh.py
+#           mesh.py
           version.py
           wall.py
     )
@@ -383,38 +395,46 @@ add_subdirectory(pytest)
 add_subdirectory(tune)
 add_subdirectory(update)
 
-if (BUILD_TESTING)
-    # add_subdirectory(test-py)
-    add_subdirectory(test)
-endif()
+# if (BUILD_TESTING)
+#     # add_subdirectory(test-py)
+#     add_subdirectory(test)
+# endif()
 
 ##################################################
 ## Build components
 
-if (BUILD_MD)
-    if (ENABLE_MPI)
-        # add the distributed FFT library
-        add_subdirectory(${HOOMD_SOURCE_DIR}/hoomd/extern/dfftlib)
-    endif()
-    add_subdirectory(md)
-endif()
+# if (BUILD_MD)
+#     if (ENABLE_MPI)
+#         # add the distributed FFT library
+#         add_subdirectory(${HOOMD_SOURCE_DIR}/hoomd/extern/dfftlib)
+#     endif()
+#     add_subdirectory(md)
+# endif()
 
-if (NOT SINGLE_PRECISION AND BUILD_HPMC)
-    add_subdirectory(hpmc)
-endif()
+# if (NOT SINGLE_PRECISION AND BUILD_HPMC)
+#     add_subdirectory(hpmc)
+# endif()
 
-if (BUILD_METAL AND BUILD_MD)
-    add_subdirectory(metal)
-endif()
+# if (BUILD_METAL AND BUILD_MD)
+#     add_subdirectory(metal)
+# endif()
 
-if (NOT ENABLE_HIP OR HIP_PLATFORM STREQUAL "nvcc")
-    if (BUILD_MPCD)
-        add_subdirectory(mpcd)
-    endif()
-endif()
+# if (NOT ENABLE_HIP OR HIP_PLATFORM STREQUAL "nvcc")
+#     if (BUILD_MPCD)
+#         add_subdirectory(mpcd)
+#     endif()
+# endif()
 
 foreach(entry ${PLUGINS})
     if(EXISTS ${CMAKE_CURRENT_SOURCE_DIR}/${entry}/CMakeLists.txt)
         add_subdirectory(${entry})
     endif()
 endforeach()
+
+
+add_subdirectory(nsearch)
+
+#option(BUILD_SPH "Build the sph package" on)
+#if (BUILD_SPH)
+#   add_subdirectory(sph)
+#endif()

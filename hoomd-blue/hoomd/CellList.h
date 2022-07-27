@@ -114,6 +114,12 @@ class PYBIND11_EXPORT CellList : public Compute
         m_params_changed = true;
         }
 
+        //! Set the kernel scaling factor
+    void setKernelFactor(Scalar kappa)
+        {
+        m_kappa = kappa;
+        }
+
     //! Set the radius of cells to include in the adjacency list
     void setRadius(unsigned int radius)
         {
@@ -135,12 +141,12 @@ class PYBIND11_EXPORT CellList : public Compute
         m_params_changed = true;
         }
 
-    //! Specify if the orientation cell list is to be computed
-    void setComputeOrientation(bool compute_orientation)
-        {
-        m_compute_orientation = compute_orientation;
-        m_params_changed = true;
-        }
+    // //! Specify if the orientation cell list is to be computed
+    // void setComputeOrientation(bool compute_orientation)
+    //     {
+    //     m_compute_orientation = compute_orientation;
+    //     m_params_changed = true;
+    //     }
 
     //! Specify if the index cell list is to be computed
     void setComputeIdx(bool compute_idx)
@@ -149,18 +155,18 @@ class PYBIND11_EXPORT CellList : public Compute
         m_params_changed = true;
         }
 
-    //! Specify that the flag is to be filled with the particle charge
-    void setFlagCharge()
-        {
-        m_flag_charge = true;
-        m_flag_type = false;
-        m_params_changed = true;
-        }
+    // //! Specify that the flag is to be filled with the particle charge
+    // void setFlagCharge()
+    //     {
+    //     m_flag_charge = true;
+    //     m_flag_type = false;
+    //     m_params_changed = true;
+    //     }
 
     //! Specify that the flag is to be filled with the particle type
     void setFlagType()
         {
-        m_flag_charge = false;
+        // m_flag_charge = false;
         m_flag_type = true;
         m_params_changed = true;
         }
@@ -169,7 +175,7 @@ class PYBIND11_EXPORT CellList : public Compute
     //! variable)
     void setFlagIndex()
         {
-        m_flag_charge = false;
+        // m_flag_charge = false;
         m_flag_type = false;
         m_params_changed = true;
         }
@@ -236,6 +242,12 @@ class PYBIND11_EXPORT CellList : public Compute
     Scalar getNominalWidth() const
         {
         return m_nominal_width;
+        }
+
+    //! Get the kernel scaling factor
+    Scalar getKernelFactor() const
+        {
+        return m_kappa;
         }
 
     //! Get the dimensions of the cell list
@@ -318,11 +330,11 @@ class PYBIND11_EXPORT CellList : public Compute
         return m_tdb;
         }
 
-    //! Get the cell list containing orientation
-    const GlobalArray<Scalar4>& getOrientationArray() const
-        {
-        return m_orientation;
-        }
+    // //! Get the cell list containing orientation
+    // const GlobalArray<Scalar4>& getOrientationArray() const
+    //     {
+    //     return m_orientation;
+    //     }
 
     //! Get the cell list containing index
     const GlobalArray<unsigned int>& getIndexArray() const
@@ -363,9 +375,9 @@ class PYBIND11_EXPORT CellList : public Compute
     unsigned int m_radius;      //!< Radius of adjacency bins to list
     bool m_compute_xyzf;        //!< true if the xyzf list should be computed
     bool m_compute_tdb;         //!< true if the tdb list should be computed
-    bool m_compute_orientation; //!< true if the orientation list should be computed
+    // bool m_compute_orientation; //!< true if the orientation list should be computed
     bool m_compute_idx;         //!< true if the idx list should be computed
-    bool m_flag_charge;      //!< true if the flag should be set to the charge, it will be index (or
+    // bool m_flag_charge;      //!< true if the flag should be set to the charge, it will be index (or
                              //!< type) otherwise
     bool m_flag_type;        //!< true if the flag should be set to type, it will be index otherwise
     bool m_params_changed;   //!< Set to true when parameters are changed
@@ -381,6 +393,7 @@ class PYBIND11_EXPORT CellList : public Compute
     unsigned int m_Nmax;         //!< Numer of spaces reserved for particles in each cell
     Scalar3 m_actual_width;      //!< Actual width of a cell in each direction
     Scalar3 m_ghost_width;       //!< Width of ghost layer sized for (on one side only)
+    Scalar m_kappa;              //!< Kernel scaling factor kappa
 
     // values computed by compute()
     GlobalArray<unsigned int> m_cell_size; //!< Number of members in each cell

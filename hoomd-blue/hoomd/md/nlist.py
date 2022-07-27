@@ -62,7 +62,7 @@ import hoomd.device
 from hoomd.data.parameterdicts import ParameterDict
 from hoomd.data.typeconverter import OnlyFrom, OnlyTypes
 from hoomd.logging import log
-from hoomd.mesh import Mesh
+#from hoomd.mesh import Mesh
 from hoomd.md import _md
 from hoomd.operation import _HOOMDBaseObject
 

@@ -70,11 +70,11 @@ from hoomd.version_config import (
     cuda_devrt_library,
     git_branch,
     git_sha1,
-    hpmc_built,
-    llvm_enabled,
-    md_built,
-    metal_built,
-    mpcd_built,
+    # hpmc_built,
+    # llvm_enabled,
+    # md_built,
+    # metal_built,
+    # mpcd_built,
 )
 
 version = _hoomd.BuildInfo.getVersion()

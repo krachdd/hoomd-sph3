@@ -34,22 +34,30 @@ ForceCompute::ForceCompute(std::shared_ptr<SystemDefinition> sysdef)
     // allocate data on the host
     unsigned int max_num_particles = m_pdata->getMaxN();
     GlobalArray<Scalar4> force(max_num_particles, m_exec_conf);
-    GlobalArray<Scalar> virial(max_num_particles, 6, m_exec_conf);
-    GlobalArray<Scalar4> torque(max_num_particles, m_exec_conf);
+    GlobalArray<Scalar4> ratedpe(max_num_particles, m_exec_conf);
+    // GlobalArray<Scalar> virial(max_num_particles, 6, m_exec_conf);
+    // GlobalArray<Scalar4> torque(max_num_particles, m_exec_conf);
     m_force.swap(force);
     TAG_ALLOCATION(m_force);
-    m_virial.swap(virial);
-    TAG_ALLOCATION(m_virial);
-    m_torque.swap(torque);
-    TAG_ALLOCATION(m_torque);
+    m_ratedpe.swap(ratedpe);
+    TAG_ALLOCATION(m_ratedpe);
+
+    // m_virial.swap(virial);
+    // TAG_ALLOCATION(m_virial);
+    // m_torque.swap(torque);
+    // TAG_ALLOCATION(m_torque);
+
+
 
         {
         ArrayHandle<Scalar4> h_force(m_force, access_location::host, access_mode::overwrite);
-        ArrayHandle<Scalar4> h_torque(m_torque, access_location::host, access_mode::overwrite);
-        ArrayHandle<Scalar> h_virial(m_virial, access_location::host, access_mode::overwrite);
+        ArrayHandle<Scalar4> h_ratedpe(m_ratedpe, access_location::host, access_mode::overwrite);
+        // ArrayHandle<Scalar4> h_torque(m_torque, access_location::host, access_mode::overwrite);
+        // ArrayHandle<Scalar> h_virial(m_virial, access_location::host, access_mode::overwrite);
         memset(h_force.data, 0, sizeof(Scalar4) * m_force.getNumElements());
-        memset(h_torque.data, 0, sizeof(Scalar4) * m_torque.getNumElements());
-        memset(h_virial.data, 0, sizeof(Scalar) * m_virial.getNumElements());
+        memset(h_ratedpe.data, 0, sizeof(Scalar4) * m_ratedpe.getNumElements());
+        // memset(h_torque.data, 0, sizeof(Scalar4) * m_torque.getNumElements());
+        // memset(h_virial.data, 0, sizeof(Scalar) * m_virial.getNumElements());
         }
 
 #if defined(ENABLE_HIP) && defined(__HIP_PLATFORM_NVCC__)
@@ -64,20 +72,24 @@ ForceCompute::ForceCompute(std::shared_ptr<SystemDefinition> sysdef)
                           sizeof(Scalar4) * m_force.getNumElements(),
                           cudaMemAdviseSetAccessedBy,
                           gpu_map[idev]);
-            cudaMemAdvise(m_virial.get(),
-                          sizeof(Scalar) * m_virial.getNumElements(),
+            cudaMemAdvise(m_ratedpe.get(),
+                          sizeof(Scalar4) * m_ratedpe.getNumElements(),
                           cudaMemAdviseSetAccessedBy,
                           gpu_map[idev]);
-            cudaMemAdvise(m_torque.get(),
-                          sizeof(Scalar4) * m_torque.getNumElements(),
-                          cudaMemAdviseSetAccessedBy,
-                          gpu_map[idev]);
+            // cudaMemAdvise(m_virial.get(),
+            //               sizeof(Scalar) * m_virial.getNumElements(),
+            //               cudaMemAdviseSetAccessedBy,
+            //               gpu_map[idev]);
+            // cudaMemAdvise(m_torque.get(),
+            //               sizeof(Scalar4) * m_torque.getNumElements(),
+            //               cudaMemAdviseSetAccessedBy,
+            //               gpu_map[idev]);
             }
         CHECK_CUDA_ERROR();
         }
 #endif
 
-    m_virial_pitch = m_virial.getPitch();
+    // m_virial_pitch = m_virial.getPitch();
 
     // connect to the ParticleData to receive notifications when particles change order in memory
     m_pdata->getParticleSortSignal().connect<ForceCompute, &ForceCompute::setParticlesSorted>(this);
@@ -87,9 +99,9 @@ ForceCompute::ForceCompute(std::shared_ptr<SystemDefinition> sysdef)
     m_pdata->getMaxParticleNumberChangeSignal().connect<ForceCompute, &ForceCompute::reallocate>(
         this);
 
-    // reset external virial
-    for (unsigned int i = 0; i < 6; ++i)
-        m_external_virial[i] = Scalar(0.0);
+    // // reset external virial
+    // for (unsigned int i = 0; i < 6; ++i)
+    //     m_external_virial[i] = Scalar(0.0);
 
     m_external_energy = Scalar(0.0);
 
@@ -105,20 +117,23 @@ ForceCompute::ForceCompute(std::shared_ptr<SystemDefinition> sysdef)
 void ForceCompute::reallocate()
     {
     m_force.resize(m_pdata->getMaxN());
-    m_virial.resize(m_pdata->getMaxN(), 6);
-    m_torque.resize(m_pdata->getMaxN());
+    m_ratedpe.resize(m_pdata->getMaxN());
+    // m_virial.resize(m_pdata->getMaxN(), 6);
+    // m_torque.resize(m_pdata->getMaxN());
 
         {
         ArrayHandle<Scalar4> h_force(m_force, access_location::host, access_mode::overwrite);
-        ArrayHandle<Scalar4> h_torque(m_torque, access_location::host, access_mode::overwrite);
-        ArrayHandle<Scalar> h_virial(m_virial, access_location::host, access_mode::overwrite);
+        ArrayHandle<Scalar4> h_ratedpe(m_ratedpe, access_location::host, access_mode::overwrite);
+        // ArrayHandle<Scalar4> h_torque(m_torque, access_location::host, access_mode::overwrite);
+        // ArrayHandle<Scalar> h_virial(m_virial, access_location::host, access_mode::overwrite);
         memset(h_force.data, 0, sizeof(Scalar4) * m_force.getNumElements());
-        memset(h_torque.data, 0, sizeof(Scalar4) * m_torque.getNumElements());
-        memset(h_virial.data, 0, sizeof(Scalar) * m_virial.getNumElements());
+        memset(h_ratedpe.data, 0, sizeof(Scalar4) * m_ratedpe.getNumElements());
+        // memset(h_torque.data, 0, sizeof(Scalar4) * m_torque.getNumElements());
+        // memset(h_virial.data, 0, sizeof(Scalar) * m_virial.getNumElements());
         }
 
     // the pitch of the virial array may have changed
-    m_virial_pitch = m_virial.getPitch();
+    // m_virial_pitch = m_virial.getPitch();
 
     // update memory hints
     updateGPUAdvice();
@@ -147,26 +162,33 @@ void ForceCompute::updateGPUAdvice()
                           sizeof(Scalar4) * nelem,
                           cudaMemAdviseSetPreferredLocation,
                           gpu_map[idev]);
-            for (unsigned int i = 0; i < 6; ++i)
-                cudaMemAdvise(m_virial.get() + i * m_virial.getPitch() + range.first,
-                              sizeof(Scalar) * nelem,
-                              cudaMemAdviseSetPreferredLocation,
-                              gpu_map[idev]);
-            cudaMemAdvise(m_torque.get() + range.first,
+            cudaMemAdvise(m_ratedpe.get() + range.first,
                           sizeof(Scalar4) * nelem,
                           cudaMemAdviseSetPreferredLocation,
                           gpu_map[idev]);
+            // for (unsigned int i = 0; i < 6; ++i)
+            //     cudaMemAdvise(m_virial.get() + i * m_virial.getPitch() + range.first,
+            //                   sizeof(Scalar) * nelem,
+            //                   cudaMemAdviseSetPreferredLocation,
+            //                   gpu_map[idev]);
+            // cudaMemAdvise(m_torque.get() + range.first,
+            //               sizeof(Scalar4) * nelem,
+            //               cudaMemAdviseSetPreferredLocation,
+            //               gpu_map[idev]);
 
             cudaMemPrefetchAsync(m_force.get() + range.first,
                                  sizeof(Scalar4) * nelem,
                                  gpu_map[idev]);
-            for (unsigned int i = 0; i < 6; ++i)
-                cudaMemPrefetchAsync(m_virial.get() + i * m_virial.getPitch() + range.first,
-                                     sizeof(Scalar) * nelem,
-                                     gpu_map[idev]);
-            cudaMemPrefetchAsync(m_torque.get() + range.first,
+            cudaMemPrefetchAsync(m_ratedpe.get() + range.first,
                                  sizeof(Scalar4) * nelem,
                                  gpu_map[idev]);
+            // for (unsigned int i = 0; i < 6; ++i)
+            //     cudaMemPrefetchAsync(m_virial.get() + i * m_virial.getPitch() + range.first,
+            //                          sizeof(Scalar) * nelem,
+            //                          gpu_map[idev]);
+            // cudaMemPrefetchAsync(m_torque.get() + range.first,
+            //                      sizeof(Scalar4) * nelem,
+            //                      gpu_map[idev]);
             }
         CHECK_CUDA_ERROR();
 
@@ -177,14 +199,18 @@ void ForceCompute::updateGPUAdvice()
                           sizeof(Scalar4) * m_force.getNumElements(),
                           cudaMemAdviseSetAccessedBy,
                           gpu_map[idev]);
-            cudaMemAdvise(m_virial.get(),
-                          sizeof(Scalar) * m_virial.getNumElements(),
+            cudaMemAdvise(m_ratedpe.get(),
+                          sizeof(Scalar4) * m_force.getNumElements(),
                           cudaMemAdviseSetAccessedBy,
                           gpu_map[idev]);
-            cudaMemAdvise(m_torque.get(),
-                          sizeof(Scalar4) * m_torque.getNumElements(),
-                          cudaMemAdviseSetAccessedBy,
-                          gpu_map[idev]);
+            // cudaMemAdvise(m_virial.get(),
+            //               sizeof(Scalar) * m_virial.getNumElements(),
+            //               cudaMemAdviseSetAccessedBy,
+            //               gpu_map[idev]);
+            // cudaMemAdvise(m_torque.get(),
+            //               sizeof(Scalar4) * m_torque.getNumElements(),
+            //               cudaMemAdviseSetAccessedBy,
+            //               gpu_map[idev]);
             }
         CHECK_CUDA_ERROR();
         }
@@ -290,34 +316,34 @@ vec3<double> ForceCompute::calcForceGroup(std::shared_ptr<ParticleGroup> group)
 /*! Sums the virial contributions of a particle group calculated by the last call to compute() and
  * returns it.
  */
-std::vector<Scalar> ForceCompute::calcVirialGroup(std::shared_ptr<ParticleGroup> group)
-    {
-    const unsigned int group_size = group->getNumMembers();
-    const ArrayHandle<Scalar> h_virial(m_virial, access_location::host, access_mode::read);
+// std::vector<Scalar> ForceCompute::calcVirialGroup(std::shared_ptr<ParticleGroup> group)
+//     {
+//     const unsigned int group_size = group->getNumMembers();
+//     const ArrayHandle<Scalar> h_virial(m_virial, access_location::host, access_mode::read);
 
-    std::vector<Scalar> total_virial(6, 0.);
+//     std::vector<Scalar> total_virial(6, 0.);
 
-    for (unsigned int group_idx = 0; group_idx < group_size; group_idx++)
-        {
-        const unsigned int j = group->getMemberIndex(group_idx);
+//     for (unsigned int group_idx = 0; group_idx < group_size; group_idx++)
+//         {
+//         const unsigned int j = group->getMemberIndex(group_idx);
 
-        for (int i = 0; i < 6; i++)
-            total_virial[i] += h_virial.data[m_virial_pitch * i + j];
-        }
-#ifdef ENABLE_MPI
-    if (m_sysdef->isDomainDecomposed())
-        {
-        // reduce potential energy on all processors
-        MPI_Allreduce(MPI_IN_PLACE,
-                      total_virial.data(),
-                      6,
-                      MPI_HOOMD_SCALAR,
-                      MPI_SUM,
-                      m_exec_conf->getMPICommunicator());
-        }
-#endif
-    return total_virial;
-    }
+//         for (int i = 0; i < 6; i++)
+//             total_virial[i] += h_virial.data[m_virial_pitch * i + j];
+//         }
+// #ifdef ENABLE_MPI
+//     if (m_sysdef->isDomainDecomposed())
+//         {
+//         // reduce potential energy on all processors
+//         MPI_Allreduce(MPI_IN_PLACE,
+//                       total_virial.data(),
+//                       6,
+//                       MPI_HOOMD_SCALAR,
+//                       MPI_SUM,
+//                       m_exec_conf->getMPICommunicator());
+//         }
+// #endif
+//     return total_virial;
+//     }
 
 pybind11::object ForceCompute::getEnergiesPython()
     {
@@ -401,7 +427,7 @@ pybind11::object ForceCompute::getForcesPython()
         }
     }
 
-pybind11::object ForceCompute::getTorquesPython()
+pybind11::object ForceCompute::getRateDPEsPython()
     {
     bool root = true;
 #ifdef ENABLE_MPI
@@ -420,23 +446,23 @@ pybind11::object ForceCompute::getTorquesPython()
         dims[0] = 0;
         dims[1] = 0;
         }
-    std::vector<vec3<double>> torque(dims[0]);
+    std::vector<vec3<double>> ratedpe(dims[0]);
 
     // This is slow: TODO implement a proper gather operation
     for (unsigned int i = 0; i < m_pdata->getNGlobal(); i++)
         {
-        Scalar4 f = getTorque(i);
+        Scalar3 f = getRateDPE(i);
         if (root)
             {
-            torque[i].x = f.x;
-            torque[i].y = f.y;
-            torque[i].z = f.z;
+            ratedpe[i].x = f.x;
+            ratedpe[i].y = f.y;
+            ratedpe[i].z = f.z;
             }
         }
 
     if (root)
         {
-        return pybind11::array(dims, (double*)torque.data());
+        return pybind11::array(dims, (double*)ratedpe.data());
         }
     else
         {
@@ -444,62 +470,105 @@ pybind11::object ForceCompute::getTorquesPython()
         }
     }
 
-pybind11::object ForceCompute::getVirialsPython()
-    {
-    if (!m_computed_flags[pdata_flag::pressure_tensor])
-        {
-        return pybind11::none();
-        }
+// pybind11::object ForceCompute::getTorquesPython()
+//     {
+//     bool root = true;
+// #ifdef ENABLE_MPI
+//     // if we are not the root processor, return None
+//     root = m_exec_conf->isRoot();
+// #endif
 
-    bool root = true;
-#ifdef ENABLE_MPI
-    // if we are not the root processor, return None
-    root = m_exec_conf->isRoot();
-#endif
+//     std::vector<size_t> dims(2);
+//     if (root)
+//         {
+//         dims[0] = m_pdata->getNGlobal();
+//         dims[1] = 3;
+//         }
+//     else
+//         {
+//         dims[0] = 0;
+//         dims[1] = 0;
+//         }
+//     std::vector<vec3<double>> torque(dims[0]);
 
-    std::vector<size_t> dims(2);
-    if (root)
-        {
-        dims[0] = m_pdata->getNGlobal();
-        dims[1] = 6;
-        }
-    else
-        {
-        dims[0] = 0;
-        dims[1] = 0;
-        }
-    std::vector<double> virial(dims[0] * dims[1]);
+//     // This is slow: TODO implement a proper gather operation
+//     for (unsigned int i = 0; i < m_pdata->getNGlobal(); i++)
+//         {
+//         Scalar4 f = getTorque(i);
+//         if (root)
+//             {
+//             torque[i].x = f.x;
+//             torque[i].y = f.y;
+//             torque[i].z = f.z;
+//             }
+//         }
 
-    // This is slow: TODO implement a proper gather operation
-    for (unsigned int i = 0; i < m_pdata->getNGlobal(); i++)
-        {
-        double v0 = getVirial(i, 0);
-        double v1 = getVirial(i, 1);
-        double v2 = getVirial(i, 2);
-        double v3 = getVirial(i, 3);
-        double v4 = getVirial(i, 4);
-        double v5 = getVirial(i, 5);
+//     if (root)
+//         {
+//         return pybind11::array(dims, (double*)torque.data());
+//         }
+//     else
+//         {
+//         return pybind11::none();
+//         }
+//     }
 
-        if (root)
-            {
-            virial[i * 6 + 0] = v0;
-            virial[i * 6 + 1] = v1;
-            virial[i * 6 + 2] = v2;
-            virial[i * 6 + 3] = v3;
-            virial[i * 6 + 4] = v4;
-            virial[i * 6 + 5] = v5;
-            }
-        }
+// pybind11::object ForceCompute::getVirialsPython()
+//     {
+//     if (!m_computed_flags[pdata_flag::pressure_tensor])
+//         {
+//         return pybind11::none();
+//         }
 
-    if (root)
-        {
-        return pybind11::array(dims, (double*)virial.data());
-        }
-    else
-        {
-        return pybind11::none();
-        }
-    }
+//     bool root = true;
+// #ifdef ENABLE_MPI
+//     // if we are not the root processor, return None
+//     root = m_exec_conf->isRoot();
+// #endif
+
+//     std::vector<size_t> dims(2);
+//     if (root)
+//         {
+//         dims[0] = m_pdata->getNGlobal();
+//         dims[1] = 6;
+//         }
+//     else
+//         {
+//         dims[0] = 0;
+//         dims[1] = 0;
+//         }
+//     std::vector<double> virial(dims[0] * dims[1]);
+
+//     // This is slow: TODO implement a proper gather operation
+//     for (unsigned int i = 0; i < m_pdata->getNGlobal(); i++)
+//         {
+//         double v0 = getVirial(i, 0);
+//         double v1 = getVirial(i, 1);
+//         double v2 = getVirial(i, 2);
+//         double v3 = getVirial(i, 3);
+//         double v4 = getVirial(i, 4);
+//         double v5 = getVirial(i, 5);
+
+//         if (root)
+//             {
+//             virial[i * 6 + 0] = v0;
+//             virial[i * 6 + 1] = v1;
+//             virial[i * 6 + 2] = v2;
+//             virial[i * 6 + 3] = v3;
+//             virial[i * 6 + 4] = v4;
+//             virial[i * 6 + 5] = v5;
+//             }
+//         }
+
+//     if (root)
+//         {
+//         return pybind11::array(dims, (double*)virial.data());
+//         }
+//     else
+//         {
+//         return pybind11::none();
+//         }
+//     }
 
 /*! Performs the force computation.
     \param timestep Current Timestep
@@ -560,29 +629,29 @@ double ForceCompute::benchmark(unsigned int num_iters)
 /*! \param tag Global particle tag
     \returns Torque of particle referenced by tag
  */
-Scalar4 ForceCompute::getTorque(unsigned int tag)
-    {
-    unsigned int i = m_pdata->getRTag(tag);
-    bool found = (i < m_pdata->getN());
-    Scalar4 result = make_scalar4(0.0, 0.0, 0.0, 0.0);
-    if (found)
-        {
-        ArrayHandle<Scalar4> h_torque(m_torque, access_location::host, access_mode::read);
-        result = h_torque.data[i];
-        }
-#ifdef ENABLE_MPI
-    if (m_pdata->getDomainDecomposition())
-        {
-        unsigned int owner_rank = m_pdata->getOwnerRank(tag);
-        MPI_Bcast(&result,
-                  sizeof(Scalar4),
-                  MPI_BYTE,
-                  owner_rank,
-                  m_exec_conf->getMPICommunicator());
-        }
-#endif
-    return result;
-    }
+// Scalar4 ForceCompute::getTorque(unsigned int tag)
+//     {
+//     unsigned int i = m_pdata->getRTag(tag);
+//     bool found = (i < m_pdata->getN());
+//     Scalar4 result = make_scalar4(0.0, 0.0, 0.0, 0.0);
+//     if (found)
+//         {
+//         ArrayHandle<Scalar4> h_torque(m_torque, access_location::host, access_mode::read);
+//         result = h_torque.data[i];
+//         }
+// #ifdef ENABLE_MPI
+//     if (m_pdata->getDomainDecomposition())
+//         {
+//         unsigned int owner_rank = m_pdata->getOwnerRank(tag);
+//         MPI_Bcast(&result,
+//                   sizeof(Scalar4),
+//                   MPI_BYTE,
+//                   owner_rank,
+//                   m_exec_conf->getMPICommunicator());
+//         }
+// #endif
+//     return result;
+//     }
 
 /*! \param tag Global particle tag
     \returns Force of particle referenced by tag
@@ -612,28 +681,55 @@ Scalar3 ForceCompute::getForce(unsigned int tag)
     }
 
 /*! \param tag Global particle tag
-    \param component Virial component (0=xx, 1=xy, 2=xz, 3=yy, 4=yz, 5=zz)
-    \returns Virial of particle referenced by tag
+    \returns RateDPE of particle referenced by tag
  */
-Scalar ForceCompute::getVirial(unsigned int tag, unsigned int component)
+Scalar3 ForceCompute::getRateDPE(unsigned int tag)
     {
     unsigned int i = m_pdata->getRTag(tag);
     bool found = (i < m_pdata->getN());
-    Scalar result = Scalar(0.0);
+    Scalar3 result = make_scalar3(0.0, 0.0, 0.0);
     if (found)
         {
-        ArrayHandle<Scalar> h_virial(m_virial, access_location::host, access_mode::read);
-        result = h_virial.data[m_virial_pitch * component + i];
+        ArrayHandle<Scalar4> h_ratedpe(m_ratedpe, access_location::host, access_mode::read);
+        result = make_scalar3(h_ratedpe.data[i].x, h_ratedpe.data[i].y, h_ratedpe.data[i].z);
         }
 #ifdef ENABLE_MPI
     if (m_pdata->getDomainDecomposition())
         {
         unsigned int owner_rank = m_pdata->getOwnerRank(tag);
-        MPI_Bcast(&result, sizeof(Scalar), MPI_BYTE, owner_rank, m_exec_conf->getMPICommunicator());
+        MPI_Bcast(&result,
+                  sizeof(Scalar3),
+                  MPI_BYTE,
+                  owner_rank,
+                  m_exec_conf->getMPICommunicator());
         }
 #endif
     return result;
     }
+
+/*! \param tag Global particle tag
+    \param component Virial component (0=xx, 1=xy, 2=xz, 3=yy, 4=yz, 5=zz)
+    \returns Virial of particle referenced by tag
+ */
+// Scalar ForceCompute::getVirial(unsigned int tag, unsigned int component)
+//     {
+//     unsigned int i = m_pdata->getRTag(tag);
+//     bool found = (i < m_pdata->getN());
+//     Scalar result = Scalar(0.0);
+//     if (found)
+//         {
+//         ArrayHandle<Scalar> h_virial(m_virial, access_location::host, access_mode::read);
+//         result = h_virial.data[m_virial_pitch * component + i];
+//         }
+// #ifdef ENABLE_MPI
+//     if (m_pdata->getDomainDecomposition())
+//         {
+//         unsigned int owner_rank = m_pdata->getOwnerRank(tag);
+//         MPI_Bcast(&result, sizeof(Scalar), MPI_BYTE, owner_rank, m_exec_conf->getMPICommunicator());
+//         }
+// #endif
+//     return result;
+//     }
 
 /*! \param tag Global particle tag
     \returns Energy of particle referenced by tag
@@ -665,16 +761,18 @@ void export_ForceCompute(pybind11::module& m)
     pybind11::class_<ForceCompute, Compute, std::shared_ptr<ForceCompute>>(m, "ForceCompute")
         .def(pybind11::init<std::shared_ptr<SystemDefinition>>())
         .def("getForce", &ForceCompute::getForce)
-        .def("getTorque", &ForceCompute::getTorque)
-        .def("getVirial", &ForceCompute::getVirial)
+        .def("getRateDPE", &ForceCompute::getRateDPE)
+        // .def("getTorque", &ForceCompute::getTorque)
+        // .def("getVirial", &ForceCompute::getVirial)
         .def("getEnergy", &ForceCompute::getEnergy)
         .def("getExternalEnergy", &ForceCompute::getExternalEnergy)
-        .def("getExternalVirial", &ForceCompute::getExternalVirial)
+        // .def("getExternalVirial", &ForceCompute::getExternalVirial)
         .def("calcEnergySum", &ForceCompute::calcEnergySum)
         .def("getEnergies", &ForceCompute::getEnergiesPython)
         .def("getForces", &ForceCompute::getForcesPython)
-        .def("getTorques", &ForceCompute::getTorquesPython)
-        .def("getVirials", &ForceCompute::getVirialsPython);
+        .def("getRateDPEs", &ForceCompute::getRateDPEsPython);
+        // .def("getTorques", &ForceCompute::getTorquesPython)
+        // .def("getVirials", &ForceCompute::getVirialsPython);
     }
     } // end namespace detail
 

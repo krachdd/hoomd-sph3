@@ -18,8 +18,9 @@ namespace hoomd
  */
 CellList::CellList(std::shared_ptr<SystemDefinition> sysdef)
     : Compute(sysdef), m_nominal_width(Scalar(1.0)), m_radius(1), m_compute_xyzf(true),
-      m_compute_tdb(false), m_compute_orientation(false), m_compute_idx(false),
-      m_flag_charge(false), m_flag_type(false), m_sort_cell_list(false), m_compute_adj_list(true)
+      m_compute_tdb(false), 
+      // m_compute_orientation(false), m_compute_idx(false), m_flag_charge(false), 
+      m_kappa(3), m_flag_type(false), m_sort_cell_list(false), m_compute_adj_list(true)
     {
     m_exec_conf->msg->notice(5) << "Constructing CellList" << endl;
 
@@ -345,18 +346,18 @@ void CellList::initializeMemory()
         m_tdb.swap(tdb);
         }
 
-    if (m_compute_orientation)
-        {
-        GlobalArray<Scalar4> orientation(m_cell_list_indexer.getNumElements(), m_exec_conf);
-        m_orientation.swap(orientation);
-        TAG_ALLOCATION(m_orientation);
-        }
-    else
-        {
-        // array is no longer needed, discard it
-        GlobalArray<Scalar4> orientation;
-        m_orientation.swap(orientation);
-        }
+    // if (m_compute_orientation)
+    //     {
+    //     GlobalArray<Scalar4> orientation(m_cell_list_indexer.getNumElements(), m_exec_conf);
+    //     m_orientation.swap(orientation);
+    //     TAG_ALLOCATION(m_orientation);
+    //     }
+    // else
+    //     {
+    //     // array is no longer needed, discard it
+    //     GlobalArray<Scalar4> orientation;
+    //     m_orientation.swap(orientation);
+    //     }
 
     if (m_compute_idx || m_sort_cell_list)
         {
@@ -438,16 +439,20 @@ void CellList::computeCellList()
     {
     // acquire the particle data
     ArrayHandle<Scalar4> h_pos(m_pdata->getPositions(), access_location::host, access_mode::read);
-    ArrayHandle<Scalar4> h_orientation(m_pdata->getOrientationArray(),
-                                       access_location::host,
-                                       access_mode::read);
-    ArrayHandle<Scalar> h_charge(m_pdata->getCharges(), access_location::host, access_mode::read);
+    // ArrayHandle<Scalar4> h_orientation(m_pdata->getOrientationArray(),
+    //                                    access_location::host,
+    //                                    access_mode::read);
+    // ArrayHandle<Scalar> h_charge(m_pdata->getCharges(), access_location::host, access_mode::read);
     ArrayHandle<unsigned int> h_body(m_pdata->getBodies(),
                                      access_location::host,
                                      access_mode::read);
-    ArrayHandle<Scalar> h_diameter(m_pdata->getDiameters(),
+    // ArrayHandle<Scalar> h_diameter(m_pdata->getDiameters(),
+    //                                access_location::host,
+    //                                access_mode::read);
+    ArrayHandle<Scalar> h_slength(m_pdata->getSlengths(),
                                    access_location::host,
                                    access_mode::read);
+
     const BoxDim& box = m_pdata->getBox();
 
     // access the cell list data arrays
@@ -455,9 +460,9 @@ void CellList::computeCellList()
                                           access_location::host,
                                           access_mode::overwrite);
     ArrayHandle<Scalar4> h_xyzf(m_xyzf, access_location::host, access_mode::overwrite);
-    ArrayHandle<Scalar4> h_cell_orientation(m_orientation,
-                                            access_location::host,
-                                            access_mode::overwrite);
+    // ArrayHandle<Scalar4> h_cell_orientation(m_orientation,
+    //                                         access_location::host,
+    //                                         access_mode::overwrite);
     ArrayHandle<unsigned int> h_cell_idx(m_idx, access_location::host, access_mode::overwrite);
     ArrayHandle<Scalar4> h_tdb(m_tdb, access_location::host, access_mode::overwrite);
     uint3 conditions = make_uint3(0, 0, 0);
@@ -530,9 +535,9 @@ void CellList::computeCellList()
 
         // setup the flag value to store
         Scalar flag;
-        if (m_flag_charge)
-            flag = h_charge.data[n];
-        else if (m_flag_type)
+        // if (m_flag_charge)
+        //     flag = h_charge.data[n];
+        if (m_flag_type)
             flag = h_pos.data[n].w;
         else
             flag = __int_as_scalar(n);
@@ -548,18 +553,26 @@ void CellList::computeCellList()
                     = make_scalar4(h_pos.data[n].x, h_pos.data[n].y, h_pos.data[n].z, flag);
                 }
 
+            // if (m_compute_tdb)
+            //     {
+            //     h_tdb.data[cli(offset, bin)] = make_scalar4(h_pos.data[n].w,
+            //                                                 h_diameter.data[n],
+            //                                                 __int_as_scalar(h_body.data[n]),
+            //                                                 Scalar(0.0));
+            //     }
+
             if (m_compute_tdb)
                 {
                 h_tdb.data[cli(offset, bin)] = make_scalar4(h_pos.data[n].w,
-                                                            h_diameter.data[n],
+                                                            m_kappa*Scalar(2)*h_slength.data[n],
                                                             __int_as_scalar(h_body.data[n]),
                                                             Scalar(0.0));
                 }
 
-            if (m_compute_orientation)
-                {
-                h_cell_orientation.data[cli(offset, bin)] = h_orientation.data[n];
-                }
+            // if (m_compute_orientation)
+            //     {
+            //     h_cell_orientation.data[cli(offset, bin)] = h_orientation.data[n];
+            //     }
 
             if (m_compute_idx)
                 {
@@ -664,8 +677,9 @@ void export_CellList(pybind11::module& m)
         .def(pybind11::init<std::shared_ptr<SystemDefinition>>())
         .def("setNominalWidth", &CellList::setNominalWidth)
         .def("setRadius", &CellList::setRadius)
+        .def("setKernelFactor", &CellList::setKernelFactor)
         .def("setComputeTDB", &CellList::setComputeTDB)
-        .def("setFlagCharge", &CellList::setFlagCharge)
+        // .def("setFlagCharge", &CellList::setFlagCharge)
         .def("setFlagIndex", &CellList::setFlagIndex)
         .def("setSortCellList", &CellList::setSortCellList)
         .def("getDim", &CellList::getDim, pybind11::return_value_policy::reference_internal)

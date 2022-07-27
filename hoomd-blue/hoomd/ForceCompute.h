@@ -88,7 +88,7 @@ class PYBIND11_EXPORT ForceCompute : public Compute
     vec3<double> calcForceGroup(std::shared_ptr<ParticleGroup> group);
 
     //! Sum all virial terms for a group
-    std::vector<Scalar> calcVirialGroup(std::shared_ptr<ParticleGroup> group);
+    // std::vector<Scalar> calcVirialGroup(std::shared_ptr<ParticleGroup> group);
 
     /** Get per particle energies
 
@@ -102,26 +102,35 @@ class PYBIND11_EXPORT ForceCompute : public Compute
     */
     pybind11::object getForcesPython();
 
+    /** Get per particle dpe
+
+        @returns a Numpy array with per particle dpe in increasing tag order.
+    */
+    pybind11::object getRateDPEsPython();
+
     /** Get per particle torques
 
         @returns a Numpy array with per particle torques in increasing tag order.
     */
-    pybind11::object getTorquesPython();
+    // pybind11::object getTorquesPython();
 
     /** Get per particle virials
 
         @returns a Numpy array with per particle virials in increasing tag order.
     */
-    pybind11::object getVirialsPython();
+    // pybind11::object getVirialsPython();
 
     //! Easy access to the torque on a single particle
-    Scalar4 getTorque(unsigned int tag);
+    // Scalar4 getTorque(unsigned int tag);
 
     //! Easy access to the force on a single particle
     Scalar3 getForce(unsigned int tag);
 
+    //! Easy access to the dpe on a single particle
+    Scalar3 getRateDPE(unsigned int tag);
+
     //! Easy access to the virial on a single particle
-    Scalar getVirial(unsigned int tag, unsigned int component);
+    // Scalar getVirial(unsigned int tag, unsigned int component);
 
     //! Easy access to the energy on a single particle
     Scalar getEnergy(unsigned int tag);
@@ -132,24 +141,30 @@ class PYBIND11_EXPORT ForceCompute : public Compute
         return m_force;
         }
 
-    //! Get the array of computed virials
-    const GlobalArray<Scalar>& getVirialArray() const
+    //! Get the array of computed Ratedpes
+    const GlobalArray<Scalar4>& getRateDPEArray() const
         {
-        return m_virial;
+        return m_ratedpe;
         }
 
-    //! Get the array of computed torques
-    const GlobalArray<Scalar4>& getTorqueArray() const
-        {
-        return m_torque;
-        }
+    // //! Get the array of computed virials
+    // const GlobalArray<Scalar>& getVirialArray() const
+    //     {
+    //     return m_virial;
+    //     }
 
-    //! Get the contribution to the external virial
-    virtual Scalar getExternalVirial(unsigned int dir)
-        {
-        assert(dir < 6);
-        return m_external_virial[dir];
-        }
+    // //! Get the array of computed torques
+    // const GlobalArray<Scalar4>& getTorqueArray() const
+    //     {
+    //     return m_torque;
+    //     }
+
+    // //! Get the contribution to the external virial
+    // virtual Scalar getExternalVirial(unsigned int dir)
+    //     {
+    //     assert(dir < 6);
+    //     return m_external_virial[dir];
+    //     }
 
     //! Get the contribution to the external potential energy
     virtual Scalar getExternalEnergy()
@@ -170,7 +185,13 @@ class PYBIND11_EXPORT ForceCompute : public Compute
 #endif
 
     //! Returns true if this ForceCompute requires anisotropic integration
-    virtual bool isAnisotropic()
+    // virtual bool isAnisotropic()
+    //     {
+    //     // by default, only translational degrees of freedom are integrated
+    //     return false;
+    //     }
+
+    virtual bool ComputesDPE()
         {
         // by default, only translational degrees of freedom are integrated
         return false;
@@ -213,8 +234,13 @@ class PYBIND11_EXPORT ForceCompute : public Compute
 
     Scalar m_deltaT; //!< timestep size (required for some types of non-conservative forces)
 
+
     GlobalArray<Scalar4> m_force; //!< m_force.x,m_force.y,m_force.z are the x,y,z components of the
                                   //!< force, m_force.u is the PE
+
+
+    GlobalArray<Scalar4> m_ratedpe;    //!< per-particle ratedpe
+    int m_nbytes;                  //!< stores the number of bytes of memory allocate
 
     /*! per-particle virial, a 2D array with width=number
         of particles and height=6. The elements of the (upper triangular)
@@ -222,11 +248,11 @@ class PYBIND11_EXPORT ForceCompute : public Compute
         particle \f$k\f$ are stored in the rows and are indexed in the
         order xx, xy, xz, yy, yz, zz
      */
-    GlobalArray<Scalar> m_virial;
-    size_t m_virial_pitch;         //!< The pitch of the 2D virial array
-    GlobalArray<Scalar4> m_torque; //!< per-particle torque
+    // GlobalArray<Scalar> m_virial;
+    // size_t m_virial_pitch;         //!< The pitch of the 2D virial array
+    // GlobalArray<Scalar4> m_torque; //!< per-particle torque
 
-    Scalar m_external_virial[6]; //!< Stores external contribution to virial
+    // Scalar m_external_virial[6]; //!< Stores external contribution to virial
     Scalar m_external_energy;    //!< Stores external contribution to potential energy
 
     /// Store the particle data flags used during the last computation
@@ -251,8 +277,8 @@ class PYBIND11_EXPORT LocalForceComputeData : public LocalDataAccess<Output, For
     {
     public:
     LocalForceComputeData(ForceCompute& data)
-        : LocalDataAccess<Output, ForceCompute>(data), m_force_handle(), m_torque_handle(),
-          m_virial_handle(), m_virial_pitch(data.getVirialArray().getPitch()),
+        : LocalDataAccess<Output, ForceCompute>(data), m_force_handle(),  m_ratedpe_handle(),
+        // m_torque_handle(), m_virial_handle(), m_virial_pitch(data.getVirialArray().getPitch()),
           m_buffers_writeable(data.getBuffersWriteable())
         {
         }
@@ -268,6 +294,16 @@ class PYBIND11_EXPORT LocalForceComputeData : public LocalDataAccess<Output, For
                                                          3);
         }
 
+    Output getRateDPE(GhostDataFlag flag)
+        {
+        return this->template getBuffer<Scalar4, Scalar>(m_ratedpe_handle,
+                                                         &ForceCompute::getRateDPEArray,
+                                                         flag,
+                                                         m_buffers_writeable,
+                                                         0,
+                                                         3 * sizeof(Scalar));
+        }
+
     Output getPotentialEnergy(GhostDataFlag flag)
         {
         return this->template getBuffer<Scalar4, Scalar>(m_force_handle,
@@ -278,44 +314,46 @@ class PYBIND11_EXPORT LocalForceComputeData : public LocalDataAccess<Output, For
                                                          3 * sizeof(Scalar));
         }
 
-    Output getTorque(GhostDataFlag flag)
-        {
-        return this->template getBuffer<Scalar4, Scalar>(m_torque_handle,
-                                                         &ForceCompute::getTorqueArray,
-                                                         flag,
-                                                         m_buffers_writeable,
-                                                         3);
-        }
+    // Output getTorque(GhostDataFlag flag)
+    //     {
+    //     return this->template getBuffer<Scalar4, Scalar>(m_torque_handle,
+    //                                                      &ForceCompute::getTorqueArray,
+    //                                                      flag,
+    //                                                      m_buffers_writeable,
+    //                                                      3);
+    //     }
 
-    Output getVirial(GhostDataFlag flag)
-        {
-        // we order the strides as (1, m_virial_pitch) because we need to expose
-        // the array as having shape (N, 6) even though the underlying data has
-        // shape (6, m_virial_pitch)
-        return this->template getBuffer<Scalar, Scalar>(
-            m_virial_handle,
-            &ForceCompute::getVirialArray,
-            flag,
-            m_buffers_writeable,
-            6,
-            0,
-            std::vector<ssize_t>(
-                {sizeof(Scalar), static_cast<ssize_t>(m_virial_pitch * sizeof(Scalar))}));
-        }
+    // Output getVirial(GhostDataFlag flag)
+    //     {
+    //     // we order the strides as (1, m_virial_pitch) because we need to expose
+    //     // the array as having shape (N, 6) even though the underlying data has
+    //     // shape (6, m_virial_pitch)
+    //     return this->template getBuffer<Scalar, Scalar>(
+    //         m_virial_handle,
+    //         &ForceCompute::getVirialArray,
+    //         flag,
+    //         m_buffers_writeable,
+    //         6,
+    //         0,
+    //         std::vector<ssize_t>(
+    //             {sizeof(Scalar), static_cast<ssize_t>(m_virial_pitch * sizeof(Scalar))}));
+    //     }
 
     protected:
     void clear()
         {
         m_force_handle.reset(nullptr);
-        m_torque_handle.reset(nullptr);
-        m_virial_handle.reset(nullptr);
+        m_ratedpe_handle.reset(nullptr);
+        // m_torque_handle.reset(nullptr);
+        // m_virial_handle.reset(nullptr);
         m_rtag_handle.reset(nullptr);
         }
 
     private:
     std::unique_ptr<ArrayHandle<Scalar4>> m_force_handle;
-    std::unique_ptr<ArrayHandle<Scalar4>> m_torque_handle;
-    std::unique_ptr<ArrayHandle<Scalar>> m_virial_handle;
+    std::unique_ptr<ArrayHandle<Scalar4>> m_ratedpe_handle;
+    // std::unique_ptr<ArrayHandle<Scalar4>> m_torque_handle;
+    // std::unique_ptr<ArrayHandle<Scalar>> m_virial_handle;
     std::unique_ptr<ArrayHandle<unsigned int>> m_rtag_handle;
     size_t m_virial_pitch;
     bool m_buffers_writeable;
@@ -336,8 +374,9 @@ template<class Output> void export_LocalForceComputeData(pybind11::module& m, st
         .def(pybind11::init<ForceCompute&>())
         .def("getForce", &LocalForceComputeData<Output>::getForce)
         .def("getPotentialEnergy", &LocalForceComputeData<Output>::getPotentialEnergy)
-        .def("getTorque", &LocalForceComputeData<Output>::getTorque)
-        .def("getVirial", &LocalForceComputeData<Output>::getVirial)
+        .def("getRateDPE", &LocalForceComputeData<Output>::getRateDPE)
+        // .def("getTorque", &LocalForceComputeData<Output>::getTorque)
+        // .def("getVirial", &LocalForceComputeData<Output>::getVirial)
         .def("enter", &LocalForceComputeData<Output>::enter)
         .def("exit", &LocalForceComputeData<Output>::exit);
     };

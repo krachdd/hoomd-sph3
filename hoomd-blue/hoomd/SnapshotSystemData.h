@@ -46,9 +46,9 @@ template<class Real> struct SnapshotSystemData
     SnapshotParticleData<Real> particle_data; //!< The particle data
     std::map<unsigned int, unsigned int> map; //!< Lookup particle index by tag
     BondData::Snapshot bond_data;             //!< The bond data
-    AngleData::Snapshot angle_data;           //!< The angle data
-    DihedralData::Snapshot dihedral_data;     //!< The dihedral data
-    ImproperData::Snapshot improper_data;     //!< The improper data
+    // AngleData::Snapshot angle_data;           //!< The angle data
+    // DihedralData::Snapshot dihedral_data;     //!< The dihedral data
+    // ImproperData::Snapshot improper_data;     //!< The improper data
     ConstraintData::Snapshot constraint_data; //!< The constraint data
     PairData::Snapshot pair_data;             //!< The pair data
 

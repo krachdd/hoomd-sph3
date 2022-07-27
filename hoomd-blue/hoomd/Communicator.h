@@ -15,8 +15,8 @@
 #include "GPUVector.h"
 #include "GlobalArray.h"
 #include "HOOMDMath.h"
-#include "MeshDefinition.h"
-#include "MeshGroupData.h"
+// #include "MeshDefinition.h"
+// #include "MeshGroupData.h"
 #include "ParticleData.h"
 
 #include <hoomd/extern/nano-signal-slot/nano_signal_slot.hpp>
@@ -62,16 +62,22 @@ struct comm_flag
         {
         tag,               //! Bit id in CommFlags for particle tags
         position,          //! Bit id in CommFlags for particle positions
-        charge,            //! Bit id in CommFlags for particle charge
-        diameter,          //! Bit id in CommFlags for particle diameter
+        // charge,            //! Bit id in CommFlags for particle charge
+        // diameter,          //! Bit id in CommFlags for particle diameter
         velocity,          //! Bit id in CommFlags for particle velocity
-        orientation,       //! Bit id in CommFlags for particle orientation
+        dpe,               //! Bit id in CommFlags for particle density, pressure and energy
+        auxiliary1,        //! Bit id in CommFlags for particle auxiliary 1
+        auxiliary2,        //! Bit id in CommFlags for particle auxiliary 2
+        auxiliary3,        //! Bit id in CommFlags for particle auxiliary 3
+        auxiliary4,        //! Bit id in CommFlags for particle auxiliary 4
+        // orientation,       //! Bit id in CommFlags for particle orientation
         body,              //! Bit id in CommFlags for particle body id
         image,             //! Bit id in CommFlags for particle image
         net_force,         //! Communicate net force
         reverse_net_force, //! Communicate net force on ghost particles. Added by Vyas
-        net_torque,        //! Communicate net torque
-        net_virial         //! Communicate net virial
+        net_ratedpe,       //! Communicate net_ratedpe
+        // net_torque,        //! Communicate net torque
+        // net_virial         //! Communicate net virial
         };
     };
 
@@ -380,7 +386,7 @@ class PYBIND11_EXPORT Communicator
     virtual void setAutotunerParams(bool enable, unsigned int period) {};
 
     //! Helper function to initialize adjacency arrays
-    void addMeshDefinition(std::shared_ptr<MeshDefinition> meshdef);
+    // void addMeshDefinition(std::shared_ptr<MeshDefinition> meshdef);
 
     protected:
     //! Helper class to perform the communication tasks related to bonded groups
@@ -463,7 +469,7 @@ class PYBIND11_EXPORT Communicator
 
     std::shared_ptr<SystemDefinition> m_sysdef;                //!< System definition
     std::shared_ptr<ParticleData> m_pdata;                     //!< Particle data
-    std::shared_ptr<MeshDefinition> m_meshdef;                 //!< Mesh definition
+    // std::shared_ptr<MeshDefinition> m_meshdef;                 //!< Mesh definition
     std::shared_ptr<const ExecutionConfiguration> m_exec_conf; //!< Execution configuration
     const MPI_Comm m_mpi_comm;                                 //!< MPI communicator
     std::shared_ptr<DomainDecomposition> m_decomposition;      //!< Domain decomposition information
@@ -483,18 +489,24 @@ class PYBIND11_EXPORT Communicator
     GlobalArray<unsigned int> m_end;              //!< End index for every neighbor in send buf
 
     GlobalVector<Scalar4> m_pos_copybuf;         //!< Buffer for particle positions to be copied
-    GlobalVector<Scalar> m_charge_copybuf;       //!< Buffer for particle charges to be copied
-    GlobalVector<Scalar> m_diameter_copybuf;     //!< Buffer for particle diameters to be copied
+    // GlobalVector<Scalar> m_charge_copybuf;       //!< Buffer for particle charges to be copied
+    // GlobalVector<Scalar> m_diameter_copybuf;     //!< Buffer for particle diameters to be copied
     GlobalVector<unsigned int> m_body_copybuf;   //!< Buffer for particle body ids to be copied
     GlobalVector<int3> m_image_copybuf;          //!< Buffer for particle body ids to be copied
     GlobalVector<Scalar4> m_velocity_copybuf;    //!< Buffer for particle velocities to be copied
-    GlobalVector<Scalar4> m_orientation_copybuf; //!< Buffer for particle orientation to be copied
+    GlobalVector<Scalar3> m_dpe_copybuf;         //!< Buffer for particle densities, pressure and energy to be copied
+    GlobalVector<Scalar3> m_aux1_copybuf;        //!< Buffer for particle auxiliary data 1
+    GlobalVector<Scalar3> m_aux2_copybuf;        //!< Buffer for particle auxiliary data 2
+    GlobalVector<Scalar3> m_aux3_copybuf;        //!< Buffer for particle auxiliary data 3
+    GlobalVector<Scalar3> m_aux4_copybuf;        //!< Buffer for particle auxiliary data 4
+    // GlobalVector<Scalar4> m_orientation_copybuf; //!< Buffer for particle orientation to be copied
     GlobalVector<unsigned int> m_plan_copybuf;   //!< Buffer for particle plans
     GlobalVector<unsigned int> m_tag_copybuf;    //!< Buffer for particle tags
     GlobalVector<Scalar4> m_netforce_copybuf;    //!< Buffer for net force
-    GlobalVector<Scalar4> m_nettorque_copybuf;   //!< Buffer for net torque
-    GlobalVector<Scalar> m_netvirial_copybuf;    //!< Buffer for net virial
-    GlobalVector<Scalar> m_netvirial_recvbuf;    //!< Buffer for net virial (receive)
+    GlobalVector<Scalar4> m_netratedpe_copybuf;  //!< Buffer for net ratedpe
+    // GlobalVector<Scalar4> m_nettorque_copybuf;   //!< Buffer for net torque
+    // GlobalVector<Scalar> m_netvirial_copybuf;    //!< Buffer for net virial
+    // GlobalVector<Scalar> m_netvirial_recvbuf;    //!< Buffer for net virial (receive)
 
     GlobalVector<unsigned int>
         m_copy_ghosts[6]; //!< Per-direction list of indices of particles to send as ghosts
@@ -595,26 +607,26 @@ class PYBIND11_EXPORT Communicator
         m_bonds_changed = true;
         }
 
-    /* Angles communication */
-    bool m_angles_changed; //!< True if angle information needs to be refreshed
-    void setAnglesChanged()
-        {
-        m_angles_changed = true;
-        }
+    // /* Angles communication */
+    // bool m_angles_changed; //!< True if angle information needs to be refreshed
+    // void setAnglesChanged()
+    //     {
+    //     m_angles_changed = true;
+    //     }
 
-    /* Dihedrals communication */
-    bool m_dihedrals_changed; //!< True if dihedral information needs to be refreshed
-    void setDihedralsChanged()
-        {
-        m_dihedrals_changed = true;
-        }
+    // /* Dihedrals communication */
+    // bool m_dihedrals_changed; //!< True if dihedral information needs to be refreshed
+    // void setDihedralsChanged()
+    //     {
+    //     m_dihedrals_changed = true;
+    //     }
 
-    /* Impropers communication */
-    bool m_impropers_changed; //!< True if improper information needs to be refreshed
-    void setImpropersChanged()
-        {
-        m_impropers_changed = true;
-        }
+    // /* Impropers communication */
+    // bool m_impropers_changed; //!< True if improper information needs to be refreshed
+    // void setImpropersChanged()
+    //     {
+    //     m_impropers_changed = true;
+    //     }
 
     /* Constraints communication */
     bool m_constraints_changed; //!< True if constraint information needs to be refreshed
@@ -630,17 +642,17 @@ class PYBIND11_EXPORT Communicator
         m_pairs_changed = true;
         }
 
-    bool m_meshbonds_changed; //!< True if mesh bond information needs to be refreshed
-    void setMeshbondsChanged()
-        {
-        m_meshbonds_changed = true;
-        }
+    // bool m_meshbonds_changed; //!< True if mesh bond information needs to be refreshed
+    // void setMeshbondsChanged()
+    //     {
+    //     m_meshbonds_changed = true;
+    //     }
 
-    bool m_meshtriangles_changed; //!< True if mesh triangle information needs to be refreshed
-    void setMeshtrianglesChanged()
-        {
-        m_meshtriangles_changed = true;
-        }
+    // bool m_meshtriangles_changed; //!< True if mesh triangle information needs to be refreshed
+    // void setMeshtrianglesChanged()
+    //     {
+    //     m_meshtriangles_changed = true;
+    //     }
 
     //! Remove tags of ghost particles
     virtual void removeGhostParticleTags();
@@ -685,14 +697,14 @@ class PYBIND11_EXPORT Communicator
     GroupCommunicator<BondData> m_bond_comm; //!< Communication helper for bonds
     friend class GroupCommunicator<BondData>;
 
-    GroupCommunicator<AngleData> m_angle_comm; //!< Communication helper for angles
-    friend class GroupCommunicator<AngleData>;
+    // GroupCommunicator<AngleData> m_angle_comm; //!< Communication helper for angles
+    // friend class GroupCommunicator<AngleData>;
 
-    GroupCommunicator<DihedralData> m_dihedral_comm; //!< Communication helper for dihedrals
-    friend class GroupCommunicator<DihedralData>;
+    // GroupCommunicator<DihedralData> m_dihedral_comm; //!< Communication helper for dihedrals
+    // friend class GroupCommunicator<DihedralData>;
 
-    GroupCommunicator<ImproperData> m_improper_comm; //!< Communication helper for impropers
-    friend class GroupCommunicator<ImproperData>;
+    // GroupCommunicator<ImproperData> m_improper_comm; //!< Communication helper for impropers
+    // friend class GroupCommunicator<ImproperData>;
 
     GroupCommunicator<ConstraintData> m_constraint_comm; //!< Communicator helper for constraints
     friend class GroupCommunicator<ConstraintData>;
@@ -702,13 +714,13 @@ class PYBIND11_EXPORT Communicator
     friend class GroupCommunicator<PairData>;
 
     /* Communication of mesh bonded groups */
-    GroupCommunicator<MeshBondData, true> m_meshbond_comm; //!< Communication helper for mesh bonds
-    friend class GroupCommunicator<MeshBondData, true>;
+    // GroupCommunicator<MeshBondData, true> m_meshbond_comm; //!< Communication helper for mesh bonds
+    // friend class GroupCommunicator<MeshBondData, true>;
 
-    /* Communication of mesh triangle groups */
-    GroupCommunicator<MeshTriangleData, true>
-        m_meshtriangle_comm; //!< Communication helper for mesh triangles
-    friend class GroupCommunicator<MeshTriangleData, true>;
+    //  Communication of mesh triangle groups 
+    // GroupCommunicator<MeshTriangleData, true>
+    //     m_meshtriangle_comm; //!< Communication helper for mesh triangles
+    // friend class GroupCommunicator<MeshTriangleData, true>;
 
     //! Helper function to initialize adjacency arrays
     void initializeNeighborArrays();

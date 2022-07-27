@@ -4,9 +4,10 @@
 """Implement local access classes for the CPU."""
 
 from hoomd.data.local_access import (ParticleLocalAccessBase,
-                                     BondLocalAccessBase, AngleLocalAccessBase,
-                                     DihedralLocalAccessBase,
-                                     ImproperLocalAccessBase,
+                                     BondLocalAccessBase, 
+                                     # AngleLocalAccessBase,
+                                     # DihedralLocalAccessBase,
+                                     # ImproperLocalAccessBase,
                                      ConstraintLocalAccessBase,
                                      PairLocalAccessBase, _LocalSnapshot)
 from hoomd.data.array import HOOMDArray
@@ -25,22 +26,22 @@ class BondLocalAccessCPU(BondLocalAccessBase):
     _array_cls = HOOMDArray
 
 
-class AngleLocalAccessCPU(AngleLocalAccessBase):
-    """Access angle data on the GPU."""
-    _cpp_cls = _hoomd.LocalAngleDataHost
-    _array_cls = HOOMDArray
+# class AngleLocalAccessCPU(AngleLocalAccessBase):
+#     """Access angle data on the GPU."""
+#     _cpp_cls = _hoomd.LocalAngleDataHost
+#     _array_cls = HOOMDArray
 
 
-class DihedralLocalAccessCPU(DihedralLocalAccessBase):
-    """Access dihedral data on the GPU."""
-    _cpp_cls = _hoomd.LocalDihedralDataHost
-    _array_cls = HOOMDArray
+# class DihedralLocalAccessCPU(DihedralLocalAccessBase):
+#     """Access dihedral data on the GPU."""
+#     _cpp_cls = _hoomd.LocalDihedralDataHost
+#     _array_cls = HOOMDArray
 
 
-class ImproperLocalAccessCPU(ImproperLocalAccessBase):
-    """Access improper data on the GPU."""
-    _cpp_cls = _hoomd.LocalImproperDataHost
-    _array_cls = HOOMDArray
+# class ImproperLocalAccessCPU(ImproperLocalAccessBase):
+#     """Access improper data on the GPU."""
+#     _cpp_cls = _hoomd.LocalImproperDataHost
+#     _array_cls = HOOMDArray
 
 
 class ConstraintLocalAccessCPU(ConstraintLocalAccessBase):
@@ -86,8 +87,8 @@ class LocalSnapshot(_LocalSnapshot):
         super().__init__(state)
         self._particles = ParticleLocalAccessCPU(state)
         self._bonds = BondLocalAccessCPU(state)
-        self._angles = AngleLocalAccessCPU(state)
-        self._dihedrals = DihedralLocalAccessCPU(state)
-        self._impropers = ImproperLocalAccessCPU(state)
+        # self._angles = AngleLocalAccessCPU(state)
+        # self._dihedrals = DihedralLocalAccessCPU(state)
+        # self._impropers = ImproperLocalAccessCPU(state)
         self._pairs = PairLocalAccessCPU(state)
         self._constraints = ConstraintLocalAccessCPU(state)

@@ -155,18 +155,25 @@ class ParticleLocalAccessBase(_LocalAccess):
         'velocity': 'getVelocities',
         'mass': 'getMasses',
         'acceleration': 'getAcceleration',
-        'orientation': 'getOrientation',
-        'angmom': 'getAngularMomentum',
-        'moment_inertia': 'getMomentsOfInertia',
-        'charge': 'getCharge',
-        'diameter': 'getDiameter',
+        'dpe': 'getDPEs',
+        'auxiliary1': 'getAuxiliaries1',
+        'auxiliary2': 'getAuxiliaries2',
+        'auxiliary3': 'getAuxiliaries3',
+        'auxiliary4': 'getAuxiliaries4',
+        'slength': 'getSlengths',
+        # 'orientation': 'getOrientation',
+        # 'angmom': 'getAngularMomentum',
+        # 'moment_inertia': 'getMomentsOfInertia',
+        # 'charge': 'getCharge',
+        # 'diameter': 'getDiameter',
         'image': 'getImages',
         'tag': 'getTags',
         'rtag': 'getRTags',
         'body': 'getBodies',
         'net_force': 'getNetForce',
-        'net_torque': 'getNetTorque',
-        'net_virial': 'getNetVirial',
+        'net_ratedpe': 'getNetRateDPE',
+        # 'net_torque': 'getNetTorque',
+        # 'net_virial': 'getNetVirial',
         'net_energy': 'getNetEnergy'
     }
 
@@ -223,70 +230,70 @@ class BondLocalAccessBase(_GroupLocalAccess):
     _cpp_get_data_method_name = "getBondData"
 
 
-class AngleLocalAccessBase(_GroupLocalAccess):
-    """Class for directly accessing HOOMD-blue angle data.
+# class AngleLocalAccessBase(_GroupLocalAccess):
+#     """Class for directly accessing HOOMD-blue angle data.
 
-    Attributes:
-        typeid ((N_angles) `hoomd.data.array` object of ``int``):
-            The integer type of a angle.
-        members ((N_angles, 3) `hoomd.data.array` object of ``int``):
-            The tags of particles in a angle.
-        tag ((N_angles) `hoomd.data.array` object of ``int``):
-            The angle tags. MPI domain migration reorder angles in memory.
-            The angle tag identifies each angle in the order it existed in the
-            initial configuration.
-        rtag ((N_angles_global) `hoomd.data.array` object of ``int``):
-            The angle reverse tags. For a given angle tag ``tag``, ``i =
-            angles.rtag[tag]`` is the array index holding that angle.
+#     Attributes:
+#         typeid ((N_angles) `hoomd.data.array` object of ``int``):
+#             The integer type of a angle.
+#         members ((N_angles, 3) `hoomd.data.array` object of ``int``):
+#             The tags of particles in a angle.
+#         tag ((N_angles) `hoomd.data.array` object of ``int``):
+#             The angle tags. MPI domain migration reorder angles in memory.
+#             The angle tag identifies each angle in the order it existed in the
+#             initial configuration.
+#         rtag ((N_angles_global) `hoomd.data.array` object of ``int``):
+#             The angle reverse tags. For a given angle tag ``tag``, ``i =
+#             angles.rtag[tag]`` is the array index holding that angle.
 
-    See Also:
-        `hoomd.State`
-    """
-    _cpp_get_data_method_name = "getAngleData"
-
-
-class DihedralLocalAccessBase(_GroupLocalAccess):
-    """Class for directly accessing HOOMD-blue dihedral data.
-
-    Attributes:
-        typeid ((N_dihedrals) `hoomd.data.array` object of ``int``): The integer
-            type of a dihedral.
-        members ((N_dihedrals, 4) `hoomd.data.array` object of ``int``): the
-            tags of particles in a dihedral.
-        tag ((N_dihedrals) `hoomd.data.array` object of ``int``):
-            The dihedral tags. MPI domain migration reorder dihedrals in
-            memory. The dihedral tag identifies each dihedral in the order it
-            existed in the initial configuration.
-        rtag ((N_dihedrals_global) `hoomd.data.array` object of ``int``):
-            The dihedral reverse tags. For a given dihedral tag ``tag``, ``i
-            = dihedrals.rtag[tag]`` is the array index holding that dihedral.
-
-    See Also:
-        `hoomd.State`
-    """
-    _cpp_get_data_method_name = "getDihedralData"
+#     See Also:
+#         `hoomd.State`
+#     """
+#     _cpp_get_data_method_name = "getAngleData"
 
 
-class ImproperLocalAccessBase(_GroupLocalAccess):
-    """Class for directly accessing HOOMD-blue improper data.
+# class DihedralLocalAccessBase(_GroupLocalAccess):
+#     """Class for directly accessing HOOMD-blue dihedral data.
 
-    Attributes:
-        typeid ((N_impropers) `hoomd.data.array` object of ``int``):
-            The integer type of a improper.
-        members ((N_impropers, 3) `hoomd.data.array` object of ``int``):
-            The tags of particles in a improper.
-        tag ((N_impropers) `hoomd.data.array` object of ``int``):
-            The improper tags. MPI domain migration reorder impropers in
-            memory. The improper tag identifies each improper in the order it
-            existed in the initial configuration.
-        rtag ((N_impropers_global) `hoomd.data.array` object of ``int``):
-            The improper reverse tags. For a given improper tag ``tag``, ``i
-            = impropers.rtag[tag]`` is the array index holding that improper.
+#     Attributes:
+#         typeid ((N_dihedrals) `hoomd.data.array` object of ``int``): The integer
+#             type of a dihedral.
+#         members ((N_dihedrals, 4) `hoomd.data.array` object of ``int``): the
+#             tags of particles in a dihedral.
+#         tag ((N_dihedrals) `hoomd.data.array` object of ``int``):
+#             The dihedral tags. MPI domain migration reorder dihedrals in
+#             memory. The dihedral tag identifies each dihedral in the order it
+#             existed in the initial configuration.
+#         rtag ((N_dihedrals_global) `hoomd.data.array` object of ``int``):
+#             The dihedral reverse tags. For a given dihedral tag ``tag``, ``i
+#             = dihedrals.rtag[tag]`` is the array index holding that dihedral.
 
-    See Also:
-        `hoomd.State`
-    """
-    _cpp_get_data_method_name = "getImproperData"
+#     See Also:
+#         `hoomd.State`
+#     """
+#     _cpp_get_data_method_name = "getDihedralData"
+
+
+# class ImproperLocalAccessBase(_GroupLocalAccess):
+#     """Class for directly accessing HOOMD-blue improper data.
+
+#     Attributes:
+#         typeid ((N_impropers) `hoomd.data.array` object of ``int``):
+#             The integer type of a improper.
+#         members ((N_impropers, 3) `hoomd.data.array` object of ``int``):
+#             The tags of particles in a improper.
+#         tag ((N_impropers) `hoomd.data.array` object of ``int``):
+#             The improper tags. MPI domain migration reorder impropers in
+#             memory. The improper tag identifies each improper in the order it
+#             existed in the initial configuration.
+#         rtag ((N_impropers_global) `hoomd.data.array` object of ``int``):
+#             The improper reverse tags. For a given improper tag ``tag``, ``i
+#             = impropers.rtag[tag]`` is the array index holding that improper.
+
+#     See Also:
+#         `hoomd.State`
+#     """
+#     _cpp_get_data_method_name = "getImproperData"
 
 
 class ConstraintLocalAccessBase(_GroupLocalAccess):
@@ -368,20 +375,20 @@ class _LocalSnapshot:
         """hoomd.data.BondLocalAccessBase: Local bond data."""
         return self._bonds
 
-    @property
-    def angles(self):
-        """hoomd.data.AngleLocalAccessBase: Local angle data."""
-        return self._angles
+    # @property
+    # def angles(self):
+    #     """hoomd.data.AngleLocalAccessBase: Local angle data."""
+    #     return self._angles
 
-    @property
-    def dihedrals(self):
-        """hoomd.data.DihedralLocalAccessBase: Local dihedral data."""
-        return self._dihedrals
+    # @property
+    # def dihedrals(self):
+    #     """hoomd.data.DihedralLocalAccessBase: Local dihedral data."""
+    #     return self._dihedrals
 
-    @property
-    def impropers(self):
-        """hoomd.data.ImproperLocalAccessBase: Local improper data."""
-        return self._impropers
+    # @property
+    # def impropers(self):
+    #     """hoomd.data.ImproperLocalAccessBase: Local improper data."""
+    #     return self._impropers
 
     @property
     def constraints(self):
@@ -397,9 +404,9 @@ class _LocalSnapshot:
         self._state._in_context_manager = True
         self._particles._enter()
         self._bonds._enter()
-        self._angles._enter()
-        self._dihedrals._enter()
-        self._impropers._enter()
+        # self._angles._enter()
+        # self._dihedrals._enter()
+        # self._impropers._enter()
         self._constraints._enter()
         self._pairs._enter()
         return self
@@ -408,8 +415,8 @@ class _LocalSnapshot:
         self._state._in_context_manager = False
         self._particles._exit()
         self._bonds._exit()
-        self._angles._exit()
-        self._dihedrals._exit()
-        self._impropers._exit()
+        # self._angles._exit()
+        # self._dihedrals._exit()
+        # self._impropers._exit()
         self._constraints._exit()
         self._pairs._exit()

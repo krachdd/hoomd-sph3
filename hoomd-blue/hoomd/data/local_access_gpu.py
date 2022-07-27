@@ -6,7 +6,7 @@
 from hoomd import _hoomd
 from hoomd.data.local_access import (
     ParticleLocalAccessBase, BondLocalAccessBase, ConstraintLocalAccessBase,
-    DihedralLocalAccessBase, AngleLocalAccessBase, ImproperLocalAccessBase,
+    #DihedralLocalAccessBase, AngleLocalAccessBase, ImproperLocalAccessBase,
     PairLocalAccessBase, _LocalSnapshot)
 
 from hoomd.data.array import HOOMDGPUArray
@@ -24,20 +24,20 @@ if hoomd.version.gpu_enabled:
         _cpp_cls = _hoomd.LocalBondDataDevice
         _array_cls = HOOMDGPUArray
 
-    class AngleLocalAccessGPU(AngleLocalAccessBase):
-        """Access angle data on the GPU."""
-        _cpp_cls = _hoomd.LocalAngleDataDevice
-        _array_cls = HOOMDGPUArray
+    # class AngleLocalAccessGPU(AngleLocalAccessBase):
+    #     """Access angle data on the GPU."""
+    #     _cpp_cls = _hoomd.LocalAngleDataDevice
+    #     _array_cls = HOOMDGPUArray
 
-    class DihedralLocalAccessGPU(DihedralLocalAccessBase):
-        """Access dihedral data on the GPU."""
-        _cpp_cls = _hoomd.LocalDihedralDataDevice
-        _array_cls = HOOMDGPUArray
+    # class DihedralLocalAccessGPU(DihedralLocalAccessBase):
+    #     """Access dihedral data on the GPU."""
+    #     _cpp_cls = _hoomd.LocalDihedralDataDevice
+    #     _array_cls = HOOMDGPUArray
 
-    class ImproperLocalAccessGPU(ImproperLocalAccessBase):
-        """Access improper data on the GPU."""
-        _cpp_cls = _hoomd.LocalImproperDataDevice
-        _array_cls = HOOMDGPUArray
+    # class ImproperLocalAccessGPU(ImproperLocalAccessBase):
+    #     """Access improper data on the GPU."""
+    #     _cpp_cls = _hoomd.LocalImproperDataDevice
+    #     _array_cls = HOOMDGPUArray
 
     class ConstraintLocalAccessGPU(ConstraintLocalAccessBase):
         """Access constraint data on the GPU."""
@@ -56,9 +56,9 @@ if hoomd.version.gpu_enabled:
             super().__init__(state)
             self._particles = ParticleLocalAccessGPU(state)
             self._bonds = BondLocalAccessGPU(state)
-            self._angles = AngleLocalAccessGPU(state)
-            self._dihedrals = DihedralLocalAccessGPU(state)
-            self._impropers = ImproperLocalAccessGPU(state)
+            # self._angles = AngleLocalAccessGPU(state)
+            # self._dihedrals = DihedralLocalAccessGPU(state)
+            # self._impropers = ImproperLocalAccessGPU(state)
             self._pairs = PairLocalAccessGPU(state)
             self._constraints = ConstraintLocalAccessGPU(state)
 
@@ -69,17 +69,17 @@ else:
         """GPU data access is not available in CPU builds."""
         pass
 
-    class AngleLocalAccessGPU(_NoGPU):
-        """GPU data access is not available in CPU builds."""
-        pass
+    # class AngleLocalAccessGPU(_NoGPU):
+    #     """GPU data access is not available in CPU builds."""
+    #     pass
 
-    class DihedralLocalAccessGPU(_NoGPU):
-        """GPU data access is not available in CPU builds."""
-        pass
+    # class DihedralLocalAccessGPU(_NoGPU):
+    #     """GPU data access is not available in CPU builds."""
+    #     pass
 
-    class ImproperLocalAccessGPU(_NoGPU):
-        """GPU data access is not available in CPU builds."""
-        pass
+    # class ImproperLocalAccessGPU(_NoGPU):
+    #     """GPU data access is not available in CPU builds."""
+    #     pass
 
     class ConstraintLocalAccessGPU(_NoGPU):
         """GPU data access is not available in CPU builds."""

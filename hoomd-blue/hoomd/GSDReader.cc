@@ -224,22 +224,28 @@ void GSDReader::readParticles()
     // is already at the default, and the failed read is not a problem
     readChunk(&m_snapshot->particle_data.type[0], m_frame, "particles/typeid", N * 4, N);
     readChunk(&m_snapshot->particle_data.mass[0], m_frame, "particles/mass", N * 4, N);
-    readChunk(&m_snapshot->particle_data.charge[0], m_frame, "particles/charge", N * 4, N);
-    readChunk(&m_snapshot->particle_data.diameter[0], m_frame, "particles/diameter", N * 4, N);
+    readChunk(&m_snapshot->particle_data.slength[0], m_frame, "particles/slength", N * 4, N);
+    // readChunk(&m_snapshot->particle_data.charge[0], m_frame, "particles/charge", N * 4, N);
+    // readChunk(&m_snapshot->particle_data.diameter[0], m_frame, "particles/diameter", N * 4, N);
     readChunk(&m_snapshot->particle_data.body[0], m_frame, "particles/body", N * 4, N);
-    readChunk(&m_snapshot->particle_data.inertia[0],
-              m_frame,
-              "particles/moment_inertia",
-              N * 12,
-              N);
+    // readChunk(&m_snapshot->particle_data.inertia[0],
+    //           m_frame,
+    //           "particles/moment_inertia",
+    //           N * 12,
+    //           N);
     readChunk(&m_snapshot->particle_data.pos[0], m_frame, "particles/position", N * 12, N);
-    readChunk(&m_snapshot->particle_data.orientation[0],
-              m_frame,
-              "particles/orientation",
-              N * 16,
-              N);
+    // readChunk(&m_snapshot->particle_data.orientation[0],
+    //           m_frame,
+    //           "particles/orientation",
+    //           N * 16,
+    //           N);
     readChunk(&m_snapshot->particle_data.vel[0], m_frame, "particles/velocity", N * 12, N);
-    readChunk(&m_snapshot->particle_data.angmom[0], m_frame, "particles/angmom", N * 16, N);
+    readChunk(&m_snapshot->particle_data.dpe[0], m_frame, "particles/dpe", N * 12, N);
+    readChunk(&m_snapshot->particle_data.aux1[0], m_frame, "particles/auxiliary1", N * 12, N);
+    readChunk(&m_snapshot->particle_data.aux2[0], m_frame, "particles/auxiliary2", N * 12, N);
+    readChunk(&m_snapshot->particle_data.aux3[0], m_frame, "particles/auxiliary3", N * 12, N);
+    readChunk(&m_snapshot->particle_data.aux4[0], m_frame, "particles/auxiliary4", N * 12, N);
+    // readChunk(&m_snapshot->particle_data.angmom[0], m_frame, "particles/angmom", N * 16, N);
     readChunk(&m_snapshot->particle_data.image[0], m_frame, "particles/image", N * 12, N);
     }
 
@@ -257,35 +263,35 @@ void GSDReader::readTopology()
         readChunk(&m_snapshot->bond_data.groups[0], m_frame, "bonds/group", N * 8, N);
         }
 
-    N = 0;
-    readChunk(&N, m_frame, "angles/N", 4);
-    if (N > 0)
-        {
-        m_snapshot->angle_data.resize(N);
-        m_snapshot->angle_data.type_mapping = readTypes(m_frame, "angles/types");
-        readChunk(&m_snapshot->angle_data.type_id[0], m_frame, "angles/typeid", N * 4, N);
-        readChunk(&m_snapshot->angle_data.groups[0], m_frame, "angles/group", N * 12, N);
-        }
+    // N = 0;
+    // readChunk(&N, m_frame, "angles/N", 4);
+    // if (N > 0)
+    //     {
+    //     m_snapshot->angle_data.resize(N);
+    //     m_snapshot->angle_data.type_mapping = readTypes(m_frame, "angles/types");
+    //     readChunk(&m_snapshot->angle_data.type_id[0], m_frame, "angles/typeid", N * 4, N);
+    //     readChunk(&m_snapshot->angle_data.groups[0], m_frame, "angles/group", N * 12, N);
+    //     }
 
-    N = 0;
-    readChunk(&N, m_frame, "dihedrals/N", 4);
-    if (N > 0)
-        {
-        m_snapshot->dihedral_data.resize(N);
-        m_snapshot->dihedral_data.type_mapping = readTypes(m_frame, "dihedrals/types");
-        readChunk(&m_snapshot->dihedral_data.type_id[0], m_frame, "dihedrals/typeid", N * 4, N);
-        readChunk(&m_snapshot->dihedral_data.groups[0], m_frame, "dihedrals/group", N * 16, N);
-        }
+    // N = 0;
+    // readChunk(&N, m_frame, "dihedrals/N", 4);
+    // if (N > 0)
+    //     {
+    //     m_snapshot->dihedral_data.resize(N);
+    //     m_snapshot->dihedral_data.type_mapping = readTypes(m_frame, "dihedrals/types");
+    //     readChunk(&m_snapshot->dihedral_data.type_id[0], m_frame, "dihedrals/typeid", N * 4, N);
+    //     readChunk(&m_snapshot->dihedral_data.groups[0], m_frame, "dihedrals/group", N * 16, N);
+    //     }
 
-    N = 0;
-    readChunk(&N, m_frame, "impropers/N", 4);
-    if (N > 0)
-        {
-        m_snapshot->improper_data.resize(N);
-        m_snapshot->improper_data.type_mapping = readTypes(m_frame, "impropers/types");
-        readChunk(&m_snapshot->improper_data.type_id[0], m_frame, "impropers/typeid", N * 4, N);
-        readChunk(&m_snapshot->improper_data.groups[0], m_frame, "impropers/group", N * 16, N);
-        }
+    // N = 0;
+    // readChunk(&N, m_frame, "impropers/N", 4);
+    // if (N > 0)
+    //     {
+    //     m_snapshot->improper_data.resize(N);
+    //     m_snapshot->improper_data.type_mapping = readTypes(m_frame, "impropers/types");
+    //     readChunk(&m_snapshot->improper_data.type_id[0], m_frame, "impropers/typeid", N * 4, N);
+    //     readChunk(&m_snapshot->improper_data.groups[0], m_frame, "impropers/group", N * 16, N);
+    //     }
 
     N = 0;
     readChunk(&N, m_frame, "constraints/N", 4);

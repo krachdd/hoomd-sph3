@@ -77,13 +77,14 @@ class PYBIND11_EXPORT SystemDefinition
                      const std::shared_ptr<BoxDim> box,
                      unsigned int n_types = 1,
                      unsigned int n_bond_types = 0,
-                     unsigned int n_angle_types = 0,
-                     unsigned int n_dihedral_types = 0,
-                     unsigned int n_improper_types = 0,
+                     // unsigned int n_angle_types = 0,
+                     // unsigned int n_dihedral_types = 0,
+                     // unsigned int n_improper_types = 0,
                      std::shared_ptr<ExecutionConfiguration> exec_conf
                      = std::shared_ptr<ExecutionConfiguration>(new ExecutionConfiguration()),
                      std::shared_ptr<DomainDecomposition> decomposition
-                     = std::shared_ptr<DomainDecomposition>());
+                     = std::shared_ptr<DomainDecomposition>(),
+                     bool distributed = false);
 
     // Mostly exists as test pass a plain box rather than a std::shared_ptr.
     //! Constructs a SystemDefinition with a simply initialized ParticleData
@@ -91,13 +92,14 @@ class PYBIND11_EXPORT SystemDefinition
                      const BoxDim& box,
                      unsigned int n_types = 1,
                      unsigned int n_bond_types = 0,
-                     unsigned int n_angle_types = 0,
-                     unsigned int n_dihedral_types = 0,
-                     unsigned int n_improper_types = 0,
+                     // unsigned int n_angle_types = 0,
+                     // unsigned int n_dihedral_types = 0,
+                     // unsigned int n_improper_types = 0,
                      std::shared_ptr<ExecutionConfiguration> exec_conf
                      = std::shared_ptr<ExecutionConfiguration>(new ExecutionConfiguration()),
                      std::shared_ptr<DomainDecomposition> decomposition
-                     = std::shared_ptr<DomainDecomposition>());
+                     = std::shared_ptr<DomainDecomposition>(),
+                     bool distributed = false);
 
     //! Construct from a snapshot
     template<class Real>
@@ -105,7 +107,8 @@ class PYBIND11_EXPORT SystemDefinition
                      std::shared_ptr<ExecutionConfiguration> exec_conf
                      = std::shared_ptr<ExecutionConfiguration>(new ExecutionConfiguration()),
                      std::shared_ptr<DomainDecomposition> decomposition
-                     = std::shared_ptr<DomainDecomposition>());
+                     = std::shared_ptr<DomainDecomposition>(), 
+                     bool distributed = false);
 
     //! Set the dimensionality of the system
     void setNDimensions(unsigned int);
@@ -171,21 +174,21 @@ class PYBIND11_EXPORT SystemDefinition
         {
         return m_bond_data;
         }
-    //! Access the angle data defined for the simulation
-    std::shared_ptr<AngleData> getAngleData()
-        {
-        return m_angle_data;
-        }
-    //! Access the dihedral data defined for the simulation
-    std::shared_ptr<DihedralData> getDihedralData()
-        {
-        return m_dihedral_data;
-        }
-    //! Access the improper data defined for the simulation
-    std::shared_ptr<ImproperData> getImproperData()
-        {
-        return m_improper_data;
-        }
+    // //! Access the angle data defined for the simulation
+    // std::shared_ptr<AngleData> getAngleData()
+    //     {
+    //     return m_angle_data;
+    //     }
+    // //! Access the dihedral data defined for the simulation
+    // std::shared_ptr<DihedralData> getDihedralData()
+    //     {
+    //     return m_dihedral_data;
+    //     }
+    // //! Access the improper data defined for the simulation
+    // std::shared_ptr<ImproperData> getImproperData()
+    //     {
+    //     return m_improper_data;
+    //     }
 
     //! Access the constraint data defined for the simulation
     std::shared_ptr<ConstraintData> getConstraintData()
@@ -211,9 +214,9 @@ class PYBIND11_EXPORT SystemDefinition
     uint16_t m_seed = 0;                               //!< Random number seed
     std::shared_ptr<ParticleData> m_particle_data;     //!< Particle data for the system
     std::shared_ptr<BondData> m_bond_data;             //!< Bond data for the system
-    std::shared_ptr<AngleData> m_angle_data;           //!< Angle data for the system
-    std::shared_ptr<DihedralData> m_dihedral_data;     //!< Dihedral data for the system
-    std::shared_ptr<ImproperData> m_improper_data;     //!< Improper data for the system
+    // std::shared_ptr<AngleData> m_angle_data;           //!< Angle data for the system
+    // std::shared_ptr<DihedralData> m_dihedral_data;     //!< Dihedral data for the system
+    // std::shared_ptr<ImproperData> m_improper_data;     //!< Improper data for the system
     std::shared_ptr<ConstraintData> m_constraint_data; //!< Improper data for the system
     std::shared_ptr<PairData> m_pair_data;             //!< Special pairs data for the system
 

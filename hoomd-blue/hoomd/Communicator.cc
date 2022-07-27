@@ -1192,25 +1192,51 @@ void Communicator::GroupCommunicator<group_data, inMesh>::exchangeGhostGroups(
 //! Constructor
 Communicator::Communicator(std::shared_ptr<SystemDefinition> sysdef,
                            std::shared_ptr<DomainDecomposition> decomposition)
-    : m_sysdef(sysdef), m_pdata(sysdef->getParticleData()), m_meshdef(NULL),
+    : m_sysdef(sysdef), m_pdata(sysdef->getParticleData()), 
+    // m_meshdef(NULL), 
       m_exec_conf(m_pdata->getExecConf()), m_mpi_comm(m_exec_conf->getMPICommunicator()),
-      m_decomposition(decomposition), m_is_communicating(false), m_force_migrate(false),
-      m_nneigh(0), m_n_unique_neigh(0), m_pos_copybuf(m_exec_conf), m_charge_copybuf(m_exec_conf),
-      m_diameter_copybuf(m_exec_conf), m_body_copybuf(m_exec_conf), m_image_copybuf(m_exec_conf),
-      m_velocity_copybuf(m_exec_conf), m_orientation_copybuf(m_exec_conf),
-      m_plan_copybuf(m_exec_conf), m_tag_copybuf(m_exec_conf), m_netforce_copybuf(m_exec_conf),
-      m_nettorque_copybuf(m_exec_conf), m_netvirial_copybuf(m_exec_conf),
-      m_netvirial_recvbuf(m_exec_conf), m_plan(m_exec_conf), m_plan_reverse(m_exec_conf),
-      m_tag_reverse(m_exec_conf), m_netforce_reverse_copybuf(m_exec_conf),
-      m_netforce_reverse_recvbuf(m_exec_conf), m_r_ghost_max(Scalar(0.0)),
-      m_r_extra_ghost_max(Scalar(0.0)), m_ghosts_added(0), m_has_ghost_particles(false),
-      m_last_flags(0), m_comm_pending(false), m_bond_comm(*this, m_sysdef->getBondData()),
-      m_angle_comm(*this, m_sysdef->getAngleData()),
-      m_dihedral_comm(*this, m_sysdef->getDihedralData()),
-      m_improper_comm(*this, m_sysdef->getImproperData()),
+      m_decomposition(decomposition), 
+      m_is_communicating(false), 
+      m_force_migrate(false),
+      m_nneigh(0), 
+      m_n_unique_neigh(0), 
+      m_pos_copybuf(m_exec_conf), 
+      // m_charge_copybuf(m_exec_conf),
+      // m_diameter_copybuf(m_exec_conf), 
+      m_body_copybuf(m_exec_conf), 
+      m_image_copybuf(m_exec_conf),
+      m_velocity_copybuf(m_exec_conf),
+      m_dpe_copybuf(m_exec_conf), // added
+      m_aux1_copybuf(m_exec_conf), // added
+      m_aux2_copybuf(m_exec_conf), // added
+      m_aux3_copybuf(m_exec_conf), // added
+      m_aux4_copybuf(m_exec_conf), // added 
+      // m_orientation_copybuf(m_exec_conf),
+      m_plan_copybuf(m_exec_conf), 
+      m_tag_copybuf(m_exec_conf), 
+      m_netforce_copybuf(m_exec_conf),
+      // m_nettorque_copybuf(m_exec_conf), 
+      // m_netvirial_copybuf(m_exec_conf),
+      // m_netvirial_recvbuf(m_exec_conf), 
+      m_netratedpe_copybuf(m_exec_conf), // added
+      m_plan(m_exec_conf), 
+      m_plan_reverse(m_exec_conf),
+      m_tag_reverse(m_exec_conf), 
+      m_netforce_reverse_copybuf(m_exec_conf),
+      m_netforce_reverse_recvbuf(m_exec_conf), 
+      m_r_ghost_max(Scalar(0.0)),
+      m_r_extra_ghost_max(Scalar(0.0)), 
+      m_ghosts_added(0), 
+      m_has_ghost_particles(false),
+      m_last_flags(0), m_comm_pending(false), 
+      m_bond_comm(*this, m_sysdef->getBondData()),
+      // m_angle_comm(*this, m_sysdef->getAngleData()),
+      // m_dihedral_comm(*this, m_sysdef->getDihedralData()),
+      // m_improper_comm(*this, m_sysdef->getImproperData()),
       m_constraint_comm(*this, m_sysdef->getConstraintData()),
-      m_pair_comm(*this, m_sysdef->getPairData()), m_meshbond_comm(*this),
-      m_meshtriangle_comm(*this)
+      m_pair_comm(*this, m_sysdef->getPairData())
+      // m_meshbond_comm(*this),
+      // m_meshtriangle_comm(*this)
     {
     // initialize array of neighbor processor ids
     assert(m_mpi_comm);
@@ -1269,20 +1295,20 @@ Communicator::Communicator(std::shared_ptr<SystemDefinition> sysdef,
         ->getGroupNumChangeSignal()
         .connect<Communicator, &Communicator::setBondsChanged>(this);
 
-    m_angles_changed = true;
-    m_sysdef->getAngleData()
-        ->getGroupNumChangeSignal()
-        .connect<Communicator, &Communicator::setAnglesChanged>(this);
+    // m_angles_changed = true;
+    // m_sysdef->getAngleData()
+    //     ->getGroupNumChangeSignal()
+    //     .connect<Communicator, &Communicator::setAnglesChanged>(this);
 
-    m_dihedrals_changed = true;
-    m_sysdef->getDihedralData()
-        ->getGroupNumChangeSignal()
-        .connect<Communicator, &Communicator::setDihedralsChanged>(this);
+    // m_dihedrals_changed = true;
+    // m_sysdef->getDihedralData()
+    //     ->getGroupNumChangeSignal()
+    //     .connect<Communicator, &Communicator::setDihedralsChanged>(this);
 
-    m_impropers_changed = true;
-    m_sysdef->getImproperData()
-        ->getGroupNumChangeSignal()
-        .connect<Communicator, &Communicator::setImpropersChanged>(this);
+    // m_impropers_changed = true;
+    // m_sysdef->getImproperData()
+    //     ->getGroupNumChangeSignal()
+    //     .connect<Communicator, &Communicator::setImpropersChanged>(this);
 
     m_constraints_changed = true;
     m_sysdef->getConstraintData()
@@ -1314,38 +1340,43 @@ Communicator::Communicator(std::shared_ptr<SystemDefinition> sysdef,
     initializeNeighborArrays();
 
     /* create a type for pdata_element */
-    const int nitems = 14;
-    int blocklengths[14] = {4, 4, 3, 1, 1, 3, 1, 4, 4, 3, 1, 4, 4, 6};
-    MPI_Datatype types[14] = {MPI_HOOMD_SCALAR,
+ const int nitems = 13;
+    int blocklengths[13] = {4, 4, 3, 3, 3, 3, 3, 3, 3, 1, 1, 4, 4};
+    MPI_Datatype types[13] = {MPI_HOOMD_SCALAR,
+                              MPI_HOOMD_SCALAR,
+                              MPI_HOOMD_SCALAR,
+                              MPI_HOOMD_SCALAR,
                               MPI_HOOMD_SCALAR,
                               MPI_HOOMD_SCALAR,
                               MPI_HOOMD_SCALAR,
                               MPI_HOOMD_SCALAR,
                               MPI_INT,
                               MPI_UNSIGNED,
-                              MPI_HOOMD_SCALAR,
-                              MPI_HOOMD_SCALAR,
-                              MPI_HOOMD_SCALAR,
                               MPI_UNSIGNED,
                               MPI_HOOMD_SCALAR,
-                              MPI_HOOMD_SCALAR,
                               MPI_HOOMD_SCALAR};
-    MPI_Aint offsets[14];
+    MPI_Aint offsets[13];
 
     offsets[0] = offsetof(detail::pdata_element, pos);
     offsets[1] = offsetof(detail::pdata_element, vel);
     offsets[2] = offsetof(detail::pdata_element, accel);
-    offsets[3] = offsetof(detail::pdata_element, charge);
-    offsets[4] = offsetof(detail::pdata_element, diameter);
-    offsets[5] = offsetof(detail::pdata_element, image);
-    offsets[6] = offsetof(detail::pdata_element, body);
-    offsets[7] = offsetof(detail::pdata_element, orientation);
-    offsets[8] = offsetof(detail::pdata_element, angmom);
-    offsets[9] = offsetof(detail::pdata_element, inertia);
+    offsets[3] = offsetof(detail::pdata_element, dpe);
+    offsets[4] = offsetof(detail::pdata_element, aux1);
+    offsets[5] = offsetof(detail::pdata_element, aux2);
+    offsets[6] = offsetof(detail::pdata_element, aux3);
+    offsets[7] = offsetof(detail::pdata_element, aux4);
+    // offsets[3] = offsetof(detail::pdata_element, charge);
+    // offsets[4] = offsetof(detail::pdata_element, diameter);
+    offsets[8] = offsetof(detail::pdata_element, image);
+    offsets[9] = offsetof(detail::pdata_element, body);
+    // offsets[7] = offsetof(detail::pdata_element, orientation);
+    // offsets[8] = offsetof(detail::pdata_element, angmom);
+    // offsets[9] = offsetof(detail::pdata_element, inertia);
     offsets[10] = offsetof(detail::pdata_element, tag);
     offsets[11] = offsetof(detail::pdata_element, net_force);
-    offsets[12] = offsetof(detail::pdata_element, net_torque);
-    offsets[13] = offsetof(detail::pdata_element, net_virial);
+    offsets[12] = offsetof(detail::pdata_element, net_ratedpe);
+    // offsets[12] = offsetof(detail::pdata_element, net_torque);
+    // offsets[13] = offsetof(detail::pdata_element, net_virial);
 
     MPI_Datatype tmp;
     MPI_Type_create_struct(nitems, blocklengths, offsets, types, &tmp);
@@ -1367,15 +1398,15 @@ Communicator::~Communicator()
     m_sysdef->getBondData()
         ->getGroupNumChangeSignal()
         .disconnect<Communicator, &Communicator::setBondsChanged>(this);
-    m_sysdef->getAngleData()
-        ->getGroupNumChangeSignal()
-        .disconnect<Communicator, &Communicator::setAnglesChanged>(this);
-    m_sysdef->getDihedralData()
-        ->getGroupNumChangeSignal()
-        .disconnect<Communicator, &Communicator::setDihedralsChanged>(this);
-    m_sysdef->getImproperData()
-        ->getGroupNumChangeSignal()
-        .disconnect<Communicator, &Communicator::setImpropersChanged>(this);
+    // m_sysdef->getAngleData()
+    //     ->getGroupNumChangeSignal()
+    //     .disconnect<Communicator, &Communicator::setAnglesChanged>(this);
+    // m_sysdef->getDihedralData()
+    //     ->getGroupNumChangeSignal()
+    //     .disconnect<Communicator, &Communicator::setDihedralsChanged>(this);
+    // m_sysdef->getImproperData()
+    //     ->getGroupNumChangeSignal()
+    //     .disconnect<Communicator, &Communicator::setImpropersChanged>(this);
     m_sysdef->getConstraintData()
         ->getGroupNumChangeSignal()
         .disconnect<Communicator, &Communicator::setConstraintsChanged>(this);
@@ -1383,37 +1414,37 @@ Communicator::~Communicator()
         ->getGroupNumChangeSignal()
         .disconnect<Communicator, &Communicator::setPairsChanged>(this);
 
-    if (m_meshdef)
-        {
-        m_meshdef->getMeshBondData()
-            ->getGroupNumChangeSignal()
-            .disconnect<Communicator, &Communicator::setMeshbondsChanged>(this);
+    // if (m_meshdef)
+    //     {
+    //     m_meshdef->getMeshBondData()
+    //         ->getGroupNumChangeSignal()
+    //         .disconnect<Communicator, &Communicator::setMeshbondsChanged>(this);
 
-        m_meshdef->getMeshTriangleData()
-            ->getGroupNumChangeSignal()
-            .disconnect<Communicator, &Communicator::setMeshtrianglesChanged>(this);
-        }
+    //     m_meshdef->getMeshTriangleData()
+    //         ->getGroupNumChangeSignal()
+    //         .disconnect<Communicator, &Communicator::setMeshtrianglesChanged>(this);
+    //     }
 
     MPI_Type_free(&m_mpi_pdata_element);
     }
 
-void Communicator::addMeshDefinition(std::shared_ptr<MeshDefinition> meshdef)
-    {
-    m_meshdef = meshdef;
+// void Communicator::addMeshDefinition(std::shared_ptr<MeshDefinition> meshdef)
+//     {
+//     m_meshdef = meshdef;
 
-    m_meshbond_comm.setGroupData(m_meshdef->getMeshBondData());
-    m_meshtriangle_comm.setGroupData(m_meshdef->getMeshTriangleData());
+//     m_meshbond_comm.setGroupData(m_meshdef->getMeshBondData());
+//     m_meshtriangle_comm.setGroupData(m_meshdef->getMeshTriangleData());
 
-    m_meshbonds_changed = true;
-    m_meshdef->getMeshBondData()
-        ->getGroupNumChangeSignal()
-        .connect<Communicator, &Communicator::setMeshbondsChanged>(this);
+//     m_meshbonds_changed = true;
+//     m_meshdef->getMeshBondData()
+//         ->getGroupNumChangeSignal()
+//         .connect<Communicator, &Communicator::setMeshbondsChanged>(this);
 
-    m_meshtriangles_changed = true;
-    m_meshdef->getMeshTriangleData()
-        ->getGroupNumChangeSignal()
-        .connect<Communicator, &Communicator::setMeshtrianglesChanged>(this);
-    }
+//     m_meshtriangles_changed = true;
+//     m_meshdef->getMeshTriangleData()
+//         ->getGroupNumChangeSignal()
+//         .connect<Communicator, &Communicator::setMeshtrianglesChanged>(this);
+//     }
 
 void Communicator::initializeNeighborArrays()
     {
@@ -1652,32 +1683,32 @@ void Communicator::migrateParticles()
         m_pair_comm.migrateGroups(m_pairs_changed, true);
         m_pairs_changed = false;
 
-        // Angles
-        m_angle_comm.migrateGroups(m_angles_changed, true);
-        m_angles_changed = false;
+        // // Angles
+        // m_angle_comm.migrateGroups(m_angles_changed, true);
+        // m_angles_changed = false;
 
-        // Dihedrals
-        m_dihedral_comm.migrateGroups(m_dihedrals_changed, true);
-        m_dihedrals_changed = false;
+        // // Dihedrals
+        // m_dihedral_comm.migrateGroups(m_dihedrals_changed, true);
+        // m_dihedrals_changed = false;
 
-        // Dihedrals
-        m_improper_comm.migrateGroups(m_impropers_changed, true);
-        m_impropers_changed = false;
+        // // Dihedrals
+        // m_improper_comm.migrateGroups(m_impropers_changed, true);
+        // m_impropers_changed = false;
 
         // Constraints
         m_constraint_comm.migrateGroups(m_constraints_changed, true);
         m_constraints_changed = false;
 
-        if (m_meshdef)
-            {
-            // Meshbonds
-            m_meshbond_comm.migrateGroups(m_meshbonds_changed, true);
-            m_meshbonds_changed = false;
+        // if (m_meshdef)
+        //     {
+        //     // Meshbonds
+        //     m_meshbond_comm.migrateGroups(m_meshbonds_changed, true);
+        //     m_meshbonds_changed = false;
 
-            // Meshtriangles
-            m_meshtriangle_comm.migrateGroups(m_meshtriangles_changed, true);
-            m_meshtriangles_changed = false;
-            }
+        //     // Meshtriangles
+        //     m_meshtriangle_comm.migrateGroups(m_meshtriangles_changed, true);
+        //     m_meshtriangles_changed = false;
+        //     }
 
         // fill send buffer
         std::vector<unsigned int> comm_flag_out; // not currently used
@@ -1911,26 +1942,26 @@ void Communicator::exchangeGhosts()
     // special pairs
     m_pair_comm.markGhostParticles(m_plan, mask);
 
-    // angles
-    m_angle_comm.markGhostParticles(m_plan, mask);
+    // // angles
+    // m_angle_comm.markGhostParticles(m_plan, mask);
 
-    // dihedrals
-    m_dihedral_comm.markGhostParticles(m_plan, mask);
+    // // dihedrals
+    // m_dihedral_comm.markGhostParticles(m_plan, mask);
 
-    // impropers
-    m_improper_comm.markGhostParticles(m_plan, mask);
+    // // impropers
+    // m_improper_comm.markGhostParticles(m_plan, mask);
 
     // constraints
     m_constraint_comm.markGhostParticles(m_plan, mask);
 
-    if (m_meshdef)
-        {
-        // meshbonds
-        m_meshbond_comm.markGhostParticles(m_plan, mask);
+    // if (m_meshdef)
+    //     {
+    //     // meshbonds
+    //     m_meshbond_comm.markGhostParticles(m_plan, mask);
 
-        // meshtriangles
-        m_meshtriangle_comm.markGhostParticles(m_plan, mask);
-        }
+    //     // meshtriangles
+    //     m_meshtriangle_comm.markGhostParticles(m_plan, mask);
+    //     }
     /*
      * Fill send buffers, exchange particles according to plans
      */
@@ -1955,8 +1986,26 @@ void Communicator::exchangeGhosts()
         if (flags[comm_flag::position])
             m_pos_copybuf.resize(max_copy_ghosts);
 
-        if (flags[comm_flag::charge])
-            m_charge_copybuf.resize(max_copy_ghosts);
+        if (flags[comm_flag::velocity])
+            m_velocity_copybuf.resize(max_copy_ghosts);
+
+        if (flags[comm_flag::dpe])
+            m_dpe_copybuf.resize(max_copy_ghosts);
+
+        if (flags[comm_flag::auxiliary1])
+            m_aux1_copybuf.resize(max_copy_ghosts);
+
+        if (flags[comm_flag::auxiliary2])
+            m_aux2_copybuf.resize(max_copy_ghosts);
+
+        if (flags[comm_flag::auxiliary3])
+            m_aux3_copybuf.resize(max_copy_ghosts);
+
+        if (flags[comm_flag::auxiliary4])
+            m_aux4_copybuf.resize(max_copy_ghosts);
+
+        // if (flags[comm_flag::charge])
+        //     m_charge_copybuf.resize(max_copy_ghosts);
 
         if (flags[comm_flag::body])
             m_body_copybuf.resize(max_copy_ghosts);
@@ -1964,28 +2013,28 @@ void Communicator::exchangeGhosts()
         if (flags[comm_flag::image])
             m_image_copybuf.resize(max_copy_ghosts);
 
-        if (flags[comm_flag::diameter])
-            m_diameter_copybuf.resize(max_copy_ghosts);
+        // if (flags[comm_flag::diameter])
+        //     m_diameter_copybuf.resize(max_copy_ghosts);
 
-        if (flags[comm_flag::velocity])
-            m_velocity_copybuf.resize(max_copy_ghosts);
+        // if (flags[comm_flag::velocity])
+        //     m_velocity_copybuf.resize(max_copy_ghosts);
 
-        if (flags[comm_flag::orientation])
-            {
-            m_orientation_copybuf.resize(max_copy_ghosts);
-            }
+        // if (flags[comm_flag::orientation])
+        //     {
+        //     m_orientation_copybuf.resize(max_copy_ghosts);
+        //     }
 
             {
             // we fill all fields, but send only those that are requested by the CommFlags bitset
             ArrayHandle<Scalar4> h_pos(m_pdata->getPositions(),
                                        access_location::host,
                                        access_mode::read);
-            ArrayHandle<Scalar> h_charge(m_pdata->getCharges(),
-                                         access_location::host,
-                                         access_mode::read);
-            ArrayHandle<Scalar> h_diameter(m_pdata->getDiameters(),
-                                           access_location::host,
-                                           access_mode::read);
+            // ArrayHandle<Scalar> h_charge(m_pdata->getCharges(),
+            //                              access_location::host,
+            //                              access_mode::read);
+            // ArrayHandle<Scalar> h_diameter(m_pdata->getDiameters(),
+            //                                access_location::host,
+            //                                access_mode::read);
             ArrayHandle<unsigned int> h_body(m_pdata->getBodies(),
                                              access_location::host,
                                              access_mode::read);
@@ -1995,9 +2044,26 @@ void Communicator::exchangeGhosts()
             ArrayHandle<Scalar4> h_vel(m_pdata->getVelocities(),
                                        access_location::host,
                                        access_mode::read);
-            ArrayHandle<Scalar4> h_orientation(m_pdata->getOrientationArray(),
-                                               access_location::host,
-                                               access_mode::read);
+
+            ArrayHandle<Scalar3> h_dpe(m_pdata->getDPEs(),
+                                       access_location::host,
+                                       access_mode::read);
+            ArrayHandle<Scalar3> h_aux1(m_pdata->getAuxiliaries1(),
+                                       access_location::host,
+                                       access_mode::read);
+            ArrayHandle<Scalar3> h_aux2(m_pdata->getAuxiliaries2(),
+                                       access_location::host,
+                                       access_mode::read);
+            ArrayHandle<Scalar3> h_aux3(m_pdata->getAuxiliaries3(),
+                                       access_location::host,
+                                       access_mode::read);
+            ArrayHandle<Scalar3> h_aux4(m_pdata->getAuxiliaries4(),
+                                       access_location::host,
+                                       access_mode::read);
+
+            // ArrayHandle<Scalar4> h_orientation(m_pdata->getOrientationArray(),
+            //                                    access_location::host,
+            //                                    access_mode::read);
             ArrayHandle<unsigned int> h_tag(m_pdata->getTags(),
                                             access_location::host,
                                             access_mode::read);
@@ -2012,12 +2078,12 @@ void Communicator::exchangeGhosts()
             ArrayHandle<Scalar4> h_pos_copybuf(m_pos_copybuf,
                                                access_location::host,
                                                access_mode::overwrite);
-            ArrayHandle<Scalar> h_charge_copybuf(m_charge_copybuf,
-                                                 access_location::host,
-                                                 access_mode::overwrite);
-            ArrayHandle<Scalar> h_diameter_copybuf(m_diameter_copybuf,
-                                                   access_location::host,
-                                                   access_mode::overwrite);
+            // ArrayHandle<Scalar> h_charge_copybuf(m_charge_copybuf,
+            //                                      access_location::host,
+            //                                      access_mode::overwrite);
+            // ArrayHandle<Scalar> h_diameter_copybuf(m_diameter_copybuf,
+            //                                        access_location::host,
+            //                                        access_mode::overwrite);
             ArrayHandle<unsigned int> h_body_copybuf(m_body_copybuf,
                                                      access_location::host,
                                                      access_mode::overwrite);
@@ -2027,9 +2093,24 @@ void Communicator::exchangeGhosts()
             ArrayHandle<Scalar4> h_velocity_copybuf(m_velocity_copybuf,
                                                     access_location::host,
                                                     access_mode::overwrite);
-            ArrayHandle<Scalar4> h_orientation_copybuf(m_orientation_copybuf,
-                                                       access_location::host,
-                                                       access_mode::overwrite);
+            ArrayHandle<Scalar3>h_dpe_copybuf(m_dpe_copybuf,
+                                              access_location::host,
+                                              access_mode::overwrite);
+            ArrayHandle<Scalar3>h_aux1_copybuf(m_aux1_copybuf,
+                                              access_location::host,
+                                              access_mode::overwrite);
+            ArrayHandle<Scalar3>h_aux2_copybuf(m_aux2_copybuf,
+                                              access_location::host,
+                                              access_mode::overwrite);
+            ArrayHandle<Scalar3>h_aux3_copybuf(m_aux3_copybuf,
+                                              access_location::host,
+                                              access_mode::overwrite);
+            ArrayHandle<Scalar3>h_aux4_copybuf(m_aux4_copybuf,
+                                              access_location::host,
+                                              access_mode::overwrite);
+            // ArrayHandle<Scalar4> h_orientation_copybuf(m_orientation_copybuf,
+            //                                            access_location::host,
+            //                                            access_mode::overwrite);
 
             for (unsigned int idx = 0; idx < m_pdata->getN() + m_pdata->getNGhosts(); idx++)
                 {
@@ -2038,19 +2119,29 @@ void Communicator::exchangeGhosts()
                     // send with next message
                     if (flags[comm_flag::position])
                         h_pos_copybuf.data[m_num_copy_ghosts[dir]] = h_pos.data[idx];
-                    if (flags[comm_flag::charge])
-                        h_charge_copybuf.data[m_num_copy_ghosts[dir]] = h_charge.data[idx];
-                    if (flags[comm_flag::diameter])
-                        h_diameter_copybuf.data[m_num_copy_ghosts[dir]] = h_diameter.data[idx];
+                    // if (flags[comm_flag::charge])
+                    //     h_charge_copybuf.data[m_num_copy_ghosts[dir]] = h_charge.data[idx];
+                    // if (flags[comm_flag::diameter])
+                    //     h_diameter_copybuf.data[m_num_copy_ghosts[dir]] = h_diameter.data[idx];
                     if (flags[comm_flag::body])
                         h_body_copybuf.data[m_num_copy_ghosts[dir]] = h_body.data[idx];
                     if (flags[comm_flag::image])
                         h_image_copybuf.data[m_num_copy_ghosts[dir]] = h_image.data[idx];
                     if (flags[comm_flag::velocity])
                         h_velocity_copybuf.data[m_num_copy_ghosts[dir]] = h_vel.data[idx];
-                    if (flags[comm_flag::orientation])
-                        h_orientation_copybuf.data[m_num_copy_ghosts[dir]]
-                            = h_orientation.data[idx];
+                    if (flags[comm_flag::dpe])
+                        h_dpe_copybuf.data[m_num_copy_ghosts[dir]] = h_dpe.data[idx];
+                    if (flags[comm_flag::auxiliary1])
+                        h_aux1_copybuf.data[m_num_copy_ghosts[dir]] = h_aux1.data[idx];
+                    if (flags[comm_flag::auxiliary2])
+                        h_aux2_copybuf.data[m_num_copy_ghosts[dir]] = h_aux2.data[idx];
+                    if (flags[comm_flag::auxiliary3])
+                        h_aux3_copybuf.data[m_num_copy_ghosts[dir]] = h_aux3.data[idx];
+                    if (flags[comm_flag::auxiliary4])
+                        h_aux4_copybuf.data[m_num_copy_ghosts[dir]] = h_aux4.data[idx];
+                    // if (flags[comm_flag::orientation])
+                    //     h_orientation_copybuf.data[m_num_copy_ghosts[dir]]
+                    //         = h_orientation.data[idx];
                     h_plan_copybuf.data[m_num_copy_ghosts[dir]] = h_plan.data[idx];
 
                     h_copy_ghosts.data[m_num_copy_ghosts[dir]] = h_tag.data[idx];
@@ -2111,12 +2202,12 @@ void Communicator::exchangeGhosts()
             ArrayHandle<Scalar4> h_pos_copybuf(m_pos_copybuf,
                                                access_location::host,
                                                access_mode::read);
-            ArrayHandle<Scalar> h_charge_copybuf(m_charge_copybuf,
-                                                 access_location::host,
-                                                 access_mode::read);
-            ArrayHandle<Scalar> h_diameter_copybuf(m_diameter_copybuf,
-                                                   access_location::host,
-                                                   access_mode::read);
+            // ArrayHandle<Scalar> h_charge_copybuf(m_charge_copybuf,
+            //                                      access_location::host,
+            //                                      access_mode::read);
+            // ArrayHandle<Scalar> h_diameter_copybuf(m_diameter_copybuf,
+            //                                        access_location::host,
+            //                                        access_mode::read);
             ArrayHandle<unsigned int> h_body_copybuf(m_body_copybuf,
                                                      access_location::host,
                                                      access_mode::read);
@@ -2126,20 +2217,37 @@ void Communicator::exchangeGhosts()
             ArrayHandle<Scalar4> h_velocity_copybuf(m_velocity_copybuf,
                                                     access_location::host,
                                                     access_mode::read);
-            ArrayHandle<Scalar4> h_orientation_copybuf(m_orientation_copybuf,
-                                                       access_location::host,
-                                                       access_mode::read);
+
+            ArrayHandle<Scalar3> h_dpe_copybuf(m_dpe_copybuf,
+                                                    access_location::host,
+                                                    access_mode::read);
+            ArrayHandle<Scalar3> h_aux1_copybuf(m_aux1_copybuf,
+                                                    access_location::host,
+                                                    access_mode::read);
+            ArrayHandle<Scalar3> h_aux2_copybuf(m_aux2_copybuf,
+                                                    access_location::host,
+                                                    access_mode::read);
+            ArrayHandle<Scalar3> h_aux3_copybuf(m_aux3_copybuf,
+                                                    access_location::host,
+                                                    access_mode::read);
+            ArrayHandle<Scalar3> h_aux4_copybuf(m_aux4_copybuf,
+                                                    access_location::host,
+                                                    access_mode::read);
+
+            // ArrayHandle<Scalar4> h_orientation_copybuf(m_orientation_copybuf,
+            //                                            access_location::host,
+            //                                            access_mode::read);
 
             ArrayHandle<unsigned int> h_plan(m_plan, access_location::host, access_mode::readwrite);
             ArrayHandle<Scalar4> h_pos(m_pdata->getPositions(),
                                        access_location::host,
                                        access_mode::readwrite);
-            ArrayHandle<Scalar> h_charge(m_pdata->getCharges(),
-                                         access_location::host,
-                                         access_mode::readwrite);
-            ArrayHandle<Scalar> h_diameter(m_pdata->getDiameters(),
-                                           access_location::host,
-                                           access_mode::readwrite);
+            // ArrayHandle<Scalar> h_charge(m_pdata->getCharges(),
+            //                              access_location::host,
+            //                              access_mode::readwrite);
+            // ArrayHandle<Scalar> h_diameter(m_pdata->getDiameters(),
+            //                                access_location::host,
+            //                                access_mode::readwrite);
             ArrayHandle<unsigned int> h_body(m_pdata->getBodies(),
                                              access_location::host,
                                              access_mode::readwrite);
@@ -2149,9 +2257,26 @@ void Communicator::exchangeGhosts()
             ArrayHandle<Scalar4> h_vel(m_pdata->getVelocities(),
                                        access_location::host,
                                        access_mode::readwrite);
-            ArrayHandle<Scalar4> h_orientation(m_pdata->getOrientationArray(),
-                                               access_location::host,
-                                               access_mode::readwrite);
+
+            ArrayHandle<Scalar3> h_dpe(m_pdata->getDPEs(),
+                                       access_location::host,
+                                       access_mode::readwrite);
+            ArrayHandle<Scalar3> h_aux1(m_pdata->getAuxiliaries1(),
+                                       access_location::host,
+                                       access_mode::readwrite);
+            ArrayHandle<Scalar3> h_aux2(m_pdata->getAuxiliaries2(),
+                                       access_location::host,
+                                       access_mode::readwrite);
+            ArrayHandle<Scalar3> h_aux3(m_pdata->getAuxiliaries3(),
+                                       access_location::host,
+                                       access_mode::readwrite);
+            ArrayHandle<Scalar3> h_aux4(m_pdata->getAuxiliaries4(),
+                                       access_location::host,
+                                       access_mode::readwrite);
+
+            // ArrayHandle<Scalar4> h_orientation(m_pdata->getOrientationArray(),
+            //                                    access_location::host,
+            //                                    access_mode::readwrite);
             ArrayHandle<unsigned int> h_tag(m_pdata->getTags(),
                                             access_location::host,
                                             access_mode::readwrite);
@@ -2214,45 +2339,45 @@ void Communicator::exchangeGhosts()
                 m_reqs.push_back(req);
                 }
 
-            if (flags[comm_flag::charge])
-                {
-                MPI_Isend(h_charge_copybuf.data,
-                          int(m_num_copy_ghosts[dir] * sizeof(Scalar)),
-                          MPI_BYTE,
-                          send_neighbor,
-                          4,
-                          m_mpi_comm,
-                          &req);
-                m_reqs.push_back(req);
-                MPI_Irecv(h_charge.data + start_idx,
-                          int(m_num_recv_ghosts[dir] * sizeof(Scalar)),
-                          MPI_BYTE,
-                          recv_neighbor,
-                          4,
-                          m_mpi_comm,
-                          &req);
-                m_reqs.push_back(req);
-                }
+            // if (flags[comm_flag::charge])
+            //     {
+            //     MPI_Isend(h_charge_copybuf.data,
+            //               int(m_num_copy_ghosts[dir] * sizeof(Scalar)),
+            //               MPI_BYTE,
+            //               send_neighbor,
+            //               4,
+            //               m_mpi_comm,
+            //               &req);
+            //     m_reqs.push_back(req);
+            //     MPI_Irecv(h_charge.data + start_idx,
+            //               int(m_num_recv_ghosts[dir] * sizeof(Scalar)),
+            //               MPI_BYTE,
+            //               recv_neighbor,
+            //               4,
+            //               m_mpi_comm,
+            //               &req);
+            //     m_reqs.push_back(req);
+            //     }
 
-            if (flags[comm_flag::diameter])
-                {
-                MPI_Isend(h_diameter_copybuf.data,
-                          int(m_num_copy_ghosts[dir] * sizeof(Scalar)),
-                          MPI_BYTE,
-                          send_neighbor,
-                          5,
-                          m_mpi_comm,
-                          &req);
-                m_reqs.push_back(req);
-                MPI_Irecv(h_diameter.data + start_idx,
-                          int(m_num_recv_ghosts[dir] * sizeof(Scalar)),
-                          MPI_BYTE,
-                          recv_neighbor,
-                          5,
-                          m_mpi_comm,
-                          &req);
-                m_reqs.push_back(req);
-                }
+            // if (flags[comm_flag::diameter])
+            //     {
+            //     MPI_Isend(h_diameter_copybuf.data,
+            //               int(m_num_copy_ghosts[dir] * sizeof(Scalar)),
+            //               MPI_BYTE,
+            //               send_neighbor,
+            //               5,
+            //               m_mpi_comm,
+            //               &req);
+            //     m_reqs.push_back(req);
+            //     MPI_Irecv(h_diameter.data + start_idx,
+            //               int(m_num_recv_ghosts[dir] * sizeof(Scalar)),
+            //               MPI_BYTE,
+            //               recv_neighbor,
+            //               5,
+            //               m_mpi_comm,
+            //               &req);
+            //     m_reqs.push_back(req);
+            //     }
 
             if (flags[comm_flag::velocity])
                 {
@@ -2260,7 +2385,7 @@ void Communicator::exchangeGhosts()
                           int(m_num_copy_ghosts[dir] * sizeof(Scalar4)),
                           MPI_BYTE,
                           send_neighbor,
-                          6,
+                          4,
                           m_mpi_comm,
                           &req);
                 m_reqs.push_back(req);
@@ -2268,24 +2393,65 @@ void Communicator::exchangeGhosts()
                           int(m_num_recv_ghosts[dir] * sizeof(Scalar4)),
                           MPI_BYTE,
                           recv_neighbor,
+                          4,
+                          m_mpi_comm,
+                          &req);
+                m_reqs.push_back(req);
+                }
+
+
+           if (flags[comm_flag::dpe])
+                {
+                MPI_Isend(h_dpe_copybuf.data,
+                          int(m_num_copy_ghosts[dir] * sizeof(Scalar3)),
+                          MPI_BYTE,
+                          send_neighbor,
+                          5,
+                          m_mpi_comm,
+                          &req);
+                m_reqs.push_back(req);
+                MPI_Irecv(h_dpe.data + start_idx,
+                          int(m_num_recv_ghosts[dir] * sizeof(Scalar3)),
+                          MPI_BYTE,
+                          recv_neighbor,
+                          5,
+                          m_mpi_comm,
+                          &req);
+                m_reqs.push_back(req);
+                }
+
+            if (flags[comm_flag::auxiliary1])
+                {
+                MPI_Isend(h_aux1_copybuf.data,
+                          int(m_num_copy_ghosts[dir] * sizeof(Scalar3)),
+                          MPI_BYTE,
+                          send_neighbor,
+                          6,
+                          m_mpi_comm,
+                          &req);
+                m_reqs.push_back(req);
+                MPI_Irecv(h_aux1.data + start_idx,
+                          int(m_num_recv_ghosts[dir] * sizeof(Scalar3)),
+                          MPI_BYTE,
+                          recv_neighbor,
                           6,
                           m_mpi_comm,
                           &req);
                 m_reqs.push_back(req);
                 }
 
-            if (flags[comm_flag::orientation])
+            if (flags[comm_flag::auxiliary2])
                 {
-                MPI_Isend(h_orientation_copybuf.data,
-                          int(m_num_copy_ghosts[dir] * sizeof(Scalar4)),
+                MPI_Isend(h_aux2_copybuf.data,
+                          int(m_num_copy_ghosts[dir] * sizeof(Scalar3)),
                           MPI_BYTE,
                           send_neighbor,
                           7,
                           m_mpi_comm,
                           &req);
                 m_reqs.push_back(req);
-                MPI_Irecv(h_orientation.data + start_idx,
-                          int(m_num_recv_ghosts[dir] * sizeof(Scalar4)),
+                MPI_Irecv(h_aux2.data + start_idx,
+                          int(m_num_recv_ghosts[dir] * sizeof(Scalar3)),
                           MPI_BYTE,
                           recv_neighbor,
                           7,
@@ -2293,6 +2459,66 @@ void Communicator::exchangeGhosts()
                           &req);
                 m_reqs.push_back(req);
                 }
+
+            if (flags[comm_flag::auxiliary3])
+                {
+                MPI_Isend(h_aux3_copybuf.data,
+                          int(m_num_copy_ghosts[dir] * sizeof(Scalar3)),
+                          MPI_BYTE,
+                          send_neighbor,
+                          8,
+                          m_mpi_comm,
+                          &req);
+                m_reqs.push_back(req);
+                MPI_Irecv(h_aux3.data + start_idx,
+                          int(m_num_recv_ghosts[dir] * sizeof(Scalar3)),
+                          MPI_BYTE,
+                          recv_neighbor,
+                          8,
+                          m_mpi_comm,
+                          &req);
+                m_reqs.push_back(req);
+                }
+
+            if (flags[comm_flag::auxiliary4])
+                {
+                MPI_Isend(h_aux4_copybuf.data,
+                          int(m_num_copy_ghosts[dir] * sizeof(Scalar3)),
+                          MPI_BYTE,
+                          send_neighbor,
+                          9,
+                          m_mpi_comm,
+                          &req);
+                m_reqs.push_back(req);
+                MPI_Irecv(h_aux4.data + start_idx,
+                          int(m_num_recv_ghosts[dir] * sizeof(Scalar3)),
+                          MPI_BYTE,
+                          recv_neighbor,
+                          9,
+                          m_mpi_comm,
+                          &req);
+                m_reqs.push_back(req);
+                }
+
+            // if (flags[comm_flag::orientation])
+            //     {
+            //     MPI_Isend(h_orientation_copybuf.data,
+            //               int(m_num_copy_ghosts[dir] * sizeof(Scalar4)),
+            //               MPI_BYTE,
+            //               send_neighbor,
+            //               7,
+            //               m_mpi_comm,
+            //               &req);
+            //     m_reqs.push_back(req);
+            //     MPI_Irecv(h_orientation.data + start_idx,
+            //               int(m_num_recv_ghosts[dir] * sizeof(Scalar4)),
+            //               MPI_BYTE,
+            //               recv_neighbor,
+            //               7,
+            //               m_mpi_comm,
+            //               &req);
+            //     m_reqs.push_back(req);
+            //     }
 
             if (flags[comm_flag::body])
                 {
@@ -2300,7 +2526,7 @@ void Communicator::exchangeGhosts()
                           int(m_num_copy_ghosts[dir] * sizeof(unsigned int)),
                           MPI_BYTE,
                           send_neighbor,
-                          8,
+                          10,
                           m_mpi_comm,
                           &req);
                 m_reqs.push_back(req);
@@ -2308,7 +2534,7 @@ void Communicator::exchangeGhosts()
                           int(m_num_recv_ghosts[dir] * sizeof(unsigned int)),
                           MPI_BYTE,
                           recv_neighbor,
-                          8,
+                          10,
                           m_mpi_comm,
                           &req);
                 m_reqs.push_back(req);
@@ -2320,7 +2546,7 @@ void Communicator::exchangeGhosts()
                           int(m_num_copy_ghosts[dir] * sizeof(int3)),
                           MPI_BYTE,
                           send_neighbor,
-                          9,
+                          11,
                           m_mpi_comm,
                           &req);
                 m_reqs.push_back(req);
@@ -2328,7 +2554,7 @@ void Communicator::exchangeGhosts()
                           int(m_num_recv_ghosts[dir] * sizeof(int3)),
                           MPI_BYTE,
                           recv_neighbor,
-                          9,
+                          11,
                           m_mpi_comm,
                           &req);
                 m_reqs.push_back(req);
@@ -2720,12 +2946,12 @@ void Communicator::beginUpdateGhosts(uint64_t timestep)
                 }
             }
 
-        if (flags[comm_flag::orientation])
+        if (flags[comm_flag::dpe])
             {
-            ArrayHandle<Scalar4> h_orientation(m_pdata->getOrientationArray(),
+            ArrayHandle<Scalar3> h_dpe(m_pdata->getDPEs(),
                                                access_location::host,
                                                access_mode::read);
-            ArrayHandle<Scalar4> h_orientation_copybuf(m_orientation_copybuf,
+            ArrayHandle<Scalar3> h_dpe_copybuf(m_dpe_copybuf,
                                                        access_location::host,
                                                        access_mode::overwrite);
             ArrayHandle<unsigned int> h_copy_ghosts(m_copy_ghosts[dir],
@@ -2735,17 +2961,152 @@ void Communicator::beginUpdateGhosts(uint64_t timestep)
                                              access_location::host,
                                              access_mode::read);
 
-            // copy orientation of ghost particles
+            // copy dpes of ghost particles
             for (unsigned int ghost_idx = 0; ghost_idx < m_num_copy_ghosts[dir]; ghost_idx++)
                 {
                 unsigned int idx = h_rtag.data[h_copy_ghosts.data[ghost_idx]];
 
                 assert(idx < m_pdata->getN() + m_pdata->getNGhosts());
 
-                // copy orientation into send buffer
-                h_orientation_copybuf.data[ghost_idx] = h_orientation.data[idx];
+                // copy dpes into send buffer
+                h_dpe_copybuf.data[ghost_idx] = h_dpe.data[idx];
                 }
             }
+
+        if (flags[comm_flag::auxiliary1])
+            {
+            ArrayHandle<Scalar3> h_aux1(m_pdata->getAuxiliaries1(),
+                                               access_location::host,
+                                               access_mode::read);
+            ArrayHandle<Scalar3> h_aux1_copybuf(m_aux1_copybuf,
+                                                       access_location::host,
+                                                       access_mode::overwrite);
+            ArrayHandle<unsigned int> h_copy_ghosts(m_copy_ghosts[dir],
+                                                    access_location::host,
+                                                    access_mode::read);
+            ArrayHandle<unsigned int> h_rtag(m_pdata->getRTags(),
+                                             access_location::host,
+                                             access_mode::read);
+
+            // copy aux1 of ghost particles
+            for (unsigned int ghost_idx = 0; ghost_idx < m_num_copy_ghosts[dir]; ghost_idx++)
+                {
+                unsigned int idx = h_rtag.data[h_copy_ghosts.data[ghost_idx]];
+
+                assert(idx < m_pdata->getN() + m_pdata->getNGhosts());
+
+                // copy aux1 into send buffer
+                h_aux1_copybuf.data[ghost_idx] = h_aux1.data[idx];
+                }
+            }
+
+        if (flags[comm_flag::auxiliary2])
+            {
+            ArrayHandle<Scalar3> h_aux2(m_pdata->getAuxiliaries2(),
+                                               access_location::host,
+                                               access_mode::read);
+            ArrayHandle<Scalar3> h_aux2_copybuf(m_aux2_copybuf,
+                                                       access_location::host,
+                                                       access_mode::overwrite);
+            ArrayHandle<unsigned int> h_copy_ghosts(m_copy_ghosts[dir],
+                                                    access_location::host,
+                                                    access_mode::read);
+            ArrayHandle<unsigned int> h_rtag(m_pdata->getRTags(),
+                                             access_location::host,
+                                             access_mode::read);
+
+            // copy aux2 of ghost particles
+            for (unsigned int ghost_idx = 0; ghost_idx < m_num_copy_ghosts[dir]; ghost_idx++)
+                {
+                unsigned int idx = h_rtag.data[h_copy_ghosts.data[ghost_idx]];
+
+                assert(idx < m_pdata->getN() + m_pdata->getNGhosts());
+
+                // copy aux2 into send buffer
+                h_aux2_copybuf.data[ghost_idx] = h_aux2.data[idx];
+                }
+            }
+
+        if (flags[comm_flag::auxiliary3])
+            {
+            ArrayHandle<Scalar3> h_aux3(m_pdata->getAuxiliaries3(),
+                                               access_location::host,
+                                               access_mode::read);
+            ArrayHandle<Scalar3> h_aux3_copybuf(m_aux3_copybuf,
+                                                       access_location::host,
+                                                       access_mode::overwrite);
+            ArrayHandle<unsigned int> h_copy_ghosts(m_copy_ghosts[dir],
+                                                    access_location::host,
+                                                    access_mode::read);
+            ArrayHandle<unsigned int> h_rtag(m_pdata->getRTags(),
+                                             access_location::host,
+                                             access_mode::read);
+
+            // copy aux3 of ghost particles
+            for (unsigned int ghost_idx = 0; ghost_idx < m_num_copy_ghosts[dir]; ghost_idx++)
+                {
+                unsigned int idx = h_rtag.data[h_copy_ghosts.data[ghost_idx]];
+
+                assert(idx < m_pdata->getN() + m_pdata->getNGhosts());
+
+                // copy aux3 into send buffer
+                h_aux3_copybuf.data[ghost_idx] = h_aux3.data[idx];
+                }
+            }
+
+        if (flags[comm_flag::auxiliary4])
+            {
+            ArrayHandle<Scalar3> h_aux4(m_pdata->getAuxiliaries4(),
+                                               access_location::host,
+                                               access_mode::read);
+            ArrayHandle<Scalar3> h_aux4_copybuf(m_aux4_copybuf,
+                                                       access_location::host,
+                                                       access_mode::overwrite);
+            ArrayHandle<unsigned int> h_copy_ghosts(m_copy_ghosts[dir],
+                                                    access_location::host,
+                                                    access_mode::read);
+            ArrayHandle<unsigned int> h_rtag(m_pdata->getRTags(),
+                                             access_location::host,
+                                             access_mode::read);
+
+            // copy aux4 of ghost particles
+            for (unsigned int ghost_idx = 0; ghost_idx < m_num_copy_ghosts[dir]; ghost_idx++)
+                {
+                unsigned int idx = h_rtag.data[h_copy_ghosts.data[ghost_idx]];
+
+                assert(idx < m_pdata->getN() + m_pdata->getNGhosts());
+
+                // copy aux4 into send buffer
+                h_aux4_copybuf.data[ghost_idx] = h_aux4.data[idx];
+                }
+            }
+
+        // if (flags[comm_flag::orientation])
+        //     {
+        //     ArrayHandle<Scalar4> h_orientation(m_pdata->getOrientationArray(),
+        //                                        access_location::host,
+        //                                        access_mode::read);
+        //     ArrayHandle<Scalar4> h_orientation_copybuf(m_orientation_copybuf,
+        //                                                access_location::host,
+        //                                                access_mode::overwrite);
+        //     ArrayHandle<unsigned int> h_copy_ghosts(m_copy_ghosts[dir],
+        //                                             access_location::host,
+        //                                             access_mode::read);
+        //     ArrayHandle<unsigned int> h_rtag(m_pdata->getRTags(),
+        //                                      access_location::host,
+        //                                      access_mode::read);
+
+        //     // copy orientation of ghost particles
+        //     for (unsigned int ghost_idx = 0; ghost_idx < m_num_copy_ghosts[dir]; ghost_idx++)
+        //         {
+        //         unsigned int idx = h_rtag.data[h_copy_ghosts.data[ghost_idx]];
+
+        //         assert(idx < m_pdata->getN() + m_pdata->getNGhosts());
+
+        //         // copy orientation into send buffer
+        //         h_orientation_copybuf.data[ghost_idx] = h_orientation.data[idx];
+        //         }
+        //     }
 
         unsigned int send_neighbor = m_decomposition->getNeighborRank(dir);
 
@@ -2762,7 +3123,8 @@ void Communicator::beginUpdateGhosts(uint64_t timestep)
 
         num_tot_recv_ghosts += m_num_recv_ghosts[dir];
 
-        // only non-permanent fields (position, velocity, orientation) need to be considered here
+
+        // only non-permanent fields (position, velocity, dpe, aux 1-4) need to be considered here
         // charge, body, image and diameter are not updated between neighbor list builds
         if (flags[comm_flag::position])
             {
@@ -2824,35 +3186,192 @@ void Communicator::beginUpdateGhosts(uint64_t timestep)
             MPI_Waitall(2, &m_reqs.front(), &m_stats.front());
             }
 
-        if (flags[comm_flag::orientation])
+        if (flags[comm_flag::dpe])
             {
             m_reqs.resize(2);
             m_stats.resize(2);
 
-            ArrayHandle<Scalar4> h_orientation(m_pdata->getOrientationArray(),
+            ArrayHandle<Scalar3> h_dpe(m_pdata->getDPEs(),
                                                access_location::host,
                                                access_mode::readwrite);
-            ArrayHandle<Scalar4> h_orientation_copybuf(m_orientation_copybuf,
+            ArrayHandle<Scalar3> h_dpe_copybuf(m_dpe_copybuf,
                                                        access_location::host,
                                                        access_mode::read);
 
             // exchange particle data, write directly to the particle data arrays
-            MPI_Isend(h_orientation_copybuf.data,
-                      (unsigned int)(m_num_copy_ghosts[dir] * sizeof(Scalar4)),
+            MPI_Isend(h_dpe_copybuf.data,
+                      (unsigned int)(m_num_copy_ghosts[dir] * sizeof(Scalar3)),
                       MPI_BYTE,
                       send_neighbor,
                       3,
                       m_mpi_comm,
                       &m_reqs[0]);
-            MPI_Irecv(h_orientation.data + start_idx,
-                      (unsigned int)(m_num_recv_ghosts[dir] * sizeof(Scalar4)),
+            MPI_Irecv(h_dpe.data + start_idx,
+                      (unsigned int)(m_num_recv_ghosts[dir] * sizeof(Scalar3)),
                       MPI_BYTE,
                       recv_neighbor,
                       3,
                       m_mpi_comm,
                       &m_reqs[1]);
             MPI_Waitall(2, &m_reqs.front(), &m_stats.front());
+
             }
+
+
+        if (flags[comm_flag::auxiliary1])
+            {
+            m_reqs.resize(2);
+            m_stats.resize(2);
+
+            ArrayHandle<Scalar3> h_aux1(m_pdata->getAuxiliaries1(),
+                                               access_location::host,
+                                               access_mode::readwrite);
+            ArrayHandle<Scalar3> h_aux1_copybuf(m_aux1_copybuf,
+                                                       access_location::host,
+                                                       access_mode::read);
+
+            // exchange particle data, write directly to the particle data arrays
+            MPI_Isend(h_aux1_copybuf.data,
+                      (unsigned int)(m_num_copy_ghosts[dir] * sizeof(Scalar3)),
+                      MPI_BYTE,
+                      send_neighbor,
+                      4,
+                      m_mpi_comm,
+                      &m_reqs[0]);
+            MPI_Irecv(h_aux1.data + start_idx,
+                      (unsigned int)(m_num_recv_ghosts[dir] * sizeof(Scalar3)),
+                      MPI_BYTE,
+                      recv_neighbor,
+                      4,
+                      m_mpi_comm,
+                      &m_reqs[1]);
+            MPI_Waitall(2, &m_reqs.front(), &m_stats.front());
+
+            }
+
+        if (flags[comm_flag::auxiliary2])
+            {
+            m_reqs.resize(2);
+            m_stats.resize(2);
+
+            ArrayHandle<Scalar3> h_aux2(m_pdata->getAuxiliaries2(),
+                                               access_location::host,
+                                               access_mode::readwrite);
+            ArrayHandle<Scalar3> h_aux2_copybuf(m_aux2_copybuf,
+                                                       access_location::host,
+                                                       access_mode::read);
+
+            // exchange particle data, write directly to the particle data arrays
+            MPI_Isend(h_aux2_copybuf.data,
+                      (unsigned int)(m_num_copy_ghosts[dir] * sizeof(Scalar3)),
+                      MPI_BYTE,
+                      send_neighbor,
+                      5,
+                      m_mpi_comm,
+                      &m_reqs[0]);
+            MPI_Irecv(h_aux2.data + start_idx,
+                      (unsigned int)(m_num_recv_ghosts[dir] * sizeof(Scalar3)),
+                      MPI_BYTE,
+                      recv_neighbor,
+                      5,
+                      m_mpi_comm,
+                      &m_reqs[1]);
+            MPI_Waitall(2, &m_reqs.front(), &m_stats.front());
+
+            }
+
+
+        if (flags[comm_flag::auxiliary3])
+            {
+            m_reqs.resize(2);
+            m_stats.resize(2);
+
+            ArrayHandle<Scalar3> h_aux3(m_pdata->getAuxiliaries3(),
+                                               access_location::host,
+                                               access_mode::readwrite);
+            ArrayHandle<Scalar3> h_aux3_copybuf(m_aux3_copybuf,
+                                                       access_location::host,
+                                                       access_mode::read);
+
+            // exchange particle data, write directly to the particle data arrays
+            MPI_Isend(h_aux3_copybuf.data,
+                      (unsigned int)(m_num_copy_ghosts[dir] * sizeof(Scalar3)),
+                      MPI_BYTE,
+                      send_neighbor,
+                      6,
+                      m_mpi_comm,
+                      &m_reqs[0]);
+            MPI_Irecv(h_aux3.data + start_idx,
+                      (unsigned int)(m_num_recv_ghosts[dir] * sizeof(Scalar3)),
+                      MPI_BYTE,
+                      recv_neighbor,
+                      6,
+                      m_mpi_comm,
+                      &m_reqs[1]);
+            MPI_Waitall(2, &m_reqs.front(), &m_stats.front());
+
+            }
+
+        if (flags[comm_flag::auxiliary4])
+            {
+            m_reqs.resize(2);
+            m_stats.resize(2);
+
+            ArrayHandle<Scalar3> h_aux4(m_pdata->getAuxiliaries4(),
+                                               access_location::host,
+                                               access_mode::readwrite);
+            ArrayHandle<Scalar3> h_aux4_copybuf(m_aux4_copybuf,
+                                                       access_location::host,
+                                                       access_mode::read);
+
+            // exchange particle data, write directly to the particle data arrays
+            MPI_Isend(h_aux4_copybuf.data,
+                      (unsigned int)(m_num_copy_ghosts[dir] * sizeof(Scalar3)),
+                      MPI_BYTE,
+                      send_neighbor,
+                      7,
+                      m_mpi_comm,
+                      &m_reqs[0]);
+            MPI_Irecv(h_aux4.data + start_idx,
+                      (unsigned int)(m_num_recv_ghosts[dir] * sizeof(Scalar3)),
+                      MPI_BYTE,
+                      recv_neighbor,
+                      7,
+                      m_mpi_comm,
+                      &m_reqs[1]);
+            MPI_Waitall(2, &m_reqs.front(), &m_stats.front());
+
+            }
+
+        // if (flags[comm_flag::orientation])
+        //     {
+        //     m_reqs.resize(2);
+        //     m_stats.resize(2);
+
+        //     ArrayHandle<Scalar4> h_orientation(m_pdata->getOrientationArray(),
+        //                                        access_location::host,
+        //                                        access_mode::readwrite);
+        //     ArrayHandle<Scalar4> h_orientation_copybuf(m_orientation_copybuf,
+        //                                                access_location::host,
+        //                                                access_mode::read);
+
+        //     // exchange particle data, write directly to the particle data arrays
+        //     MPI_Isend(h_orientation_copybuf.data,
+        //               (unsigned int)(m_num_copy_ghosts[dir] * sizeof(Scalar4)),
+        //               MPI_BYTE,
+        //               send_neighbor,
+        //               3,
+        //               m_mpi_comm,
+        //               &m_reqs[0]);
+        //     MPI_Irecv(h_orientation.data + start_idx,
+        //               (unsigned int)(m_num_recv_ghosts[dir] * sizeof(Scalar4)),
+        //               MPI_BYTE,
+        //               recv_neighbor,
+        //               3,
+        //               m_mpi_comm,
+        //               &m_reqs[1]);
+        //     MPI_Waitall(2, &m_reqs.front(), &m_stats.front());
+        //     }
 
         // wrap particle positions (only if copying positions)
         if (flags[comm_flag::position])
@@ -2879,7 +3398,8 @@ void Communicator::updateNetForce(uint64_t timestep)
     {
     CommFlags flags = getFlags();
     if (!flags[comm_flag::net_force] && !flags[comm_flag::reverse_net_force]
-        && !flags[comm_flag::net_torque] && !flags[comm_flag::net_virial])
+        && !flags[comm_flag::net_ratedpe])
+        // && !flags[comm_flag::net_torque] && !flags[comm_flag::net_virial])
         return;
 
     // we have a current m_copy_ghosts list which contain the indices of particles
@@ -2894,14 +3414,20 @@ void Communicator::updateNetForce(uint64_t timestep)
         {
         oss << "reverse force ";
         }
-    if (flags[comm_flag::net_torque])
+
+    if (flags[comm_flag::net_ratedpe])
         {
-        oss << "torque ";
+        oss << "ratedpe ";
         }
-    if (flags[comm_flag::net_virial])
-        {
-        oss << "virial";
-        }
+    
+    // if (flags[comm_flag::net_torque])
+    //     {
+    //     oss << "torque ";
+    //     }
+    // if (flags[comm_flag::net_virial])
+    //     {
+    //     oss << "virial";
+    //     }
 
     m_exec_conf->msg->notice(7) << oss.str() << std::endl;
 
@@ -2919,15 +3445,20 @@ void Communicator::updateNetForce(uint64_t timestep)
         m_netforce_reverse_copybuf.clear();
         }
 
-    if (flags[comm_flag::net_torque])
+    if (flags[comm_flag::net_ratedpe])
         {
-        m_nettorque_copybuf.clear();
+        m_netratedpe_copybuf.clear();
         }
 
-    if (flags[comm_flag::net_virial])
-        {
-        m_netvirial_copybuf.clear();
-        }
+    // if (flags[comm_flag::net_torque])
+    //     {
+    //     m_nettorque_copybuf.clear();
+    //     }
+
+    // if (flags[comm_flag::net_virial])
+    //     {
+    //     m_netvirial_copybuf.clear();
+    //     }
 
     // update data in these arrays
 
@@ -2951,17 +3482,23 @@ void Communicator::updateNetForce(uint64_t timestep)
                                               + m_num_copy_local_ghosts_reverse[dir]);
             }
 
-        if (flags[comm_flag::net_torque])
+        if (flags[comm_flag::net_ratedpe])
             {
-            old_size = (unsigned int)m_nettorque_copybuf.size();
-            m_nettorque_copybuf.resize(old_size + m_num_copy_ghosts[dir]);
+            old_size = (unsigned int)m_netratedpe_copybuf.size();
+            m_netratedpe_copybuf.resize(old_size + m_num_copy_ghosts[dir]);
             }
 
-        if (flags[comm_flag::net_virial])
-            {
-            old_size = (unsigned int)m_netvirial_copybuf.size();
-            m_netvirial_copybuf.resize(old_size + 6 * m_num_copy_ghosts[dir]);
-            }
+        // if (flags[comm_flag::net_torque])
+        //     {
+        //     old_size = (unsigned int)m_nettorque_copybuf.size();
+        //     m_nettorque_copybuf.resize(old_size + m_num_copy_ghosts[dir]);
+        //     }
+
+        // if (flags[comm_flag::net_virial])
+        //     {
+        //     old_size = (unsigned int)m_netvirial_copybuf.size();
+        //     m_netvirial_copybuf.resize(old_size + 6 * m_num_copy_ghosts[dir]);
+        //     }
 
         // Copy data into send buffers
         if (flags[comm_flag::net_force])
@@ -3034,12 +3571,12 @@ void Communicator::updateNetForce(uint64_t timestep)
                 }
             }
 
-        if (flags[comm_flag::net_torque])
+        if (flags[comm_flag::net_ratedpe])
             {
-            ArrayHandle<Scalar4> h_nettorque(m_pdata->getNetTorqueArray(),
+            ArrayHandle<Scalar4> h_netratedpe(m_pdata->getNetRateDPEArray(),
                                              access_location::host,
                                              access_mode::read);
-            ArrayHandle<Scalar4> h_nettorque_copybuf(m_nettorque_copybuf,
+            ArrayHandle<Scalar4> h_netratedpe_copybuf(m_netratedpe_copybuf,
                                                      access_location::host,
                                                      access_mode::overwrite);
             ArrayHandle<unsigned int> h_copy_ghosts(m_copy_ghosts[dir],
@@ -3056,43 +3593,70 @@ void Communicator::updateNetForce(uint64_t timestep)
 
                 assert(idx < m_pdata->getN() + m_pdata->getNGhosts());
 
-                // copy net force into send buffer
-                h_nettorque_copybuf.data[ghost_idx] = h_nettorque.data[idx];
+                // copy netratedpe into send buffer
+                h_netratedpe_copybuf.data[ghost_idx] = h_netratedpe.data[idx];
                 }
             }
-        if (flags[comm_flag::net_virial])
-            {
-            ArrayHandle<Scalar> h_netvirial(m_pdata->getNetVirial(),
-                                            access_location::host,
-                                            access_mode::read);
-            ArrayHandle<Scalar> h_netvirial_copybuf(m_netvirial_copybuf,
-                                                    access_location::host,
-                                                    access_mode::overwrite);
-            ArrayHandle<unsigned int> h_copy_ghosts(m_copy_ghosts[dir],
-                                                    access_location::host,
-                                                    access_mode::read);
-            ArrayHandle<unsigned int> h_rtag(m_pdata->getRTags(),
-                                             access_location::host,
-                                             access_mode::read);
 
-            unsigned int pitch = (unsigned int)m_pdata->getNetVirial().getPitch();
+        // if (flags[comm_flag::net_torque])
+        //     {
+        //     ArrayHandle<Scalar4> h_nettorque(m_pdata->getNetTorqueArray(),
+        //                                      access_location::host,
+        //                                      access_mode::read);
+        //     ArrayHandle<Scalar4> h_nettorque_copybuf(m_nettorque_copybuf,
+        //                                              access_location::host,
+        //                                              access_mode::overwrite);
+        //     ArrayHandle<unsigned int> h_copy_ghosts(m_copy_ghosts[dir],
+        //                                             access_location::host,
+        //                                             access_mode::read);
+        //     ArrayHandle<unsigned int> h_rtag(m_pdata->getRTags(),
+        //                                      access_location::host,
+        //                                      access_mode::read);
 
-            // copy net torques of ghost particles
-            for (unsigned int ghost_idx = 0; ghost_idx < m_num_copy_ghosts[dir]; ghost_idx++)
-                {
-                unsigned int idx = h_rtag.data[h_copy_ghosts.data[ghost_idx]];
+        //     // copy net torques of ghost particles
+        //     for (unsigned int ghost_idx = 0; ghost_idx < m_num_copy_ghosts[dir]; ghost_idx++)
+        //         {
+        //         unsigned int idx = h_rtag.data[h_copy_ghosts.data[ghost_idx]];
 
-                assert(idx < m_pdata->getN() + m_pdata->getNGhosts());
+        //         assert(idx < m_pdata->getN() + m_pdata->getNGhosts());
 
-                // copy net force into send buffer, transposing
-                h_netvirial_copybuf.data[6 * ghost_idx + 0] = h_netvirial.data[0 * pitch + idx];
-                h_netvirial_copybuf.data[6 * ghost_idx + 1] = h_netvirial.data[1 * pitch + idx];
-                h_netvirial_copybuf.data[6 * ghost_idx + 2] = h_netvirial.data[2 * pitch + idx];
-                h_netvirial_copybuf.data[6 * ghost_idx + 3] = h_netvirial.data[3 * pitch + idx];
-                h_netvirial_copybuf.data[6 * ghost_idx + 4] = h_netvirial.data[4 * pitch + idx];
-                h_netvirial_copybuf.data[6 * ghost_idx + 5] = h_netvirial.data[5 * pitch + idx];
-                }
-            }
+        //         // copy net force into send buffer
+        //         h_nettorque_copybuf.data[ghost_idx] = h_nettorque.data[idx];
+        //         }
+        //     }
+        // if (flags[comm_flag::net_virial])
+        //     {
+        //     ArrayHandle<Scalar> h_netvirial(m_pdata->getNetVirial(),
+        //                                     access_location::host,
+        //                                     access_mode::read);
+        //     ArrayHandle<Scalar> h_netvirial_copybuf(m_netvirial_copybuf,
+        //                                             access_location::host,
+        //                                             access_mode::overwrite);
+        //     ArrayHandle<unsigned int> h_copy_ghosts(m_copy_ghosts[dir],
+        //                                             access_location::host,
+        //                                             access_mode::read);
+        //     ArrayHandle<unsigned int> h_rtag(m_pdata->getRTags(),
+        //                                      access_location::host,
+        //                                      access_mode::read);
+
+        //     unsigned int pitch = (unsigned int)m_pdata->getNetVirial().getPitch();
+
+        //     // copy net torques of ghost particles
+        //     for (unsigned int ghost_idx = 0; ghost_idx < m_num_copy_ghosts[dir]; ghost_idx++)
+        //         {
+        //         unsigned int idx = h_rtag.data[h_copy_ghosts.data[ghost_idx]];
+
+        //         assert(idx < m_pdata->getN() + m_pdata->getNGhosts());
+
+        //         // copy net force into send buffer, transposing
+        //         h_netvirial_copybuf.data[6 * ghost_idx + 0] = h_netvirial.data[0 * pitch + idx];
+        //         h_netvirial_copybuf.data[6 * ghost_idx + 1] = h_netvirial.data[1 * pitch + idx];
+        //         h_netvirial_copybuf.data[6 * ghost_idx + 2] = h_netvirial.data[2 * pitch + idx];
+        //         h_netvirial_copybuf.data[6 * ghost_idx + 3] = h_netvirial.data[3 * pitch + idx];
+        //         h_netvirial_copybuf.data[6 * ghost_idx + 4] = h_netvirial.data[4 * pitch + idx];
+        //         h_netvirial_copybuf.data[6 * ghost_idx + 5] = h_netvirial.data[5 * pitch + idx];
+        //         }
+        //     }
 
         unsigned int send_neighbor = m_decomposition->getNeighborRank(dir);
 
@@ -3218,26 +3782,26 @@ void Communicator::updateNetForce(uint64_t timestep)
                 }
             }
 
-        if (flags[comm_flag::net_torque])
+        if (flags[comm_flag::net_ratedpe])
             {
             m_reqs.resize(2);
             m_stats.resize(2);
 
-            ArrayHandle<Scalar4> h_nettorque(m_pdata->getNetTorqueArray(),
+            ArrayHandle<Scalar4> h_netratedpe(m_pdata->getNetRateDPEArray(),
                                              access_location::host,
                                              access_mode::readwrite);
-            ArrayHandle<Scalar4> h_nettorque_copybuf(m_nettorque_copybuf,
+            ArrayHandle<Scalar4> h_netratedpe_copybuf(m_netratedpe_copybuf,
                                                      access_location::host,
                                                      access_mode::read);
 
-            MPI_Isend(h_nettorque_copybuf.data,
+            MPI_Isend(h_netratedpe_copybuf.data,
                       (unsigned int)(m_num_copy_ghosts[dir] * sizeof(Scalar4)),
                       MPI_BYTE,
                       send_neighbor,
                       2,
                       m_mpi_comm,
                       &m_reqs[0]);
-            MPI_Irecv(h_nettorque.data + start_idx,
+            MPI_Irecv(h_netratedpe.data + start_idx,
                       (unsigned int)(m_num_recv_ghosts[dir] * sizeof(Scalar4)),
                       MPI_BYTE,
                       recv_neighbor,
@@ -3245,60 +3809,90 @@ void Communicator::updateNetForce(uint64_t timestep)
                       m_mpi_comm,
                       &m_reqs[1]);
             MPI_Waitall(2, &m_reqs.front(), &m_stats.front());
+
             }
 
-        if (flags[comm_flag::net_virial])
-            {
-            m_netvirial_recvbuf.resize(6 * m_num_recv_ghosts[dir]);
-            m_reqs.resize(2);
-            m_stats.resize(2);
+        // if (flags[comm_flag::net_torque])
+        //     {
+        //     m_reqs.resize(2);
+        //     m_stats.resize(2);
 
-            ArrayHandle<Scalar> h_netvirial_recvbuf(m_netvirial_recvbuf,
-                                                    access_location::host,
-                                                    access_mode::overwrite);
-            ArrayHandle<Scalar> h_netvirial_copybuf(m_netvirial_copybuf,
-                                                    access_location::host,
-                                                    access_mode::read);
+        //     ArrayHandle<Scalar4> h_nettorque(m_pdata->getNetTorqueArray(),
+        //                                      access_location::host,
+        //                                      access_mode::readwrite);
+        //     ArrayHandle<Scalar4> h_nettorque_copybuf(m_nettorque_copybuf,
+        //                                              access_location::host,
+        //                                              access_mode::read);
 
-            MPI_Isend(h_netvirial_copybuf.data,
-                      (unsigned int)(6 * m_num_copy_ghosts[dir] * sizeof(Scalar)),
-                      MPI_BYTE,
-                      send_neighbor,
-                      3,
-                      m_mpi_comm,
-                      &m_reqs[0]);
-            MPI_Irecv(h_netvirial_recvbuf.data,
-                      (unsigned int)(6 * m_num_recv_ghosts[dir] * sizeof(Scalar)),
-                      MPI_BYTE,
-                      recv_neighbor,
-                      3,
-                      m_mpi_comm,
-                      &m_reqs[1]);
-            MPI_Waitall(2, &m_reqs.front(), &m_stats.front());
-            }
+        //     MPI_Isend(h_nettorque_copybuf.data,
+        //               (unsigned int)(m_num_copy_ghosts[dir] * sizeof(Scalar4)),
+        //               MPI_BYTE,
+        //               send_neighbor,
+        //               2,
+        //               m_mpi_comm,
+        //               &m_reqs[0]);
+        //     MPI_Irecv(h_nettorque.data + start_idx,
+        //               (unsigned int)(m_num_recv_ghosts[dir] * sizeof(Scalar4)),
+        //               MPI_BYTE,
+        //               recv_neighbor,
+        //               2,
+        //               m_mpi_comm,
+        //               &m_reqs[1]);
+        //     MPI_Waitall(2, &m_reqs.front(), &m_stats.front());
+        //     }
 
-        if (flags[comm_flag::net_virial])
-            {
-            unsigned int pitch = (unsigned int)(m_pdata->getNetVirial().getPitch());
+        // if (flags[comm_flag::net_virial])
+        //     {
+        //     m_netvirial_recvbuf.resize(6 * m_num_recv_ghosts[dir]);
+        //     m_reqs.resize(2);
+        //     m_stats.resize(2);
 
-            // unpack virial
-            ArrayHandle<Scalar> h_netvirial_recvbuf(m_netvirial_recvbuf,
-                                                    access_location::host,
-                                                    access_mode::read);
-            ArrayHandle<Scalar> h_netvirial(m_pdata->getNetVirial(),
-                                            access_location::host,
-                                            access_mode::read);
+        //     ArrayHandle<Scalar> h_netvirial_recvbuf(m_netvirial_recvbuf,
+        //                                             access_location::host,
+        //                                             access_mode::overwrite);
+        //     ArrayHandle<Scalar> h_netvirial_copybuf(m_netvirial_copybuf,
+        //                                             access_location::host,
+        //                                             access_mode::read);
 
-            for (unsigned int i = 0; i < m_num_recv_ghosts[dir]; ++i)
-                {
-                h_netvirial.data[0 * pitch + start_idx + i] = h_netvirial_recvbuf.data[6 * i + 0];
-                h_netvirial.data[1 * pitch + start_idx + i] = h_netvirial_recvbuf.data[6 * i + 1];
-                h_netvirial.data[2 * pitch + start_idx + i] = h_netvirial_recvbuf.data[6 * i + 2];
-                h_netvirial.data[3 * pitch + start_idx + i] = h_netvirial_recvbuf.data[6 * i + 3];
-                h_netvirial.data[4 * pitch + start_idx + i] = h_netvirial_recvbuf.data[6 * i + 4];
-                h_netvirial.data[5 * pitch + start_idx + i] = h_netvirial_recvbuf.data[6 * i + 5];
-                }
-            }
+        //     MPI_Isend(h_netvirial_copybuf.data,
+        //               (unsigned int)(6 * m_num_copy_ghosts[dir] * sizeof(Scalar)),
+        //               MPI_BYTE,
+        //               send_neighbor,
+        //               3,
+        //               m_mpi_comm,
+        //               &m_reqs[0]);
+        //     MPI_Irecv(h_netvirial_recvbuf.data,
+        //               (unsigned int)(6 * m_num_recv_ghosts[dir] * sizeof(Scalar)),
+        //               MPI_BYTE,
+        //               recv_neighbor,
+        //               3,
+        //               m_mpi_comm,
+        //               &m_reqs[1]);
+        //     MPI_Waitall(2, &m_reqs.front(), &m_stats.front());
+        //     }
+
+        // if (flags[comm_flag::net_virial])
+        //     {
+        //     unsigned int pitch = (unsigned int)(m_pdata->getNetVirial().getPitch());
+
+        //     // unpack virial
+        //     ArrayHandle<Scalar> h_netvirial_recvbuf(m_netvirial_recvbuf,
+        //                                             access_location::host,
+        //                                             access_mode::read);
+        //     ArrayHandle<Scalar> h_netvirial(m_pdata->getNetVirial(),
+        //                                     access_location::host,
+        //                                     access_mode::read);
+
+        //     for (unsigned int i = 0; i < m_num_recv_ghosts[dir]; ++i)
+        //         {
+        //         h_netvirial.data[0 * pitch + start_idx + i] = h_netvirial_recvbuf.data[6 * i + 0];
+        //         h_netvirial.data[1 * pitch + start_idx + i] = h_netvirial_recvbuf.data[6 * i + 1];
+        //         h_netvirial.data[2 * pitch + start_idx + i] = h_netvirial_recvbuf.data[6 * i + 2];
+        //         h_netvirial.data[3 * pitch + start_idx + i] = h_netvirial_recvbuf.data[6 * i + 3];
+        //         h_netvirial.data[4 * pitch + start_idx + i] = h_netvirial_recvbuf.data[6 * i + 4];
+        //         h_netvirial.data[5 * pitch + start_idx + i] = h_netvirial_recvbuf.data[6 * i + 5];
+        //         }
+        //     }
         } // end dir loop
     }
 
@@ -3430,7 +4024,7 @@ void export_Communicator(pybind11::module& m)
     pybind11::class_<Communicator, std::shared_ptr<Communicator>>(m, "Communicator")
         .def(pybind11::init<std::shared_ptr<SystemDefinition>,
                             std::shared_ptr<DomainDecomposition>>())
-        .def("addMeshDefinition", &Communicator::addMeshDefinition)
+        // .def("addMeshDefinition", &Communicator::addMeshDefinition)
         .def_property_readonly("domain_decomposition", &Communicator::getDomainDecomposition);
     }
     } // end namespace detail
