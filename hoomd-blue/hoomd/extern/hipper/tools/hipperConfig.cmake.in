@@ -1,0 +1,9 @@
+@PACKAGE_INIT@
+
+set(hipper_INCLUDE_DIR "${PACKAGE_PREFIX_DIR}/@CMAKE_INSTALL_INCLUDEDIR@")
+check_required_components("@PROJECT_NAME@")
+
+if(NOT TARGET hipper::hipper)
+    set(hipper_INCLUDE_DIRS "${hipper_INCLUDE_DIR}")
+    include("${CMAKE_CURRENT_LIST_DIR}/@PROJECT_NAME@Targets.cmake")
+endif()

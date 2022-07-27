@@ -1,0 +1,25 @@
+build/
+
+
+*.sublime-workspace
+*.DS_Store
+*.dcd
+*.gsd
+build
+__pycache__
+*.pyc
+*.swp
+.vscode/launch.json
+.vscode/*.db*
+.vscode/c_cpp_properties.json
+
+# clangd
+.clangd
+.cache
+compile_commands.json
+
+# general specification of editor standards
+.editorconfig
+
+# virtualenv
+.venv

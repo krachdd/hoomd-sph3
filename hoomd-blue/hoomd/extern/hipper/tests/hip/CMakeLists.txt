@@ -1,0 +1,22 @@
+if(NOT DEFINED HIP_PATH)
+    if(NOT DEFINED ENV{HIP_PATH})
+        set(HIP_PATH "/opt/rocm/hip" CACHE PATH "Path to which HIP has been installed")
+    else()
+        set(HIP_PATH $ENV{HIP_PATH} CACHE PATH "Path to which HIP has been installed")
+    endif()
+endif()
+set(CMAKE_MODULE_PATH "${HIP_PATH}/cmake" ${CMAKE_MODULE_PATH})
+
+find_package(HIP QUIET)
+if(NOT HIP_FOUND)
+    message(STATUS "No HIP compiler, skipping HIP tests.")
+    return()
+endif()
+
+hip_add_executable(test_hipper_hip ${HIPPER_TEST_FILES})
+target_link_libraries(test_hipper_hip PRIVATE hipper::hipper Catch2::Catch2)
+target_compile_definitions(test_hipper_hip PRIVATE HIPPER_HIP)
+
+foreach(label ${HIPPER_TEST_LABELS})
+    add_test(NAME hipper-hip-${label} COMMAND test_hipper_hip "[${label}]")
+endforeach()

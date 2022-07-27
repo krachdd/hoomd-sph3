@@ -1,0 +1,9 @@
+.ipynb_checkpoints
+*.gsd
+*.log
+*.xml
+*.bib
+*.json
+*.dcd
+*.pyc
+__pycache__
