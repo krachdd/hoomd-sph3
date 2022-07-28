@@ -246,16 +246,16 @@ namespace detail {
 
 void export_SPHBaseClass(pybind11::module& m)
 {
-    // pybind11::class_<SPHBaseClass, std::shared_ptr<SPHBaseClass>>(m, "SPHBaseClass")
-    //     .def(pybind11::init<std::shared_ptr<SystemDefinition>,
-    //                         std::shared_ptr<SmoothingKernel<KT_> >,
-    //                        std::shared_ptr<StateEquation<SET_> >,
-    //                        std::shared_ptr<nsearch::NeighborList>>())
-    //     .def("constructTypeVectors", &SPHBaseClass::constructTypeVectors)
-    //     .def("getAcceleration", &SPHBaseClass::getAcceleration)
-    //     .def("applyBodyForce", &SPHBaseClass::applyBodyForce)
-    //     .def("applyBodyForceGPU", &SPHBaseClass::applyBodyForceGPU)
-    //     .def("setAcceleration", &SPHBaseClass::setAcceleration)
+    pybind11::class_<SPHBaseClass, std::shared_ptr<SPHBaseClass>>(m, "SPHBaseClass")
+        .def(pybind11::init<std::shared_ptr<SystemDefinition>,
+                            std::shared_ptr<SmoothingKernel<KT_> >,
+                           std::shared_ptr<StateEquation<SET_> >,
+                           std::shared_ptr<nsearch::NeighborList>>())
+        .def("constructTypeVectors", &SPHBaseClass::constructTypeVectors)
+        .def("getAcceleration", &SPHBaseClass::getAcceleration)
+        .def("applyBodyForce", &SPHBaseClass::applyBodyForce)
+        .def("applyBodyForceGPU", &SPHBaseClass::applyBodyForceGPU)
+        .def("setAcceleration", &SPHBaseClass::setAcceleration);
 
     pybind11::enum_<DensityMethod>(m, "PhaseFlowDensityMethod")
     .value("DENSITYSUMMATION", DENSITYSUMMATION)
