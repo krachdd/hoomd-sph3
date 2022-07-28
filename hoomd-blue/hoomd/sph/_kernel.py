@@ -1,25 +1,27 @@
-# Copyright (c) 2009-2022 The Regents of the University of Michigan.
-# Part of HOOMD-blue, released under the BSD 3-Clause License.
+R""" SPH kernel classes
+"""
 
-"""SPH kernel classes."""
-
-import hoomd 
+import math
+import numpy
+import hoomd
 import hoomd.sph
-import hoomd.nsearch 
-from hoomd import _hoomd
+from hoomd     import _hoomd
 from hoomd.sph import _sph
 from hoomd.nsearch import _nsearch
-import numpy
-import math
 
-
-class _SmoothingKernel(_HOOMDBaseObject):
-    r"""
-    Base class for smoothing kernel function classes
-    """
-
-    def __init__(self):
-        self._in_context_manager = False
+## \internal
+# \brief Base class for smoothing kernel function classes
+#
+class _SmoothingKernel(hoomd.meta._metadata):
+    ## \internal
+    # \brief Constructs the kernel class
+    #
+    # Initializes the cpp_smoothingkernel.
+    def __init__(self, name=None):
+        # check if initialization has occurred
+        if not hoomd.init.is_initialized():
+            hoomd.context.msg.error("Cannot create a smoothing kernel before initialization\n");
+            raise RuntimeError('Error creating smoothing kernel');
 
         self.kappa = 0;
         self.cpp_smoothingkernel = None;
@@ -31,6 +33,9 @@ class _SmoothingKernel(_HOOMDBaseObject):
             self.name = "";
         else:
             self.name="_" + name;
+
+        # base class constructor
+        hoomd.meta._metadata.__init__(self)
 
     def check_initialization(self):
         # check that we have been initialized properly
@@ -54,8 +59,9 @@ class _SmoothingKernel(_HOOMDBaseObject):
         # Set kernel scaling factor in neighbor list class
         self.nlist.cpp_nlist.setKernelFactor(self.kappa)
 
-
-
+        # Set nlist in SmoothingKernel class
+        #self.cpp_smoothingkernel.setNeighborList(self.nlist.cpp_nlist)
+        
 class WendlandC2(_SmoothingKernel):
     R""" Wendland C2 Kernel
     """

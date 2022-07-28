@@ -70,13 +70,13 @@ namespace detail
     void export_SPHBaseClass(pybind11::module& m);
     void export_CustomForceCompute(pybind11::module& m);
 
-#ifdef ENABLE_HIP
-    void export_VelocityVerletGPU(pybind11::module& m);
-    //void export_SuspendedObjectIntegratorGPU();
-    // void export_RigidBodyIntegratorGPU(pybind11::module& m);
-    void export_SinglePhaseFlowGPU(pybind11::module& m);
-    // void export_TwoPhaseFlowGPU(pybind11::module& m);
-#endif
+// #ifdef ENABLE_HIP
+//     void export_VelocityVerletGPU(pybind11::module& m);
+//     //void export_SuspendedObjectIntegratorGPU();
+//     // void export_RigidBodyIntegratorGPU(pybind11::module& m);
+//     void export_SinglePhaseFlowGPU(pybind11::module& m);
+//     // void export_TwoPhaseFlowGPU(pybind11::module& m);
+// #endif
 
 
 } // end namespace detail 
@@ -106,13 +106,13 @@ PYBIND11_MODULE(_sph, m){
     export_SPHBaseClass(m);
     export_CustomForceCompute(m);
 
-#ifdef ENABLE_HIP
-    export_VelocityVerletGPU(m);
-    //export_SuspendedObjectIntegratorGPU();
-    // export_RigidBodyIntegratorGPU(m);
-    export_SinglePhaseFlowGPU(m);
-    // export_TwoPhaseFlowGPU(m);
-#endif
+// #ifdef ENABLE_HIP
+//     export_VelocityVerletGPU(m);
+//     //export_SuspendedObjectIntegratorGPU();
+//     // export_RigidBodyIntegratorGPU(m);
+//     export_SinglePhaseFlowGPU(m);
+//     // export_TwoPhaseFlowGPU(m);
+// #endif
 
 }
 

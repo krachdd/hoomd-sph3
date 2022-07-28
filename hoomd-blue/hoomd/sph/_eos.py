@@ -1,21 +1,25 @@
-# Copyright (c) 2009-2022 The Regents of the University of Michigan.
-# Part of HOOMD-blue, released under the BSD 3-Clause License.
+R""" SPH equation of state classes
+"""
 
-"""SPH equation of state classes."""
-
-import hoomd 
-import hoomd.sph
-from hoomd import _hoomd 
-from hoomd.sph import _sph
+import math
 import numpy
+import hoomd
+import hoomd.sph
+from hoomd     import _hoomd
+from hoomd.sph import _sph
 
-class _StateEquation(_HOOMDBaseObject):
-	r"""
-	Constructs the equation of state meta class
-	"""
-
-	def __init__(self):
-        self._in_context_manager = False
+## \internal
+# \brief Base class for equation of state classes
+#
+class _StateEquation(hoomd.meta._metadata):
+    ## \internal
+    # \brief Constructs the equation of state meta class
+    #
+    def __init__(self, name=None):
+        # check if initialization has occurred
+        if not hoomd.init.is_initialized():
+            hoomd.context.msg.error("Cannot create an equation of state class before initialization\n");
+            raise RuntimeError('Error creating equation of state');
 
         self.SpeedOfSound = 0;
         self.BackgroundPressure = 0;
@@ -28,6 +32,9 @@ class _StateEquation(_HOOMDBaseObject):
             self.name = "";
         else:
             self.name="_" + name;
+
+        # base class constructor
+        hoomd.meta._metadata.__init__(self)
 
     def check_initialization(self):
         # check that we have been initialized properly
@@ -50,7 +57,6 @@ class _StateEquation(_HOOMDBaseObject):
         self.check_initialization();
         mrho = rho.item()if isinstance(rho, numpy.generic) else rho
         return self.cpp_stateequation.Pressure(rho)
-
 
 class Tait(_StateEquation):
     R""" Tait Equation of state
@@ -75,3 +81,4 @@ class Linear(_StateEquation):
 
         # create the c++ mirror class
         self.cpp_stateequation = _sph.Linear();
+

@@ -6,14 +6,16 @@
 import itertools
 
 import hoomd
-from hoomd.md import _md
+import hoomd.sph
+from hoomd import _hoomd
+from hoomd.sph import _sph
 from hoomd.data.parameterdicts import ParameterDict
 from hoomd.data.typeconverter import OnlyTypes
 from hoomd.operation import Integrator as BaseIntegrator
 from hoomd.data import syncedlist
-from hoomd.md.methods import Method
-from hoomd.md.force import Force
-from hoomd.md.constrain import Constraint, Rigid
+# from hoomd.md.methods import Method
+from hoomd.sph.force import Force
+from hoomd.sph.constrain import Constraint#, Rigid
 
 
 def _set_synced_list(old_list, new_list):
@@ -26,7 +28,7 @@ class _DynamicIntegrator(BaseIntegrator):
     def __init__(self, forces, constraints, methods, rigid):
         forces = [] if forces is None else forces
         constraints = [] if constraints is None else constraints
-        methods = [] if methods is None else methods
+        # methods = [] if methods is None else methods
         self._forces = syncedlist.SyncedList(
             Force, syncedlist._PartialGetAttr('_cpp_obj'), iterable=forces)
 
@@ -35,8 +37,8 @@ class _DynamicIntegrator(BaseIntegrator):
             syncedlist._PartialGetAttr('_cpp_obj'),
             iterable=constraints)
 
-        self._methods = syncedlist.SyncedList(
-            Method, syncedlist._PartialGetAttr('_cpp_obj'), iterable=methods)
+        # self._methods = syncedlist.SyncedList(
+        #     Method, syncedlist._PartialGetAttr('_cpp_obj'), iterable=methods)
 
         param_dict = ParameterDict(rigid=OnlyTypes(Rigid, allow_none=True))
         if rigid is not None and rigid._added:
@@ -47,14 +49,14 @@ class _DynamicIntegrator(BaseIntegrator):
     def _attach(self):
         self._forces._sync(self._simulation, self._cpp_obj.forces)
         self._constraints._sync(self._simulation, self._cpp_obj.constraints)
-        self._methods._sync(self._simulation, self._cpp_obj.methods)
+        # self._methods._sync(self._simulation, self._cpp_obj.methods)
         if self.rigid is not None:
             self.rigid._attach()
         super()._attach()
 
     def _detach(self):
         self._forces._unsync()
-        self._methods._unsync()
+        # self._methods._unsync()
         self._constraints._unsync()
         if self.rigid is not None:
             self.rigid._detach()
@@ -86,22 +88,23 @@ class _DynamicIntegrator(BaseIntegrator):
     def constraints(self, value):
         _set_synced_list(self._constraints, value)
 
-    @property
-    def methods(self):
-        return self._methods
+    # @property
+    # def methods(self):
+    #     return self._methods
 
-    @methods.setter
-    def methods(self, value):
-        _set_synced_list(self._methods, value)
+    # @methods.setter
+    # def methods(self, value):
+    #     _set_synced_list(self._methods, value)
 
     @property
     def _children(self):
         children = list(self.forces)
         children.extend(self.constraints)
-        children.extend(self.methods)
+        # children.extend(self.methods)
 
         for child in itertools.chain(self.forces, self.constraints,
-                                     self.methods):
+                                     # self.methods
+                                     ):
             children.extend(child._children)
 
         return children
@@ -141,6 +144,7 @@ class _DynamicIntegrator(BaseIntegrator):
         self._param_dict["rigid"] = new_rigid
 
 
+@hoomd.logging.modify_namespace(("sph", "Integrator"))
 class Integrator(_DynamicIntegrator):
     r"""Molecular dynamics time integration.
 
@@ -204,6 +208,23 @@ class Integrator(_DynamicIntegrator):
     special case, as it only integrates the degrees of freedom of each body's
     center of mass. See `hoomd.md.constrain.Rigid` for details.
 
+    .. rubric:: Degrees of freedom
+
+    `Integrator` always integrates the translational degrees of freedom.
+    It *optionally* integrates one or more rotational degrees of freedom
+    for a given particle *i* when all the following conditions are met:
+
+    * The intergration method supports rotational degrees of freedom.
+    * `integrate_rotational_dof` is ``True``.
+    * The moment of inertia is non-zero :math:`I^d_i > 0`.
+
+    Each particle may have zero, one, two, or three rotational degrees of
+    freedom.
+
+    Note:
+        By default, `integrate_rotational_dof` is ``False``. `gsd` and
+        `hoomd.Snapshot` also set particle moments of inertia to 0 by default.
+
     .. rubric:: Classes
 
     Classes of the following modules can be used as elements in `methods`:
@@ -240,7 +261,7 @@ class Integrator(_DynamicIntegrator):
 
 
     Attributes:
-        dt (float): Integrator time step size :math:`[\\mathrm{time}]`.
+        dt (float): Integrator time step size :math:`[\mathrm{time}]`.
 
         methods (list[hoomd.md.methods.Method]): List of integration methods.
 
@@ -262,10 +283,11 @@ class Integrator(_DynamicIntegrator):
                  integrate_rotational_dof=False,
                  forces=None,
                  constraints=None,
-                 methods=None,
+                 # methods=None,
                  rigid=None):
 
-        super().__init__(forces, constraints, methods, rigid)
+        super().__init__(forces, constraints, #methods, 
+            rigid)
 
         self._param_dict.update(
             ParameterDict(
@@ -287,7 +309,7 @@ class Integrator(_DynamicIntegrator):
                 and self._simulation.state is not None):
             self._simulation.state.update_group_dof()
 
-    @hoomd.logging.log(requires_run=True)
+    @hoomd.logging.log(category="sequence", requires_run=True)
     def linear_momentum(self):
         """tuple(float,float,float): The linear momentum vector of the system \
             :math:`[\\mathrm{mass} \\cdot \\mathrm{velocity}]`.

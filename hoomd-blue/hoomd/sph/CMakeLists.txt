@@ -72,33 +72,33 @@ set(_sph_cpu_sources SPHIntegratorTwoStep.cc
                    )
 
 # ignore conversion warnings in external files
-if(CMAKE_COMPILER_IS_GNUCXX OR CMAKE_CXX_COMPILER_ID MATCHES "Clang")
-    set_source_files_properties(extern/kiss_fft.cc PROPERTIES COMPILE_FLAGS "-Wno-conversion -Wno-float-conversion")
-    set_source_files_properties(extern/vmdsock.cc PROPERTIES COMPILE_FLAGS "-Wno-conversion")
-    set_source_files_properties(extern/imd.cc PROPERTIES COMPILE_FLAGS "-Wno-conversion")
-endif()
+# if(CMAKE_COMPILER_IS_GNUCXX OR CMAKE_CXX_COMPILER_ID MATCHES "Clang")
+#     set_source_files_properties(extern/kiss_fft.cc PROPERTIES COMPILE_FLAGS "-Wno-conversion -Wno-float-conversion")
+#     set_source_files_properties(extern/vmdsock.cc PROPERTIES COMPILE_FLAGS "-Wno-conversion")
+#     set_source_files_properties(extern/imd.cc PROPERTIES COMPILE_FLAGS "-Wno-conversion")
+# endif()
 
 set(_sph_headers    #GeneralGPUDeviceFunctions.cuh  
-                    SinglePhaseFlowGPU.h  
+#                     SinglePhaseFlowGPU.h  
                     SPHIntegrationMethodTwoStep.h     
 #                     TwoPhaseFlowGPU.cuh
-                    GeneralGPUFunctions.cuh
+#                     GeneralGPUFunctions.cuh
                     SinglePhaseFlow.h     
                     SPHIntegratorTwoStep.h            
 #                     TwoPhaseFlowGPU.h
                     # RigidBodyIntegratorGPU.cuh     
                     SmoothingKernel.h     
                     StateEquations.h                  
-                    TwoPhaseFlow.h
+#                     TwoPhaseFlow.h
                     # RigidBodyIntegratorGPU.h       
                     SolidFluidTypeBit.h   
                     # SuspendedObjectIntegratorGPU.cuh  
-                    VelocityVerletGPU.cuh
+#                     VelocityVerletGPU.cuh
                     # RigidBodyIntegrator.h          
-                    SPHBaseClass.cuh      
+#                     SPHBaseClass.cuh      
                     # SuspendedObjectIntegratorGPU.h    
-                    VelocityVerletGPU.h
-                    SinglePhaseFlowGPU.cuh         
+#                     VelocityVerletGPU.h
+#                     SinglePhaseFlowGPU.cuh         
                     SPHBaseClass.h        
 #                     SuspendedObjectIntegrator.h       
                     VelocityVerlet.h
@@ -115,21 +115,21 @@ list(APPEND _sph_cpu_sources VelocityVerletGPU.cc
                              # SuspendedObjectIntegratorGPU.cc
                              # RigidBodyIntegratorGPU.cc
                              SinglePhaseFlowGPU.cc
-                             TwoPhaseFlowGPU.cc
+#                              TwoPhaseFlowGPU.cc
                            )
 endif()
 
-set(_sph_cu_sources VelocityVerletGPU.cu
-                    #SuspendedObjectIntegratorGPU.cu
-                    # RigidBodyIntegratorGPU.cu
-                    SPHBaseClass.cu
-                    SinglePhaseFlowGPU.cu
-                    SmoothingKernel.cu
-                    StateEquations.cu
-                    TwoPhaseFlowGPU.cu
-                    GeneralGPUFunctions.cu
-                    GeneralGPUDeviceFunctions.cu
-                    )
+# set(_sph_cu_sources VelocityVerletGPU.cu
+#                     #SuspendedObjectIntegratorGPU.cu
+#                     # RigidBodyIntegratorGPU.cu
+#                     SPHBaseClass.cu
+#                     SinglePhaseFlowGPU.cu
+#                     SmoothingKernel.cu
+#                     StateEquations.cu
+# #                     TwoPhaseFlowGPU.cu
+#                     GeneralGPUFunctions.cu
+#                     GeneralGPUDeviceFunctions.cu
+#                     )
 
 # if (ENABLE_HIP)
 # set(_cuda_sources ${_sph_cu_sources})
@@ -332,13 +332,14 @@ add_subdirectory(data)
 #endif()
 
 
-if (ENABLE_HIP)
-set(_cuda_sources ${_sph_cu_sources} )
-endif (ENABLE_HIP)
+# if (ENABLE_HIP)
+# set(_cuda_sources ${_sph_cu_sources} )
+# endif (ENABLE_HIP)
 
 
 
-pybind11_add_module(_sph SHARED ${_sph_sources} ${_cuda_sources} ${_sph_headers} NO_EXTRAS)
+pybind11_add_module(_sph SHARED ${_sph_sources} #${_cuda_sources} 
+    ${_sph_headers} NO_EXTRAS)
 # alias into the HOOMD namespace so that plugins and symlinked components both work
 add_library(HOOMD::_sph ALIAS _sph)
 
@@ -369,11 +370,12 @@ install(TARGETS _sph EXPORT HOOMDTargets
 ################ Python only modules
 # copy python modules to the build directory to make it a working python package
 set(files   __init__.py
-#             integrate.py
+            integrate.py
             force.py
-#             kernel.py
-#             eos.py
-#             models.py
+            kernel.py
+            eos.py
+            models.py
+            constrain.py
     )
 
 install(FILES ${files}

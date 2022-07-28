@@ -65,3 +65,4 @@ class PYBIND11_EXPORT VelocityVerlet : public SPHIntegrationMethodTwoStep
     } // end namespace hoomd
 
 #endif // #ifndef __VELOCITY_VERLET_H__
+
