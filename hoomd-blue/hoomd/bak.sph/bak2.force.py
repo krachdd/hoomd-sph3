@@ -6,22 +6,19 @@
 from abc import abstractmethod
 
 import hoomd
-from hoomd.sph import _sph
+from hoomd.md import _md
 from hoomd.operation import _HOOMDBaseObject
 from hoomd.logging import log
 from hoomd.data.typeparam import TypeParameter
 from hoomd.data.typeconverter import OnlyTypes
 from hoomd.data.parameterdicts import ParameterDict, TypeParameterDict
 from hoomd.filter import ParticleFilter
-# from hoomd.md.manifold import Manifold
+from hoomd.md.manifold import Manifold
 import numpy
 
 
 class Force(_HOOMDBaseObject):
     r"""Defines a force for molecular dynamics simulations.
-
-    `Force` is the base class for all molecular dynamics forces and provides
-    common methods.
 
     A `Force` class computes the force and torque on each particle in the
     simulation state :math:`\vec{F}_i` and :math:`\vec{\tau}_i`. With a few
@@ -59,9 +56,10 @@ class Force(_HOOMDBaseObject):
         W^{kl}_i = \sum_j F^k_{ij} \cdot
         \mathrm{minimum\_image}(\vec{r}_j - \vec{r}_i)^l
 
-    Warning:
-        This class should not be instantiated by users. The class can be used
-        for `isinstance` or `issubclass` checks.
+    Note:
+        :py:class:`Force` is the base class for all molecular dynamics forces
+        and provides common methods. Users should not instantiate this class
+        directly.
     """
 
     def __init__(self):
@@ -151,13 +149,13 @@ class Force(_HOOMDBaseObject):
 
     @property
     def cpu_local_force_arrays(self):
-        """hoomd.sph.data.ForceLocalAccess: Expose force arrays on the CPU.
+        """hoomd.md.data.ForceLocalAccess: Expose force arrays on the CPU.
 
         Provides direct access to the force, potential energy, torque, and
         virial data of the particles in the system on the cpu through a context
         manager. All data is MPI rank-local.
 
-        The `hoomd.sph.data.ForceLocalAccess` object returned by this property
+        The `hoomd.md.data.ForceLocalAccess` object returned by this property
         has four arrays through which one can modify the force data:
 
         Note:
@@ -176,17 +174,17 @@ class Force(_HOOMDBaseObject):
             raise RuntimeError("Cannot enter cpu_local_force_arrays context "
                                "manager inside another local_force_arrays "
                                "context manager")
-        return hoomd.sph.data.ForceLocalAccess(self)
+        return hoomd.md.data.ForceLocalAccess(self)
 
     @property
     def gpu_local_force_arrays(self):
-        """hoomd.sph.data.ForceLocalAccessGPU: Expose force arrays on the GPU.
+        """hoomd.md.data.ForceLocalAccessGPU: Expose force arrays on the GPU.
 
         Provides direct access to the force, potential energy, torque, and
         virial data of the particles in the system on the gpu through a context
         manager. All data is MPI rank-local.
 
-        The `hoomd.sph.data.ForceLocalAccessGPU` object returned by this property
+        The `hoomd.md.data.ForceLocalAccessGPU` object returned by this property
         has four arrays through which one can modify the force data:
 
         Note:
@@ -212,7 +210,7 @@ class Force(_HOOMDBaseObject):
             raise RuntimeError(
                 "Cannot enter gpu_local_force_arrays context manager inside "
                 "another local_force_arrays context manager")
-        return hoomd.sph.data.ForceLocalAccessGPU(self)
+        return hoomd.md.data.ForceLocalAccessGPU(self)
 
 
 class Custom(Force):
@@ -249,7 +247,7 @@ class Custom(Force):
     ``_with_ghost``.
 
     Note:
-        Pass ``aniso=True`` to the `sph.force.Custom` constructor if your custom
+        Pass ``aniso=True`` to the `md.force.Custom` constructor if your custom
         force produces non-zero torques on particles.
 
     Examples::
@@ -279,10 +277,6 @@ class Custom(Force):
 
     Note:
         Access to the force buffers is constant (O(1)) time.
-
-    .. versionchanged:: 3.1.0
-        `Custom` zeros the force, torque, energy, and virial arrays before
-        calling the user-provided `set_forces`.
     """
 
     def __init__(self, aniso=False):
@@ -293,7 +287,7 @@ class Custom(Force):
 
     def _attach(self):
         self._state = self._simulation.state
-        self._cpp_obj = _sph.CustomForceCompute(self._state._cpp_sys_def,
+        self._cpp_obj = _md.CustomForceCompute(self._state._cpp_sys_def,
                                                self.set_forces, self._aniso)
         super()._attach()
 
@@ -311,11 +305,11 @@ class Custom(Force):
 #     r"""Active force.
 
 #     Args:
-#         filter (`hoomd.filter`): Subset of particles on which to
-#             apply active forces.
+#         filter (:py:mod:`hoomd.filter`): Subset of particles on which to apply
+#             active forces.
 
-#     `Active` computes an active force and torque on all particles selected by
-#     the filter:
+#     :py:class:`Active` computes an active force and torque on all
+#     particles selected by the filter:
 
 #     .. math::
 
@@ -352,8 +346,8 @@ class Custom(Force):
 #         The energy and virial associated with the active force are 0.
 
 #     Attributes:
-#         filter (`hoomd.filter`): Subset of particles on which to
-#             apply active forces.
+#         filter (:py:mod:`hoomd.filter`): Subset of particles on which to apply
+#             active forces.
 
 #     .. py:attribute:: active_force
 
@@ -387,11 +381,11 @@ class Custom(Force):
 #             type_kind="particle_types",
 #             param_dict=TypeParameterDict((1.0, 0.0, 0.0), len_keys=1),
 #         )
-#         # active_torque = TypeParameter(
-#         #     "active_torque",
-#         #     type_kind="particle_types",
-#         #     param_dict=TypeParameterDict((0.0, 0.0, 0.0), len_keys=1),
-#         # )
+#         active_torque = TypeParameter(
+#             "active_torque",
+#             type_kind="particle_types",
+#             param_dict=TypeParameterDict((0.0, 0.0, 0.0), len_keys=1),
+#         )
 
 #         self._extend_typeparam([active_force, active_torque])
 
@@ -425,9 +419,9 @@ class Custom(Force):
 #         """Create a rotational diffusion updater for this active force.
 
 #         Args:
-#             trigger (hoomd.trigger.trigger_like): Select the timesteps to update
+#             trigger (hoomd.trigger.Trigger): Select the timesteps to update
 #                 rotational diffusion.
-#             rotational_diffusion (hoomd.variant.variant_like): The
+#             rotational_diffusion (hoomd.variant.Variant or float): The
 #                 rotational diffusion as a function of time or a constant.
 
 #         Returns:
@@ -442,14 +436,14 @@ class Custom(Force):
 #     r"""Active force on a manifold.
 
 #     Args:
-#         filter (`hoomd.filter`): Subset of particles on which to
+#         filter (`hoomd.filter.ParticleFilter`): Subset of particles on which to
 #             apply active forces.
-#         manifold_constraint (hoomd.md.manifold.Manifold): Manifold constraint.
+#         manifold_constraint (`hoomd.md.manifold.Manifold`): Manifold constraint.
 
-#     `ActiveOnManifold` computes a constrained active force and torque on all
-#     particles selected by the filter similar to `Active`. `ActiveOnManifold`
-#     restricts the forces to the local tangent plane of the manifold constraint.
-#     For more information see `Active`.
+#     :py:class:`ActiveOnManifold` computes a constrained active force and torque
+#     on all particles selected by the filter similar to :py:class:`Active`.
+#     `ActiveOnManifold` restricts the forces to the local tangent plane of the
+#     manifold constraint. For more information see :py:class:`Active`.
 
 #     Hint:
 #         Use `ActiveOnManifold` with a `md.methods.rattle` integration method
@@ -476,9 +470,9 @@ class Custom(Force):
 #         active.active_torque['A','B'] = (0,0,0)
 
 #     Attributes:
-#         filter (`hoomd.filter`): Subset of particles on which to
+#         filter (`hoomd.filter.ParticleFilter`): Subset of particles on which to
 #             apply active forces.
-#         manifold_constraint (hoomd.md.manifold.Manifold): Manifold constraint.
+#         manifold_constraint (`hoomd.md.manifold.Manifold`): Manifold constraint.
 
 #     .. py:attribute:: active_force
 
