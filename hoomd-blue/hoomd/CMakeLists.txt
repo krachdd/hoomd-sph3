@@ -434,6 +434,7 @@ endforeach()
 
 add_subdirectory(nsearch)
 
+
 option(BUILD_SPH "Build the sph package" on)
 if (BUILD_SPH)
   add_subdirectory(sph)

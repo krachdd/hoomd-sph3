@@ -31,8 +31,8 @@ class PYBIND11_EXPORT CustomForceCompute : public ForceCompute
     public:
     //! Constructs the compute
     CustomForceCompute(std::shared_ptr<hoomd::SystemDefinition> sysdef,
-                       pybind11::object py_setForces,
-                       // bool aniso
+                       pybind11::object py_setForces
+                       // , bool aniso
                        );
 
     //! Destructor

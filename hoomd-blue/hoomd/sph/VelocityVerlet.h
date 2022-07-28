@@ -61,6 +61,11 @@ class PYBIND11_EXPORT VelocityVerlet : public SPHIntegrationMethodTwoStep
     // bool m_zero_force;  //!< True if the integration step should ignore computed forces
     };
 
+    namespace detail 
+{
+void export_VelocityVerlet(pybind11::module& m);
+
+} // end namespace detail
     } // end namespace sph
     } // end namespace hoomd
 

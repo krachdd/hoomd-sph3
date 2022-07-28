@@ -6,6 +6,7 @@
 #include "SPHIntegrationMethodTwoStep.h"
 #include "hoomd/HOOMDMath.h"
 #include "hoomd/VectorMath.h"
+#include <vector>
 
 #ifdef ENABLE_MPI
 #include "hoomd/Communicator.h"
@@ -108,34 +109,34 @@ Scalar SPHIntegrationMethodTwoStep::getTranslationalDOF(std::shared_ptr<Particle
 
     The base class does nothing
 */
-void SPHIntegrationMethodTwoStep::validateGroup()
-    {
-    ArrayHandle<unsigned int> h_body(m_pdata->getBodies(),
-                                     access_location::host,
-                                     access_mode::read);
-    ArrayHandle<unsigned int> h_rtag(m_pdata->getRTags(), access_location::host, access_mode::read);
-    ArrayHandle<unsigned int> h_tag(m_pdata->getTags(), access_location::host, access_mode::read);
-    ArrayHandle<unsigned int> h_group_index(m_group->getIndexArray(),
-                                            access_location::host,
-                                            access_mode::read);
+// void SPHIntegrationMethodTwoStep::validateGroup()
+//     {
+//     ArrayHandle<unsigned int> h_body(m_pdata->getBodies(),
+//                                      access_location::host,
+//                                      access_mode::read);
+//     ArrayHandle<unsigned int> h_rtag(m_pdata->getRTags(), access_location::host, access_mode::read);
+//     ArrayHandle<unsigned int> h_tag(m_pdata->getTags(), access_location::host, access_mode::read);
+//     ArrayHandle<unsigned int> h_group_index(m_group->getIndexArray(),
+//                                             access_location::host,
+//                                             access_mode::read);
 
-    for (unsigned int gidx = 0; gidx < m_group->getNumMembers(); gidx++)
-        {
-        unsigned int i = h_group_index.data[gidx];
-        unsigned int tag = h_tag.data[i];
-        unsigned int body = h_body.data[i];
+//     for (unsigned int gidx = 0; gidx < m_group->getNumMembers(); gidx++)
+//         {
+//         unsigned int i = h_group_index.data[gidx];
+//         unsigned int tag = h_tag.data[i];
+//         unsigned int body = h_body.data[i];
 
-        if (body < MIN_FLOPPY && body != tag)
-            {
-            m_exec_conf->msg->error()
-                << "Particle " << tag
-                << " belongs to a rigid body, but is not its center particle. " << std::endl
-                << "This integration method does not operate on constituent particles." << std::endl
-                << std::endl;
-            throw std::runtime_error("Error initializing integration method");
-            }
-        }
-    }
+//         if (body < MIN_FLOPPY && body != tag)
+//             {
+//             m_exec_conf->msg->error()
+//                 << "Particle " << tag
+//                 << " belongs to a rigid body, but is not its center particle. " << std::endl
+//                 << "This integration method does not operate on constituent particles." << std::endl
+//                 << std::endl;
+//             throw std::runtime_error("Error initializing integration method");
+//             }
+//         }
+//     }
 
 namespace detail
     {
@@ -145,7 +146,7 @@ void export_SPHIntegrationMethodTwoStep(pybind11::module& m)
         m,
         "SPHIntegrationMethodTwoStep")
         .def(pybind11::init<std::shared_ptr<SystemDefinition>, std::shared_ptr<ParticleGroup>>())
-        .def("validateGroup", &SPHIntegrationMethodTwoStep::validateGroup)
+        // .def("validateGroup", &SPHIntegrationMethodTwoStep::validateGroup)
         .def_property_readonly("filter",
                                [](const std::shared_ptr<SPHIntegrationMethodTwoStep> method)
                                { return method->getGroup()->getFilter(); });

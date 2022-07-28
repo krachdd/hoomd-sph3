@@ -93,7 +93,7 @@ class PYBIND11_EXPORT SPHIntegratorTwoStep : public Integrator
     // virtual bool areForcesAnisotropic();
 
     /// Updates the rigid body constituent particles
-    virtual void updateRigidBodies(uint64_t timestep);
+    // virtual void updateRigidBodies(uint64_t timestep);
 
     /// Set autotuner parameters
     virtual void setAutotunerParams(bool enable, unsigned int period);
@@ -122,11 +122,11 @@ class PYBIND11_EXPORT SPHIntegratorTwoStep : public Integrator
     // bool m_integrate_rotational_dof = false;
     };
 
-namespace detail
-    {
-/// Exports the SPHIntegratorTwoStep class to python
-void export_SPHIntegratorTwoStep(pybind11::module& m);
+// namespace detail
+//     {
+// /// Exports the SPHIntegratorTwoStep class to python
+// void export_SPHIntegratorTwoStep(pybind11::module& m);
 
-    } // end namespace detail
+//     } // end namespace detail
     } // end namespace sph
     } // end namespace hoomd

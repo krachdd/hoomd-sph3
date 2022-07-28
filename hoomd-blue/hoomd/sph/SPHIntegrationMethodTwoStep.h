@@ -149,7 +149,7 @@ class PYBIND11_EXPORT SPHIntegrationMethodTwoStep
 
     //! Validate that all members in the particle group are valid (throw an exception if they are
     //! not)
-    virtual void validateGroup();
+    // virtual void validateGroup();
 
     //! Set (an-)isotropic integration mode
     /*! \param aniso True if anisotropic integration is requested
@@ -189,12 +189,12 @@ class PYBIND11_EXPORT SPHIntegrationMethodTwoStep
     Scalar m_deltaT; //!< The time step
     };
 
-namespace detail
-    {
-//! Exports the SPHIntegrationMethodTwoStep class to python
-void export_SPHIntegrationMethodTwoStep(pybind11::module& m);
+// namespace detail
+//     {
+// //! Exports the SPHIntegrationMethodTwoStep class to python
+// void export_SPHIntegrationMethodTwoStep(pybind11::module& m);
 
-    } // end namespace detail
+//     } // end namespace detail
     } // end namespace sph
     } // end namespace hoomd
 

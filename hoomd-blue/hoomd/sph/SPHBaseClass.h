@@ -126,11 +126,11 @@ class PYBIND11_EXPORT SPHBaseClass : public ForceCompute
     //     //! Connection to the signal notifying when number of particle types changes
     //     boost::signals2::connection m_particle_num_change_connection;
     };
-namespace detail 
-{
-void export_SPHBaseClass(pybind11::module& m);
+// namespace detail 
+// {
+// void export_SPHBaseClass(pybind11::module& m);
 
-} // end namespace detail
+// } // end namespace detail
 } // end namespace sph
 } // end namespace hoomd
 

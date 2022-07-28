@@ -3,6 +3,7 @@
 
 #include "VelocityVerlet.h"
 #include "hoomd/VectorMath.h"
+#include <vector>
 
 using namespace std;
 

@@ -19,8 +19,8 @@ namespace sph
 /*! \param sysdef SystemDefinition containing the ParticleData to compute forces on
  */
 CustomForceCompute::CustomForceCompute(std::shared_ptr<SystemDefinition> sysdef,
-                                       pybind11::object py_setForces,
-                                       // bool aniso
+                                       pybind11::object py_setForces
+                                       // , bool aniso
                                        )
     : ForceCompute(sysdef) //, m_aniso(aniso)
     {
@@ -66,7 +66,8 @@ void export_CustomForceCompute(py::module& m)
     py::class_<CustomForceCompute, ForceCompute, std::shared_ptr<CustomForceCompute>>(
         m,
         "CustomForceCompute")
-        .def(py::init<std::shared_ptr<SystemDefinition>, pybind11::object, bool>());
+        // .def(py::init<std::shared_ptr<SystemDefinition>, pybind11::object, bool>());
+        .def(py::init<std::shared_ptr<SystemDefinition>, pybind11::object>());
     }
 
     } // end namespace detail

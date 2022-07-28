@@ -107,18 +107,18 @@ struct SmoothingKernel
 
 
 template<SmoothingKernelType KT_>std::string get_kernel_name();
-namespace detail
-{
-//! Exports the SPHIntegrationMethodTwoStep class to python
+// namespace detail
+// {
+// //! Exports the SPHIntegrationMethodTwoStep class to python
 
-void export_WendlandC2(pybind11::module& m);
-void export_WendlandC4(pybind11::module& m);
-void export_WendlandC6(pybind11::module& m);
-void export_Quintic(pybind11::module& m);
-void export_CubicSpline(pybind11::module& m);
+// void export_WendlandC2(pybind11::module& m);
+// void export_WendlandC4(pybind11::module& m);
+// void export_WendlandC6(pybind11::module& m);
+// void export_Quintic(pybind11::module& m);
+// void export_CubicSpline(pybind11::module& m);
 
 
-} // end namespace detail
+// } // end namespace detail
 } // end namespace sph
 } // end namespace hoomd
 

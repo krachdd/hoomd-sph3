@@ -97,13 +97,13 @@ struct StateEquation
     };
 
 template<StateEquationType SET_> std::string get_SE_name();
-namespace detail 
-{
-//! Exports the StateEquations classes to python
-void export_StateEquations(pybind11::module& m);
+// namespace detail 
+// {
+// //! Exports the StateEquations classes to python
+// void export_StateEquations(pybind11::module& m);
 
 
-} // end namespace  
+// } // end namespace  
 } // end namespace sph 
 } // end namespace hoomd 
 

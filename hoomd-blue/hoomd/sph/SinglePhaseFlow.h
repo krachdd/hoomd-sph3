@@ -381,15 +381,15 @@ class SinglePhaseFlow : public SPHBaseClass<KT_, SET_>
     };
 
 
-namespace detail
-{
-//! Exports the SinglePhaseFlow class to python
-// template<SmoothingKernelType KT_,StateEquationType SET_>
-// void export_SinglePhaseFlow_templ();
-// template<SmoothingKernelType KT_,StateEquationType SET_>
-void export_SinglePhaseFlow(pybind11::module& m);
+// namespace detail
+// {
+// //! Exports the SinglePhaseFlow class to python
+// // template<SmoothingKernelType KT_,StateEquationType SET_>
+// // void export_SinglePhaseFlow_templ();
+// // template<SmoothingKernelType KT_,StateEquationType SET_>
+// void export_SinglePhaseFlow(pybind11::module& m);
 
-} // end namespace detail
+// } // end namespace detail
 } // end namespace sph
 } // end namespace hoomd
 
