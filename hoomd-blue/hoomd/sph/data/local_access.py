@@ -18,8 +18,8 @@ class _ForceLocalAccessBase(hoomd.data.local_access._LocalAccess):
     _fields = {
         'force': 'getForce',
         'potential_energy': 'getPotentialEnergy',
-        'torque': 'getTorque',
-        'virial': 'getVirial'
+        # 'torque': 'getTorque',
+        # 'virial': 'getVirial'
     }
 
     def __init__(self, force_obj):

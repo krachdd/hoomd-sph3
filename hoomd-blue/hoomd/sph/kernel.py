@@ -35,8 +35,8 @@ class _SmoothingKernel(_HOOMDBaseObject):
     def check_initialization(self):
         # check that we have been initialized properly
         if self.cpp_smoothingkernel is None:
-            hoomd.context.msg.error('Bug in hoomd_script: cpp_smoothingkernel not set, please report\n');
-            raise RuntimeError();
+            # hoomd.context.msg.error('Bug in hoomd_script: cpp_smoothingkernel not set, please report\n');
+            raise RuntimeError('Bug in hoomd_script: cpp_smoothingkernel not set, please report\n');
 
     def getKernelKappa(self):
         return self.cpp_smoothingkernel.getKernelKappa()
@@ -60,7 +60,7 @@ class WendlandC2(_SmoothingKernel):
     R""" Wendland C2 Kernel
     """
     def __init__(self):
-        hoomd.util.print_status_line();
+        # hoomd.util.print_status_line();
         # Initialize base class
         _SmoothingKernel.__init__(self, "WendlandC2");
 
@@ -80,7 +80,7 @@ class WendlandC4(_SmoothingKernel):
     R""" Wendland C4 Kernel
     """
     def __init__(self):
-        hoomd.util.print_status_line();
+        # hoomd.util.print_status_line();
         # Initialize base class
         _SmoothingKernel.__init__(self, "WendlandC4");
 
@@ -100,7 +100,7 @@ class WendlandC6(_SmoothingKernel):
     R""" Wendland C6 Kernel
     """
     def __init__(self):
-        hoomd.util.print_status_line();
+        # hoomd.util.print_status_line();
         # Initialize base class
         _SmoothingKernel.__init__(self, "WendlandC6");
 
@@ -120,7 +120,7 @@ class Quintic(_SmoothingKernel):
     R""" Quintic Kernel
     """
     def __init__(self):
-        hoomd.util.print_status_line();
+        # hoomd.util.print_status_line();
         # Initialize base class
         _SmoothingKernel.__init__(self, "Quintic");
 
@@ -140,7 +140,7 @@ class CubicSpline(_SmoothingKernel):
     R""" Cubic Spline Kernel
     """
     def __init__(self):
-        hoomd.util.print_status_line();
+        # hoomd.util.print_status_line();
         # Initialize base class
         _SmoothingKernel.__init__(self, "Quintic");
 

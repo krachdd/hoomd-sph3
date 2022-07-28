@@ -32,8 +32,8 @@ class _StateEquation(_HOOMDBaseObject):
     def check_initialization(self):
         # check that we have been initialized properly
         if self.cpp_stateequation is None:
-            hoomd.context.msg.error('Bug in hoomd_script: cpp_stateequation not set, please report\n');
-            raise RuntimeError();
+            # hoomd.context.msg.error('Bug in hoomd_script: cpp_stateequation not set, please report\n');
+            raise RuntimeError("Bug in hoomd_script: cpp_stateequation not set, please report\n");
 
     def set_params(self,rho0,bp):
         self.check_initialization();
@@ -56,7 +56,7 @@ class Tait(_StateEquation):
     R""" Tait Equation of state
     """
     def __init__(self):
-        hoomd.util.print_status_line();
+        # hoomd.util.print_status_line();
 
         # Initialize base class
         _StateEquation.__init__(self, "Tait");
@@ -68,7 +68,7 @@ class Linear(_StateEquation):
     R""" Linear Equation of state
     """
     def __init__(self):
-        hoomd.util.print_status_line();
+        # hoomd.util.print_status_line();
 
         # Initialize base class
         _StateEquation.__init__(self, "Linear");

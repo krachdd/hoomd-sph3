@@ -283,7 +283,7 @@ endif()
 
 # subdirectories that are not components
 # add_subdirectory(custom)
-add_subdirectory(data)
+
 # add_subdirectory(filter)
 # add_subdirectory(write)
 # add_subdirectory(pytest)
@@ -336,6 +336,8 @@ add_subdirectory(data)
 # set(_cuda_sources ${_sph_cu_sources} )
 # endif (ENABLE_HIP)
 
+
+add_subdirectory(data)
 
 
 pybind11_add_module(_sph SHARED ${_sph_sources} #${_cuda_sources} 
