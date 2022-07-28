@@ -7,33 +7,34 @@
 set(_sph_sources module.cc)
 
 # MODIFY THIS IF NEW CPP SOURCES ARE ADDED
-set(_sph_cpu_sources SPHIntegratorTwoStep.cc
-                     SPHIntegrationMethodTwoStep.cc
-                     VelocityVerlet.cc
+set(_sph_cpu_sources 
+#                      SPHIntegratorTwoStep.cc
+#                      SPHIntegrationMethodTwoStep.cc
+#                      VelocityVerlet.cc
                      # SuspendedObjectIntegrator.cc
                      # RigidBodyIntegrator.cc
 #                      StateEquationsExport.cc
                      SPHBaseClass.cc
-                     SinglePhaseFlow.cc
+#                      SinglePhaseFlow.cc
 #                      TwoPhaseFlow.cc
 #                      SmoothingKernelExport.cc
-                     CustomForceCompute.cc
+#                      CustomForceCompute.cc
                    )
 
 set(_sph_headers    #GeneralGPUDeviceFunctions.cuh  
 #                     SinglePhaseFlowGPU.h  
-                    SPHIntegrationMethodTwoStep.h     
+#                     SPHIntegrationMethodTwoStep.h     
 #                     TwoPhaseFlowGPU.cuh
 #                     GeneralGPUFunctions.cuh
-                    SinglePhaseFlow.h     
-                    SPHIntegratorTwoStep.h            
+#                     SinglePhaseFlow.h     
+#                     SPHIntegratorTwoStep.h            
 #                     TwoPhaseFlowGPU.h
                     # RigidBodyIntegratorGPU.cuh     
-                    SmoothingKernel.h     
-                    StateEquations.h                  
+#                     SmoothingKernel.h     
+#                     StateEquations.h                  
 #                     TwoPhaseFlow.h
                     # RigidBodyIntegratorGPU.h       
-                    SolidFluidTypeBit.h   
+#                     SolidFluidTypeBit.h   
                     # SuspendedObjectIntegratorGPU.cuh  
 #                     VelocityVerletGPU.cuh
                     # RigidBodyIntegrator.h          
@@ -43,14 +44,16 @@ set(_sph_headers    #GeneralGPUDeviceFunctions.cuh
 #                     SinglePhaseFlowGPU.cuh         
                     SPHBaseClass.h        
 #                     SuspendedObjectIntegrator.h       
-                    VelocityVerlet.h
-                    CustomForceCompute.h
+#                     VelocityVerlet.h
+#                     CustomForceCompute.h
     )
 
-if (NOT ENABLE_HIP)
-list(APPEND _sph_cpu_sources StateEquations.cc
-                             SmoothingKernel.cc)
-endif()
+# if (NOT ENABLE_HIP)
+# list(APPEND _sph_cpu_sources 
+# #                              StateEquations.cc
+# #                              SmoothingKernel.cc
+# )
+# endif()
 
 # if (ENABLE_HIP)
 # list(APPEND _sph_cpu_sources VelocityVerletGPU.cc
@@ -111,13 +114,14 @@ install(TARGETS _sph EXPORT HOOMDTargets
 
 ################ Python only modules
 # copy python modules to the build directory to make it a working python package
-set(files   __init__.py
+set(files   
+            __init__.py
             integrate.py
             force.py
-            kernel.py
-            eos.py
-            models.py
-            constrain.py
+#             kernel.py
+#             eos.py
+#             models.py
+#             constrain.py
     )
 
 install(FILES ${files}

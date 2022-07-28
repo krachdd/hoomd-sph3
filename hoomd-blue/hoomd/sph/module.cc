@@ -54,21 +54,21 @@ namespace detail
 
 
 
-    void export_SPHIntegratorTwoStep(pybind11::module& m);
-    void export_SPHIntegrationMethodTwoStep(pybind11::module& m);
-    void export_VelocityVerlet(pybind11::module& m);
+    // void export_SPHIntegratorTwoStep(pybind11::module& m);
+    // void export_SPHIntegrationMethodTwoStep(pybind11::module& m);
+    // void export_VelocityVerlet(pybind11::module& m);
     // void export_SuspendedObjectIntegrator(pybind11::module& m);
     // void export_RigidBodyIntegrator(pybind11::module& m);
-    void export_WendlandC2(pybind11::module& m);
-    void export_WendlandC4(pybind11::module& m);
-    void export_WendlandC6(pybind11::module& m);
-    void export_Quintic(pybind11::module& m);
-    void export_CubicSpline(pybind11::module& m);
-    void export_SinglePhaseFlow(pybind11::module& m);
-    void export_StateEquations(pybind11::module& m);
+    // void export_WendlandC2(pybind11::module& m);
+    // void export_WendlandC4(pybind11::module& m);
+    // void export_WendlandC6(pybind11::module& m);
+    // void export_Quintic(pybind11::module& m);
+    // void export_CubicSpline(pybind11::module& m);
+    // void export_SinglePhaseFlow(pybind11::module& m);
+    // void export_StateEquations(pybind11::module& m);
     // void export_TwoPhaseFlow(pybind11::module& m);
     void export_SPHBaseClass(pybind11::module& m);
-    void export_CustomForceCompute(pybind11::module& m);
+    // void export_CustomForceCompute(pybind11::module& m);
 
 // #ifdef ENABLE_HIP
 //     void export_VelocityVerletGPU(pybind11::module& m);
@@ -90,21 +90,21 @@ using namespace hoomd::sph::detail;
 
 
 PYBIND11_MODULE(_sph, m){
-    export_SPHIntegratorTwoStep(m);
-    export_SPHIntegrationMethodTwoStep(m);
-    export_VelocityVerlet(m);
+    // export_SPHIntegratorTwoStep(m);
+    // export_SPHIntegrationMethodTwoStep(m);
+    // export_VelocityVerlet(m);
     // export_SuspendedObjectIntegrator(m);
     // export_RigidBodyIntegrator(m);
-    export_WendlandC2(m);
-    export_WendlandC4(m);
-    export_WendlandC6(m);
-    export_Quintic(m);
-    export_CubicSpline(m);
-    export_SinglePhaseFlow(m);
-    export_StateEquations(m);
+    // export_WendlandC2(m);
+    // export_WendlandC4(m);
+    // export_WendlandC6(m);
+    // export_Quintic(m);
+    // export_CubicSpline(m);
+    // export_SinglePhaseFlow(m);
+    // export_StateEquations(m);
     // export_TwoPhaseFlow(m);
     export_SPHBaseClass(m);
-    export_CustomForceCompute(m);
+    // export_CustomForceCompute(m);
 
 // #ifdef ENABLE_HIP
 //     export_VelocityVerletGPU(m);
