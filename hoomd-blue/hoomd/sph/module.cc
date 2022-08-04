@@ -6,8 +6,8 @@
 // Include the defined classes that are to be exported to python
 // #include <hoomd/HOOMDMath.h>
 
-// #include "StateEquations.h"
-// #include "SmoothingKernel.h"
+#include "StateEquations.h"
+#include "SmoothingKernel.h"
 // #include "SPHBaseClass.h"
 // #include "SPHIntegratorTwoStep.h"
 // #include "SPHIntegrationMethodTwoStep.h"
@@ -67,7 +67,7 @@ namespace detail
     // void export_SinglePhaseFlow(pybind11::module& m);
     // void export_StateEquations(pybind11::module& m);
     // void export_TwoPhaseFlow(pybind11::module& m);
-    void export_SPHBaseClass(pybind11::module& m);
+    // void export_SPHBaseClass(pybind11::module& m);
     // void export_CustomForceCompute(pybind11::module& m);
 
 // #ifdef ENABLE_HIP
@@ -106,6 +106,14 @@ PYBIND11_MODULE(_sph, m){
     // export_SPHBaseClass(m);
     export_SPHBaseClass<wendlandc2, linear>(m, "SPHBaseClass_WC2_L");
     export_SPHBaseClass<wendlandc2, tait>(m, "SPHBaseClass_WC2_T");
+    export_SPHBaseClass<wendlandc4, linear>(m, "SPHBaseClass_WC4_L");
+    export_SPHBaseClass<wendlandc4, tait>(m, "SPHBaseClass_WC4_T");
+    export_SPHBaseClass<wendlandc6, linear>(m, "SPHBaseClass_WC6_L");
+    export_SPHBaseClass<wendlandc6, tait>(m, "SPHBaseClass_WC6_T");
+    export_SPHBaseClass<quintic, linear>(m, "SPHBaseClass_Q_L");
+    export_SPHBaseClass<quintic, tait>(m, "SPHBaseClass_Q_T");
+    export_SPHBaseClass<cubicspline, linear>(m, "SPHBaseClass_CS_L");
+    export_SPHBaseClass<cubicspline, tait>(m, "SPHBaseClass_CS_T");
     // export_CustomForceCompute(m);
 
 // #ifdef ENABLE_HIP

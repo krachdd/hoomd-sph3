@@ -15,9 +15,6 @@
 // #include <boost/shared_ptr.hpp>
 // #include <boost/preprocessor/seq.hpp>
 
-#ifndef KERNELTYPES
-#define KERNELTYPES (wendlandc2)(wendlandc4)(wendlandc6)(quintic)(cubicspline)
-#endif
 
 #ifndef __SPH_SMOOTHING_KERNEL_H__
 #define __SPH_SMOOTHING_KERNEL_H__
@@ -38,6 +35,12 @@ namespace hoomd
 {
 namespace sph
 {
+
+#ifndef KERNELTYPES
+#define KERNELTYPES (wendlandc2)(wendlandc4)(wendlandc6)(quintic)(cubicspline)
+#endif
+
+
 
 enum SmoothingKernelType
 {

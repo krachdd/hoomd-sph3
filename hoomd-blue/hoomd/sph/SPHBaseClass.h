@@ -81,9 +81,9 @@ class PYBIND11_EXPORT SPHBaseClass : public ForceCompute
          */
         void applyBodyForce(unsigned int timestep, std::shared_ptr<ParticleGroup> pgroup);
         
-#ifdef ENABLE_HIP
-        void applyBodyForceGPU(unsigned int timestep, std::shared_ptr<ParticleGroup> pgroup);
-#endif
+// #ifdef ENABLE_HIP
+//         void applyBodyForceGPU(unsigned int timestep, std::shared_ptr<ParticleGroup> pgroup);
+// #endif
 
         /*! Set the volumetric acceleration
          * \param gx Volumetric acceleration in x-Direction
@@ -126,11 +126,16 @@ class PYBIND11_EXPORT SPHBaseClass : public ForceCompute
     //     //! Connection to the signal notifying when number of particle types changes
     //     boost::signals2::connection m_particle_num_change_connection;
     };
-// namespace detail 
-// {
-// void export_SPHBaseClass(pybind11::module& m);
 
-// } // end namespace detail
+
+namespace detail 
+{
+
+template<SmoothingKernelType KT_, StateEquationType SET_>
+void export_SPHBaseClass(pybind11::module& m, std::string name);
+
+} // end namespace detail
+
 } // end namespace sph
 } // end namespace hoomd
 

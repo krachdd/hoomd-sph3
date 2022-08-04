@@ -14,10 +14,6 @@
 
 // #include <boost/shared_ptr.hpp>
 
-#ifndef SEQTYPES
-#define SEQTYPES (linear)(tait)
-#endif
-
 #ifndef __SPH_STATE_EQUATIONS_H__
 #define __SPH_STATE_EQUATIONS_H__
 
@@ -36,6 +32,11 @@ namespace hoomd
 {
 namespace sph
 {
+
+#ifndef SEQTYPES
+#define SEQTYPES (linear)(tait)
+#endif
+
 
 enum StateEquationType
 {

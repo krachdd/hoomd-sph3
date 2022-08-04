@@ -297,13 +297,29 @@ void export_SPHBaseClass(pybind11::module& m, std::string name)
 //! Explicit template instantiations
 template class PYBIND11_EXPORT SPHBaseClass<wendlandc2, linear>;
 template class PYBIND11_EXPORT SPHBaseClass<wendlandc2, tait>;
+template class PYBIND11_EXPORT SPHBaseClass<wendlandc4, linear>;
+template class PYBIND11_EXPORT SPHBaseClass<wendlandc4, tait>;
+template class PYBIND11_EXPORT SPHBaseClass<wendlandc6, linear>;
+template class PYBIND11_EXPORT SPHBaseClass<wendlandc6, tait>;
+template class PYBIND11_EXPORT SPHBaseClass<quintic, linear>;
+template class PYBIND11_EXPORT SPHBaseClass<quintic, tait>;
+template class PYBIND11_EXPORT SPHBaseClass<cubicspline, linear>;
+template class PYBIND11_EXPORT SPHBaseClass<cubicspline, tait>;
 
 
 namespace detail
 {
 
-    template void export_SPHBaseClass<wendlandc2, linear>(pybind11::module& m, "SPHBaseClass_WC2_L");
-    template void export_SPHBaseClass<wendlandc2, tait>(pybind11::module& m, "SPHBaseClass_WC2_T");
+    template void export_SPHBaseClass<wendlandc2, linear>(pybind11::module& m, std::string name = "SPHBaseClass_WC2_L");
+    template void export_SPHBaseClass<wendlandc2, tait>(pybind11::module& m, std::string name = "SPHBaseClass_WC2_T");
+    template void export_SPHBaseClass<wendlandc4, linear>(pybind11::module& m, std::string name = "SPHBaseClass_WC4_L");
+    template void export_SPHBaseClass<wendlandc4, tait>(pybind11::module& m, std::string name = "SPHBaseClass_WC4_T");
+    template void export_SPHBaseClass<wendlandc6, linear>(pybind11::module& m, std::string name = "SPHBaseClass_WC6_L");
+    template void export_SPHBaseClass<wendlandc6, tait>(pybind11::module& m, std::string name = "SPHBaseClass_WC6_T");
+    template void export_SPHBaseClass<quintic, linear>(pybind11::module& m, std::string name = "SPHBaseClass_Q_L");
+    template void export_SPHBaseClass<quintic, tait>(pybind11::module& m, std::string name = "SPHBaseClass_Q_T");
+    template void export_SPHBaseClass<cubicspline, linear>(pybind11::module& m, std::string name = "SPHBaseClass_CS_L");
+    template void export_SPHBaseClass<cubicspline, tait>(pybind11::module& m, std::string name = "SPHBaseClass_CS_T");
 
 }  // end namespace detail
 
