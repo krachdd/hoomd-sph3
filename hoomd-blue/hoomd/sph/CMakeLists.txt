@@ -8,9 +8,9 @@ set(_sph_sources module.cc)
 
 # MODIFY THIS IF NEW CPP SOURCES ARE ADDED
 set(_sph_cpu_sources 
-#                      SPHIntegratorTwoStep.cc
-#                      SPHIntegrationMethodTwoStep.cc
-#                      VelocityVerlet.cc
+                     SPHIntegratorTwoStep.cc
+                     SPHIntegrationMethodTwoStep.cc
+                     VelocityVerlet.cc
                      # SuspendedObjectIntegrator.cc
                      # RigidBodyIntegrator.cc
 #                      StateEquationsExport.cc
@@ -18,23 +18,23 @@ set(_sph_cpu_sources
 #                      SinglePhaseFlow.cc
 #                      TwoPhaseFlow.cc
 #                      SmoothingKernelExport.cc
-#                      CustomForceCompute.cc
+                     CustomForceCompute.cc
                    )
 
 set(_sph_headers    #GeneralGPUDeviceFunctions.cuh  
 #                     SinglePhaseFlowGPU.h  
-#                     SPHIntegrationMethodTwoStep.h     
+                    SPHIntegrationMethodTwoStep.h     
 #                     TwoPhaseFlowGPU.cuh
 #                     GeneralGPUFunctions.cuh
 #                     SinglePhaseFlow.h     
-#                     SPHIntegratorTwoStep.h            
+                    SPHIntegratorTwoStep.h            
 #                     TwoPhaseFlowGPU.h
                     # RigidBodyIntegratorGPU.cuh     
                     SmoothingKernel.h     
                     StateEquations.h                  
 #                     TwoPhaseFlow.h
                     # RigidBodyIntegratorGPU.h       
-#                     SolidFluidTypeBit.h   
+                    SolidFluidTypeBit.h   
                     # SuspendedObjectIntegratorGPU.cuh  
 #                     VelocityVerletGPU.cuh
                     # RigidBodyIntegrator.h          
@@ -44,8 +44,8 @@ set(_sph_headers    #GeneralGPUDeviceFunctions.cuh
 #                     SinglePhaseFlowGPU.cuh         
                     SPHBaseClass.h        
 #                     SuspendedObjectIntegrator.h       
-#                     VelocityVerlet.h
-#                     CustomForceCompute.h
+                    VelocityVerlet.h
+                    CustomForceCompute.h
     )
 
 # if (NOT ENABLE_HIP)

@@ -54,9 +54,9 @@ namespace detail
 
 
 
-    // void export_SPHIntegratorTwoStep(pybind11::module& m);
-    // void export_SPHIntegrationMethodTwoStep(pybind11::module& m);
-    // void export_VelocityVerlet(pybind11::module& m);
+    void export_SPHIntegratorTwoStep(pybind11::module& m);
+    void export_SPHIntegrationMethodTwoStep(pybind11::module& m);
+    void export_VelocityVerlet(pybind11::module& m);
     // void export_SuspendedObjectIntegrator(pybind11::module& m);
     // void export_RigidBodyIntegrator(pybind11::module& m);
     // void export_WendlandC2(pybind11::module& m);
@@ -68,7 +68,7 @@ namespace detail
     // void export_StateEquations(pybind11::module& m);
     // void export_TwoPhaseFlow(pybind11::module& m);
     // void export_SPHBaseClass(pybind11::module& m);
-    // void export_CustomForceCompute(pybind11::module& m);
+    void export_CustomForceCompute(pybind11::module& m);
 
 // #ifdef ENABLE_HIP
 //     void export_VelocityVerletGPU(pybind11::module& m);
@@ -90,9 +90,9 @@ using namespace hoomd::sph::detail;
 
 
 PYBIND11_MODULE(_sph, m){
-    // export_SPHIntegratorTwoStep(m);
-    // export_SPHIntegrationMethodTwoStep(m);
-    // export_VelocityVerlet(m);
+    export_SPHIntegratorTwoStep(m);
+    export_SPHIntegrationMethodTwoStep(m);
+    export_VelocityVerlet(m);
     // export_SuspendedObjectIntegrator(m);
     // export_RigidBodyIntegrator(m);
     // export_WendlandC2(m);
@@ -114,7 +114,7 @@ PYBIND11_MODULE(_sph, m){
     export_SPHBaseClass<quintic, tait>(m, "SPHBaseClass_Q_T");
     export_SPHBaseClass<cubicspline, linear>(m, "SPHBaseClass_CS_L");
     export_SPHBaseClass<cubicspline, tait>(m, "SPHBaseClass_CS_T");
-    // export_CustomForceCompute(m);
+    export_CustomForceCompute(m);
 
 // #ifdef ENABLE_HIP
 //     export_VelocityVerletGPU(m);

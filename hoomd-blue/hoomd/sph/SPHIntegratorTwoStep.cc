@@ -23,26 +23,26 @@ SPHIntegratorTwoStep::SPHIntegratorTwoStep(std::shared_ptr<SystemDefinition> sys
     {
     m_exec_conf->msg->notice(5) << "Constructing SPHIntegratorTwoStep" << endl;
 
-#ifdef ENABLE_MPI
-    if (m_sysdef->isDomainDecomposed())
-        {
-        m_comm->getComputeCallbackSignal()
-            .connect<SPHIntegratorTwoStep, &SPHIntegratorTwoStep::updateRigidBodies>(this);
-        }
-#endif
+// #ifdef ENABLE_MPI
+//     if (m_sysdef->isDomainDecomposed())
+//         {
+//         m_comm->getComputeCallbackSignal()
+//             .connect<SPHIntegratorTwoStep, &SPHIntegratorTwoStep::updateRigidBodies>(this);
+//         }
+// #endif
     }
 
 SPHIntegratorTwoStep::~SPHIntegratorTwoStep()
     {
     m_exec_conf->msg->notice(5) << "Destroying SPHIntegratorTwoStep" << endl;
 
-#ifdef ENABLE_MPI
-    if (m_sysdef->isDomainDecomposed())
-        {
-        m_comm->getComputeCallbackSignal()
-            .disconnect<SPHIntegratorTwoStep, &SPHIntegratorTwoStep::updateRigidBodies>(this);
-        }
-#endif
+// #ifdef ENABLE_MPI
+//     if (m_sysdef->isDomainDecomposed())
+//         {
+//         m_comm->getComputeCallbackSignal()
+//             .disconnect<SPHIntegratorTwoStep, &SPHIntegratorTwoStep::updateRigidBodies>(this);
+//         }
+// #endif
     }
 
 /*! \param timestep Current time step of the simulation
