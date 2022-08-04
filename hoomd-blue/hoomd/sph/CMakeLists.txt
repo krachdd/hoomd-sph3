@@ -30,8 +30,8 @@ set(_sph_headers    #GeneralGPUDeviceFunctions.cuh
 #                     SPHIntegratorTwoStep.h            
 #                     TwoPhaseFlowGPU.h
                     # RigidBodyIntegratorGPU.cuh     
-#                     SmoothingKernel.h     
-#                     StateEquations.h                  
+                    SmoothingKernel.h     
+                    StateEquations.h                  
 #                     TwoPhaseFlow.h
                     # RigidBodyIntegratorGPU.h       
 #                     SolidFluidTypeBit.h   

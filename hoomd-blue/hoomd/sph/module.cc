@@ -103,7 +103,9 @@ PYBIND11_MODULE(_sph, m){
     // export_SinglePhaseFlow(m);
     // export_StateEquations(m);
     // export_TwoPhaseFlow(m);
-    export_SPHBaseClass(m);
+    // export_SPHBaseClass(m);
+    export_SPHBaseClass<wendlandc2, linear>(m, "SPHBaseClass_WC2_L");
+    export_SPHBaseClass<wendlandc2, tait>(m, "SPHBaseClass_WC2_T");
     // export_CustomForceCompute(m);
 
 // #ifdef ENABLE_HIP
