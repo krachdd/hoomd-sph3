@@ -70,7 +70,7 @@ struct singlephaseflow_logger_index
 /*!
 */
 template<SmoothingKernelType KT_,StateEquationType SET_>
-class SinglePhaseFlow : public SPHBaseClass<KT_, SET_>
+class PYBIND11_EXPORT SinglePhaseFlow : public SPHBaseClass<KT_, SET_>
     {
     public:
 
@@ -380,6 +380,12 @@ class SinglePhaseFlow : public SPHBaseClass<KT_, SET_>
 
     };
 
+
+namespace detail 
+{
+template<SmoothingKernelType KT_, StateEquationType SET_>
+void export_SinglePhaseFlow(pybind11::module& m, std::string name)
+}
 
 // namespace detail
 // {

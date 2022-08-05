@@ -14,10 +14,12 @@ set(_sph_cpu_sources
                      # SuspendedObjectIntegrator.cc
                      # RigidBodyIntegrator.cc
 #                      StateEquationsExport.cc
+                     StateEquations.cc
                      SPHBaseClass.cc
 #                      SinglePhaseFlow.cc
 #                      TwoPhaseFlow.cc
 #                      SmoothingKernelExport.cc
+                     SmoothingKernel.cc
                      CustomForceCompute.cc
                    )
 
@@ -99,7 +101,7 @@ if (CUSOLVER_AVAILABLE)
     # CUDA 8.0 requires that we link in gomp
     target_link_libraries(_sph PUBLIC _hoomd CUDA::cusolver CUDA::cusparse gomp)
 else()
-    target_link_libraries(_sph PUBLIC _hoomd)
+    target_link_libraries(_sph PUBLIC _hoomd PUBLIC _nsearch)
 endif()
 if (ENABLE_HIP)
     target_link_libraries(_sph PRIVATE neighbor)
@@ -118,10 +120,10 @@ set(files
             __init__.py
             integrate.py
             force.py
-#             kernel.py
-#             eos.py
-#             models.py
-#             constrain.py
+            kernel.py
+            eos.py
+            models.py
+            constrain.py
     )
 
 install(FILES ${files}

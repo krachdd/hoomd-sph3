@@ -109,7 +109,7 @@ struct SmoothingKernel
     };
 
 
-template<SmoothingKernelType KT_>std::string get_kernel_name();
+// template<SmoothingKernelType KT_>std::string get_kernel_name();
 // namespace detail
 // {
 // //! Exports the SPHIntegrationMethodTwoStep class to python

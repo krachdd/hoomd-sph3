@@ -280,16 +280,16 @@ Scalar SmoothingKernel<cubicspline>::dwijdr(const Scalar h, const Scalar rij)
 }
 
 
-template<> std::string get_kernel_name<wendlandc2>()
-{return "WC2";}
-template<> std::string get_kernel_name<wendlandc4>()
-{return "WC4";}
-template<> std::string get_kernel_name<wendlandc6>()
-{return "WC6";}
-template<> std::string get_kernel_name<quintic>()
-{return "Q";}
-template<> std::string get_kernel_name<cubicspline>()
-{return "CS";}
+// template<> std::string get_kernel_name<wendlandc2>()
+// {return "WC2";}
+// template<> std::string get_kernel_name<wendlandc4>()
+// {return "WC4";}
+// template<> std::string get_kernel_name<wendlandc6>()
+// {return "WC6";}
+// template<> std::string get_kernel_name<quintic>()
+// {return "Q";}
+// template<> std::string get_kernel_name<cubicspline>()
+// {return "CS";}
 
 namespace detail
 {

@@ -8,7 +8,7 @@ import itertools
 import hoomd
 import hoomd.sph
 from hoomd import _hoomd
-from hoomd.sph import _sph
+# from hoomd.sph import _sph
 from hoomd.data.parameterdicts import ParameterDict
 from hoomd.data.typeconverter import OnlyTypes
 from hoomd.operation import Integrator as BaseIntegrator

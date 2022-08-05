@@ -8,13 +8,13 @@
 
 #include "StateEquations.h"
 #include "SmoothingKernel.h"
-// #include "SPHBaseClass.h"
+#include "SPHBaseClass.h"
 // #include "SPHIntegratorTwoStep.h"
 // #include "SPHIntegrationMethodTwoStep.h"
 // #include "VelocityVerlet.h"
 // // #include "SuspendedObjectIntegrator.h"
 // // #include "RigidBodyIntegrator.h"
-// #include "SinglePhaseFlow.h"
+#include "SinglePhaseFlow.h"
 // // #include "TwoPhaseFlow.h"
 
 // // include GPU classes
@@ -67,7 +67,7 @@ namespace detail
     // void export_SinglePhaseFlow(pybind11::module& m);
     // void export_StateEquations(pybind11::module& m);
     // void export_TwoPhaseFlow(pybind11::module& m);
-    // void export_SPHBaseClass(pybind11::module& m);
+    void export_SPHBaseClass(pybind11::module& m);
     void export_CustomForceCompute(pybind11::module& m);
 
 // #ifdef ENABLE_HIP
@@ -95,13 +95,14 @@ PYBIND11_MODULE(_sph, m){
     export_VelocityVerlet(m);
     // export_SuspendedObjectIntegrator(m);
     // export_RigidBodyIntegrator(m);
-    // export_WendlandC2(m);
-    // export_WendlandC4(m);
-    // export_WendlandC6(m);
-    // export_Quintic(m);
-    // export_CubicSpline(m);
+    export_WendlandC2(m);
+    export_WendlandC4(m);
+    export_WendlandC6(m);
+    export_Quintic(m);
+    export_CubicSpline(m);
     // export_SinglePhaseFlow(m);
-    // export_StateEquations(m);
+    export_StateEquation_tait(m);
+    export_StateEquation_linear(m);
     // export_TwoPhaseFlow(m);
     // export_SPHBaseClass(m);
     export_SPHBaseClass<wendlandc2, linear>(m, "SPHBaseClass_WC2_L");
@@ -114,6 +115,16 @@ PYBIND11_MODULE(_sph, m){
     export_SPHBaseClass<quintic, tait>(m, "SPHBaseClass_Q_T");
     export_SPHBaseClass<cubicspline, linear>(m, "SPHBaseClass_CS_L");
     export_SPHBaseClass<cubicspline, tait>(m, "SPHBaseClass_CS_T");
+    export_SinglePhaseFlow<wendlandc2, linear>(m, "SinglePF_WC2_L");
+    export_SinglePhaseFlow<wendlandc2, tait>(m, "SinglePF_WC2_T");
+    export_SinglePhaseFlow<wendlandc4, linear>(m, "SinglePF_WC4_L");
+    export_SinglePhaseFlow<wendlandc4, tait>(m, "SinglePF_WC4_T");
+    export_SinglePhaseFlow<wendlandc6, linear>(m, "SinglePF_WC6_L");
+    export_SinglePhaseFlow<wendlandc6, tait>(m, "SinglePF_WC6_T");
+    export_SinglePhaseFlow<quintic, linear>(m, "SinglePF_Q_L");
+    export_SinglePhaseFlow<quintic, tait>(m, "SinglePF_Q_T");
+    export_SinglePhaseFlow<cubicspline, linear>(m, "SinglePF_CS_L");
+    export_SinglePhaseFlow<cubicspline, tait>(m, "SinglePF_CS_T");
     export_CustomForceCompute(m);
 
 // #ifdef ENABLE_HIP

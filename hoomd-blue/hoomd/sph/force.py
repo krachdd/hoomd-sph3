@@ -6,7 +6,7 @@
 from abc import abstractmethod
 
 import hoomd
-import hommd.sph
+import hoomd.sph
 from hoomd import _hoomd
 from hoomd.sph import _sph
 from hoomd.operation import _HOOMDBaseObject

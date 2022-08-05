@@ -1143,9 +1143,9 @@ void SinglePhaseFlow<KT_, SET_>::computeForces(unsigned int timestep)
 namespace detail 
 {
 template<SmoothingKernelType KT_, StateEquationType SET_>
-void export_SinglePhaseFlow(pybind11::module& m)
+void export_SinglePhaseFlow(pybind11::module& m, std::string name)
 {
-    pybind11::class_<SinglePhaseFlow<KT_, SET_> , std::shared_ptr<SinglePhaseFlow<KT_, SET_>>>(m, "SinglePF_L_WC2") 
+    pybind11::class_<SinglePhaseFlow<KT_, SET_> , std::shared_ptr<SinglePhaseFlow<KT_, SET_>>>(m, name.c_str()) 
         .def(pybind11::init< std::shared_ptr<SystemDefinition>,
                              std::shared_ptr<SmoothingKernel<KT_> >,
                              std::shared_ptr<StateEquation<SET_> >,
@@ -1170,228 +1170,228 @@ void export_SinglePhaseFlow(pybind11::module& m)
         .def("setAcceleration", &SPHBaseClass<KT_, SET_>::setAcceleration)
         ;
 
-    pybind11::class_<SinglePhaseFlow<KT_, SET_> , std::shared_ptr<SinglePhaseFlow<KT_, SET_>>>(m, "SinglePF_L_WC4") 
-        .def(pybind11::init< std::shared_ptr<SystemDefinition>,
-                             std::shared_ptr<SmoothingKernel<KT_> >,
-                             std::shared_ptr<StateEquation<SET_> >,
-                             std::shared_ptr<nsearch::NeighborList>,
-                             std::shared_ptr<ParticleGroup>,
-                             std::shared_ptr<ParticleGroup>,
-                             DensityMethod,
-                             ViscosityMethod >())
-        .def("setParams", &SinglePhaseFlow<KT_, SET_>::setParams)
-        .def("getDensityMethod", &SinglePhaseFlow<KT_, SET_>::getDensityMethod)
-        .def("setDensityMethod", &SinglePhaseFlow<KT_, SET_>::setDensityMethod)
-        .def("getViscosityMethod", &SinglePhaseFlow<KT_, SET_>::getViscosityMethod)
-        .def("setViscosityMethod", &SinglePhaseFlow<KT_, SET_>::setViscosityMethod)
-        .def("setConstSmoothingLength", &SinglePhaseFlow<KT_, SET_>::setConstSmoothingLength)
-        .def("computeSolidForces", &SinglePhaseFlow<KT_, SET_>::computeSolidForces)
-        .def("activateArtificialViscosity", &SinglePhaseFlow<KT_, SET_>::activateArtificialViscosity)
-        .def("deactivateArtificialViscosity", &SinglePhaseFlow<KT_, SET_>::deactivateArtificialViscosity)
-        .def("activateDensityDiffusion", &SinglePhaseFlow<KT_, SET_>::activateDensityDiffusion)
-        .def("deactivateDensityDiffusion", &SinglePhaseFlow<KT_, SET_>::deactivateDensityDiffusion)
-        .def("activateShepardRenormalization", &SinglePhaseFlow<KT_, SET_>::activateShepardRenormalization)
-        .def("deactivateShepardRenormalization", &SinglePhaseFlow<KT_, SET_>::deactivateShepardRenormalization)
-        .def("setAcceleration", &SPHBaseClass<KT_, SET_>::setAcceleration)
-        ;
-    pybind11::class_<SinglePhaseFlow<KT_, SET_> , std::shared_ptr<SinglePhaseFlow<KT_, SET_>>>(m, "SinglePF_L_WC6") 
-        .def(pybind11::init< std::shared_ptr<SystemDefinition>,
-                             std::shared_ptr<SmoothingKernel<KT_> >,
-                             std::shared_ptr<StateEquation<SET_> >,
-                             std::shared_ptr<nsearch::NeighborList>,
-                             std::shared_ptr<ParticleGroup>,
-                             std::shared_ptr<ParticleGroup>,
-                             DensityMethod,
-                             ViscosityMethod >())
-        .def("setParams", &SinglePhaseFlow<KT_, SET_>::setParams)
-        .def("getDensityMethod", &SinglePhaseFlow<KT_, SET_>::getDensityMethod)
-        .def("setDensityMethod", &SinglePhaseFlow<KT_, SET_>::setDensityMethod)
-        .def("getViscosityMethod", &SinglePhaseFlow<KT_, SET_>::getViscosityMethod)
-        .def("setViscosityMethod", &SinglePhaseFlow<KT_, SET_>::setViscosityMethod)
-        .def("setConstSmoothingLength", &SinglePhaseFlow<KT_, SET_>::setConstSmoothingLength)
-        .def("computeSolidForces", &SinglePhaseFlow<KT_, SET_>::computeSolidForces)
-        .def("activateArtificialViscosity", &SinglePhaseFlow<KT_, SET_>::activateArtificialViscosity)
-        .def("deactivateArtificialViscosity", &SinglePhaseFlow<KT_, SET_>::deactivateArtificialViscosity)
-        .def("activateDensityDiffusion", &SinglePhaseFlow<KT_, SET_>::activateDensityDiffusion)
-        .def("deactivateDensityDiffusion", &SinglePhaseFlow<KT_, SET_>::deactivateDensityDiffusion)
-        .def("activateShepardRenormalization", &SinglePhaseFlow<KT_, SET_>::activateShepardRenormalization)
-        .def("deactivateShepardRenormalization", &SinglePhaseFlow<KT_, SET_>::deactivateShepardRenormalization)
-        .def("setAcceleration", &SPHBaseClass<KT_, SET_>::setAcceleration)
-        ;
+    // pybind11::class_<SinglePhaseFlow<KT_, SET_> , std::shared_ptr<SinglePhaseFlow<KT_, SET_>>>(m, "SinglePF_L_WC4") 
+    //     .def(pybind11::init< std::shared_ptr<SystemDefinition>,
+    //                          std::shared_ptr<SmoothingKernel<KT_> >,
+    //                          std::shared_ptr<StateEquation<SET_> >,
+    //                          std::shared_ptr<nsearch::NeighborList>,
+    //                          std::shared_ptr<ParticleGroup>,
+    //                          std::shared_ptr<ParticleGroup>,
+    //                          DensityMethod,
+    //                          ViscosityMethod >())
+    //     .def("setParams", &SinglePhaseFlow<KT_, SET_>::setParams)
+    //     .def("getDensityMethod", &SinglePhaseFlow<KT_, SET_>::getDensityMethod)
+    //     .def("setDensityMethod", &SinglePhaseFlow<KT_, SET_>::setDensityMethod)
+    //     .def("getViscosityMethod", &SinglePhaseFlow<KT_, SET_>::getViscosityMethod)
+    //     .def("setViscosityMethod", &SinglePhaseFlow<KT_, SET_>::setViscosityMethod)
+    //     .def("setConstSmoothingLength", &SinglePhaseFlow<KT_, SET_>::setConstSmoothingLength)
+    //     .def("computeSolidForces", &SinglePhaseFlow<KT_, SET_>::computeSolidForces)
+    //     .def("activateArtificialViscosity", &SinglePhaseFlow<KT_, SET_>::activateArtificialViscosity)
+    //     .def("deactivateArtificialViscosity", &SinglePhaseFlow<KT_, SET_>::deactivateArtificialViscosity)
+    //     .def("activateDensityDiffusion", &SinglePhaseFlow<KT_, SET_>::activateDensityDiffusion)
+    //     .def("deactivateDensityDiffusion", &SinglePhaseFlow<KT_, SET_>::deactivateDensityDiffusion)
+    //     .def("activateShepardRenormalization", &SinglePhaseFlow<KT_, SET_>::activateShepardRenormalization)
+    //     .def("deactivateShepardRenormalization", &SinglePhaseFlow<KT_, SET_>::deactivateShepardRenormalization)
+    //     .def("setAcceleration", &SPHBaseClass<KT_, SET_>::setAcceleration)
+    //     ;
+    // pybind11::class_<SinglePhaseFlow<KT_, SET_> , std::shared_ptr<SinglePhaseFlow<KT_, SET_>>>(m, "SinglePF_L_WC6") 
+    //     .def(pybind11::init< std::shared_ptr<SystemDefinition>,
+    //                          std::shared_ptr<SmoothingKernel<KT_> >,
+    //                          std::shared_ptr<StateEquation<SET_> >,
+    //                          std::shared_ptr<nsearch::NeighborList>,
+    //                          std::shared_ptr<ParticleGroup>,
+    //                          std::shared_ptr<ParticleGroup>,
+    //                          DensityMethod,
+    //                          ViscosityMethod >())
+    //     .def("setParams", &SinglePhaseFlow<KT_, SET_>::setParams)
+    //     .def("getDensityMethod", &SinglePhaseFlow<KT_, SET_>::getDensityMethod)
+    //     .def("setDensityMethod", &SinglePhaseFlow<KT_, SET_>::setDensityMethod)
+    //     .def("getViscosityMethod", &SinglePhaseFlow<KT_, SET_>::getViscosityMethod)
+    //     .def("setViscosityMethod", &SinglePhaseFlow<KT_, SET_>::setViscosityMethod)
+    //     .def("setConstSmoothingLength", &SinglePhaseFlow<KT_, SET_>::setConstSmoothingLength)
+    //     .def("computeSolidForces", &SinglePhaseFlow<KT_, SET_>::computeSolidForces)
+    //     .def("activateArtificialViscosity", &SinglePhaseFlow<KT_, SET_>::activateArtificialViscosity)
+    //     .def("deactivateArtificialViscosity", &SinglePhaseFlow<KT_, SET_>::deactivateArtificialViscosity)
+    //     .def("activateDensityDiffusion", &SinglePhaseFlow<KT_, SET_>::activateDensityDiffusion)
+    //     .def("deactivateDensityDiffusion", &SinglePhaseFlow<KT_, SET_>::deactivateDensityDiffusion)
+    //     .def("activateShepardRenormalization", &SinglePhaseFlow<KT_, SET_>::activateShepardRenormalization)
+    //     .def("deactivateShepardRenormalization", &SinglePhaseFlow<KT_, SET_>::deactivateShepardRenormalization)
+    //     .def("setAcceleration", &SPHBaseClass<KT_, SET_>::setAcceleration)
+    //     ;
 
-    pybind11::class_<SinglePhaseFlow<KT_, SET_> , std::shared_ptr<SinglePhaseFlow<KT_, SET_>>>(m, "SinglePF_L_WQ") 
-        .def(pybind11::init< std::shared_ptr<SystemDefinition>,
-                             std::shared_ptr<SmoothingKernel<KT_> >,
-                             std::shared_ptr<StateEquation<SET_> >,
-                             std::shared_ptr<nsearch::NeighborList>,
-                             std::shared_ptr<ParticleGroup>,
-                             std::shared_ptr<ParticleGroup>,
-                             DensityMethod,
-                             ViscosityMethod >())
-        .def("setParams", &SinglePhaseFlow<KT_, SET_>::setParams)
-        .def("getDensityMethod", &SinglePhaseFlow<KT_, SET_>::getDensityMethod)
-        .def("setDensityMethod", &SinglePhaseFlow<KT_, SET_>::setDensityMethod)
-        .def("getViscosityMethod", &SinglePhaseFlow<KT_, SET_>::getViscosityMethod)
-        .def("setViscosityMethod", &SinglePhaseFlow<KT_, SET_>::setViscosityMethod)
-        .def("setConstSmoothingLength", &SinglePhaseFlow<KT_, SET_>::setConstSmoothingLength)
-        .def("computeSolidForces", &SinglePhaseFlow<KT_, SET_>::computeSolidForces)
-        .def("activateArtificialViscosity", &SinglePhaseFlow<KT_, SET_>::activateArtificialViscosity)
-        .def("deactivateArtificialViscosity", &SinglePhaseFlow<KT_, SET_>::deactivateArtificialViscosity)
-        .def("activateDensityDiffusion", &SinglePhaseFlow<KT_, SET_>::activateDensityDiffusion)
-        .def("deactivateDensityDiffusion", &SinglePhaseFlow<KT_, SET_>::deactivateDensityDiffusion)
-        .def("activateShepardRenormalization", &SinglePhaseFlow<KT_, SET_>::activateShepardRenormalization)
-        .def("deactivateShepardRenormalization", &SinglePhaseFlow<KT_, SET_>::deactivateShepardRenormalization)
-        .def("setAcceleration", &SPHBaseClass<KT_, SET_>::setAcceleration)
-        ;
+    // pybind11::class_<SinglePhaseFlow<KT_, SET_> , std::shared_ptr<SinglePhaseFlow<KT_, SET_>>>(m, "SinglePF_L_WQ") 
+    //     .def(pybind11::init< std::shared_ptr<SystemDefinition>,
+    //                          std::shared_ptr<SmoothingKernel<KT_> >,
+    //                          std::shared_ptr<StateEquation<SET_> >,
+    //                          std::shared_ptr<nsearch::NeighborList>,
+    //                          std::shared_ptr<ParticleGroup>,
+    //                          std::shared_ptr<ParticleGroup>,
+    //                          DensityMethod,
+    //                          ViscosityMethod >())
+    //     .def("setParams", &SinglePhaseFlow<KT_, SET_>::setParams)
+    //     .def("getDensityMethod", &SinglePhaseFlow<KT_, SET_>::getDensityMethod)
+    //     .def("setDensityMethod", &SinglePhaseFlow<KT_, SET_>::setDensityMethod)
+    //     .def("getViscosityMethod", &SinglePhaseFlow<KT_, SET_>::getViscosityMethod)
+    //     .def("setViscosityMethod", &SinglePhaseFlow<KT_, SET_>::setViscosityMethod)
+    //     .def("setConstSmoothingLength", &SinglePhaseFlow<KT_, SET_>::setConstSmoothingLength)
+    //     .def("computeSolidForces", &SinglePhaseFlow<KT_, SET_>::computeSolidForces)
+    //     .def("activateArtificialViscosity", &SinglePhaseFlow<KT_, SET_>::activateArtificialViscosity)
+    //     .def("deactivateArtificialViscosity", &SinglePhaseFlow<KT_, SET_>::deactivateArtificialViscosity)
+    //     .def("activateDensityDiffusion", &SinglePhaseFlow<KT_, SET_>::activateDensityDiffusion)
+    //     .def("deactivateDensityDiffusion", &SinglePhaseFlow<KT_, SET_>::deactivateDensityDiffusion)
+    //     .def("activateShepardRenormalization", &SinglePhaseFlow<KT_, SET_>::activateShepardRenormalization)
+    //     .def("deactivateShepardRenormalization", &SinglePhaseFlow<KT_, SET_>::deactivateShepardRenormalization)
+    //     .def("setAcceleration", &SPHBaseClass<KT_, SET_>::setAcceleration)
+    //     ;
 
-    pybind11::class_<SinglePhaseFlow<KT_, SET_> , std::shared_ptr<SinglePhaseFlow<KT_, SET_>>>(m, "SinglePF_L_CS") 
-        .def(pybind11::init< std::shared_ptr<SystemDefinition>,
-                             std::shared_ptr<SmoothingKernel<KT_> >,
-                             std::shared_ptr<StateEquation<SET_> >,
-                             std::shared_ptr<nsearch::NeighborList>,
-                             std::shared_ptr<ParticleGroup>,
-                             std::shared_ptr<ParticleGroup>,
-                             DensityMethod,
-                             ViscosityMethod >())
-        .def("setParams", &SinglePhaseFlow<KT_, SET_>::setParams)
-        .def("getDensityMethod", &SinglePhaseFlow<KT_, SET_>::getDensityMethod)
-        .def("setDensityMethod", &SinglePhaseFlow<KT_, SET_>::setDensityMethod)
-        .def("getViscosityMethod", &SinglePhaseFlow<KT_, SET_>::getViscosityMethod)
-        .def("setViscosityMethod", &SinglePhaseFlow<KT_, SET_>::setViscosityMethod)
-        .def("setConstSmoothingLength", &SinglePhaseFlow<KT_, SET_>::setConstSmoothingLength)
-        .def("computeSolidForces", &SinglePhaseFlow<KT_, SET_>::computeSolidForces)
-        .def("activateArtificialViscosity", &SinglePhaseFlow<KT_, SET_>::activateArtificialViscosity)
-        .def("deactivateArtificialViscosity", &SinglePhaseFlow<KT_, SET_>::deactivateArtificialViscosity)
-        .def("activateDensityDiffusion", &SinglePhaseFlow<KT_, SET_>::activateDensityDiffusion)
-        .def("deactivateDensityDiffusion", &SinglePhaseFlow<KT_, SET_>::deactivateDensityDiffusion)
-        .def("activateShepardRenormalization", &SinglePhaseFlow<KT_, SET_>::activateShepardRenormalization)
-        .def("deactivateShepardRenormalization", &SinglePhaseFlow<KT_, SET_>::deactivateShepardRenormalization)
-        .def("setAcceleration", &SPHBaseClass<KT_, SET_>::setAcceleration)
-        ;
+    // pybind11::class_<SinglePhaseFlow<KT_, SET_> , std::shared_ptr<SinglePhaseFlow<KT_, SET_>>>(m, "SinglePF_L_CS") 
+    //     .def(pybind11::init< std::shared_ptr<SystemDefinition>,
+    //                          std::shared_ptr<SmoothingKernel<KT_> >,
+    //                          std::shared_ptr<StateEquation<SET_> >,
+    //                          std::shared_ptr<nsearch::NeighborList>,
+    //                          std::shared_ptr<ParticleGroup>,
+    //                          std::shared_ptr<ParticleGroup>,
+    //                          DensityMethod,
+    //                          ViscosityMethod >())
+    //     .def("setParams", &SinglePhaseFlow<KT_, SET_>::setParams)
+    //     .def("getDensityMethod", &SinglePhaseFlow<KT_, SET_>::getDensityMethod)
+    //     .def("setDensityMethod", &SinglePhaseFlow<KT_, SET_>::setDensityMethod)
+    //     .def("getViscosityMethod", &SinglePhaseFlow<KT_, SET_>::getViscosityMethod)
+    //     .def("setViscosityMethod", &SinglePhaseFlow<KT_, SET_>::setViscosityMethod)
+    //     .def("setConstSmoothingLength", &SinglePhaseFlow<KT_, SET_>::setConstSmoothingLength)
+    //     .def("computeSolidForces", &SinglePhaseFlow<KT_, SET_>::computeSolidForces)
+    //     .def("activateArtificialViscosity", &SinglePhaseFlow<KT_, SET_>::activateArtificialViscosity)
+    //     .def("deactivateArtificialViscosity", &SinglePhaseFlow<KT_, SET_>::deactivateArtificialViscosity)
+    //     .def("activateDensityDiffusion", &SinglePhaseFlow<KT_, SET_>::activateDensityDiffusion)
+    //     .def("deactivateDensityDiffusion", &SinglePhaseFlow<KT_, SET_>::deactivateDensityDiffusion)
+    //     .def("activateShepardRenormalization", &SinglePhaseFlow<KT_, SET_>::activateShepardRenormalization)
+    //     .def("deactivateShepardRenormalization", &SinglePhaseFlow<KT_, SET_>::deactivateShepardRenormalization)
+    //     .def("setAcceleration", &SPHBaseClass<KT_, SET_>::setAcceleration)
+    //     ;
 
-    pybind11::class_<SinglePhaseFlow<KT_, SET_> , std::shared_ptr<SinglePhaseFlow<KT_, SET_>>>(m, "SinglePF_T_WC2") 
-        .def(pybind11::init< std::shared_ptr<SystemDefinition>,
-                             std::shared_ptr<SmoothingKernel<KT_> >,
-                             std::shared_ptr<StateEquation<SET_> >,
-                             std::shared_ptr<nsearch::NeighborList>,
-                             std::shared_ptr<ParticleGroup>,
-                             std::shared_ptr<ParticleGroup>,
-                             DensityMethod,
-                             ViscosityMethod >())
-        .def("setParams", &SinglePhaseFlow<KT_, SET_>::setParams)
-        .def("getDensityMethod", &SinglePhaseFlow<KT_, SET_>::getDensityMethod)
-        .def("setDensityMethod", &SinglePhaseFlow<KT_, SET_>::setDensityMethod)
-        .def("getViscosityMethod", &SinglePhaseFlow<KT_, SET_>::getViscosityMethod)
-        .def("setViscosityMethod", &SinglePhaseFlow<KT_, SET_>::setViscosityMethod)
-        .def("setConstSmoothingLength", &SinglePhaseFlow<KT_, SET_>::setConstSmoothingLength)
-        .def("computeSolidForces", &SinglePhaseFlow<KT_, SET_>::computeSolidForces)
-        .def("activateArtificialViscosity", &SinglePhaseFlow<KT_, SET_>::activateArtificialViscosity)
-        .def("deactivateArtificialViscosity", &SinglePhaseFlow<KT_, SET_>::deactivateArtificialViscosity)
-        .def("activateDensityDiffusion", &SinglePhaseFlow<KT_, SET_>::activateDensityDiffusion)
-        .def("deactivateDensityDiffusion", &SinglePhaseFlow<KT_, SET_>::deactivateDensityDiffusion)
-        .def("activateShepardRenormalization", &SinglePhaseFlow<KT_, SET_>::activateShepardRenormalization)
-        .def("deactivateShepardRenormalization", &SinglePhaseFlow<KT_, SET_>::deactivateShepardRenormalization)
-        .def("setAcceleration", &SPHBaseClass<KT_, SET_>::setAcceleration)
-        ;
+    // pybind11::class_<SinglePhaseFlow<KT_, SET_> , std::shared_ptr<SinglePhaseFlow<KT_, SET_>>>(m, "SinglePF_T_WC2") 
+    //     .def(pybind11::init< std::shared_ptr<SystemDefinition>,
+    //                          std::shared_ptr<SmoothingKernel<KT_> >,
+    //                          std::shared_ptr<StateEquation<SET_> >,
+    //                          std::shared_ptr<nsearch::NeighborList>,
+    //                          std::shared_ptr<ParticleGroup>,
+    //                          std::shared_ptr<ParticleGroup>,
+    //                          DensityMethod,
+    //                          ViscosityMethod >())
+    //     .def("setParams", &SinglePhaseFlow<KT_, SET_>::setParams)
+    //     .def("getDensityMethod", &SinglePhaseFlow<KT_, SET_>::getDensityMethod)
+    //     .def("setDensityMethod", &SinglePhaseFlow<KT_, SET_>::setDensityMethod)
+    //     .def("getViscosityMethod", &SinglePhaseFlow<KT_, SET_>::getViscosityMethod)
+    //     .def("setViscosityMethod", &SinglePhaseFlow<KT_, SET_>::setViscosityMethod)
+    //     .def("setConstSmoothingLength", &SinglePhaseFlow<KT_, SET_>::setConstSmoothingLength)
+    //     .def("computeSolidForces", &SinglePhaseFlow<KT_, SET_>::computeSolidForces)
+    //     .def("activateArtificialViscosity", &SinglePhaseFlow<KT_, SET_>::activateArtificialViscosity)
+    //     .def("deactivateArtificialViscosity", &SinglePhaseFlow<KT_, SET_>::deactivateArtificialViscosity)
+    //     .def("activateDensityDiffusion", &SinglePhaseFlow<KT_, SET_>::activateDensityDiffusion)
+    //     .def("deactivateDensityDiffusion", &SinglePhaseFlow<KT_, SET_>::deactivateDensityDiffusion)
+    //     .def("activateShepardRenormalization", &SinglePhaseFlow<KT_, SET_>::activateShepardRenormalization)
+    //     .def("deactivateShepardRenormalization", &SinglePhaseFlow<KT_, SET_>::deactivateShepardRenormalization)
+    //     .def("setAcceleration", &SPHBaseClass<KT_, SET_>::setAcceleration)
+    //     ;
 
-    pybind11::class_<SinglePhaseFlow<KT_, SET_> , std::shared_ptr<SinglePhaseFlow<KT_, SET_>>>(m, "SinglePF_T_WC4") 
-        .def(pybind11::init< std::shared_ptr<SystemDefinition>,
-                             std::shared_ptr<SmoothingKernel<KT_> >,
-                             std::shared_ptr<StateEquation<SET_> >,
-                             std::shared_ptr<nsearch::NeighborList>,
-                             std::shared_ptr<ParticleGroup>,
-                             std::shared_ptr<ParticleGroup>,
-                             DensityMethod,
-                             ViscosityMethod >())
-        .def("setParams", &SinglePhaseFlow<KT_, SET_>::setParams)
-        .def("getDensityMethod", &SinglePhaseFlow<KT_, SET_>::getDensityMethod)
-        .def("setDensityMethod", &SinglePhaseFlow<KT_, SET_>::setDensityMethod)
-        .def("getViscosityMethod", &SinglePhaseFlow<KT_, SET_>::getViscosityMethod)
-        .def("setViscosityMethod", &SinglePhaseFlow<KT_, SET_>::setViscosityMethod)
-        .def("setConstSmoothingLength", &SinglePhaseFlow<KT_, SET_>::setConstSmoothingLength)
-        .def("computeSolidForces", &SinglePhaseFlow<KT_, SET_>::computeSolidForces)
-        .def("activateArtificialViscosity", &SinglePhaseFlow<KT_, SET_>::activateArtificialViscosity)
-        .def("deactivateArtificialViscosity", &SinglePhaseFlow<KT_, SET_>::deactivateArtificialViscosity)
-        .def("activateDensityDiffusion", &SinglePhaseFlow<KT_, SET_>::activateDensityDiffusion)
-        .def("deactivateDensityDiffusion", &SinglePhaseFlow<KT_, SET_>::deactivateDensityDiffusion)
-        .def("activateShepardRenormalization", &SinglePhaseFlow<KT_, SET_>::activateShepardRenormalization)
-        .def("deactivateShepardRenormalization", &SinglePhaseFlow<KT_, SET_>::deactivateShepardRenormalization)
-        .def("setAcceleration", &SPHBaseClass<KT_, SET_>::setAcceleration)
-        ;
-    pybind11::class_<SinglePhaseFlow<KT_, SET_> , std::shared_ptr<SinglePhaseFlow<KT_, SET_>>>(m, "SinglePF_T_WC6") 
-        .def(pybind11::init< std::shared_ptr<SystemDefinition>,
-                             std::shared_ptr<SmoothingKernel<KT_> >,
-                             std::shared_ptr<StateEquation<SET_> >,
-                             std::shared_ptr<nsearch::NeighborList>,
-                             std::shared_ptr<ParticleGroup>,
-                             std::shared_ptr<ParticleGroup>,
-                             DensityMethod,
-                             ViscosityMethod >())
-        .def("setParams", &SinglePhaseFlow<KT_, SET_>::setParams)
-        .def("getDensityMethod", &SinglePhaseFlow<KT_, SET_>::getDensityMethod)
-        .def("setDensityMethod", &SinglePhaseFlow<KT_, SET_>::setDensityMethod)
-        .def("getViscosityMethod", &SinglePhaseFlow<KT_, SET_>::getViscosityMethod)
-        .def("setViscosityMethod", &SinglePhaseFlow<KT_, SET_>::setViscosityMethod)
-        .def("setConstSmoothingLength", &SinglePhaseFlow<KT_, SET_>::setConstSmoothingLength)
-        .def("computeSolidForces", &SinglePhaseFlow<KT_, SET_>::computeSolidForces)
-        .def("activateArtificialViscosity", &SinglePhaseFlow<KT_, SET_>::activateArtificialViscosity)
-        .def("deactivateArtificialViscosity", &SinglePhaseFlow<KT_, SET_>::deactivateArtificialViscosity)
-        .def("activateDensityDiffusion", &SinglePhaseFlow<KT_, SET_>::activateDensityDiffusion)
-        .def("deactivateDensityDiffusion", &SinglePhaseFlow<KT_, SET_>::deactivateDensityDiffusion)
-        .def("activateShepardRenormalization", &SinglePhaseFlow<KT_, SET_>::activateShepardRenormalization)
-        .def("deactivateShepardRenormalization", &SinglePhaseFlow<KT_, SET_>::deactivateShepardRenormalization)
-        .def("setAcceleration", &SPHBaseClass<KT_, SET_>::setAcceleration)
-        ;
+    // pybind11::class_<SinglePhaseFlow<KT_, SET_> , std::shared_ptr<SinglePhaseFlow<KT_, SET_>>>(m, "SinglePF_T_WC4") 
+    //     .def(pybind11::init< std::shared_ptr<SystemDefinition>,
+    //                          std::shared_ptr<SmoothingKernel<KT_> >,
+    //                          std::shared_ptr<StateEquation<SET_> >,
+    //                          std::shared_ptr<nsearch::NeighborList>,
+    //                          std::shared_ptr<ParticleGroup>,
+    //                          std::shared_ptr<ParticleGroup>,
+    //                          DensityMethod,
+    //                          ViscosityMethod >())
+    //     .def("setParams", &SinglePhaseFlow<KT_, SET_>::setParams)
+    //     .def("getDensityMethod", &SinglePhaseFlow<KT_, SET_>::getDensityMethod)
+    //     .def("setDensityMethod", &SinglePhaseFlow<KT_, SET_>::setDensityMethod)
+    //     .def("getViscosityMethod", &SinglePhaseFlow<KT_, SET_>::getViscosityMethod)
+    //     .def("setViscosityMethod", &SinglePhaseFlow<KT_, SET_>::setViscosityMethod)
+    //     .def("setConstSmoothingLength", &SinglePhaseFlow<KT_, SET_>::setConstSmoothingLength)
+    //     .def("computeSolidForces", &SinglePhaseFlow<KT_, SET_>::computeSolidForces)
+    //     .def("activateArtificialViscosity", &SinglePhaseFlow<KT_, SET_>::activateArtificialViscosity)
+    //     .def("deactivateArtificialViscosity", &SinglePhaseFlow<KT_, SET_>::deactivateArtificialViscosity)
+    //     .def("activateDensityDiffusion", &SinglePhaseFlow<KT_, SET_>::activateDensityDiffusion)
+    //     .def("deactivateDensityDiffusion", &SinglePhaseFlow<KT_, SET_>::deactivateDensityDiffusion)
+    //     .def("activateShepardRenormalization", &SinglePhaseFlow<KT_, SET_>::activateShepardRenormalization)
+    //     .def("deactivateShepardRenormalization", &SinglePhaseFlow<KT_, SET_>::deactivateShepardRenormalization)
+    //     .def("setAcceleration", &SPHBaseClass<KT_, SET_>::setAcceleration)
+    //     ;
+    // pybind11::class_<SinglePhaseFlow<KT_, SET_> , std::shared_ptr<SinglePhaseFlow<KT_, SET_>>>(m, "SinglePF_T_WC6") 
+    //     .def(pybind11::init< std::shared_ptr<SystemDefinition>,
+    //                          std::shared_ptr<SmoothingKernel<KT_> >,
+    //                          std::shared_ptr<StateEquation<SET_> >,
+    //                          std::shared_ptr<nsearch::NeighborList>,
+    //                          std::shared_ptr<ParticleGroup>,
+    //                          std::shared_ptr<ParticleGroup>,
+    //                          DensityMethod,
+    //                          ViscosityMethod >())
+    //     .def("setParams", &SinglePhaseFlow<KT_, SET_>::setParams)
+    //     .def("getDensityMethod", &SinglePhaseFlow<KT_, SET_>::getDensityMethod)
+    //     .def("setDensityMethod", &SinglePhaseFlow<KT_, SET_>::setDensityMethod)
+    //     .def("getViscosityMethod", &SinglePhaseFlow<KT_, SET_>::getViscosityMethod)
+    //     .def("setViscosityMethod", &SinglePhaseFlow<KT_, SET_>::setViscosityMethod)
+    //     .def("setConstSmoothingLength", &SinglePhaseFlow<KT_, SET_>::setConstSmoothingLength)
+    //     .def("computeSolidForces", &SinglePhaseFlow<KT_, SET_>::computeSolidForces)
+    //     .def("activateArtificialViscosity", &SinglePhaseFlow<KT_, SET_>::activateArtificialViscosity)
+    //     .def("deactivateArtificialViscosity", &SinglePhaseFlow<KT_, SET_>::deactivateArtificialViscosity)
+    //     .def("activateDensityDiffusion", &SinglePhaseFlow<KT_, SET_>::activateDensityDiffusion)
+    //     .def("deactivateDensityDiffusion", &SinglePhaseFlow<KT_, SET_>::deactivateDensityDiffusion)
+    //     .def("activateShepardRenormalization", &SinglePhaseFlow<KT_, SET_>::activateShepardRenormalization)
+    //     .def("deactivateShepardRenormalization", &SinglePhaseFlow<KT_, SET_>::deactivateShepardRenormalization)
+    //     .def("setAcceleration", &SPHBaseClass<KT_, SET_>::setAcceleration)
+    //     ;
 
-    pybind11::class_<SinglePhaseFlow<KT_, SET_> , std::shared_ptr<SinglePhaseFlow<KT_, SET_>>>(m, "SinglePF_T_WQ") 
-        .def(pybind11::init< std::shared_ptr<SystemDefinition>,
-                             std::shared_ptr<SmoothingKernel<KT_> >,
-                             std::shared_ptr<StateEquation<SET_> >,
-                             std::shared_ptr<nsearch::NeighborList>,
-                             std::shared_ptr<ParticleGroup>,
-                             std::shared_ptr<ParticleGroup>,
-                             DensityMethod,
-                             ViscosityMethod >())
-        .def("setParams", &SinglePhaseFlow<KT_, SET_>::setParams)
-        .def("getDensityMethod", &SinglePhaseFlow<KT_, SET_>::getDensityMethod)
-        .def("setDensityMethod", &SinglePhaseFlow<KT_, SET_>::setDensityMethod)
-        .def("getViscosityMethod", &SinglePhaseFlow<KT_, SET_>::getViscosityMethod)
-        .def("setViscosityMethod", &SinglePhaseFlow<KT_, SET_>::setViscosityMethod)
-        .def("setConstSmoothingLength", &SinglePhaseFlow<KT_, SET_>::setConstSmoothingLength)
-        .def("computeSolidForces", &SinglePhaseFlow<KT_, SET_>::computeSolidForces)
-        .def("activateArtificialViscosity", &SinglePhaseFlow<KT_, SET_>::activateArtificialViscosity)
-        .def("deactivateArtificialViscosity", &SinglePhaseFlow<KT_, SET_>::deactivateArtificialViscosity)
-        .def("activateDensityDiffusion", &SinglePhaseFlow<KT_, SET_>::activateDensityDiffusion)
-        .def("deactivateDensityDiffusion", &SinglePhaseFlow<KT_, SET_>::deactivateDensityDiffusion)
-        .def("activateShepardRenormalization", &SinglePhaseFlow<KT_, SET_>::activateShepardRenormalization)
-        .def("deactivateShepardRenormalization", &SinglePhaseFlow<KT_, SET_>::deactivateShepardRenormalization)
-        .def("setAcceleration", &SPHBaseClass<KT_, SET_>::setAcceleration)
-        ;
+    // pybind11::class_<SinglePhaseFlow<KT_, SET_> , std::shared_ptr<SinglePhaseFlow<KT_, SET_>>>(m, "SinglePF_T_WQ") 
+    //     .def(pybind11::init< std::shared_ptr<SystemDefinition>,
+    //                          std::shared_ptr<SmoothingKernel<KT_> >,
+    //                          std::shared_ptr<StateEquation<SET_> >,
+    //                          std::shared_ptr<nsearch::NeighborList>,
+    //                          std::shared_ptr<ParticleGroup>,
+    //                          std::shared_ptr<ParticleGroup>,
+    //                          DensityMethod,
+    //                          ViscosityMethod >())
+    //     .def("setParams", &SinglePhaseFlow<KT_, SET_>::setParams)
+    //     .def("getDensityMethod", &SinglePhaseFlow<KT_, SET_>::getDensityMethod)
+    //     .def("setDensityMethod", &SinglePhaseFlow<KT_, SET_>::setDensityMethod)
+    //     .def("getViscosityMethod", &SinglePhaseFlow<KT_, SET_>::getViscosityMethod)
+    //     .def("setViscosityMethod", &SinglePhaseFlow<KT_, SET_>::setViscosityMethod)
+    //     .def("setConstSmoothingLength", &SinglePhaseFlow<KT_, SET_>::setConstSmoothingLength)
+    //     .def("computeSolidForces", &SinglePhaseFlow<KT_, SET_>::computeSolidForces)
+    //     .def("activateArtificialViscosity", &SinglePhaseFlow<KT_, SET_>::activateArtificialViscosity)
+    //     .def("deactivateArtificialViscosity", &SinglePhaseFlow<KT_, SET_>::deactivateArtificialViscosity)
+    //     .def("activateDensityDiffusion", &SinglePhaseFlow<KT_, SET_>::activateDensityDiffusion)
+    //     .def("deactivateDensityDiffusion", &SinglePhaseFlow<KT_, SET_>::deactivateDensityDiffusion)
+    //     .def("activateShepardRenormalization", &SinglePhaseFlow<KT_, SET_>::activateShepardRenormalization)
+    //     .def("deactivateShepardRenormalization", &SinglePhaseFlow<KT_, SET_>::deactivateShepardRenormalization)
+    //     .def("setAcceleration", &SPHBaseClass<KT_, SET_>::setAcceleration)
+    //     ;
 
-    pybind11::class_<SinglePhaseFlow<KT_, SET_> , std::shared_ptr<SinglePhaseFlow<KT_, SET_>>>(m, "SinglePF_T_CS") 
-        .def(pybind11::init< std::shared_ptr<SystemDefinition>,
-                             std::shared_ptr<SmoothingKernel<KT_> >,
-                             std::shared_ptr<StateEquation<SET_> >,
-                             std::shared_ptr<nsearch::NeighborList>,
-                             std::shared_ptr<ParticleGroup>,
-                             std::shared_ptr<ParticleGroup>,
-                             DensityMethod,
-                             ViscosityMethod >())
-        .def("setParams", &SinglePhaseFlow<KT_, SET_>::setParams)
-        .def("getDensityMethod", &SinglePhaseFlow<KT_, SET_>::getDensityMethod)
-        .def("setDensityMethod", &SinglePhaseFlow<KT_, SET_>::setDensityMethod)
-        .def("getViscosityMethod", &SinglePhaseFlow<KT_, SET_>::getViscosityMethod)
-        .def("setViscosityMethod", &SinglePhaseFlow<KT_, SET_>::setViscosityMethod)
-        .def("setConstSmoothingLength", &SinglePhaseFlow<KT_, SET_>::setConstSmoothingLength)
-        .def("computeSolidForces", &SinglePhaseFlow<KT_, SET_>::computeSolidForces)
-        .def("activateArtificialViscosity", &SinglePhaseFlow<KT_, SET_>::activateArtificialViscosity)
-        .def("deactivateArtificialViscosity", &SinglePhaseFlow<KT_, SET_>::deactivateArtificialViscosity)
-        .def("activateDensityDiffusion", &SinglePhaseFlow<KT_, SET_>::activateDensityDiffusion)
-        .def("deactivateDensityDiffusion", &SinglePhaseFlow<KT_, SET_>::deactivateDensityDiffusion)
-        .def("activateShepardRenormalization", &SinglePhaseFlow<KT_, SET_>::activateShepardRenormalization)
-        .def("deactivateShepardRenormalization", &SinglePhaseFlow<KT_, SET_>::deactivateShepardRenormalization)
-        .def("setAcceleration", &SPHBaseClass<KT_, SET_>::setAcceleration)
-        ;
+    // pybind11::class_<SinglePhaseFlow<KT_, SET_> , std::shared_ptr<SinglePhaseFlow<KT_, SET_>>>(m, "SinglePF_T_CS") 
+    //     .def(pybind11::init< std::shared_ptr<SystemDefinition>,
+    //                          std::shared_ptr<SmoothingKernel<KT_> >,
+    //                          std::shared_ptr<StateEquation<SET_> >,
+    //                          std::shared_ptr<nsearch::NeighborList>,
+    //                          std::shared_ptr<ParticleGroup>,
+    //                          std::shared_ptr<ParticleGroup>,
+    //                          DensityMethod,
+    //                          ViscosityMethod >())
+    //     .def("setParams", &SinglePhaseFlow<KT_, SET_>::setParams)
+    //     .def("getDensityMethod", &SinglePhaseFlow<KT_, SET_>::getDensityMethod)
+    //     .def("setDensityMethod", &SinglePhaseFlow<KT_, SET_>::setDensityMethod)
+    //     .def("getViscosityMethod", &SinglePhaseFlow<KT_, SET_>::getViscosityMethod)
+    //     .def("setViscosityMethod", &SinglePhaseFlow<KT_, SET_>::setViscosityMethod)
+    //     .def("setConstSmoothingLength", &SinglePhaseFlow<KT_, SET_>::setConstSmoothingLength)
+    //     .def("computeSolidForces", &SinglePhaseFlow<KT_, SET_>::computeSolidForces)
+    //     .def("activateArtificialViscosity", &SinglePhaseFlow<KT_, SET_>::activateArtificialViscosity)
+    //     .def("deactivateArtificialViscosity", &SinglePhaseFlow<KT_, SET_>::deactivateArtificialViscosity)
+    //     .def("activateDensityDiffusion", &SinglePhaseFlow<KT_, SET_>::activateDensityDiffusion)
+    //     .def("deactivateDensityDiffusion", &SinglePhaseFlow<KT_, SET_>::deactivateDensityDiffusion)
+    //     .def("activateShepardRenormalization", &SinglePhaseFlow<KT_, SET_>::activateShepardRenormalization)
+    //     .def("deactivateShepardRenormalization", &SinglePhaseFlow<KT_, SET_>::deactivateShepardRenormalization)
+    //     .def("setAcceleration", &SPHBaseClass<KT_, SET_>::setAcceleration)
+    //     ;
 
 
     }
@@ -1443,5 +1443,34 @@ void export_SinglePhaseFlow(pybind11::module& m)
 
 
 } // end namespace detail
+
+//! Explicit template instantiations
+template class PYBIND11_EXPORT SinglePhaseFlow<wendlandc2, linear>;
+template class PYBIND11_EXPORT SinglePhaseFlow<wendlandc2, tait>;
+template class PYBIND11_EXPORT SinglePhaseFlow<wendlandc4, linear>;
+template class PYBIND11_EXPORT SinglePhaseFlow<wendlandc4, tait>;
+template class PYBIND11_EXPORT SinglePhaseFlow<wendlandc6, linear>;
+template class PYBIND11_EXPORT SinglePhaseFlow<wendlandc6, tait>;
+template class PYBIND11_EXPORT SinglePhaseFlow<quintic, linear>;
+template class PYBIND11_EXPORT SinglePhaseFlow<quintic, tait>;
+template class PYBIND11_EXPORT SinglePhaseFlow<cubicspline, linear>;
+template class PYBIND11_EXPORT SinglePhaseFlow<cubicspline, tait>;
+
+
+namespace detail
+{
+
+    template void export_SinglePhaseFlow<wendlandc2, linear>(pybind11::module& m, std::string name = "SinglePF_WC2_L");
+    template void export_SinglePhaseFlow<wendlandc2, tait>(pybind11::module& m, std::string name = "SinglePF_WC2_T");
+    template void export_SinglePhaseFlow<wendlandc4, linear>(pybind11::module& m, std::string name = "SinglePF_WC4_L");
+    template void export_SinglePhaseFlow<wendlandc4, tait>(pybind11::module& m, std::string name = "SinglePF_WC4_T");
+    template void export_SinglePhaseFlow<wendlandc6, linear>(pybind11::module& m, std::string name = "SinglePF_WC6_L");
+    template void export_SinglePhaseFlow<wendlandc6, tait>(pybind11::module& m, std::string name = "SinglePF_WC6_T");
+    template void export_SinglePhaseFlow<quintic, linear>(pybind11::module& m, std::string name = "SinglePF_Q_L");
+    template void export_SinglePhaseFlow<quintic, tait>(pybind11::module& m, std::string name = "SinglePF_Q_T");
+    template void export_SinglePhaseFlow<cubicspline, linear>(pybind11::module& m, std::string name = "SinglePF_CS_L");
+    template void export_SinglePhaseFlow<cubicspline, tait>(pybind11::module& m, std::string name = "SinglePF_CS_T");
+
+}  // end namespace detail
 } // end namespace sph
 } // end namespace hoomd
