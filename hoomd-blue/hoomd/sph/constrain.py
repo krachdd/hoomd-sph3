@@ -18,7 +18,7 @@ Warning:
     Do not apply multiple constraint class instances to the same particle. Each
     instance solves for its constraints independently.
 """
-
+import hoomd.sph
 from hoomd.sph import _sph
 from hoomd.data.parameterdicts import ParameterDict, TypeParameterDict
 from hoomd.data.typeparam import TypeParameter

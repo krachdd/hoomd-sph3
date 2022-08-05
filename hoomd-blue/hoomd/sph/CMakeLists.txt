@@ -118,11 +118,11 @@ install(TARGETS _sph EXPORT HOOMDTargets
 # copy python modules to the build directory to make it a working python package
 set(files   
             __init__.py
-            integrate.py
-            force.py
-            kernel.py
-            eos.py
-            models.py
+#             integrate.py
+#             force.py
+#             kernel.py
+#             eos.py
+#             models.py
             constrain.py
     )
 

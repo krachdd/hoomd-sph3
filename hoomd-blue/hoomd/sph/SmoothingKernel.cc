@@ -279,6 +279,41 @@ Scalar SmoothingKernel<cubicspline>::dwijdr(const Scalar h, const Scalar rij)
         return dwdr;
 }
 
+//! Explicit template instantiations
+// template void PYBIND11_EXPORT SmoothingKernel<wendlandc2>::setAlpha;
+// template void PYBIND11_EXPORT SmoothingKernel<wendlandc2>::setSelfDensity;
+// template void PYBIND11_EXPORT SmoothingKernel<wendlandc2>::setKernelKappa;
+// template Scalar PYBIND11_EXPORT SmoothingKernel<wendlandc2>::getKernelKappa;
+// template Scalar PYBIND11_EXPORT SmoothingKernel<wendlandc2>::w0;
+// template Scalar PYBIND11_EXPORT SmoothingKernel<wendlandc2>::normalizationfactor;
+
+// template void PYBIND11_EXPORT SmoothingKernel<wendlandc4>::setAlpha;
+// template void PYBIND11_EXPORT SmoothingKernel<wendlandc4>::setSelfDensity;
+// template void PYBIND11_EXPORT SmoothingKernel<wendlandc4>::setKernelKappa;
+// template Scalar PYBIND11_EXPORT SmoothingKernel<wendlandc4>::getKernelKappa;
+// template Scalar PYBIND11_EXPORT SmoothingKernel<wendlandc4>::w0;
+// template Scalar PYBIND11_EXPORT SmoothingKernel<wendlandc4>::normalizationfactor;
+
+// template void PYBIND11_EXPORT SmoothingKernel<wendlandc6>::setAlpha;
+// template void PYBIND11_EXPORT SmoothingKernel<wendlandc6>::setSelfDensity;
+// template void PYBIND11_EXPORT SmoothingKernel<wendlandc6>::setKernelKappa;
+// template Scalar PYBIND11_EXPORT SmoothingKernel<wendlandc6>::getKernelKappa;
+// template Scalar PYBIND11_EXPORT SmoothingKernel<wendlandc6>::w0;
+// template Scalar PYBIND11_EXPORT SmoothingKernel<wendlandc6>::normalizationfactor;
+
+// template void PYBIND11_EXPORT SmoothingKernel<quintic>::setAlpha;
+// template void PYBIND11_EXPORT SmoothingKernel<quintic>::setSelfDensity;
+// template void PYBIND11_EXPORT SmoothingKernel<quintic>::setKernelKappa;
+// template Scalar PYBIND11_EXPORT SmoothingKernel<quintic>::getKernelKappa;
+// template Scalar PYBIND11_EXPORT SmoothingKernel<quintic>::w0;
+// template Scalar PYBIND11_EXPORT SmoothingKernel<quintic>::normalizationfactor;
+
+// template void PYBIND11_EXPORT SmoothingKernel<cubicspline>::setAlpha;
+// template void PYBIND11_EXPORT SmoothingKernel<cubicspline>::setSelfDensity;
+// template void PYBIND11_EXPORT SmoothingKernel<cubicspline>::setKernelKappa;
+// template Scalar PYBIND11_EXPORT SmoothingKernel<cubicspline>::getKernelKappa;
+// template Scalar PYBIND11_EXPORT SmoothingKernel<cubicspline>::w0;
+// template Scalar PYBIND11_EXPORT SmoothingKernel<cubicspline>::normalizationfactor;
 
 // template<> std::string get_kernel_name<wendlandc2>()
 // {return "WC2";}
@@ -291,53 +326,131 @@ Scalar SmoothingKernel<cubicspline>::dwijdr(const Scalar h, const Scalar rij)
 // template<> std::string get_kernel_name<cubicspline>()
 // {return "CS";}
 
+//! Explicit template instantiations
+
+
 namespace detail
 {
- void export_WendlandC2(pybind11::module& m)
+void export_WendlandC2(pybind11::module& m)
      {
      pybind11::class_<SmoothingKernel<wendlandc2>, std::shared_ptr<SmoothingKernel<wendlandc2>>>(m, "WendlandC2")
          .def("getKernelKappa", &SmoothingKernel<wendlandc2>::getKernelKappa)
          //.def("setNeighborList", &SmoothingKernel<wendlandc2>::setNeighborList)
          .def("EvalKernel", &SmoothingKernel<wendlandc2>::wij)
          .def("EvalKernelDerivative", &SmoothingKernel<wendlandc2>::dwijdr)
+         .def("setAlpha", &SmoothingKernel<wendlandc2>::setAlpha)
+         .def("setSelfDensity", &SmoothingKernel<wendlandc2>::setSelfDensity)
+         .def("setKernelKappa", &SmoothingKernel<wendlandc2>::setKernelKappa)
+         .def("w0", &SmoothingKernel<wendlandc2>::w0)
+         .def("normalizationfactor", &SmoothingKernel<wendlandc2>::normalizationfactor)
+
          ;
      }
- void export_WendlandC4(pybind11::module& m)
+
+void export_WendlandC4(pybind11::module& m)
      {
-     pybind11::class_<SmoothingKernel<wendlandc4>, std::shared_ptr<SmoothingKernel<wendlandc4>>>(m, "WendlandC4")
+     pybind11::class_<SmoothingKernel<wendlandc4>, std::shared_ptr<SmoothingKernel<wendlandc4>>>(m, "Wendlandc4")
          .def("getKernelKappa", &SmoothingKernel<wendlandc4>::getKernelKappa)
-         //.def("setNeighborList", &SmoothingKernel<wendlandc2>::setNeighborList)
+         //.def("setNeighborList", &SmoothingKernel<wendlandc4>::setNeighborList)
          .def("EvalKernel", &SmoothingKernel<wendlandc4>::wij)
          .def("EvalKernelDerivative", &SmoothingKernel<wendlandc4>::dwijdr)
+         .def("setAlpha", &SmoothingKernel<wendlandc4>::setAlpha)
+         .def("setSelfDensity", &SmoothingKernel<wendlandc4>::setSelfDensity)
+         .def("setKernelKappa", &SmoothingKernel<wendlandc4>::setKernelKappa)
+         .def("w0", &SmoothingKernel<wendlandc4>::w0)
+         .def("normalizationfactor", &SmoothingKernel<wendlandc4>::normalizationfactor)
+
          ;
      }
- void export_WendlandC6(pybind11::module& m)
+
+void export_WendlandC6(pybind11::module& m)
      {
-     pybind11::class_<SmoothingKernel<wendlandc6>, std::shared_ptr<SmoothingKernel<wendlandc6>>>(m, "WendlandC6")
+     pybind11::class_<SmoothingKernel<wendlandc6>, std::shared_ptr<SmoothingKernel<wendlandc6>>>(m, "Wendlandc6")
          .def("getKernelKappa", &SmoothingKernel<wendlandc6>::getKernelKappa)
-         //.def("setNeighborList", &SmoothingKernel<wendlandc2>::setNeighborList)
+         //.def("setNeighborList", &SmoothingKernel<wendlandc6>::setNeighborList)
          .def("EvalKernel", &SmoothingKernel<wendlandc6>::wij)
          .def("EvalKernelDerivative", &SmoothingKernel<wendlandc6>::dwijdr)
+         .def("setAlpha", &SmoothingKernel<wendlandc6>::setAlpha)
+         .def("setSelfDensity", &SmoothingKernel<wendlandc6>::setSelfDensity)
+         .def("setKernelKappa", &SmoothingKernel<wendlandc6>::setKernelKappa)
+         .def("w0", &SmoothingKernel<wendlandc6>::w0)
+         .def("normalizationfactor", &SmoothingKernel<wendlandc6>::normalizationfactor)
+
          ;
      }
- void export_Quintic(pybind11::module& m)
+
+void export_Quintic(pybind11::module& m)
      {
      pybind11::class_<SmoothingKernel<quintic>, std::shared_ptr<SmoothingKernel<quintic>>>(m, "Quintic")
          .def("getKernelKappa", &SmoothingKernel<quintic>::getKernelKappa)
-         //.def("setNeighborList", &SmoothingKernel<wendlandc2>::setNeighborList)
+         //.def("setNeighborList", &SmoothingKernel<quintic>::setNeighborList)
          .def("EvalKernel", &SmoothingKernel<quintic>::wij)
          .def("EvalKernelDerivative", &SmoothingKernel<quintic>::dwijdr)
+         .def("setAlpha", &SmoothingKernel<quintic>::setAlpha)
+         .def("setSelfDensity", &SmoothingKernel<quintic>::setSelfDensity)
+         .def("setKernelKappa", &SmoothingKernel<quintic>::setKernelKappa)
+         .def("w0", &SmoothingKernel<quintic>::w0)
+         .def("normalizationfactor", &SmoothingKernel<quintic>::normalizationfactor)
+
          ;
      }
- void export_CubicSpline(pybind11::module& m)
+
+void export_CubicSpline(pybind11::module& m)
      {
-     pybind11::class_<SmoothingKernel<cubicspline>, std::shared_ptr<SmoothingKernel<cubicspline>>>(m, "CubicSpline")
+     pybind11::class_<SmoothingKernel<cubicspline>, std::shared_ptr<SmoothingKernel<cubicspline>>>(m, "Cubicspline")
          .def("getKernelKappa", &SmoothingKernel<cubicspline>::getKernelKappa)
-         //.def("setNeighborList", &SmoothingKernel<wendlandc2>::setNeighborList)
+         //.def("setNeighborList", &SmoothingKernel<cubicspline>::setNeighborList)
          .def("EvalKernel", &SmoothingKernel<cubicspline>::wij)
          .def("EvalKernelDerivative", &SmoothingKernel<cubicspline>::dwijdr)
+         .def("setAlpha", &SmoothingKernel<cubicspline>::setAlpha)
+         .def("setSelfDensity", &SmoothingKernel<cubicspline>::setSelfDensity)
+         .def("setKernelKappa", &SmoothingKernel<cubicspline>::setKernelKappa)
+         .def("w0", &SmoothingKernel<cubicspline>::w0)
+         .def("normalizationfactor", &SmoothingKernel<cubicspline>::normalizationfactor)
+
          ;
      }
+
+
+
+
+
+ // void export_WendlandC4(pybind11::module& m)
+ //     {
+ //     pybind11::class_<SmoothingKernel<wendlandc4>, std::shared_ptr<SmoothingKernel<wendlandc4>>>(m, "WendlandC4")
+ //         .def("getKernelKappa", &SmoothingKernel<wendlandc4>::getKernelKappa)
+ //         //.def("setNeighborList", &SmoothingKernel<wendlandc2>::setNeighborList)
+ //         .def("EvalKernel", &SmoothingKernel<wendlandc4>::wij)
+ //         .def("EvalKernelDerivative", &SmoothingKernel<wendlandc4>::dwijdr)
+ //         ;
+ //     }
+ // void export_WendlandC6(pybind11::module& m)
+ //     {
+ //     pybind11::class_<SmoothingKernel<wendlandc6>, std::shared_ptr<SmoothingKernel<wendlandc6>>>(m, "WendlandC6")
+ //         .def("getKernelKappa", &SmoothingKernel<wendlandc6>::getKernelKappa)
+ //         //.def("setNeighborList", &SmoothingKernel<wendlandc2>::setNeighborList)
+ //         .def("EvalKernel", &SmoothingKernel<wendlandc6>::wij)
+ //         .def("EvalKernelDerivative", &SmoothingKernel<wendlandc6>::dwijdr)
+ //         ;
+ //     }
+ // void export_Quintic(pybind11::module& m)
+ //     {
+ //     pybind11::class_<SmoothingKernel<quintic>, std::shared_ptr<SmoothingKernel<quintic>>>(m, "Quintic")
+ //         .def("getKernelKappa", &SmoothingKernel<quintic>::getKernelKappa)
+ //         //.def("setNeighborList", &SmoothingKernel<wendlandc2>::setNeighborList)
+ //         .def("EvalKernel", &SmoothingKernel<quintic>::wij)
+ //         .def("EvalKernelDerivative", &SmoothingKernel<quintic>::dwijdr)
+ //         ;
+ //     }
+ // void export_CubicSpline(pybind11::module& m)
+ //     {
+ //     pybind11::class_<SmoothingKernel<cubicspline>, std::shared_ptr<SmoothingKernel<cubicspline>>>(m, "CubicSpline")
+ //         .def("getKernelKappa", &SmoothingKernel<cubicspline>::getKernelKappa)
+ //         //.def("setNeighborList", &SmoothingKernel<wendlandc2>::setNeighborList)
+ //         .def("EvalKernel", &SmoothingKernel<cubicspline>::wij)
+ //         .def("EvalKernelDerivative", &SmoothingKernel<cubicspline>::dwijdr)
+ //         ;
+ //     }
  } // end namespace detail
 
 // #define INST_getKernelKappa(r,data,k) template Scalar SmoothingKernel<k>::getKernelKappa();
