@@ -260,6 +260,11 @@ class PYBIND11_EXPORT SinglePhaseFlow : public SPHBaseClass<KT_, SET_>
         void computeForces(unsigned int timestep);
 
     #ifdef ENABLE_MPI
+        /// The system's communicator.
+        std::shared_ptr<Communicator> m_comm;
+    #endif
+
+    #ifdef ENABLE_MPI
         //! Get requested ghost communication flags
         virtual CommFlags getRequestedCommFlags(unsigned int timestep)
             {
@@ -287,6 +292,8 @@ class PYBIND11_EXPORT SinglePhaseFlow : public SPHBaseClass<KT_, SET_>
         // Shared pointers
         std::shared_ptr<ParticleGroup> m_fluidgroup; //!< Group of fluid particles
         std::shared_ptr<ParticleGroup> m_solidgroup; //!< Group of fluid particles
+
+        std::shared_ptr<nsearch::NeighborList> m_nlist; //!< the neighborlist to use for the computation
 
         // Model parameters
         Scalar m_ch; //!< Smoothing length to use if constant for all particles
@@ -384,7 +391,7 @@ class PYBIND11_EXPORT SinglePhaseFlow : public SPHBaseClass<KT_, SET_>
 namespace detail 
 {
 template<SmoothingKernelType KT_, StateEquationType SET_>
-void export_SinglePhaseFlow(pybind11::module& m, std::string name)
+void export_SinglePhaseFlow(pybind11::module& m, std::string name);
 }
 
 // namespace detail

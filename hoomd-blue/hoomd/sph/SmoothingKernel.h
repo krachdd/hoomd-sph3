@@ -52,7 +52,7 @@ enum SmoothingKernelType
 };
 
 template<SmoothingKernelType KT_>
-struct SmoothingKernel
+struct PYBIND11_EXPORT SmoothingKernel
     {
     public:
         //! Construct the smoothing kernel and associate it with the neighbor list method
@@ -89,12 +89,14 @@ struct SmoothingKernel
         //! Return kernel self density
         /*! \param h Smoothing length
         */
-        HOSTDEVICE Scalar w0(const Scalar h);
+        // HOSTDEVICE Scalar w0(const Scalar h);
+        Scalar w0(const Scalar h);
 
         //! Return kernel normalization factor
         /*! \param h Smoothing length
         */
-        HOSTDEVICE Scalar normalizationfactor(const Scalar h);
+        // HOSTDEVICE Scalar normalizationfactor(const Scalar h);
+        Scalar normalizationfactor(const Scalar h);
 /*
     protected:
         const boost::shared_ptr<SystemDefinition> m_sysdef; //!< The system definition this method is associated with
@@ -114,11 +116,11 @@ struct SmoothingKernel
 // {
 // //! Exports the SPHIntegrationMethodTwoStep class to python
 
-// void export_WendlandC2(pybind11::module& m);
-// void export_WendlandC4(pybind11::module& m);
-// void export_WendlandC6(pybind11::module& m);
-// void export_Quintic(pybind11::module& m);
-// void export_CubicSpline(pybind11::module& m);
+void export_WendlandC2(pybind11::module& m);
+void export_WendlandC4(pybind11::module& m);
+void export_WendlandC6(pybind11::module& m);
+void export_Quintic(pybind11::module& m);
+void export_CubicSpline(pybind11::module& m);
 
 
 // } // end namespace detail

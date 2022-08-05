@@ -194,8 +194,8 @@ Scalar SinglePhaseFlow<KT_, SET_>::getLogValue(const std::string& quantity, unsi
 template<SmoothingKernelType KT_,StateEquationType SET_>
 void SinglePhaseFlow<KT_, SET_>::computeProperties()
     {
-    if (this->m_prof)
-        this->m_prof->push("SinglePhaseFlowlogger");
+    // if (this->m_prof)
+    //     this->m_prof->push("SinglePhaseFlowlogger");
 
     ArrayHandle<Scalar4> h_pos(this->m_pdata->getPositions(), access_location::host, access_mode::read);
     ArrayHandle<Scalar4> h_velocity(this->m_pdata->getVelocities(), access_location::host, access_mode::read);
@@ -235,8 +235,8 @@ void SinglePhaseFlow<KT_, SET_>::computeProperties()
     this->m_properties_reduced = !this->m_pdata->getDomainDecomposition();
 #endif
 
-    if (this->m_prof)
-        this->m_prof->pop();
+    // if (this->m_prof)
+    //     this->m_prof->pop();
     }
 
 #ifdef ENABLE_MPI
@@ -339,8 +339,8 @@ void SinglePhaseFlow<KT_, SET_>::compute_ndensity(unsigned int timestep)
     {
     this->m_exec_conf->msg->notice(7) << "Computing SinglePhaseFlow::Number Density" << std::endl;
 
-    if (this->m_prof)
-        this->m_prof->push("SinglePhaseFlowNDensity");
+    // if (this->m_prof)
+    //     this->m_prof->push("SinglePhaseFlowNDensity");
 
     // Grab handles for particle data
     ArrayHandle<Scalar3> h_dpe(this->m_pdata->getDPEs(), access_location::host, access_mode::readwrite);
@@ -351,7 +351,8 @@ void SinglePhaseFlow<KT_, SET_>::compute_ndensity(unsigned int timestep)
     // Grab handles for neighbor data
     ArrayHandle<unsigned int> h_n_neigh(this->m_nlist->getNNeighArray(), access_location::host, access_mode::read);
     ArrayHandle<unsigned int> h_nlist(this->m_nlist->getNListArray(), access_location::host, access_mode::read);
-    ArrayHandle<unsigned int> h_head_list(this->m_nlist->getHeadList(), access_location::host, access_mode::read);
+    ArrayHandle<size_t> h_head_list(this->m_nlist->getHeadList(), access_location::host, access_mode::read);
+    // ArrayHandle<unsigned int> h_head_list(this->m_nlist->getHeadList(), access_location::host, access_mode::read);
     ArrayHandle<unsigned int> h_type_property_map(this->m_type_property_map, access_location::host, access_mode::read);
 
     // Local copy of the simulation box
@@ -460,8 +461,8 @@ void SinglePhaseFlow<KT_, SET_>::compute_ndensity(unsigned int timestep)
 
         } // End of particle loop
 
-    if (this->m_prof)
-        this->m_prof->pop();
+    // if (this->m_prof)
+    //     this->m_prof->pop();
     }
 
 
@@ -472,8 +473,8 @@ void SinglePhaseFlow<KT_, SET_>::compute_pressure(unsigned int timestep)
     {
     this->m_exec_conf->msg->notice(7) << "Computing SinglePhaseFlow::Pressure" << std::endl;
 
-    if (this->m_prof)
-        this->m_prof->push("SinglePhaseFlowPressure");
+    // if (this->m_prof)
+    //     this->m_prof->push("SinglePhaseFlowPressure");
 
     // Define ArrayHandles
     ArrayHandle<Scalar3> h_dpe(this->m_pdata->getDPEs(), access_location::host, access_mode::readwrite);
@@ -488,8 +489,8 @@ void SinglePhaseFlow<KT_, SET_>::compute_pressure(unsigned int timestep)
         h_dpe.data[i].y = this->m_eos->Pressure(h_dpe.data[i].x);
         }
 
-    if (this->m_prof)
-        this->m_prof->pop();
+    // if (this->m_prof)
+    //     this->m_prof->pop();
     }
 
 /*! Compute fictitious solid particle properties
@@ -502,8 +503,8 @@ void SinglePhaseFlow<KT_, SET_>::compute_noslip(unsigned int timestep)
     {
     this->m_exec_conf->msg->notice(7) << "Computing SinglePhaseFlow::NoSlip" << std::endl;
 
-    if (this->m_prof)
-        this->m_prof->push("SinglePhaseFlowNoSlip");
+    // if (this->m_prof)
+    //     this->m_prof->push("SinglePhaseFlowNoSlip");
 
     // Grab handles for particle and neighbor data
     ArrayHandle<Scalar3> h_vf(this->m_pdata->getAuxiliaries1(), access_location::host,access_mode::readwrite);
@@ -516,7 +517,8 @@ void SinglePhaseFlow<KT_, SET_>::compute_noslip(unsigned int timestep)
     // Grab handles for neighbor data
     ArrayHandle<unsigned int> h_n_neigh(this->m_nlist->getNNeighArray(), access_location::host, access_mode::read);
     ArrayHandle<unsigned int> h_nlist(this->m_nlist->getNListArray(), access_location::host, access_mode::read);
-    ArrayHandle<unsigned int> h_head_list(this->m_nlist->getHeadList(), access_location::host, access_mode::read);
+    // ArrayHandle<unsigned int> h_head_list(this->m_nlist->getHeadList(), access_location::host, access_mode::read);
+    ArrayHandle<size_t> h_head_list(this->m_nlist->getHeadList(), access_location::host, access_mode::read);
     ArrayHandle<unsigned int> h_type_property_map(this->m_type_property_map, access_location::host, access_mode::read);
 
     // Local copy of the simulation box
@@ -692,8 +694,8 @@ void SinglePhaseFlow<KT_, SET_>::compute_noslip(unsigned int timestep)
 
         } // End solid particle loop
 
-    if (this->m_prof)
-        this->m_prof->pop();
+    // if (this->m_prof)
+    //     this->m_prof->pop();
     }
 
 
@@ -704,8 +706,8 @@ void SinglePhaseFlow<KT_, SET_>::renormalize_density(unsigned int timestep)
     {
     this->m_exec_conf->msg->notice(7) << "Computing SinglePhaseFlow::Density renormalization" << std::endl;
 
-    if (this->m_prof)
-        this->m_prof->push("SinglePhaseFlowDensityRenormalization");
+    // if (this->m_prof)
+    //     this->m_prof->push("SinglePhaseFlowDensityRenormalization");
 
     // Grab handles for particle data
     ArrayHandle<Scalar3> h_dpe(this->m_pdata->getDPEs(), access_location::host, access_mode::readwrite);
@@ -716,7 +718,8 @@ void SinglePhaseFlow<KT_, SET_>::renormalize_density(unsigned int timestep)
     // Grab handles for neighbor data
     ArrayHandle<unsigned int> h_n_neigh(this->m_nlist->getNNeighArray(), access_location::host, access_mode::read);
     ArrayHandle<unsigned int> h_nlist(this->m_nlist->getNListArray(), access_location::host, access_mode::read);
-    ArrayHandle<unsigned int> h_head_list(this->m_nlist->getHeadList(), access_location::host, access_mode::read);
+    // ArrayHandle<unsigned int> h_head_list(this->m_nlist->getHeadList(), access_location::host, access_mode::read);
+    ArrayHandle<size_t> h_head_list(this->m_nlist->getHeadList(), access_location::host, access_mode::read);
 
     auto tmp_pde = this->m_pdata->getDPEs();
     ArrayHandle<Scalar3> h_dpe_old(tmp_pde, access_location::host, access_mode::read);
@@ -830,8 +833,8 @@ void SinglePhaseFlow<KT_, SET_>::renormalize_density(unsigned int timestep)
 
         } // End of particle loop
 
-    if (this->m_prof)
-        this->m_prof->pop();
+    // if (this->m_prof)
+    //     this->m_prof->pop();
     }
 
 /*! Perform force computation
@@ -847,8 +850,8 @@ void SinglePhaseFlow<KT_, SET_>::forcecomputation(unsigned int timestep)
         this->m_exec_conf->msg->notice(7) << "Computing SinglePhaseFlow::Forces using CONTINUITY approach" << endl;
 
     // Start the profile for this compute
-    if (this->m_prof)
-        this->m_prof->push("SinglePhaseFlowForces");
+    // if (this->m_prof)
+    //     this->m_prof->push("SinglePhaseFlowForces");
 
     // Grab handles for particle data
     // Access mode overwrite implies that data does not need to be read in
@@ -873,7 +876,8 @@ void SinglePhaseFlow<KT_, SET_>::forcecomputation(unsigned int timestep)
     // access the neighbor list
     ArrayHandle<unsigned int> h_n_neigh(this->m_nlist->getNNeighArray(), access_location::host, access_mode::read);
     ArrayHandle<unsigned int> h_nlist(this->m_nlist->getNListArray(), access_location::host, access_mode::read);
-    ArrayHandle<unsigned int> h_head_list(this->m_nlist->getHeadList(), access_location::host, access_mode::read);
+    // ArrayHandle<unsigned int> h_head_list(this->m_nlist->getHeadList(), access_location::host, access_mode::read);
+    ArrayHandle<size_t> h_head_list(this->m_nlist->getHeadList(), access_location::host, access_mode::read);
     ArrayHandle<unsigned int> h_type_property_map(this->m_type_property_map, access_location::host, access_mode::read);
 
     // Check input data
@@ -1079,8 +1083,8 @@ void SinglePhaseFlow<KT_, SET_>::forcecomputation(unsigned int timestep)
     if ( m_compute_solid_forces )
         this->applyBodyForce(timestep, m_solidgroup);
 
-    if (this->m_prof)
-        this->m_prof->pop();
+    // if (this->m_prof)
+    //     this->m_prof->pop();
     }
 
 /*! Compute forces definition
@@ -1089,8 +1093,8 @@ void SinglePhaseFlow<KT_, SET_>::forcecomputation(unsigned int timestep)
 template<SmoothingKernelType KT_,StateEquationType SET_>
 void SinglePhaseFlow<KT_, SET_>::computeForces(unsigned int timestep)
     {
-    if (this->m_prof)
-        this->m_prof->push("SinglePhaseFlow");
+    // if (this->m_prof)
+    //     this->m_prof->push("SinglePhaseFlow");
 
     // This is executed once to initialize protected/private variables
     if (!m_params_set)
@@ -1136,8 +1140,8 @@ void SinglePhaseFlow<KT_, SET_>::computeForces(unsigned int timestep)
     // Execute the force computation
     forcecomputation(timestep);
 
-    if (this->m_prof)
-        this->m_prof->pop();
+    // if (this->m_prof)
+    //     this->m_prof->pop();
     }
 
 namespace detail 
