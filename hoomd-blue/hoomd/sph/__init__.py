@@ -1,7 +1,8 @@
 """ sph
 
-Smoothed-Particle Hydrodynamics
+Smoothed-Particle Hydrodynamics Plugin 
 """
+
 # from hoomd.sph import integrate
 # from hoomd.sph import force
 # from hoomd.sph import eos
