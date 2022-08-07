@@ -243,37 +243,6 @@ void SPHBaseClass<KT_, SET_>::setAcceleration(Scalar gx, Scalar gy, Scalar gz, u
 //     };
 
 
-/*
-namespace detail {
-
-void export_SPHBaseClass(pybind11::module& m)
-{
-    pybind11::class_<SPHBaseClass, std::shared_ptr<SPHBaseClass>>(m, "SPHBaseClass")
-        .def(pybind11::init<std::shared_ptr<SystemDefinition>,
-                            std::shared_ptr<SmoothingKernel<KT_> >,
-                           std::shared_ptr<StateEquation<SET_> >,
-                           std::shared_ptr<nsearch::NeighborList>>())
-        .def("constructTypeVectors", &SPHBaseClass::constructTypeVectors)
-        .def("getAcceleration", &SPHBaseClass::getAcceleration)
-        .def("applyBodyForce", &SPHBaseClass::applyBodyForce)
-        .def("applyBodyForceGPU", &SPHBaseClass::applyBodyForceGPU)
-        .def("setAcceleration", &SPHBaseClass::setAcceleration);
-
-    pybind11::enum_<DensityMethod>(m, "PhaseFlowDensityMethod")
-    .value("DENSITYSUMMATION", DENSITYSUMMATION)
-    .value("DENSITYCONTINUITY", DENSITYCONTINUITY)
-    ;
-
-    pybind11::enum_<ViscosityMethod>(m, "PhaseFlowViscosityMethod")
-    .value("HARMONICAVERAGE", HARMONICAVERAGE)
-    ;
-
-}
-
-*/
-
-
-
 namespace detail {
 
 template<SmoothingKernelType KT_, StateEquationType SET_>
@@ -293,16 +262,36 @@ void export_SPHBaseClass(pybind11::module& m, std::string name)
         // .def("applyBodyForceGPU", &SPHBaseClass<KT_, SET_>::applyBodyForceGPU)
         .def("setAcceleration", &SPHBaseClass<KT_, SET_>::setAcceleration);
 
-    pybind11::enum_<DensityMethod>(sphbaseclass, "PhaseFlowDensityMethod")
-        .value("DENSITYSUMMATION", DENSITYSUMMATION)
-        .value("DENSITYCONTINUITY", DENSITYCONTINUITY)
-        .export_values();
+    // std::string dmethodname = "_PhaseFlowDensityMethod";
+    // pybind11::enum_<SPHBaseClass<KT_, SET_>::DensityMethod>(sphbaseclass, (name + dmethodname).c_str())
+    //     .value("DENSITYSUMMATION", SPHBaseClass<KT_, SET_>::DensityMethod::DENSITYSUMMATION)
+    //     .value("DENSITYCONTINUITY", SPHBaseClass<KT_, SET_>::DensityMethod::DENSITYCONTINUITY)
+    //     .export_values();
 
-    pybind11::enum_<ViscosityMethod>(sphbaseclass, "PhaseFlowViscosityMethod")
-        .value("HARMONICAVERAGE", HARMONICAVERAGE)
-        .export_values();
+    // std::string vmethodname = "_PhaseFlowViscosityMethod";
+    // pybind11::enum_<SPHBaseClass<KT_, SET_>::ViscosityMethod>(sphbaseclass, (name + vmethodname).c_str())
+    //     .value("HARMONICAVERAGE", SPHBaseClass<KT_, SET_>::ViscosityMethod::HARMONICAVERAGE)
+    //     .export_values();
 
 }
+
+
+void export_DensityMethod(pybind11::module& m)
+{
+    pybind11::enum_<DensityMethod>(m, "PhaseFlowDensityMethod")
+        .value("DENSITYSUMMATION", DensityMethod::DENSITYSUMMATION)
+        .value("DENSITYCONTINUITY", DensityMethod::DENSITYCONTINUITY)
+        ;
+}
+
+void export_ViscosityMethod(pybind11::module& m)
+{
+    pybind11::enum_<ViscosityMethod>(m, "PhaseFlowViscosityMethod")
+        .value("HARMONICAVERAGE", ViscosityMethod::HARMONICAVERAGE)
+        ;
+}
+
+
 
 } // end namespace detail 
 

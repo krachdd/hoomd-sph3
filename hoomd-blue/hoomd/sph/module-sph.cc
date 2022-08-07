@@ -18,6 +18,7 @@
 // // #include "TwoPhaseFlow.h"
 #include "CustomForceCompute.h"
 
+
 // // include GPU classes
 // #ifdef ENABLE_HIP
 // #include "VelocityVerletGPU.h"
@@ -117,6 +118,7 @@ PYBIND11_MODULE(_sph, m){
     export_SPHBaseClass<quintic, tait>(m, "SPHBaseClass_Q_T");
     export_SPHBaseClass<cubicspline, linear>(m, "SPHBaseClass_CS_L");
     export_SPHBaseClass<cubicspline, tait>(m, "SPHBaseClass_CS_T");
+
     export_SinglePhaseFlow<wendlandc2, linear>(m, "SinglePF_WC2_L");
     export_SinglePhaseFlow<wendlandc2, tait>(m, "SinglePF_WC2_T");
     export_SinglePhaseFlow<wendlandc4, linear>(m, "SinglePF_WC4_L");
@@ -127,7 +129,11 @@ PYBIND11_MODULE(_sph, m){
     export_SinglePhaseFlow<quintic, tait>(m, "SinglePF_Q_T");
     export_SinglePhaseFlow<cubicspline, linear>(m, "SinglePF_CS_L");
     export_SinglePhaseFlow<cubicspline, tait>(m, "SinglePF_CS_T");
+
     export_CustomForceCompute(m);
+
+    export_DensityMethod(m);
+    export_ViscosityMethod(m);
 
 // #ifdef ENABLE_HIP
 //     export_VelocityVerletGPU(m);

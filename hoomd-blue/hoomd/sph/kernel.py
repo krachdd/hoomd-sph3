@@ -9,6 +9,8 @@ import hoomd.nsearch
 from hoomd import _hoomd
 from hoomd.sph import _sph
 from hoomd.nsearch import _nsearch
+from hoomd.operation import _HOOMDBaseObject
+
 import numpy
 import math
 

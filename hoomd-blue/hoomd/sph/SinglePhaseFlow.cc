@@ -361,7 +361,8 @@ void SinglePhaseFlow<KT_, SET_>::compute_ndensity(unsigned int timestep)
     // Precompute self-density for homogeneous smoothing lengths
     Scalar w0 = this->m_skernel->w0(m_ch);
 
-    unsigned int myHead, size;
+    unsigned int size;
+    long unsigned int myHead;
 
     // Particle loop
     for (unsigned int i = 0; i < this->m_pdata->getN(); i++)
@@ -524,7 +525,9 @@ void SinglePhaseFlow<KT_, SET_>::compute_noslip(unsigned int timestep)
     // Local copy of the simulation box
     const BoxDim& box = this->m_pdata->getGlobalBox();
 
-    unsigned int myHead, size;
+    unsigned int size;
+    long unsigned int myHead;
+
 
     // For all solid particles
     unsigned int group_size = this->m_solidgroup->getNumMembers();
@@ -730,7 +733,9 @@ void SinglePhaseFlow<KT_, SET_>::renormalize_density(unsigned int timestep)
     // Precompute self-density for homogeneous smoothing lengths
     Scalar w0 = this->m_skernel->w0(this->m_ch);
 
-    unsigned int myHead, size;
+    unsigned int size;
+    long unsigned int myHead;
+
 
     // Particle loop
     // For each fluid particle
@@ -928,7 +933,7 @@ void SinglePhaseFlow<KT_, SET_>::forcecomputation(unsigned int timestep)
         }
 
         // Loop over all of the neighbors of this particle
-        const unsigned int myHead = h_head_list.data[i];
+        const long unsigned int myHead = h_head_list.data[i];
         const unsigned int size = (unsigned int)h_n_neigh.data[i];
         for (unsigned int j = 0; j < size; j++)
             {

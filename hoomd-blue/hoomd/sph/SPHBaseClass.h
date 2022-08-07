@@ -61,20 +61,6 @@ template<SmoothingKernelType KT_, StateEquationType SET_>
 class PYBIND11_EXPORT SPHBaseClass : public ForceCompute
     {
     public:
-
-        //! Enum for various density evaluation approaches
-        enum DensityMethod
-        {
-            DENSITYSUMMATION,    //!< Summation approach
-            DENSITYCONTINUITY,    //!< Continuity approach
-        };
-
-        //! Enum for various viscosity evaluation approaches
-        enum ViscosityMethod
-        {
-            HARMONICAVERAGE, //!< Viscosity operator based on inter-particle averaged shear stress
-        };
-
         
         //! Constructor
         SPHBaseClass(std::shared_ptr<SystemDefinition> sysdef,
@@ -130,6 +116,9 @@ class PYBIND11_EXPORT SPHBaseClass : public ForceCompute
         std::shared_ptr<StateEquation<SET_> > m_eos; //!< The equation of state class this method is associated with
         std::shared_ptr<nsearch::NeighborList> m_nlist; //!< The neighbor list to use for the computation
 
+        DensityMethod m_densitymethod;
+        ViscosityMethod m_viscositymethod;
+
         Scalar3 m_bodyforce; //!< Volumetric force
         unsigned int m_damptime; //!< Damping time
         bool m_body_acceleration; //!< True if body acceleration has been set and not null
@@ -148,6 +137,10 @@ namespace detail
 
 template<SmoothingKernelType KT_, StateEquationType SET_>
 void export_SPHBaseClass(pybind11::module& m, std::string name);
+
+void export_DensityMethod(pybind11::module& m);
+
+void export_ViscosityMethod(pybind11::module& m);
 
 } // end namespace detail
 
