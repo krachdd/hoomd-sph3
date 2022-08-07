@@ -1,0 +1,17 @@
+version: 2
+updates:
+  - package-ecosystem: "github-actions"
+    directory: "/"
+    target-branch: trunk-patch
+    schedule:
+      interval: "monthly"
+    pull-request-branch-name:
+      separator: "-"
+
+  - package-ecosystem: "pip"
+    directory: ".github"
+    target-branch: trunk-patch
+    schedule:
+      interval: "monthly"
+    pull-request-branch-name:
+      separator: "-"
