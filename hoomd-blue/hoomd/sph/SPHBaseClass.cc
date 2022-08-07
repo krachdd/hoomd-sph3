@@ -280,7 +280,9 @@ template<SmoothingKernelType KT_, StateEquationType SET_>
 void export_SPHBaseClass(pybind11::module& m, std::string name)
 {   
     // using Class = SPHBaseClass<KT_, SET_>; 
-    pybind11::class_<SPHBaseClass<KT_, SET_>, ForceCompute, std::shared_ptr<SPHBaseClass<KT_, SET_>>>(m, name.c_str())
+    pybind11::class_<SPHBaseClass<KT_, SET_>, ForceCompute, std::shared_ptr<SPHBaseClass<KT_, SET_>>>
+        sphbaseclass(m, name.c_str());
+    sphbaseclass
         .def(pybind11::init<std::shared_ptr<SystemDefinition>,
                             std::shared_ptr<SmoothingKernel<KT_> >,
                            std::shared_ptr<StateEquation<SET_> >,
@@ -290,6 +292,16 @@ void export_SPHBaseClass(pybind11::module& m, std::string name)
         .def("applyBodyForce", &SPHBaseClass<KT_, SET_>::applyBodyForce)
         // .def("applyBodyForceGPU", &SPHBaseClass<KT_, SET_>::applyBodyForceGPU)
         .def("setAcceleration", &SPHBaseClass<KT_, SET_>::setAcceleration);
+
+    pybind11::enum_<DensityMethod>(sphbaseclass, "PhaseFlowDensityMethod")
+        .value("DENSITYSUMMATION", DENSITYSUMMATION)
+        .value("DENSITYCONTINUITY", DENSITYCONTINUITY)
+        .export_values();
+
+    pybind11::enum_<ViscosityMethod>(sphbaseclass, "PhaseFlowViscosityMethod")
+        .value("HARMONICAVERAGE", HARMONICAVERAGE)
+        .export_values();
+
 }
 
 } // end namespace detail 

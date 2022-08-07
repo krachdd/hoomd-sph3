@@ -7,14 +7,15 @@ import hoomd
 import hoomd.sph
 from hoomd import _hoomd 
 from hoomd.sph import _sph
+from hoomd.operation import _HOOMDBaseObject
 import numpy
 
 class _StateEquation(_HOOMDBaseObject):
-	r"""
-	Constructs the equation of state meta class
-	"""
+    r"""
+    Constructs the equation of state meta class
+    """
 
-	def __init__(self):
+    def __init__(self):
         self._in_context_manager = False
 
         self.SpeedOfSound = 0;

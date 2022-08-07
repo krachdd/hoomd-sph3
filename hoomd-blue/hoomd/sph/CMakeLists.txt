@@ -4,33 +4,33 @@ set(COMPONENT_NAME sph)
 
 set(_${COMPONENT_NAME}_sources
     module-sph.cc
-#     SPHIntegratorTwoStep.cc
-#     SPHIntegrationMethodTwoStep.cc
-#     VelocityVerlet.cc
+    SPHIntegratorTwoStep.cc
+    SPHIntegrationMethodTwoStep.cc
+    VelocityVerlet.cc
 #     SuspendedObjectIntegrator.cc
 #     RigidBodyIntegrator.cc
 #     StateEquationsExport.cc
-#     StateEquations.cc
-#     SPHBaseClass.cc
-#     SinglePhaseFlow.cc
+    StateEquations.cc
+    SPHBaseClass.cc
+    SinglePhaseFlow.cc
 #     TwoPhaseFlow.cc
 #     SmoothingKernelExport.cc
-#     SmoothingKernel.cc
+    SmoothingKernel.cc
     CustomForceCompute.cc
     )
 
 set(_${COMPONENT_NAME}_headers
 #     GeneralGPUDeviceFunctions.cuh  
 #     SinglePhaseFlowGPU.h  
-#     SPHIntegrationMethodTwoStep.h     
+    SPHIntegrationMethodTwoStep.h     
 #     TwoPhaseFlowGPU.cuh
 #     GeneralGPUFunctions.cuh
-#     SinglePhaseFlow.h     
-#     SPHIntegratorTwoStep.h            
+    SinglePhaseFlow.h     
+    SPHIntegratorTwoStep.h            
 #     TwoPhaseFlowGPU.h
 #     RigidBodyIntegratorGPU.cuh     
-#     SmoothingKernel.h     
-#     StateEquations.h                  
+    SmoothingKernel.h     
+    StateEquations.h                  
 #     TwoPhaseFlow.h
 #     RigidBodyIntegratorGPU.h       
 #     SolidFluidTypeBit.h   
@@ -41,9 +41,9 @@ set(_${COMPONENT_NAME}_headers
 #     SuspendedObjectIntegratorGPU.h    
 #     VelocityVerletGPU.h
 #     SinglePhaseFlowGPU.cuh         
-#     SPHBaseClass.h        
+    SPHBaseClass.h        
 #     SuspendedObjectIntegrator.h       
-#     VelocityVerlet.h
+    VelocityVerlet.h
     CustomForceCompute.h
     )
 
@@ -86,6 +86,7 @@ endif()
 
 # link the library to its dependencies
 target_link_libraries(_${COMPONENT_NAME} PUBLIC HOOMD::_hoomd)
+target_link_libraries(_${COMPONENT_NAME} PUBLIC HOOMD::_nsearch)
 
 fix_cudart_rpath(_${COMPONENT_NAME})
 
@@ -98,11 +99,11 @@ install(TARGETS _${COMPONENT_NAME}
 # copy python modules to the build directory to make it a working python package
 set(files
     __init__.py
-#             integrate.py
-#             force.py
-#             kernel.py
-#             eos.py
-#             models.py
+    integrate.py
+    force.py
+    kernel.py
+    eos.py
+    models.py
     constrain.py
     )
 

@@ -61,6 +61,21 @@ template<SmoothingKernelType KT_, StateEquationType SET_>
 class PYBIND11_EXPORT SPHBaseClass : public ForceCompute
     {
     public:
+
+        //! Enum for various density evaluation approaches
+        enum DensityMethod
+        {
+            DENSITYSUMMATION,    //!< Summation approach
+            DENSITYCONTINUITY,    //!< Continuity approach
+        };
+
+        //! Enum for various viscosity evaluation approaches
+        enum ViscosityMethod
+        {
+            HARMONICAVERAGE, //!< Viscosity operator based on inter-particle averaged shear stress
+        };
+
+        
         //! Constructor
         SPHBaseClass(std::shared_ptr<SystemDefinition> sysdef,
                      std::shared_ptr<SmoothingKernel<KT_> > skernel,
