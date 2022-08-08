@@ -163,34 +163,50 @@ class ParticleData(object):
     _default_value['types'] = ['A']
     _default_value['typeid'] = numpy.uint32(0)
     _default_value['mass'] = numpy.float32(1.0)
-    _default_value['charge'] = numpy.float32(0)
-    _default_value['diameter'] = numpy.float32(1.0)
+    # _default_value['charge'] = numpy.float32(0)
+    # _default_value['diameter'] = numpy.float32(1.0)
     _default_value['body'] = numpy.int32(-1)
-    _default_value['moment_inertia'] = numpy.array([0, 0, 0],
-                                                   dtype=numpy.float32)
+    # _default_value['moment_inertia'] = numpy.array([0, 0, 0],dtype=numpy.float32)
     _default_value['position'] = numpy.array([0, 0, 0], dtype=numpy.float32)
-    _default_value['orientation'] = numpy.array([1, 0, 0, 0],
-                                                dtype=numpy.float32)
+    # _default_value['orientation'] = numpy.array([1, 0, 0, 0],
+    #                                             dtype=numpy.float32)
     _default_value['velocity'] = numpy.array([0, 0, 0], dtype=numpy.float32)
-    _default_value['angmom'] = numpy.array([0, 0, 0, 0], dtype=numpy.float32)
+    _default_value['slength'] = numpy.float32(0.0);
+    _default_value['dpe'] = numpy.array([0,0,0], dtype=numpy.float32);
+    _default_value['auxiliary1'] = numpy.array([0,0,0], dtype=numpy.float32);
+    _default_value['auxiliary2'] = numpy.array([0,0,0], dtype=numpy.float32);
+    _default_value['auxiliary3'] = numpy.array([0,0,0], dtype=numpy.float32);
+    _default_value['auxiliary4'] = numpy.array([0,0,0], dtype=numpy.float32);
+    # _default_value['angmom'] = numpy.array([0, 0, 0, 0], dtype=numpy.float32)
     _default_value['image'] = numpy.array([0, 0, 0], dtype=numpy.int32)
     _default_value['type_shapes'] = [{}]
 
     def __init__(self):
         self.N = 0
         self.position = None
-        self.orientation = None
+        # self.orientation = None
         self.types = None
         self.typeid = None
         self.mass = None
-        self.charge = None
-        self.diameter = None
+        # self.charge = None
+        # self.diameter = None
         self.body = None
-        self.moment_inertia = None
+        # self.moment_inertia = None
         self.velocity = None
-        self.angmom = None
+        self.slength = None;
+        self.dpe = None;
+        self.auxiliary1 = None;
+        self.auxiliary2 = None;
+        self.auxiliary3 = None;
+        self.auxiliary4 = None;
+        # self.angmom = None
         self.image = None
         self.type_shapes = None
+
+
+
+
+
 
     def validate(self):
         """Validate all attributes.
@@ -210,10 +226,10 @@ class ParticleData(object):
             self.position = numpy.ascontiguousarray(self.position,
                                                     dtype=numpy.float32)
             self.position = self.position.reshape([self.N, 3])
-        if self.orientation is not None:
-            self.orientation = numpy.ascontiguousarray(self.orientation,
-                                                       dtype=numpy.float32)
-            self.orientation = self.orientation.reshape([self.N, 4])
+        # if self.orientation is not None:
+        #     self.orientation = numpy.ascontiguousarray(self.orientation,
+        #                                                dtype=numpy.float32)
+        #     self.orientation = self.orientation.reshape([self.N, 4])
         if self.typeid is not None:
             self.typeid = numpy.ascontiguousarray(self.typeid,
                                                   dtype=numpy.uint32)
@@ -221,29 +237,49 @@ class ParticleData(object):
         if self.mass is not None:
             self.mass = numpy.ascontiguousarray(self.mass, dtype=numpy.float32)
             self.mass = self.mass.reshape([self.N])
-        if self.charge is not None:
-            self.charge = numpy.ascontiguousarray(self.charge,
-                                                  dtype=numpy.float32)
-            self.charge = self.charge.reshape([self.N])
-        if self.diameter is not None:
-            self.diameter = numpy.ascontiguousarray(self.diameter,
-                                                    dtype=numpy.float32)
-            self.diameter = self.diameter.reshape([self.N])
+        # if self.charge is not None:
+        #     self.charge = numpy.ascontiguousarray(self.charge,
+        #                                           dtype=numpy.float32)
+        #     self.charge = self.charge.reshape([self.N])
+        # if self.diameter is not None:
+        #     self.diameter = numpy.ascontiguousarray(self.diameter,
+        #                                             dtype=numpy.float32)
+        #     self.diameter = self.diameter.reshape([self.N])
         if self.body is not None:
             self.body = numpy.ascontiguousarray(self.body, dtype=numpy.int32)
             self.body = self.body.reshape([self.N])
-        if self.moment_inertia is not None:
-            self.moment_inertia = numpy.ascontiguousarray(self.moment_inertia,
-                                                          dtype=numpy.float32)
-            self.moment_inertia = self.moment_inertia.reshape([self.N, 3])
+        # if self.moment_inertia is not None:
+        #     self.moment_inertia = numpy.ascontiguousarray(self.moment_inertia,
+        #                                                   dtype=numpy.float32)
+        #     self.moment_inertia = self.moment_inertia.reshape([self.N, 3])
         if self.velocity is not None:
             self.velocity = numpy.ascontiguousarray(self.velocity,
                                                     dtype=numpy.float32)
             self.velocity = self.velocity.reshape([self.N, 3])
-        if self.angmom is not None:
-            self.angmom = numpy.ascontiguousarray(self.angmom,
-                                                  dtype=numpy.float32)
-            self.angmom = self.angmom.reshape([self.N, 4])
+        
+        if self.slength is not None:
+            self.slength = numpy.ascontiguousarray(self.slength, dtype=numpy.float32);
+            self.slength = self.slength.reshape([self.N])
+        if self.dpe is not None:
+            self.dpe = numpy.ascontiguousarray(self.dpe, dtype=numpy.float32);
+            self.dpe = self.dpe.reshape([self.N, 3]);
+        if self.auxiliary1 is not None:
+            self.auxiliary1 = numpy.ascontiguousarray(self.auxiliary1, dtype=numpy.float32);
+            self.auxiliary1 = self.auxiliary1.reshape([self.N, 3]);
+        if self.auxiliary2 is not None:
+            self.auxiliary2 = numpy.ascontiguousarray(self.auxiliary2, dtype=numpy.float32);
+            self.auxiliary2 = self.auxiliary2.reshape([self.N, 3]);
+        if self.auxiliary3 is not None:
+            self.auxiliary3 = numpy.ascontiguousarray(self.auxiliary3, dtype=numpy.float32);
+            self.auxiliary3 = self.auxiliary3.reshape([self.N, 3]);
+        if self.auxiliary4 is not None:
+            self.auxiliary4 = numpy.ascontiguousarray(self.auxiliary4, dtype=numpy.float32);
+            self.auxiliary4 = self.auxiliary4.reshape([self.N, 3]);
+
+        # if self.angmom is not None:
+        #     self.angmom = numpy.ascontiguousarray(self.angmom,
+        #                                           dtype=numpy.float32)
+        #     self.angmom = self.angmom.reshape([self.N, 4])
         if self.image is not None:
             self.image = numpy.ascontiguousarray(self.image, dtype=numpy.int32)
             self.image = self.image.reshape([self.N, 3])
@@ -426,9 +462,9 @@ class Snapshot(object):
         self.configuration = ConfigurationData()
         self.particles = ParticleData()
         self.bonds = BondData(2)
-        self.angles = BondData(3)
-        self.dihedrals = BondData(4)
-        self.impropers = BondData(4)
+        # self.angles = BondData(3)
+        # self.dihedrals = BondData(4)
+        # self.impropers = BondData(4)
         self.constraints = ConstraintData()
         self.pairs = BondData(2)
         self.state = {}
@@ -463,9 +499,9 @@ class Snapshot(object):
         self.configuration.validate()
         self.particles.validate()
         self.bonds.validate()
-        self.angles.validate()
-        self.dihedrals.validate()
-        self.impropers.validate()
+        # self.angles.validate()
+        # self.dihedrals.validate()
+        # self.impropers.validate()
         self.constraints.validate()
         self.pairs.validate()
 
@@ -732,9 +768,9 @@ class HOOMDTrajectory(object):
                 'configuration',
                 'particles',
                 'bonds',
-                'angles',
-                'dihedrals',
-                'impropers',
+                # 'angles',
+                # 'dihedrals',
+                # 'impropers',
                 'constraints',
                 'pairs',
         ]:
@@ -893,9 +929,9 @@ class HOOMDTrajectory(object):
         for path in [
                 'particles',
                 'bonds',
-                'angles',
-                'dihedrals',
-                'impropers',
+                # 'angles',
+                # 'dihedrals',
+                # 'impropers',
                 'constraints',
                 'pairs',
         ]:
