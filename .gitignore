@@ -1,4 +1,8 @@
 dependencies/gsd-2.5.3/build
+# all esult files
+*.gsd
+*.vtu
+*.raw
 
 # Prerequisites
 *.d
