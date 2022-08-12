@@ -174,74 +174,74 @@ class Snapshot:
         else:
             raise RuntimeError('Snapshot data is only present on rank 0')
 
-    @property
-    def angles(self):
-        """Angles.
+    # @property
+    # def angles(self):
+    #     """Angles.
 
-        Attributes:
-            angles.N (int): Number of angles.
+    #     Attributes:
+    #         angles.N (int): Number of angles.
 
-            angles.types (list[str]): Names of the angle types
+    #         angles.types (list[str]): Names of the angle types
 
-            angles.typeid ((*N*,) `numpy.ndarray` of ``uint32``):
-                Angle type id.
+    #         angles.typeid ((*N*,) `numpy.ndarray` of ``uint32``):
+    #             Angle type id.
 
-            angles.group ((*N*, 3) `numpy.ndarray` of ``uint32``):
-                Tags of the particles in the angle.
+    #         angles.group ((*N*, 3) `numpy.ndarray` of ``uint32``):
+    #             Tags of the particles in the angle.
 
-        Note:
-            Set ``N`` to change the size of the arrays.
-        """
-        if self.communicator.rank == 0:
-            return self._cpp_obj.angles
-        else:
-            raise RuntimeError('Snapshot data is only present on rank 0')
+    #     Note:
+    #         Set ``N`` to change the size of the arrays.
+    #     """
+    #     if self.communicator.rank == 0:
+    #         return self._cpp_obj.angles
+    #     else:
+    #         raise RuntimeError('Snapshot data is only present on rank 0')
 
-    @property
-    def dihedrals(self):
-        """Dihedrals.
+    # @property
+    # def dihedrals(self):
+    #     """Dihedrals.
 
-        Attributes:
-            dihedrals.N (int): Number of dihedrals.
+    #     Attributes:
+    #         dihedrals.N (int): Number of dihedrals.
 
-            dihedrals.types (list[str]): Names of the dihedral types
+    #         dihedrals.types (list[str]): Names of the dihedral types
 
-            dihedrals.typeid ((*N*,) `numpy.ndarray` of ``uint32``):
-                Dihedral type id.
+    #         dihedrals.typeid ((*N*,) `numpy.ndarray` of ``uint32``):
+    #             Dihedral type id.
 
-            dihedrals.group ((*N*, 4) `numpy.ndarray` of ``uint32``):
-                Tags of the particles in the dihedral.
+    #         dihedrals.group ((*N*, 4) `numpy.ndarray` of ``uint32``):
+    #             Tags of the particles in the dihedral.
 
-        Note:
-            Set ``N`` to change the size of the arrays.
-        """
-        if self.communicator.rank == 0:
-            return self._cpp_obj.dihedrals
-        else:
-            raise RuntimeError('Snapshot data is only present on rank 0')
+    #     Note:
+    #         Set ``N`` to change the size of the arrays.
+    #     """
+    #     if self.communicator.rank == 0:
+    #         return self._cpp_obj.dihedrals
+    #     else:
+    #         raise RuntimeError('Snapshot data is only present on rank 0')
 
-    @property
-    def impropers(self):
-        """Impropers.
+    # @property
+    # def impropers(self):
+    #     """Impropers.
 
-        Attributes:
-            impropers.N (int): Number of impropers.
+    #     Attributes:
+    #         impropers.N (int): Number of impropers.
 
-            impropers.types (list[str]): Names of the improper types
+    #         impropers.types (list[str]): Names of the improper types
 
-            impropers.typeid ((*N*,) `numpy.ndarray` of ``uint32``):
-                Improper type id.
+    #         impropers.typeid ((*N*,) `numpy.ndarray` of ``uint32``):
+    #             Improper type id.
 
-            impropers.group ((*N*, 4) `numpy.ndarray` of ``uint32``):
-                Tags of the particles in the improper.
+    #         impropers.group ((*N*, 4) `numpy.ndarray` of ``uint32``):
+    #             Tags of the particles in the improper.
 
-        Note:
-            Set ``N`` to change the size of the arrays.
-        """
-        if self.communicator.rank == 0:
-            return self._cpp_obj.impropers
-        else:
-            raise RuntimeError('Snapshot data is only present on rank 0')
+    #     Note:
+    #         Set ``N`` to change the size of the arrays.
+    #     """
+    #     if self.communicator.rank == 0:
+    #         return self._cpp_obj.impropers
+    #     else:
+    #         raise RuntimeError('Snapshot data is only present on rank 0')
 
     @property
     def pairs(self):
@@ -258,13 +258,13 @@ class Snapshot:
             pairs.group ((*N*, 2) `numpy.ndarray` of ``uint32``):
                 Tags of the particles in the special pair.
 
-        Note:
-            Set ``N`` to change the size of the arrays.
-        """
-        if self.communicator.rank == 0:
-            return self._cpp_obj.pairs
-        else:
-            raise RuntimeError('Snapshot data is only present on rank 0')
+    #     Note:
+    #         Set ``N`` to change the size of the arrays.
+    #     """
+    #     if self.communicator.rank == 0:
+    #         return self._cpp_obj.pairs
+    #     else:
+    #         raise RuntimeError('Snapshot data is only present on rank 0')
 
     @property
     def constraints(self):
@@ -361,12 +361,25 @@ class Snapshot:
             gsd_snap.validate()
 
             set_properties(snap.particles, gsd_snap.particles, ('N', 'types'),
-                           ('angmom', 'body', 'charge', 'diameter', 'image',
-                            'mass', 'moment_inertia', 'orientation', 'position',
-                            'typeid', 'velocity'))
+                           (
+                            # 'angmom', 
+                            'body', 
+                            # 'charge', 'diameter', 
+                            'image',
+                            'mass', 
+                            # 'moment_inertia', 'orientation', 
+                            'position',
+                            'typeid', 'velocity',
+                            'slength', 'dpe', 'auxiliary1', 
+                            'auxiliary2', 'auxiliary3', 'auxiliary4', 
+                            ))
 
-            for section in ('angles', 'bonds', 'dihedrals', 'impropers',
-                            'pairs'):
+            for section in (
+                # 'angles', 
+                'bonds', 
+                # 'dihedrals', 'impropers',
+                            'pairs'
+                            ):
                 set_properties(getattr(snap,
                                        section), getattr(gsd_snap, section),
                                ('N', 'types'), ('group', 'typeid'))

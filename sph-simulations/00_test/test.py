@@ -47,84 +47,53 @@ H       = hoomd.sph.kernel.OptimalH[KERNEL]*DX       # m
 RCUT    = hoomd.sph.kernel.Kappa[KERNEL]*H           # m
 
 
-# print("H = {0}".format(H))
-# print("RCUT = {0}".format(RCUT))
-# print("int(RCUT/DX) = {0}".format(int(RCUT/DX)))
-
-# print("int(LX/DX) = {0}".format(int(LX/DX)))
-# print("LX = {0}".format(LX))
-# print("int(LY/DX) = {0}".format(int(LY/DX)))
-# print("int(LZ/DX) = {0}".format(int(LZ/DX)))
+Nx = int(LX/DX)
+Ny = int((LY + 3 * RCUT)/DX)
+Nz = int((LZ + 3 * RCUT)/DX)
+N_particles = Nx * Ny * Nz
 
 xdim = np.linspace(-LX/2, LX/2, int(LX/DX), endpoint=True)
-ydim = np.linspace(-(LY/2+RCUT), (LY/2+RCUT), int((LY+RCUT)/DX), endpoint=True)
-zdim = np.linspace(-(LZ/2+RCUT), (LZ/2+RCUT), int((LZ+RCUT)/DX), endpoint=True)
+ydim = np.linspace(-(LY/2+3*RCUT), (LY/2+3*RCUT), int((LY+3*RCUT)/DX), endpoint=True)
+zdim = np.linspace(-(LZ/2+3*RCUT), (LZ/2+3*RCUT), int((LZ+3*RCUT)/DX), endpoint=True)
 
-position = list(itertools.product(xdim, ydim, zdim, repeat=1))
+x, y, z = np.meshgrid(xdim, ydim, zdim)
+positions = np.array((x.ravel(), y.ravel(), z.ravel())).T
 
+velocities = np.zeros((positions.shape[0], positions.shape[1]), dtype = np.float32)
+velocities = np.zeros((positions.shape[0], positions.shape[1]), dtype = np.float32)
+masses     = np.ones((positions.shape[0]), dtype = np.float32) * M
+slengths   = np.ones((positions.shape[0]), dtype = np.float32) * H
+dpes       = np.zeros((positions.shape[0], positions.shape[1]), dtype = np.float32)
 
-
-N_particles = len(position)
-
-
-velocity = []
-for i in range(N_particles): velocity.append((np.float64(0.), np.float64(0.), np.float64(0.)))
-dpe = np.copy(velocity)
-mass = []
-for i in range(N_particles): mass.append(np.float64(0.))
-slength = np.copy(mass)
-typeid = []
-for i in range(N_particles): typeid.append(np.int32(0))
-
-
-# print(type(velocity[0][0]))
-
-
-snapshot = gsd.hoomd.Snapshot()
+snapshot = hoomd.Snapshot(device.communicator)
 snapshot.particles.N = N_particles
-snapshot.particles.position = position[:]
-# snapshot.particles.velocity = velocity[:]
-# # snapshot.particles.mass = mass[:]
-# # snapshot.particles.slength = slength[:]
-# # snapshot.particles.dpe = dpe[:]
-# # snapshot.particles.typeid = typeid[:]
-# # snapshot.particles.types = ['F','S']
+snapshot.particles.position[:] = positions
+snapshot.particles.typeid[:] = [0] * N_particles
+snapshot.particles.types = ['F', 'S']
+snapshot.particles.velocity[:] = velocities
+snapshot.particles.mass[:] = masses
+snapshot.particles.slength[:] = slengths
+snapshot.particles.dpe[:] = dpes
 
 # if device.communicator.rank == 0:
-#     m   = snapshot.particles.mass[:]
-#     v   = snapshot.particles.velocity[:]
-#     x   = snapshot.particles.position[:]
-#     # h   = snapshot.particles.slength[:]
-#     # dpe = snapshot.particles.dpe[:]
-#     # tid = snapshot.particles.typeid[:]
-#     # Set initial conditions
-#     # snapshot.particles.types = ['F','S']
+m   = snapshot.particles.mass[:]
+v   = snapshot.particles.velocity[:]
+x   = snapshot.particles.position[:]
+h   = snapshot.particles.slength[:]
+dpe = snapshot.particles.dpe[:]
+tid = snapshot.particles.typeid[:]
 
+for i in range(len(x)):
+    xi,yi,zi  = x[i][0], x[i][1], x[i][2]
+    dpe[i][0] = RHO0
+    tid[i]    = 0
+    if ( yi < -0.5*LY or yi > 0.5*LY ):
+        tid[i] = 1
 
-#     for i in range(len(x)):
-#         xi,yi,zi  = x[i][0], x[i][1], x[i][2]
-#         # h[i]      = H
-#         # dpe[i][0] = RHO0
-#         m[i]      = M
-#         v[i][0]   = 0.0
-#         v[i][1]   = 0.0
-#         v[i][2]   = 0.0
-#         # tid[i]    = 0
-#         # if ( yi < -0.5*LY or yi > 0.5*LY ):
-#         #     tid[i] = 1
-
-#     snapshot.particles.velocity[:] = v
-#     snapshot.particles.mass[:]     = m
-#     # snapshot.particles.slength[:]  = h
-#     # snapshot.particles.dpe[:]      = dpe
-#     snapshot.particles.typeid[:]   = tid
-
-
-with gsd.hoomd.open(name='parallelplates.gsd', mode='xb+') as f:
-    f.append(snapshot)
+sim.create_state_from_snapshot(snapshot)
 
 
 # Print the domain decomposition.
-# domain_decomposition = sim.state.domain_decomposition
-# if device.communicator.rank == 0:
-#     print(domain_decomposition)
+domain_decomposition = sim.state.domain_decomposition
+if device.communicator.rank == 0:
+    print("Domain decomposition: {0}".format(domain_decomposition))
