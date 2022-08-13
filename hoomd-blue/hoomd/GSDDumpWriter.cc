@@ -545,46 +545,46 @@ void GSDDumpWriter::writeAttributes(const SnapshotParticleData<float>& snapshot,
         }
 
 
-        {
-        std::vector<float> data(N);
-        data.reserve(1); //! make sure we allocate
-        bool all_default = true;
+        // {
+        // std::vector<float> data(N);
+        // data.reserve(1); //! make sure we allocate
+        // bool all_default = true;
         
-        for (unsigned int group_idx = 0; group_idx < N; group_idx++)
-            {
-            unsigned int t = m_group->getMemberTag(group_idx);
+        // for (unsigned int group_idx = 0; group_idx < N; group_idx++)
+        //     {
+        //     unsigned int t = m_group->getMemberTag(group_idx);
 
-            // look up tag in snapshot
-            auto it = map.find(t);
-            assert(it != map.end());
+        //     // look up tag in snapshot
+        //     auto it = map.find(t);
+        //     assert(it != map.end());
 
-            if (snapshot.dpe[it->second].x != float(0.0)
-                || snapshot.dpe[it->second].y != float(0.0)
-                || snapshot.dpe[it->second].z != float(0.0))
-                {
-                all_default = false;
-                }
+        //     if (snapshot.dpe[it->second].x != float(0.0)
+        //         || snapshot.dpe[it->second].y != float(0.0)
+        //         || snapshot.dpe[it->second].z != float(0.0))
+        //         {
+        //         all_default = false;
+        //         }
 
-            data[group_idx * 3 + 0] = float(snapshot.dpe[it->second].x);
-            data[group_idx * 3 + 1] = float(snapshot.dpe[it->second].y);
-            data[group_idx * 3 + 2] = float(snapshot.dpe[it->second].z);
-            }
+        //     data[group_idx * 3 + 0] = float(snapshot.dpe[it->second].x);
+        //     data[group_idx * 3 + 1] = float(snapshot.dpe[it->second].y);
+        //     data[group_idx * 3 + 2] = float(snapshot.dpe[it->second].z);
+        //     }
 
-        if (!all_default || (nframes > 0 && m_nondefault["particles/dpe"]))
-            {
-            m_exec_conf->msg->notice(10) << "GSD: writing particles/dpe" << endl;
-            retval = gsd_write_chunk(&m_handle,
-                                     "particles/dpe",
-                                     GSD_TYPE_FLOAT,
-                                     N,
-                                     3,
-                                     0,
-                                     (void*)&data[0]);
-            GSDUtils::checkError(retval, m_fname);
-            if (nframes == 0)
-                m_nondefault["particles/dpe"] = true;
-            }
-        }
+        // if (!all_default || (nframes > 0 && m_nondefault["particles/dpe"]))
+        //     {
+        //     m_exec_conf->msg->notice(10) << "GSD: writing particles/dpe" << endl;
+        //     retval = gsd_write_chunk(&m_handle,
+        //                              "particles/dpe",
+        //                              GSD_TYPE_FLOAT,
+        //                              N,
+        //                              3,
+        //                              0,
+        //                              (void*)&data[0]);
+        //     GSDUtils::checkError(retval, m_fname);
+        //     if (nframes == 0)
+        //         m_nondefault["particles/dpe"] = true;
+        //     }
+        // }
 
         // {
         // std::vector<float> data(uint64_t(N) * 3);
