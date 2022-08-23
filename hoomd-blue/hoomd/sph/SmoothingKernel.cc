@@ -328,12 +328,12 @@ Scalar SmoothingKernel<cubicspline>::dwijdr(const Scalar h, const Scalar rij)
 
 //! Explicit template instantiations
 
-
 namespace detail
 {
 void export_WendlandC2(pybind11::module& m)
      {
      pybind11::class_<SmoothingKernel<wendlandc2>, std::shared_ptr<SmoothingKernel<wendlandc2>>>(m, "WendlandC2")
+         .def(pybind11::init<>())
          .def("getKernelKappa", &SmoothingKernel<wendlandc2>::getKernelKappa)
          //.def("setNeighborList", &SmoothingKernel<wendlandc2>::setNeighborList)
          .def("EvalKernel", &SmoothingKernel<wendlandc2>::wij)
@@ -349,7 +349,8 @@ void export_WendlandC2(pybind11::module& m)
 
 void export_WendlandC4(pybind11::module& m)
      {
-     pybind11::class_<SmoothingKernel<wendlandc4>, std::shared_ptr<SmoothingKernel<wendlandc4>>>(m, "Wendlandc4")
+     pybind11::class_<SmoothingKernel<wendlandc4>, std::shared_ptr<SmoothingKernel<wendlandc4>>>(m, "WendlandC4")
+         .def(pybind11::init<>())
          .def("getKernelKappa", &SmoothingKernel<wendlandc4>::getKernelKappa)
          //.def("setNeighborList", &SmoothingKernel<wendlandc4>::setNeighborList)
          .def("EvalKernel", &SmoothingKernel<wendlandc4>::wij)
@@ -365,7 +366,8 @@ void export_WendlandC4(pybind11::module& m)
 
 void export_WendlandC6(pybind11::module& m)
      {
-     pybind11::class_<SmoothingKernel<wendlandc6>, std::shared_ptr<SmoothingKernel<wendlandc6>>>(m, "Wendlandc6")
+     pybind11::class_<SmoothingKernel<wendlandc6>, std::shared_ptr<SmoothingKernel<wendlandc6>>>(m, "WendlandC6")
+         .def(pybind11::init<>())
          .def("getKernelKappa", &SmoothingKernel<wendlandc6>::getKernelKappa)
          //.def("setNeighborList", &SmoothingKernel<wendlandc6>::setNeighborList)
          .def("EvalKernel", &SmoothingKernel<wendlandc6>::wij)
@@ -382,6 +384,7 @@ void export_WendlandC6(pybind11::module& m)
 void export_Quintic(pybind11::module& m)
      {
      pybind11::class_<SmoothingKernel<quintic>, std::shared_ptr<SmoothingKernel<quintic>>>(m, "Quintic")
+         .def(pybind11::init<>())
          .def("getKernelKappa", &SmoothingKernel<quintic>::getKernelKappa)
          //.def("setNeighborList", &SmoothingKernel<quintic>::setNeighborList)
          .def("EvalKernel", &SmoothingKernel<quintic>::wij)
@@ -398,6 +401,7 @@ void export_Quintic(pybind11::module& m)
 void export_CubicSpline(pybind11::module& m)
      {
      pybind11::class_<SmoothingKernel<cubicspline>, std::shared_ptr<SmoothingKernel<cubicspline>>>(m, "Cubicspline")
+         .def(pybind11::init<>())
          .def("getKernelKappa", &SmoothingKernel<cubicspline>::getKernelKappa)
          //.def("setNeighborList", &SmoothingKernel<cubicspline>::setNeighborList)
          .def("EvalKernel", &SmoothingKernel<cubicspline>::wij)

@@ -20,7 +20,7 @@ class _SmoothingKernel(_HOOMDBaseObject):
     Base class for smoothing kernel function classes
     """
 
-    def __init__(self):
+    def __init__(self, name = None):
         self._in_context_manager = False
 
         self.kappa = 0;
@@ -94,7 +94,7 @@ class WendlandC4(_SmoothingKernel):
 
     def OptimalH(self):
         return 1.7
-
+        
     def Kappa(self):
         return self.kappa
         

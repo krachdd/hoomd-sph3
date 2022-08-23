@@ -89,7 +89,11 @@ class NeighborList(_HOOMDBaseObject):
                  kappa):
 
         validate_exclusions = OnlyFrom([
-            'bond', 'angle', 'constraint', 'dihedral', 'special_pair', 'body',
+            'bond', 
+            #'angle', 
+            'constraint', 
+            #'dihedral', 
+            'special_pair', 'body',
             '1-3', '1-4', 'meshbond'
         ])
 
@@ -203,7 +207,7 @@ class Cell(NeighborList):
                          kappa)
 
         self._param_dict.update(
-            ParameterDict(deterministic=bool(deterministic)),kappa=float(kappa))
+            ParameterDict(deterministic=bool(deterministic),kappa=float(kappa)))
 
     def _attach(self):
         if isinstance(self._simulation.device, hoomd.device.CPU):
