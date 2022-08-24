@@ -198,4 +198,4 @@ class PYBIND11_EXPORT SPHIntegrationMethodTwoStep
     } // end namespace sph
     } // end namespace hoomd
 
-#endif // #ifndef __INTEGRATION_METHOD_TWO_STEP_H__
+#endif // #ifndef __SPH_INTEGRATION_METHOD_TWO_STEP_H__

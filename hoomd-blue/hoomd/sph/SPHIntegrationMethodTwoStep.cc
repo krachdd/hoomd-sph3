@@ -1,0 +1,157 @@
+// Copyright (c) 2009-2022 The Regents of the University of Michigan.
+// Part of HOOMD-blue, released under the BSD 3-Clause License.
+
+// Maintainer: David Krach
+
+#include "SPHIntegrationMethodTwoStep.h"
+#include "hoomd/HOOMDMath.h"
+#include "hoomd/VectorMath.h"
+#include <vector>
+
+#ifdef ENABLE_MPI
+#include "hoomd/Communicator.h"
+#endif
+
+using namespace std;
+
+/*! \file SPHIntegrationMethodTwoStep.h
+    \brief Contains code for the SPHIntegrationMethodTwoStep class
+*/
+
+namespace hoomd
+    {
+namespace sph
+    {
+/*! \param sysdef SystemDefinition this method will act on. Must not be NULL.
+    \param group The group of particles this integration method is to work on
+    \post The method is constructed with the given particle.
+*/
+SPHIntegrationMethodTwoStep::SPHIntegrationMethodTwoStep(std::shared_ptr<SystemDefinition> sysdef,
+                                                   std::shared_ptr<ParticleGroup> group)
+    : m_sysdef(sysdef), m_group(group), m_pdata(m_sysdef->getParticleData()),
+      m_exec_conf(m_pdata->getExecConf()), m_deltaT(Scalar(0.0))
+    {
+    // sanity check
+    assert(m_sysdef);
+    assert(m_pdata);
+    assert(m_group);
+    }
+
+/*! \param deltaT New time step to set
+ */
+void SPHIntegrationMethodTwoStep::setDeltaT(Scalar deltaT)
+    {
+    m_deltaT = deltaT;
+    }
+
+/*! \param query_group Group over which to count (translational) degrees of freedom.
+    A majority of the integration methods add D degrees of freedom per particle in \a query_group
+   that is also in the group assigned to the method. Hence, the base class SPHIntegrationMethodTwoStep
+   will implement that counting. Derived classes can override if needed.
+*/
+Scalar SPHIntegrationMethodTwoStep::getTranslationalDOF(std::shared_ptr<ParticleGroup> query_group)
+    {
+    // get the size of the intersection between query_group and m_group
+    unsigned int intersect_size = query_group->intersectionSize(m_group);
+
+    return m_sysdef->getNDimensions() * intersect_size;
+    }
+
+// Scalar SPHIntegrationMethodTwoStep::getRotationalDOF(std::shared_ptr<ParticleGroup> query_group)
+//     {
+//     unsigned int query_group_dof = 0;
+//     unsigned int dimension = m_sysdef->getNDimensions();
+//     ArrayHandle<Scalar3> h_moment_inertia(m_pdata->getMomentsOfInertiaArray(),
+//                                           access_location::host,
+//                                           access_mode::read);
+
+//     for (unsigned int group_idx = 0; group_idx < query_group->getNumMembers(); group_idx++)
+//         {
+//         unsigned int j = query_group->getMemberIndex(group_idx);
+//         if (m_group->isMember(j))
+//             {
+//             if (dimension == 3)
+//                 {
+//                 if (fabs(h_moment_inertia.data[j].x) > 0)
+//                     query_group_dof++;
+
+//                 if (fabs(h_moment_inertia.data[j].y) > 0)
+//                     query_group_dof++;
+
+//                 if (fabs(h_moment_inertia.data[j].z) > 0)
+//                     query_group_dof++;
+//                 }
+//             else
+//                 {
+//                 if (fabs(h_moment_inertia.data[j].z) > 0)
+//                     query_group_dof++;
+//                 }
+//             }
+//         }
+
+// #ifdef ENABLE_MPI
+//     if (m_pdata->getDomainDecomposition())
+//         {
+//         MPI_Allreduce(MPI_IN_PLACE,
+//                       &query_group_dof,
+//                       1,
+//                       MPI_UNSIGNED,
+//                       MPI_SUM,
+//                       m_exec_conf->getMPICommunicator());
+//         }
+// #endif
+
+//     return query_group_dof;
+//     }
+
+/*! Checks that every particle in the group is valid. This method may be called by anyone wishing to
+   make this error check.
+
+    The base class does nothing
+*/
+void SPHIntegrationMethodTwoStep::validateGroup()
+    {
+    ArrayHandle<unsigned int> h_body(m_pdata->getBodies(),
+                                     access_location::host,
+                                     access_mode::read);
+    ArrayHandle<unsigned int> h_rtag(m_pdata->getRTags(), access_location::host, access_mode::read);
+    ArrayHandle<unsigned int> h_tag(m_pdata->getTags(), access_location::host, access_mode::read);
+    ArrayHandle<unsigned int> h_group_index(m_group->getIndexArray(),
+                                            access_location::host,
+                                            access_mode::read);
+
+    for (unsigned int gidx = 0; gidx < m_group->getNumMembers(); gidx++)
+        {
+        unsigned int i = h_group_index.data[gidx];
+        unsigned int tag = h_tag.data[i];
+        unsigned int body = h_body.data[i];
+
+        if (body < MIN_FLOPPY && body != tag)
+            {
+            m_exec_conf->msg->error()
+                << "Particle " << tag
+                << " belongs to a rigid body, but is not its center particle. " << std::endl
+                << "This integration method does not operate on constituent particles." << std::endl
+                << std::endl;
+            throw std::runtime_error("Error initializing integration method");
+            }
+        }
+    }
+
+namespace detail
+    {
+void export_SPHIntegrationMethodTwoStep(pybind11::module& m)
+    {
+    pybind11::class_<SPHIntegrationMethodTwoStep, std::shared_ptr<SPHIntegrationMethodTwoStep>>(
+        m,
+        "SPHIntegrationMethodTwoStep")
+        .def(pybind11::init<std::shared_ptr<SystemDefinition>, std::shared_ptr<ParticleGroup>>())
+        .def("validateGroup", &SPHIntegrationMethodTwoStep::validateGroup)
+        .def_property_readonly("filter",
+                               [](const std::shared_ptr<SPHIntegrationMethodTwoStep> method)
+                               { return method->getGroup()->getFilter(); });
+    }
+
+    } // end namespace detail
+    } // end namespace sph
+    } // end namespace hoomd
