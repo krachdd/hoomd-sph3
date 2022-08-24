@@ -91,7 +91,6 @@ groupFLUID  = hoomd.filter.Tags((int(0)))
 groupSOLID  = hoomd.filter.Tags((int(1)))
 
 
-
 # Set up SPH solver
 model = hoomd.sph.models.SinglePhaseFlow(Kernel,EOS,NList,groupFLUID,groupSOLID)
 

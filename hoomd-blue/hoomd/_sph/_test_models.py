@@ -57,22 +57,22 @@ class _SPHBaseClass(Force):
         """Noop for this compute"""
         pass
 
-    def get_rcut(self):
+    # def get_rcut(self):
 
-        # Go through the list of only the active particle types in the simulation
-        # ntypes = hoomd.context.current.system_definition.getParticleData().getNTypes();
-        ntypes = self._simulation.state._cpp_sys_def.getParticleData().getNTypes();
-        type_list = [];
-        for i in range(0,ntypes):
-            type_list.append(self._simulation.state._cpp_sys_def.getParticleData().getNameByType(i));
+    #     # Go through the list of only the active particle types in the simulation
+    #     # ntypes = hoomd.context.current.system_definition.getParticleData().getNTypes();
+    #     ntypes = self._simulation.state._cpp_sys_def.getParticleData().getNTypes();
+    #     type_list = [];
+    #     for i in range(0,ntypes):
+    #         type_list.append(self._simulation.state._cpp_sys_def.getParticleData().getNameByType(i));
 
-        # update the rcut by pair type
-        r_cut_dict = hoomd.nsearch.nlist.rcut();
-        for i in range(0,ntypes):
-            for j in range(i,ntypes):
-                r_cut_dict.set_pair(type_list[i],type_list[j],self.rcut);
+    #     # update the rcut by pair type
+    #     r_cut_dict = hoomd.nsearch.nlist.rcut();
+    #     for i in range(0,ntypes):
+    #         for j in range(i,ntypes):
+    #             r_cut_dict.set_pair(type_list[i],type_list[j],self.rcut);
 
-        return r_cut_dict;
+    #     return r_cut_dict;
 
     def setBodyAcceleration(self,gx,gy,gz,damp=0):
         self.accel_set = True

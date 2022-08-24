@@ -287,16 +287,16 @@ class Custom(Force):
         calling the user-provided `set_forces`.
     """
 
-    def __init__(self, aniso=False):
+    def __init__(self): # , aniso=False):
         super().__init__()
-        self._aniso = aniso
+        # self._aniso = aniso
 
         self._state = None  # to be set on attaching
 
     def _attach(self):
         self._state = self._simulation.state
         self._cpp_obj = _sph.CustomForceCompute(self._state._cpp_sys_def,
-                                               self.set_forces, self._aniso)
+                                               self.set_forces) # , self._aniso)
         super()._attach()
 
     @abstractmethod
