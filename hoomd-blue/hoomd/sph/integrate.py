@@ -13,7 +13,7 @@ from hoomd.data.parameterdicts import ParameterDict
 from hoomd.data.typeconverter import OnlyTypes
 from hoomd.operation import Integrator as BaseIntegrator
 from hoomd.data import syncedlist
-# from hoomd.md.methods import Method
+from hoomd.sph.methods import Method
 from hoomd.sph.force import Force
 from hoomd.sph.constrain import Constraint#, Rigid
 
@@ -49,7 +49,7 @@ class _DynamicIntegrator(BaseIntegrator):
     def _attach(self):
         self._forces._sync(self._simulation, self._cpp_obj.forces)
         self._constraints._sync(self._simulation, self._cpp_obj.constraints)
-        # self._methods._sync(self._simulation, self._cpp_obj.methods)
+        self._methods._sync(self._simulation, self._cpp_obj.methods)
         if self.rigid is not None:
             self.rigid._attach()
         super()._attach()
@@ -103,7 +103,7 @@ class _DynamicIntegrator(BaseIntegrator):
         children.extend(self.methods)
 
         for child in itertools.chain(self.forces, self.constraints,
-                                     # self.methods
+                                     self.methods
                                      ):
             children.extend(child._children)
 

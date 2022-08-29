@@ -405,7 +405,7 @@ void export_VelocityVerlet(pybind11::module& m)
     pybind11::class_<VelocityVerlet, SPHIntegrationMethodTwoStep, std::shared_ptr<VelocityVerlet>>(
         m,
         "VelocityVerlet")
-        .def(pybind11::init<std::shared_ptr<SystemDefinition>, std::shared_ptr<ParticleGroup>>());
+        .def(pybind11::init<std::shared_ptr<SystemDefinition>, std::shared_ptr<ParticleGroup>>())
         .def_property("limit", &VelocityVerlet::getLimit, &VelocityVerlet::setLimit)
         .def_property("zero_force", &VelocityVerlet::getZeroForce, &VelocityVerlet::setZeroForce);
     }

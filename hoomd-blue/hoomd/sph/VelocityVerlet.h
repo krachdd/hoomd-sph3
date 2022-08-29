@@ -34,13 +34,13 @@ class PYBIND11_EXPORT VelocityVerlet : public SPHIntegrationMethodTwoStep
     VelocityVerlet(std::shared_ptr<SystemDefinition> sysdef, std::shared_ptr<ParticleGroup> group);
     virtual ~VelocityVerlet();
 
-    / Get the movement limit
+    //! Get the movement limit
     pybind11::object getLimit();
 
-    ! Sets the movement limit
+    //! Sets the movement limit
     void setLimit(pybind11::object limit);
 
-    / Get zero force
+    //! Get zero force
     bool getZeroForce();
 
     //! Sets the zero force option
@@ -56,16 +56,16 @@ class PYBIND11_EXPORT VelocityVerlet : public SPHIntegrationMethodTwoStep
     virtual void integrateStepTwo(uint64_t timestep);
 
     protected:
-    // bool m_limit;       //!< True if we should limit the distance a particle moves in one step
+    bool m_limit;       //!< True if we should limit the distance a particle moves in one step
     Scalar m_limit_val; //!< The maximum distance a particle is to move in one step
-    // bool m_zero_force;  //!< True if the integration step should ignore computed forces
+    bool m_zero_force;  //!< True if the integration step should ignore computed forces
     };
 
-//     namespace detail 
-// {
-// void export_VelocityVerlet(pybind11::module& m);
+    namespace detail 
+{
+void export_VelocityVerlet(pybind11::module& m);
 
-// } // end namespace detail
+} // end namespace detail
     } // end namespace sph
     } // end namespace hoomd
 

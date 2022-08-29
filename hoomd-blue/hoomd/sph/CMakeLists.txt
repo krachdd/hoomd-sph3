@@ -101,9 +101,9 @@ set(files
     __init__.py
     integrate.py
     force.py
-    kernel.py
-    eos.py
-    models.py
+#     kernel.py
+#     eos.py
+#     models.py
     constrain.py
     )
 
@@ -118,3 +118,5 @@ copy_files_to_build("${files}" "${COMPONENT_NAME}" "*.py")
 # endif()
 
 add_subdirectory(data)
+
+add_subdirectory(methods)
