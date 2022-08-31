@@ -20,17 +20,17 @@ install(FILES ${HOOMD_BINARY_DIR}/hoomd/include/HOOMDVersion.h
 #     set(_md_built "False")
 # endif()
 
-if (BUILD_SPH)
-    set(_sph_built "True")
-else()
-    set(_sph_built "False")
-endif()
+# if (BUILD_SPH)
+#     set(_sph_built "True")
+# else()
+#     set(_sph_built "False")
+# endif()
 
-if (BUILD_SPH)
-    set(_sph_built "True")
-else()
-    set(_sph_built "False")
-endif()
+# if (BUILD_SPH)
+#     set(_sph_built "True")
+# else()
+#     set(_sph_built "False")
+# endif()
 
 # if (BUILD_HPMC)
 #     set(_hpmc_built "True")
@@ -433,9 +433,9 @@ endforeach()
 
 
 add_subdirectory(nsearch)
+add_subdirectory(sph)
 
-
-option(BUILD_SPH "Build the sph package" on)
-if (BUILD_SPH)
-  add_subdirectory(sph)
-endif()
+# option(BUILD_SPH "Build the sph package" on)
+# if (BUILD_SPH)
+#   add_subdirectory(sph)
+# endif()

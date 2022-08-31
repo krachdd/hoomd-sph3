@@ -284,10 +284,11 @@ class Integrator(_DynamicIntegrator):
                  forces=None,
                  constraints=None,
                  # methods=None,
-                 rigid=None):
+                 #rigid=None
+                 ):
 
-        super().__init__(forces, constraints, #methods, 
-            rigid)
+        super().__init__(forces, constraints, #methods, rigid
+            )
 
         self._param_dict.update(
             ParameterDict(

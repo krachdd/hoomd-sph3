@@ -39,8 +39,8 @@ UREF = FX*LREF*LREF*0.25/(MU/RHO0)
 
 
 
-device = hoomd.device.CPU(notice_level=10)
-# device = hoomd.device.CPU(notice_level=2)
+# device = hoomd.device.CPU(notice_level=10)
+device = hoomd.device.CPU(notice_level=2)
 sim = hoomd.Simulation(device=device)
 # if device.communicator.rank == 0:
 #     print("hoomd.version.mpi_enabled: {0}".format(hoomd.version.mpi_enabled))
@@ -79,19 +79,48 @@ Kappa  = Kernel.Kappa()
 
 
 
-# Neighbor list
+# # Neighbor list
 NList = hoomd.nsearch.nlist.Cell(buffer = RCUT*0.05, rebuild_check_delay = 1, kappa = Kappa)
 
-# Equation of State
+# # Equation of State
 EOS = hoomd.sph.eos.Tait()
 EOS.set_params(RHO0,0.05)
 
-# Define groups
-groupFLUID  = hoomd.filter.Tags((int(0)))
-groupSOLID  = hoomd.filter.Tags((int(1)))
+# # Define groups
+groupFLUID  = hoomd.filter.Type(['F']) # is zero
+groupSOLID  = hoomd.filter.Type(['S']) # is one
+
+# print(type(groupSOLID))
+
+with sim.state.cpu_local_snapshot as data:
+    print(f'{np.count_nonzero(data.particles.typeid == 0)} fluid particles on rank {device.communicator.rank}')
+    print(f'{np.count_nonzero(data.particles.typeid == 1)} solid particles on rank {device.communicator.rank}')
+
+# # Set up SPH solver
+# model = hoomd.sph.models.SinglePhaseFlow(Kernel,EOS,NList,groupFLUID,groupSOLID)
+
+integrator = hoomd.sph.Integrator(dt=0.005)
+
+VelocityVerlet = hoomd.sph.methods.VelocityVerlet(filter=groupFLUID)
+integrator.methods.append(VelocityVerlet)
+
+model = hoomd.sph.sphmodel.SinglePhaseFlow(kernel = Kernel,
+                                           eos    = EOS,
+                                           nlist  = NList,
+                                           mu     = 0.01)
+# model.densitymethod = 'SUMMATION'
+# model.set_params(MU)
+# model.activateArtificialViscosity(0.2,0.0)
+# model.deactivateShepardRenormalization()
+# model.deactivateDensityDiffusion()
+# model.setBodyAcceleration(FX,0.0,0.0,1000)
+dt = model.compute_dt(LREF,UREF,DRHO)
 
 
-# Set up SPH solver
-model = hoomd.sph.models.SinglePhaseFlow(Kernel,EOS,NList,groupFLUID,groupSOLID)
+
+print("integrator Forces: {0}".format(integrator.forces[:]))
+print("integrator Methods: {0}".format(integrator.methods[:]))
+
+
 
 hoomd.write.GSD.write(filename = dumpname, state = sim.state, mode = 'wb')

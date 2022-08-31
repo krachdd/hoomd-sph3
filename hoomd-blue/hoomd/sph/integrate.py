@@ -8,7 +8,7 @@ import itertools
 import hoomd
 import hoomd.sph
 from hoomd import _hoomd
-# from hoomd.sph import _sph
+from hoomd.sph import _sph
 from hoomd.data.parameterdicts import ParameterDict
 from hoomd.data.typeconverter import OnlyTypes
 from hoomd.operation import Integrator as BaseIntegrator
@@ -25,7 +25,7 @@ def _set_synced_list(old_list, new_list):
 
 class _DynamicIntegrator(BaseIntegrator):
 
-    def __init__(self, forces, constraints, methods, rigid):
+    def __init__(self, forces, constraints, methods): #, rigid):
         forces = [] if forces is None else forces
         constraints = [] if constraints is None else constraints
         methods = [] if methods is None else methods
@@ -33,44 +33,45 @@ class _DynamicIntegrator(BaseIntegrator):
             Force, syncedlist._PartialGetAttr('_cpp_obj'), iterable=forces)
 
         self._constraints = syncedlist.SyncedList(
-            OnlyTypes(Constraint, disallow_types=(Rigid,)),
+            OnlyTypes(Constraint#, disallow_types=(Rigid,)
+                ),
             syncedlist._PartialGetAttr('_cpp_obj'),
             iterable=constraints)
 
         self._methods = syncedlist.SyncedList(
             Method, syncedlist._PartialGetAttr('_cpp_obj'), iterable=methods)
 
-        param_dict = ParameterDict(rigid=OnlyTypes(Rigid, allow_none=True))
-        if rigid is not None and rigid._added:
-            raise ValueError("Rigid object can only belong to one integrator.")
-        param_dict["rigid"] = rigid
-        self._param_dict.update(param_dict)
+        # param_dict = ParameterDict(rigid=OnlyTypes(Rigid, allow_none=True))
+        # if rigid is not None and rigid._added:
+        #     raise ValueError("Rigid object can only belong to one integrator.")
+        # param_dict["rigid"] = rigid
+        # self._param_dict.update(param_dict)
 
     def _attach(self):
         self._forces._sync(self._simulation, self._cpp_obj.forces)
         self._constraints._sync(self._simulation, self._cpp_obj.constraints)
         self._methods._sync(self._simulation, self._cpp_obj.methods)
-        if self.rigid is not None:
-            self.rigid._attach()
+        # if self.rigid is not None:
+        #     self.rigid._attach()
         super()._attach()
 
     def _detach(self):
         self._forces._unsync()
         self._methods._unsync()
         self._constraints._unsync()
-        if self.rigid is not None:
-            self.rigid._detach()
+        # if self.rigid is not None:
+        #     self.rigid._detach()
         super()._detach()
 
     def _remove(self):
-        if self.rigid is not None:
-            self.rigid._remove()
+        # if self.rigid is not None:
+        #     self.rigid._remove()
         super()._remove()
 
     def _add(self, simulation):
         super()._add(simulation)
-        if self.rigid is not None:
-            self.rigid._add(simulation)
+        # if self.rigid is not None:
+        #     self.rigid._add(simulation)
 
     @property
     def forces(self):
@@ -110,38 +111,38 @@ class _DynamicIntegrator(BaseIntegrator):
         return children
 
     def _setattr_param(self, attr, value):
-        if attr == "rigid":
-            self._set_rigid(value)
-            return
+        # if attr == "rigid":
+        #     self._set_rigid(value)
+        #     return
         super()._setattr_param(attr, value)
 
-    def _set_rigid(self, new_rigid):
-        """Handles the adding and detaching of potential Rigid objects."""
-        # this generally only happens when attaching and we can ignore it since
-        # we attach the rigid body in _attach.
-        if new_rigid is self.rigid:
-            return
+    # def _set_rigid(self, new_rigid):
+    #     """Handles the adding and detaching of potential Rigid objects."""
+    #     # this generally only happens when attaching and we can ignore it since
+    #     # we attach the rigid body in _attach.
+    #     if new_rigid is self.rigid:
+    #         return
 
-        old_rigid = self.rigid
+    #     old_rigid = self.rigid
 
-        if new_rigid is not None and new_rigid._added:
-            raise ValueError("Cannot add Rigid object to multiple integrators.")
+    #     if new_rigid is not None and new_rigid._added:
+    #         raise ValueError("Cannot add Rigid object to multiple integrators.")
 
-        if old_rigid is not None:
-            if self._attached:
-                old_rigid._detach()
-            if self._added:
-                old_rigid._remove()
+    #     if old_rigid is not None:
+    #         if self._attached:
+    #             old_rigid._detach()
+    #         if self._added:
+    #             old_rigid._remove()
 
-        if new_rigid is None:
-            self._param_dict["rigid"] = None
-            return
+    #     if new_rigid is None:
+    #         self._param_dict["rigid"] = None
+    #         return
 
-        if self._added:
-            new_rigid._add(self._simulation)
-        if self._attached:
-            new_rigid._attach()
-        self._param_dict["rigid"] = new_rigid
+    #     if self._added:
+    #         new_rigid._add(self._simulation)
+    #     if self._attached:
+    #         new_rigid._attach()
+    #     self._param_dict["rigid"] = new_rigid
 
 
 @hoomd.logging.modify_namespace(("sph", "Integrator"))
@@ -284,19 +285,22 @@ class Integrator(_DynamicIntegrator):
                  forces=None,
                  constraints=None,
                  methods=None,
-                 rigid=None):
+                 # rigid=None
+                 ):
 
-        super().__init__(forces, constraints, methods, 
-            rigid)
+        super().__init__(forces, constraints, methods 
+            #, rigid
+            )
 
         self._param_dict.update(
             ParameterDict(
-                dt=float(dt),
-                integrate_rotational_dof=bool(integrate_rotational_dof)))
+                dt=float(dt)#,
+                # integrate_rotational_dof=bool(integrate_rotational_dof)
+                ))
 
     def _attach(self):
         # initialize the reflected c++ class
-        self._cpp_obj = _md.IntegratorTwoStep(
+        self._cpp_obj = _sph.SPHIntegratorTwoStep(
             self._simulation.state._cpp_sys_def, self.dt)
         # Call attach from DynamicIntegrator which attaches forces,
         # constraint_forces, and methods, and calls super()._attach() itself.

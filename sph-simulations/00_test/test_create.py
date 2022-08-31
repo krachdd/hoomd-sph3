@@ -82,7 +82,7 @@ for i in range(len(x)):
     xi,yi,zi  = x[i][0], x[i][1], x[i][2]
     dpe[i][0] = RHO0
     tid[i]    = 0
-    if ( yi < -0.5*LY or yi > 0.5*LY ):
+    if ( yi < -0.4*LY or yi > 0.4*LY ):
         tid[i] = 1
 
 snapshot.particles.dpe[:]      = dpe
