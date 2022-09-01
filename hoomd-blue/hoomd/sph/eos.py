@@ -35,6 +35,8 @@ class _StateEquation(_HOOMDBaseObject):
         if self.cpp_stateequation is None:
             # hoomd.context.msg.error('Bug in hoomd_script: cpp_stateequation not set, please report\n');
             raise RuntimeError("Bug in hoomd_script: cpp_stateequation not set, please report\n");
+        else:
+            print("Equation of State check_initialization successful")
 
     def set_params(self,rho0,bp):
         self.check_initialization();

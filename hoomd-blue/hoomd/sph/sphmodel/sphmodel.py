@@ -5,6 +5,7 @@ import warnings
 
 import hoomd
 from hoomd.sph import _sph
+from hoomd.nsearch import _nsearch
 from hoomd.sph import force
 from hoomd.data.parameterdicts import ParameterDict, TypeParameterDict
 from hoomd.data.typeparam import TypeParameter
@@ -19,14 +20,25 @@ class SPHModel(force.Force):
 
     def __init__(self, kernel, eos, nlist):
         super().__init__()
+
+        # default exclusions
+        params = ParameterDict(accel_set = bool(False),
+                               params_set = bool(False),
+                               gx=float(0.0),
+                               gy=float(0.0),
+                               gz=float(0.0),
+                               damp=int(0))
+        # params["exclusions"] = exclusions
+        self._param_dict.update(params)
+
         self.kernel     = kernel
         self.eos        = eos
-        # self.nlist      = nlist
-        self.accel_set  = False
-        self.params_set = False
-        self.gx         = 0.0
-        self.gy         = 0.0
-        self.gz         = 0.0
+        self.nlist      = nlist
+        # self.accel_set  = False
+        # self.params_set = False
+        # self.gx         = 0.0
+        # self.gy         = 0.0
+        # self.gz         = 0.0
 
         # # Detect maximum cut-off radius for nlist parameterization
         # kappa = self.kernel.Kappa()
@@ -45,6 +57,7 @@ class SPHModel(force.Force):
         # # Set neighbor list in kernel class
         # self.kernel.setNeighborList(self.nlist)
 
+        print(self._simulation.device)
 
         type_params = []
         self._extend_typeparam(type_params)
@@ -56,6 +69,7 @@ class SPHModel(force.Force):
 
 
     def _add(self, simulation):
+        print("in _add")
         super()._add(simulation)
         self._add_nlist()
 
@@ -85,6 +99,7 @@ class SPHModel(force.Force):
         self._add_dependency(self.nlist)
 
     def _attach(self):
+        print("in _attach")
         # check that some Particles are defined
         if self._simulation.state._cpp_sys_def.getParticleData().getNGlobal() == 0:
             self._simulation.device._cpp_msg.warning("No particles are defined.\n")
@@ -96,13 +111,13 @@ class SPHModel(force.Force):
                                "different simulation.".format(type(self)))
         self.nlist._attach()
         if isinstance(self._simulation.device, hoomd.device.CPU):
-            cls = getattr(_sph, self._cpp_class_name)
+            cls = getattr(_nsearch, self._cpp_class_name)
             self.nlist._cpp_obj.setStorageMode(
-                _sph.NeighborList.storageMode.half)
+                _nsearch.NeighborList.storageMode.half)
         else:
-            cls = getattr(_sph, self._cpp_class_name + "GPU")
+            cls = getattr(_nsearch, self._cpp_class_name + "GPU")
             self.nlist._cpp_obj.setStorageMode(
-                _sph.NeighborList.storageMode.full)
+                _nsearch.NeighborList.storageMode.full)
         self._cpp_obj = cls(self._simulation.state._cpp_sys_def,
                             self.nlist._cpp_obj)
 
@@ -172,28 +187,37 @@ class SinglePhaseFlow(SPHModel):
 
     VISCOSITYMETHODS = {'HARMONICAVERAGE':_sph.PhaseFlowViscosityMethod.HARMONICAVERAGE}
 
+    # _cpp_class_name = 'SinglePF_WC4_T'
+
     def __init__(self,
                  kernel,
                  eos,
                  nlist,
-                 #fluidgroup=None, # Groups koennen rausgenommen werden
-                 #solidgroup=None,
-                 mu, 
+                 fluidgroup = None,
+                 solidgroup = None,
                  densitymethod='SUMMATION',
                  viscositymethod='HARMONICAVERAGE'):
 
         super().__init__(kernel, eos, nlist)
 
+        self._param_dict.update(
+            ParameterDict(densitymethod = str('SUMMATION'),
+                          viscositymethod = str('HARMONICAVERAGE')
+                          ))
 
-        _cpp_class_name = 'SinglePF'
+        # self._state = self._simulation.state
+        self._cpp_class_name = 'SinglePF'
 
         # IMPORTANT TO ADD CUDA! 
         # create the c++ mirror class
         # if isinstance(self._simulation.device, hoomd.device.CPU):
         #     _cpp_class_name += 'GPU'
-        _cpp_class_name += '_' + Kernel[self.kernel.name] + '_' + EOS[self.eos.name] 
+        self._cpp_class_name += '_' + Kernel[self.kernel.name] + '_' + EOS[self.eos.name] 
 
-        print(_cpp_class_name)
+        print(self._cpp_class_name)
+        cls = getattr(_sph, self._cpp_class_name)
+        # self._cpp_obj = ()
+
         # self._attach()
         # Check if group is associated
         # if fluidgroup == None or solidgroup == None:
@@ -287,7 +311,7 @@ class SinglePhaseFlow(SPHModel):
             GMAG = np.sqrt(self.gx**2+self.gy**2+self.gz**2)
         # Smoothing length
         # H   = self.maxh
-        H   = self.ḱernel.Kappa()
+        H   = self.kernel.Kappa()
         # Viscosity
         MU  = self.mu
         # Rest density

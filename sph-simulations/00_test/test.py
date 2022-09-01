@@ -73,6 +73,8 @@ RCUT    = hoomd.sph.kernel.Kappa[KERNEL]*H           # m
 Kernel = hoomd.sph.kernel.Kernels[KERNEL]()
 Kappa  = Kernel.Kappa()
 
+print(Kernel.__dict__)
+
 # print(dir(hoomd.sph._sph))
 # print(hoomd.sph.kernel.Kernels['WendlandC4']
 # print(dir(hoomd.sph.kernel.WendlandC4))
@@ -81,6 +83,19 @@ Kappa  = Kernel.Kappa()
 
 # # Neighbor list
 NList = hoomd.nsearch.nlist.Cell(buffer = RCUT*0.05, rebuild_check_delay = 1, kappa = Kappa)
+
+print(NList.__dict__)
+
+# print(NList._getattr_param('kappa'))
+
+# # print(help(NList._setattr_param))
+# print(NList._setattr_param('kappa', 2.1))
+
+
+
+# print(NList._getattr_param('kappa'))
+
+# Kernel.setNeighborList(NList)
 
 # # Equation of State
 EOS = hoomd.sph.eos.Tait()
@@ -107,14 +122,23 @@ integrator.methods.append(VelocityVerlet)
 model = hoomd.sph.sphmodel.SinglePhaseFlow(kernel = Kernel,
                                            eos    = EOS,
                                            nlist  = NList,
-                                           mu     = 0.01)
+                                           fluidgroup = groupFLUID,
+                                           solidgroup = groupSOLID,
+                                           #mu     = 0.01
+                                           )
+
+integrator.forces.append(model)
+
+
+
+print(model)
 # model.densitymethod = 'SUMMATION'
 # model.set_params(MU)
 # model.activateArtificialViscosity(0.2,0.0)
 # model.deactivateShepardRenormalization()
 # model.deactivateDensityDiffusion()
 # model.setBodyAcceleration(FX,0.0,0.0,1000)
-dt = model.compute_dt(LREF,UREF,DRHO)
+# dt = model.compute_dt(LREF,UREF,DRHO)
 
 
 

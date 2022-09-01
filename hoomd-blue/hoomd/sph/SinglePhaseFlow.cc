@@ -1154,7 +1154,7 @@ namespace detail
 template<SmoothingKernelType KT_, StateEquationType SET_>
 void export_SinglePhaseFlow(pybind11::module& m, std::string name)
 {
-    pybind11::class_<SinglePhaseFlow<KT_, SET_> , std::shared_ptr<SinglePhaseFlow<KT_, SET_>>>(m, name.c_str()) 
+    pybind11::class_<SinglePhaseFlow<KT_, SET_>, SPHBaseClass<KT_, SET_> , std::shared_ptr<SinglePhaseFlow<KT_, SET_>>>(m, name.c_str()) 
         .def(pybind11::init< std::shared_ptr<SystemDefinition>,
                              std::shared_ptr<SmoothingKernel<KT_> >,
                              std::shared_ptr<StateEquation<SET_> >,
