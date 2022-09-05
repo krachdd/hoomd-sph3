@@ -24,8 +24,8 @@ SinglePhaseFlow<KT_, SET_>::SinglePhaseFlow(std::shared_ptr<SystemDefinition> sy
                                  std::shared_ptr<nsearch::NeighborList> nlist,
                                  std::shared_ptr<ParticleGroup> fluidgroup,
                                  std::shared_ptr<ParticleGroup> solidgroup,
-                                 std::string mdensitymethod,
-                                 std::string mviscositymethod)
+                                 DensityMethod mdensitymethod,
+                                 ViscosityMethod mviscositymethod)
     : SPHBaseClass<KT_, SET_>(sysdef,skernel,equationofstate,nlist), m_fluidgroup(fluidgroup), m_solidgroup(solidgroup)
       {
         this->m_exec_conf->msg->notice(5) << "Constructing SinglePhaseFlow" << std::endl;
@@ -379,7 +379,7 @@ void SinglePhaseFlow<KT_, SET_>::compute_ndensity(unsigned int timestep)
 
         // Do not compute number density based mass density for fluid particle
         // if anything other that DensityMethod SUMMATION is used.
-        if ( this->m_density_method != "SUMMATION" && !(i_issolid) ) // TODO CHECK if this works
+        if ( this->m_density_method != DENSITYSUMMATION && !(i_issolid) )
             continue;
 
         // Initialize number density with self density of kernel
@@ -457,7 +457,7 @@ void SinglePhaseFlow<KT_, SET_>::compute_ndensity(unsigned int timestep)
 
         // Compute mass density from number density if particle i is a fluid particle
         // rho_i = m_i * \sum_j wij
-        if ( this->m_density_method == "SUMMATION" && i_isfluid )
+        if ( this->m_density_method == DENSITYSUMMATION && i_isfluid )
             h_dpe.data[i].x= h_dpe.data[i].x * h_velocity.data[i].w;
 
         } // End of particle loop
@@ -849,9 +849,9 @@ template<SmoothingKernelType KT_,StateEquationType SET_>
 void SinglePhaseFlow<KT_, SET_>::forcecomputation(unsigned int timestep)
     {
 
-    if ( m_density_method == "SUMMATION" )
+    if ( m_density_method == DENSITYSUMMATION )
         this->m_exec_conf->msg->notice(7) << "Computing SinglePhaseFlow::Forces using SUMMATION approach" << endl;
-    else if ( m_density_method == "CONTINUITY" )
+    else if ( m_density_method == DENSITYCONTINUITY )
         this->m_exec_conf->msg->notice(7) << "Computing SinglePhaseFlow::Forces using CONTINUITY approach" << endl;
 
     // Start the profile for this compute
@@ -1006,7 +1006,7 @@ void SinglePhaseFlow<KT_, SET_>::forcecomputation(unsigned int timestep)
             //temp0 = -Vi*Vj*( Pi + Pj );
             //temp0 = -mi*mj*(Pi+Pj)/(rhoi*rhoj);
             //temp0 = -mi*mj*( Pi/(rhoi*rhoj) + Pj/(rhoj*rhoj) );
-            if ( m_density_method == "SUMMATION" )
+            if ( m_density_method == DENSITYSUMMATION )
                 temp0 = -(Vi*Vi+Vj*Vj)*((rhoj*Pi+rhoi*Pj)/(rhoi+rhoj));
             else
                 temp0 = -mi*mj*(Pi+Pj)/(rhoi*rhoj);
@@ -1053,7 +1053,7 @@ void SinglePhaseFlow<KT_, SET_>::forcecomputation(unsigned int timestep)
                 }
 
             // Evaluate rate of change of density if CONTINUITY approach is used
-            if ( m_density_method == "CONTINUITY" )
+            if ( m_density_method == DENSITYCONTINUITY )
                 {
                 if ( issolid )
                     {
@@ -1161,8 +1161,8 @@ void export_SinglePhaseFlow(pybind11::module& m, std::string name)
                              std::shared_ptr<nsearch::NeighborList>,
                              std::shared_ptr<ParticleGroup>,
                              std::shared_ptr<ParticleGroup>,
-                             std::string,
-                             std::string >())
+                             DensityMethod,
+                             ViscosityMethod >())
         .def("setParams", &SinglePhaseFlow<KT_, SET_>::setParams)
         .def("getDensityMethod", &SinglePhaseFlow<KT_, SET_>::getDensityMethod)
         .def("setDensityMethod", &SinglePhaseFlow<KT_, SET_>::setDensityMethod)

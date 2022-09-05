@@ -291,14 +291,14 @@ class SinglePhaseFlow(SPHModel):
         cpp_sys_def = self._simulation.state._cpp_sys_def
         cpp_fluidgroup  = self._simulation.state._get_group(self.fluidgroup_filter)
         cpp_solidgroup  = self._simulation.state._get_group(self.solidgroup_filter)
-        cpp_kernel = self.kernel.cpp_smoothingkernel,
+        cpp_kernel = self.kernel.cpp_smoothingkernel
         cpp_eos = self.eos.cpp_stateequation
         cpp_nlist =  self.nlist._cpp_obj
 
         print(dir(self.nlist))
 
         self._cpp_obj = spf_cls(cpp_sys_def, cpp_kernel, cpp_eos, cpp_nlist, cpp_fluidgroup, 
-                                cpp_solidgroup, self.densitymethod, self.viscositymethod)
+                                cpp_solidgroup, self.cpp_densitymethod, self.cpp_viscositymethod)
 
         # get all params in line
         self.mu = self._param_dict['mu']

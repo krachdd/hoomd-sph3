@@ -81,8 +81,8 @@ class PYBIND11_EXPORT SinglePhaseFlow : public SPHBaseClass<KT_, SET_>
                         std::shared_ptr<nsearch::NeighborList> nlist,
                         std::shared_ptr<ParticleGroup> fluidgroup,
                         std::shared_ptr<ParticleGroup> solidgroup,
-                        std::string mdensitymethod='SUMMATION',
-                        std::string mviscositymethod='HARMONICAVERAGE');
+                        DensityMethod   mdensitymethod=DENSITYSUMMATION,
+                        ViscosityMethod mviscositymethod=HARMONICAVERAGE);
 
         //! Destructor
         virtual ~SinglePhaseFlow();
@@ -174,21 +174,21 @@ class PYBIND11_EXPORT SinglePhaseFlow : public SPHBaseClass<KT_, SET_>
         virtual void setParams(Scalar mu);
 
         //! Getter and Setter methods for density method
-        std::string getDensityMethod()
+        DensityMethod getDensityMethod()
             {
             return m_density_method;
             }
-        void setDensityMethod(std::string densitymethod)
+        void setDensityMethod(DensityMethod densitymethod)
             {
             m_density_method = densitymethod;
             }
 
         //! Getter and Setter methods for viscosity method
-        std::string getViscosityMethod()
+        ViscosityMethod getViscosityMethod()
             {
             return m_viscosity_method;
             }
-        void setViscosityMethod(std::string viscositymethod)
+        void setViscosityMethod(ViscosityMethod viscositymethod)
             {
             m_viscosity_method = viscositymethod;
             }
@@ -299,8 +299,8 @@ class PYBIND11_EXPORT SinglePhaseFlow : public SPHBaseClass<KT_, SET_>
         Scalar m_ch; //!< Smoothing length to use if constant for all particles
         Scalar m_rcut; //!< Cut-off length to use if constant for all particles
         Scalar m_rcutsq; //!< Square cut-off length to use if constant for all particles
-        std::string m_density_method; //!< Density approach to use
-        std::string m_viscosity_method; //!< Viscosity approach to use
+        DensityMethod m_density_method; //!< Density approach to use
+        ViscosityMethod m_viscosity_method; //!< Viscosity approach to use
 
         // Physical variables
         Scalar m_rho0; //!< Rest density (Read from equation of state class)
