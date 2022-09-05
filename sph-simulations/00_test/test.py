@@ -83,6 +83,7 @@ Kappa  = Kernel.Kappa()
 
 # # Neighbor list
 NList = hoomd.nsearch.nlist.Cell(buffer = RCUT*0.05, rebuild_check_delay = 1, kappa = Kappa)
+# NList = hoomd.nsearch.nlist.Stencil(buffer = RCUT*0.05, cell_width=1.5, rebuild_check_delay = 1, kappa = Kappa)
 
 print(NList.__dict__)
 
