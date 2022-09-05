@@ -21,6 +21,8 @@ class SPHModel(force.Force):
     def __init__(self, kernel, eos, nlist):
         super().__init__()
 
+
+
         # default exclusions
         params = ParameterDict(accel_set = bool(False),
                                params_set = bool(False),
@@ -34,6 +36,9 @@ class SPHModel(force.Force):
         self.kernel     = kernel
         self.eos        = eos
         self.nlist      = nlist
+        print("in init print nlist")
+        print(nlist)
+        print(self.nlist._cpp_obj)
         # self.accel_set  = False
         # self.params_set = False
         # self.gx         = 0.0
@@ -57,7 +62,7 @@ class SPHModel(force.Force):
         # # Set neighbor list in kernel class
         # self.kernel.setNeighborList(self.nlist)
 
-        print(self._simulation.device)
+        # print(self._simulation.device)
 
         type_params = []
         self._extend_typeparam(type_params)
@@ -99,7 +104,7 @@ class SPHModel(force.Force):
         self._add_dependency(self.nlist)
 
     def _attach(self):
-        print("in _attach")
+        print("in _attach baseclass")
         # check that some Particles are defined
         if self._simulation.state._cpp_sys_def.getParticleData().getNGlobal() == 0:
             self._simulation.device._cpp_msg.warning("No particles are defined.\n")
@@ -111,17 +116,21 @@ class SPHModel(force.Force):
                                "different simulation.".format(type(self)))
         self.nlist._attach()
         if isinstance(self._simulation.device, hoomd.device.CPU):
-            cls = getattr(_nsearch, self._cpp_class_name)
             self.nlist._cpp_obj.setStorageMode(
                 _nsearch.NeighborList.storageMode.half)
         else:
-            cls = getattr(_nsearch, self._cpp_class_name + "GPU")
             self.nlist._cpp_obj.setStorageMode(
                 _nsearch.NeighborList.storageMode.full)
-        self._cpp_obj = cls(self._simulation.state._cpp_sys_def,
-                            self.nlist._cpp_obj)
+        # self._cpp_obj = cls(self._simulation.state._cpp_sys_def,
+        #                      self.nlist._cpp_obj)
+
+        self._cpp_baseclass_name = 'SPHBaseClass' + '_' + Kernel[self.kernel.name] + '_' + EOS[self.eos.name]
+        base_cls = getattr(_sph, self._cpp_baseclass_name)
+        self._cpp_obj = base_cls(self._simulation.state._cpp_sys_def, self.kernel.cpp_smoothingkernel,
+                                 self.eos.cpp_stateequation, self.nlist._cpp_obj)
 
         super()._attach()
+
 
     def _setattr_param(self, attr, value):
         if attr == "nlist":
@@ -139,24 +148,6 @@ class SPHModel(force.Force):
         if self._added:
             self._add_nlist()
             old_nlist._remove_dependent(self)
-
-    def setBodyAcceleration(self,gx,gy,gz,damp=0):
-        self.accel_set = True
-        self.check_initialization();
-        self.gx   = gx.item() if isinstance(gx, np.generic) else gx
-        self.gy   = gy.item() if isinstance(gy, np.generic) else gy
-        self.gz   = gz.item() if isinstance(gz, np.generic) else gz
-        self.damp = int(damp.item()) if isinstance(damp,np.generic) else int(damp)
-        self.damp = abs(self.damp)
-
-        if ( self.gx == 0 and self.gy == 0 and self.gz == 0):
-            warnings.warn(
-                f"{self} No body force applied.",
-                RuntimeWarning)
-
-        # self.cpp_force.setAcceleration(self.gx,self.gy,self.gz,self.damp)
-        self._cpp_obj.setAcceleration(self.gx,self.gy,self.gz,self.damp)
-
 
     def get_rcut(self):
 
@@ -187,35 +178,63 @@ class SinglePhaseFlow(SPHModel):
 
     VISCOSITYMETHODS = {'HARMONICAVERAGE':_sph.PhaseFlowViscosityMethod.HARMONICAVERAGE}
 
-    # _cpp_class_name = 'SinglePF_WC4_T'
-
     def __init__(self,
                  kernel,
                  eos,
                  nlist,
-                 fluidgroup = None,
-                 solidgroup = None,
+                 fluidgroup_filter = None,
+                 solidgroup_filter = None,
                  densitymethod='SUMMATION',
                  viscositymethod='HARMONICAVERAGE'):
 
         super().__init__(kernel, eos, nlist)
 
-        self._param_dict.update(
-            ParameterDict(densitymethod = str('SUMMATION'),
-                          viscositymethod = str('HARMONICAVERAGE')
+        self._param_dict.update(ParameterDict(
+                          densitymethod = str('SUMMATION'),
+                          viscositymethod = str('HARMONICAVERAGE'), 
+                          mu = float(0.0), 
+                          artificialviscosity = bool(True), 
+                          alpha = float(0.2),
+                          beta = float(0.0),
+                          densitydiffusion = bool(False),
+                          ddiff = float(0.0),
+                          shepardrenormanlization = bool(False),
+                          shepardfreq = int(30),
+                          compute_solid_forces = bool(False)
                           ))
 
+
+
         # self._state = self._simulation.state
-        self._cpp_class_name = 'SinglePF'
+        self._cpp_SPFclass_name = 'SinglePF' '_' + Kernel[self.kernel.name] + '_' + EOS[self.eos.name]
+        self.fluidgroup_filter = fluidgroup_filter
+        self.solidgroup_filter = solidgroup_filter
+        self.densitymethod = densitymethod
+        self.viscositymethod = viscositymethod
+        self.accel_set = False
+        self.params_set = False
+
+        if densitymethod == str('SUMMATION'):
+            self.cpp_densitymethod = hoomd.sph._sph.PhaseFlowDensityMethod.DENSITYSUMMATION
+        elif densitymethod == str('CONTINUITY'):
+            self.cpp_densitymethod = hoomd.sph._sph.PhaseFlowDensityMethod.DENSITYCONTINUITY
+        else:
+            raise ValueError("Using undefined DensityMethod.")
+
+        if viscositymethod == str('HARMONICAVERAGE'):
+            self.cpp_viscositymethod = hoomd.sph._sph.PhaseFlowViscosityMethod.HARMONICAVERAGE
+        else:
+            raise ValueError("Using undefined ViscosityMethod.")
+
 
         # IMPORTANT TO ADD CUDA! 
         # create the c++ mirror class
         # if isinstance(self._simulation.device, hoomd.device.CPU):
         #     _cpp_class_name += 'GPU'
-        self._cpp_class_name += '_' + Kernel[self.kernel.name] + '_' + EOS[self.eos.name] 
 
-        print(self._cpp_class_name)
-        cls = getattr(_sph, self._cpp_class_name)
+
+        # print(self._cpp_class_name)
+        # cls = getattr(_sph, self._cpp_class_name)
         # self._cpp_obj = ()
 
         # self._attach()
@@ -241,10 +260,89 @@ class SinglePhaseFlow(SPHModel):
         # else:
         #     self.maxh = pdata.getMaxSmoothingLength()
 
+    def _add(self, simulation):
+        print("in _add SinglePF")
+        super()._add(simulation)
+        self._add_nlist()
+
+    def _attach(self):
+        if isinstance(self._simulation.device, hoomd.device.CPU):
+            spf_cls = getattr(_sph, self._cpp_SPFclass_name)
+        else:
+            print("GPU not implemented")
+
+        # check that some Particles are defined
+        if self._simulation.state._cpp_sys_def.getParticleData().getNGlobal() == 0:
+            self._simulation.device._cpp_msg.warning("No particles are defined.\n")
+        
+        # This should never happen, but leaving it in case the logic for adding
+        # missed some edge case.
+        if self._simulation != self.nlist._simulation:
+            raise RuntimeError("{} object's neighbor list is used in a "
+                               "different simulation.".format(type(self)))
+        self.nlist._attach()
+        if isinstance(self._simulation.device, hoomd.device.CPU):
+            self.nlist._cpp_obj.setStorageMode(
+                _nsearch.NeighborList.storageMode.half)
+        else:
+            self.nlist._cpp_obj.setStorageMode(
+                _nsearch.NeighborList.storageMode.full)
+
+        cpp_sys_def = self._simulation.state._cpp_sys_def
+        cpp_fluidgroup  = self._simulation.state._get_group(self.fluidgroup_filter)
+        cpp_solidgroup  = self._simulation.state._get_group(self.solidgroup_filter)
+        cpp_kernel = self.kernel.cpp_smoothingkernel,
+        cpp_eos = self.eos.cpp_stateequation
+        cpp_nlist =  self.nlist._cpp_obj
+
+        print(dir(self.nlist))
+
+        self._cpp_obj = spf_cls(cpp_sys_def, cpp_kernel, cpp_eos, cpp_nlist, cpp_fluidgroup, 
+                                cpp_solidgroup, self.densitymethod, self.viscositymethod)
+
+        # get all params in line
+        self.mu = self._param_dict['mu']
+        self.artificialviscosity = self._param_dict['artificialviscosity']
+        self.alpha = self._param_dict['alpha']
+        self.beta = self._param_dict['beta']
+        self.densitydiffusion = self._param_dict['densitydiffusion']
+        self.ddiff = self._param_dict['ddiff']
+        self.shepardrenormanlization = self._param_dict['shepardrenormanlization']
+        self.shepardfreq = self._param_dict['shepardfreq']
+        self.compute_solid_forces = self._param_dict['compute_solid_forces']
+
+        self.set_params(self.mu)
+        self.setdensitymethod(self.densitymethod)
+        self.setviscositymethod(self.viscositymethod)
+        
+        if (self.artificialviscositya == True):
+            self.activateArtificialViscosity(self.alpha, self.beta)
+        else:
+            self.deactivateArtificialViscosity()
+        if (self.densitydiffusion == True):
+            self.activateDensityDiffusion(self.ddiff)
+        else:
+            self.deactivateDensityDiffusion()
+        if (self.shepardrenormanlization == True):
+            self.activateShepardRenormalization(self.shepardfreq)
+        else:
+            self.deactivateShepardRenormalization()
+        if (self.compute_solid_forces == True):
+            self.computeSolidForces()
+
+        self.setBodyAcceleration(self.gx, self.gy, self.gz, self.damp)
+
+
+        # Attach param_dict and typeparam_dict
+        super()._attach()
+
+
+
     def set_params(self,mu):
-        self.mu   = mu.item()   if isinstance(mu, np.generic)   else mu
+        # self.mu   = mu.item()   if isinstance(mu, np.generic)   else mu
         self._cpp_obj.setParams(self.mu)
         self.params_set = True
+        self._param_dict.__setattr__('params_set', True)
 
     @property
     def densitymethod(self):
@@ -253,7 +351,8 @@ class SinglePhaseFlow(SPHModel):
         return invD[self._cpp_obj.getDensityMethod()]
 
     @densitymethod.setter
-    def densitymethod(self, method):
+    def setdensitymethod(self, method):
+        print('in densitymethod setter')
         if method not in self.DENSITYMETHODS:
             raise ValueError("Undefined DensityMethod.")
         self._cpp_obj.setDensityMethod(self.DENSITYMETHODS[method])
@@ -265,7 +364,7 @@ class SinglePhaseFlow(SPHModel):
         return invD[self._cpp_obj.getViscosityMethod()]
 
     @viscositymethod.setter
-    def viscositymethod(self, method):
+    def setviscositymethod(self, method):
         if method not in self.VISCOSITYMETHODS:
             raise ValueError("Undefined ViscosityMethod.")
         self._cpp_obj.setViscosityMethod(self.VISCOSITYMETHODS[method])
@@ -294,6 +393,24 @@ class SinglePhaseFlow(SPHModel):
 
     def computeSolidForces(self):
         self._cpp_obj.computeSolidForces()
+
+    def setBodyAcceleration(self,gx,gy,gz,damp=0):
+        self.accel_set = True
+        self._param_dict.__setattr__('accel_set', True)
+        # self.check_initialization();
+        # self.gx   = gx.item() if isinstance(gx, np.generic) else gx
+        # self.gy   = gy.item() if isinstance(gy, np.generic) else gy
+        # self.gz   = gz.item() if isinstance(gz, np.generic) else gz
+        # self.damp = int(damp.item()) if isinstance(damp,np.generic) else int(damp)
+        self.damp = abs(self.damp)
+
+        if ( self.gx == 0 and self.gy == 0 and self.gz == 0):
+            warnings.warn(
+                f"{self} No body force applied.",
+                RuntimeWarning)
+
+        # self.cpp_force.setAcceleration(self.gx,self.gy,self.gz,self.damp)
+        self._cpp_obj.setAcceleration(self.gx,self.gy,self.gz,self.damp)
 
     def compute_dt(self,LREF,UREF,DRHO=0.01,COURANT=0.25):
         # Input sanity

@@ -672,7 +672,7 @@ class VelocityVerlet(Method):
     """
 
     def __init__(self, filter):
-
+        print("in VV add")
         # store metadata
         param_dict = ParameterDict(filter=ParticleFilter,)
         param_dict.update(dict(filter=filter, zero_force=False))
@@ -681,6 +681,8 @@ class VelocityVerlet(Method):
         self._param_dict.update(param_dict)
 
     def _attach(self):
+
+        print("in VV attach")
 
         sim = self._simulation
         # initialize the reflected c++ class
