@@ -1,4 +1,4 @@
-#!/home/david/anaconda3/envs/sph3/bin/python
+#!/home/USADR/ac126015/software/anaconda3/envs/sph3/bin/python
 import hoomd
 from hoomd import *
 from hoomd import sph
@@ -39,8 +39,9 @@ UREF = FX*LREF*LREF*0.25/(MU/RHO0)
 
 
 
-# device = hoomd.device.CPU(notice_level=10)
-device = hoomd.device.CPU(notice_level=2)
+device = hoomd.device.CPU(notice_level=10)
+# device = hoomd.device.CPU(notice_level=7)
+# device = hoomd.device.CPU(notice_level=2)
 sim = hoomd.Simulation(device=device)
 # if device.communicator.rank == 0:
 #     print("hoomd.version.mpi_enabled: {0}".format(hoomd.version.mpi_enabled))
@@ -66,6 +67,8 @@ with sim.state.cpu_local_snapshot as snap:
     N = len(snap.particles.position)
     print(f'{N} particles on rank {device.communicator.rank}')
 
+print("Before Kernel setup")
+
 # Kernel
 KERNEL  = 'WendlandC4'
 H       = hoomd.sph.kernel.OptimalH[KERNEL]*DX       # m
@@ -79,13 +82,14 @@ Kappa  = Kernel.Kappa()
 # print(hoomd.sph.kernel.Kernels['WendlandC4']
 # print(dir(hoomd.sph.kernel.WendlandC4))
 
+print("Before nlist setup")
 
 
 # # Neighbor list
 NList = hoomd.nsearch.nlist.Cell(buffer = RCUT*0.05, rebuild_check_delay = 1, kappa = Kappa)
 # NList = hoomd.nsearch.nlist.Stencil(buffer = RCUT*0.05, cell_width=1.5, rebuild_check_delay = 1, kappa = Kappa)
 
-print(NList.__dict__)
+# print(NList.__dict__)
 
 # print(NList._getattr_param('kappa'))
 
@@ -98,9 +102,15 @@ print(NList.__dict__)
 
 # Kernel.setNeighborList(NList)
 
+print("Before eos setup")
+
+
 # # Equation of State
 EOS = hoomd.sph.eos.Tait()
 EOS.set_params(RHO0,0.05)
+
+
+print("Before group setup")
 
 # # Define groups/filters
 filterFLUID  = hoomd.filter.Type(['F']) # is zero
@@ -114,6 +124,7 @@ with sim.state.cpu_local_snapshot as data:
 
 # # Set up SPH solver
 
+print("Before model setup")
 
 
 model = hoomd.sph.sphmodel.SinglePhaseFlow(kernel = Kernel,
@@ -124,11 +135,12 @@ model = hoomd.sph.sphmodel.SinglePhaseFlow(kernel = Kernel,
                                            #mu     = 0.01
                                            )
 
+print("Before model parameters")
 
 
 model.mu = 0.01
 
-print(model)
+# print(model)
 # model._attach()
 # print(model.__dict__)
 model.densitymethod = 'SUMMATION'
@@ -138,25 +150,37 @@ model.artificialviscosity = True
 model.alpha = 0.2
 model.beta = 0.0
 
-print(model.__dict__)
+# print(model.__dict__)
 
 # model.set_params(MU)
 # model.activateArtificialViscosity(0.2,0.0)
 # model.deactivateShepardRenormalization()
 # model.deactivateDensityDiffusion()
 # model.setBodyAcceleration(FX,0.0,0.0,1000)
+
+
+print("before timestep computed")
 dt = model.compute_dt(LREF,UREF,DRHO)
+
+print("before set dt")
 
 integrator = hoomd.sph.Integrator(dt=dt)
 
 
+print("Before VV")
+
 VelocityVerlet = hoomd.sph.methods.VelocityVerlet(filter=filterFLUID)
+
+
+print("before methods append")
 integrator.methods.append(VelocityVerlet)
+
+print("before model append")
 integrator.forces.append(model)
 
-print(dt)
+# print(dt)
 
-print(model.__dict__)
+# print(model.__dict__)
 
 
 print("integrator Forces: {0}".format(integrator.forces[:]))
@@ -184,6 +208,11 @@ table = hoomd.write.Table(trigger=hoomd.trigger.Periodic(period=100),
 # sim.operations.writers.append(table_file)
 sim.operations.writers.append(table)
 
+
+print("before set intregrator")
+
 sim.operations.integrator = integrator
 
-sim.run(10000)
+print("before run")
+
+sim.run(10001)

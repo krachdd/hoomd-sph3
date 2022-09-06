@@ -36,9 +36,6 @@ class SPHModel(force.Force):
         self.kernel     = kernel
         self.eos        = eos
         self.nlist      = nlist
-        print("in init print nlist")
-        print(nlist)
-        print(self.nlist._cpp_obj)
         # self.accel_set  = False
         # self.params_set = False
         # self.gx         = 0.0
@@ -74,7 +71,6 @@ class SPHModel(force.Force):
 
 
     def _add(self, simulation):
-        print("in _add")
         super()._add(simulation)
         self._add_nlist()
 
@@ -104,7 +100,7 @@ class SPHModel(force.Force):
         self._add_dependency(self.nlist)
 
     def _attach(self):
-        print("in _attach baseclass")
+        print("in _attach of SPH Model")
         # check that some Particles are defined
         if self._simulation.state._cpp_sys_def.getParticleData().getNGlobal() == 0:
             self._simulation.device._cpp_msg.warning("No particles are defined.\n")
@@ -124,11 +120,11 @@ class SPHModel(force.Force):
         # self._cpp_obj = cls(self._simulation.state._cpp_sys_def,
         #                      self.nlist._cpp_obj)
 
-        self._cpp_baseclass_name = 'SPHBaseClass' + '_' + Kernel[self.kernel.name] + '_' + EOS[self.eos.name]
-        base_cls = getattr(_sph, self._cpp_baseclass_name)
-        self._cpp_obj = base_cls(self._simulation.state._cpp_sys_def, self.kernel.cpp_smoothingkernel,
-                                 self.eos.cpp_stateequation, self.nlist._cpp_obj)
-
+        # self._cpp_baseclass_name = 'SPHBaseClass' + '_' + Kernel[self.kernel.name] + '_' + EOS[self.eos.name]
+        # base_cls = getattr(_sph, self._cpp_baseclass_name)
+        # self._cpp_obj = base_cls(self._simulation.state._cpp_sys_def, self.kernel.cpp_smoothingkernel,
+        #                          self.eos.cpp_stateequation, self.nlist._cpp_obj)
+        print("before super attach in SPH Model ")
         super()._attach()
 
 
@@ -209,19 +205,25 @@ class SinglePhaseFlow(SPHModel):
         self._cpp_SPFclass_name = 'SinglePF' '_' + Kernel[self.kernel.name] + '_' + EOS[self.eos.name]
         self.fluidgroup_filter = fluidgroup_filter
         self.solidgroup_filter = solidgroup_filter
-        self.densitymethod = densitymethod
-        self.viscositymethod = viscositymethod
+        self.str_densitymethod = self._param_dict._dict["densitymethod"]
+        self.str_viscositymethod = self._param_dict._dict["viscositymethod"]
         self.accel_set = False
         self.params_set = False
 
-        if densitymethod == str('SUMMATION'):
+        print("First check on densitymethod")
+        print(self.densitymethod)
+        print(self.str_densitymethod)
+
+
+
+        if self.str_densitymethod == str('SUMMATION'):
             self.cpp_densitymethod = hoomd.sph._sph.PhaseFlowDensityMethod.DENSITYSUMMATION
-        elif densitymethod == str('CONTINUITY'):
+        elif self.str_densitymethod == str('CONTINUITY'):
             self.cpp_densitymethod = hoomd.sph._sph.PhaseFlowDensityMethod.DENSITYCONTINUITY
         else:
             raise ValueError("Using undefined DensityMethod.")
 
-        if viscositymethod == str('HARMONICAVERAGE'):
+        if self.str_viscositymethod == str('HARMONICAVERAGE'):
             self.cpp_viscositymethod = hoomd.sph._sph.PhaseFlowViscosityMethod.HARMONICAVERAGE
         else:
             raise ValueError("Using undefined ViscosityMethod.")
@@ -263,7 +265,9 @@ class SinglePhaseFlow(SPHModel):
     def _add(self, simulation):
         print("in _add SinglePF")
         super()._add(simulation)
+        print("add nlist")
         self._add_nlist()
+        print("after add nlist")
 
     def _attach(self):
         if isinstance(self._simulation.device, hoomd.device.CPU):
@@ -297,6 +301,8 @@ class SinglePhaseFlow(SPHModel):
 
         print(dir(self.nlist))
 
+
+        print("first constructions sph base class")
         self._cpp_obj = spf_cls(cpp_sys_def, cpp_kernel, cpp_eos, cpp_nlist, cpp_fluidgroup, 
                                 cpp_solidgroup, self.cpp_densitymethod, self.cpp_viscositymethod)
 
@@ -311,11 +317,13 @@ class SinglePhaseFlow(SPHModel):
         self.shepardfreq = self._param_dict['shepardfreq']
         self.compute_solid_forces = self._param_dict['compute_solid_forces']
 
+
+        print("before set params")
         self.set_params(self.mu)
-        self.setdensitymethod(self.densitymethod)
-        self.setviscositymethod(self.viscositymethod)
+        self.setdensitymethod(self.str_densitymethod)
+        self.setviscositymethod(self.str_viscositymethod)
         
-        if (self.artificialviscositya == True):
+        if (self.artificialviscosity == True):
             self.activateArtificialViscosity(self.alpha, self.beta)
         else:
             self.deactivateArtificialViscosity()
@@ -332,9 +340,11 @@ class SinglePhaseFlow(SPHModel):
 
         self.setBodyAcceleration(self.gx, self.gy, self.gz, self.damp)
 
-
+        print("before super attach in attach in SPHModel SinglePhaseFlow")
         # Attach param_dict and typeparam_dict
         super()._attach()
+        print("after super attach in attach in SPHModel SinglePhaseFlow")
+
 
 
 
@@ -344,26 +354,28 @@ class SinglePhaseFlow(SPHModel):
         self.params_set = True
         self._param_dict.__setattr__('params_set', True)
 
-    @property
+    # @property
     def densitymethod(self):
         # Invert key mapping
         invD = dict((v,k) for k, v in self.DENSITYMETHODS.iteritems())
         return invD[self._cpp_obj.getDensityMethod()]
 
-    @densitymethod.setter
+    # @densitymethod.setter
     def setdensitymethod(self, method):
         print('in densitymethod setter')
+        print('method {0}'.format(method))
+
         if method not in self.DENSITYMETHODS:
             raise ValueError("Undefined DensityMethod.")
         self._cpp_obj.setDensityMethod(self.DENSITYMETHODS[method])
 
-    @property
+    # @property
     def viscositymethod(self):
         # Invert key mapping
         invD = dict((v,k) for k, v in self.VISCOSITYMETHODS.iteritems())
         return invD[self._cpp_obj.getViscosityMethod()]
 
-    @viscositymethod.setter
+    # @viscositymethod.setter
     def setviscositymethod(self, method):
         if method not in self.VISCOSITYMETHODS:
             raise ValueError("Undefined ViscosityMethod.")

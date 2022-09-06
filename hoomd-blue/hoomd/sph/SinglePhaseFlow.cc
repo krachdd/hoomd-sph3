@@ -261,7 +261,7 @@ void SinglePhaseFlow<KT_, SET_>::reduceProperties()
 template<SmoothingKernelType KT_,StateEquationType SET_>
 void SinglePhaseFlow<KT_, SET_>::setParams(Scalar mu)
     {
-    this->m_exec_conf->msg->notice(7) << "Setting SinglePhaseFlow parameters" << std::endl;
+    this->m_exec_conf->msg->notice(7) << "Setting SinglePhaseFlow parameter mu" << std::endl;
 
     m_mu   = mu;
     if (m_mu <= 0)

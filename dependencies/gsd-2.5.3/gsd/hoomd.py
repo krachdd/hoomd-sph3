@@ -505,11 +505,11 @@ class Snapshot(object):
         self.constraints.validate()
         self.pairs.validate()
 
-        # validate HPMC state
-        if self.particles.types is not None:
-            NT = len(self.particles.types)
-        else:
-            NT = 1
+        # # validate HPMC state
+        # if self.particles.types is not None:
+        #     NT = len(self.particles.types)
+        # else:
+        #     NT = 1
 
         # if 'hpmc/integrate/d' in self.state:
         #     self.state['hpmc/integrate/d'] = \
@@ -652,9 +652,9 @@ class Snapshot(object):
         #         self.state[
         #             'hpmc/simple_polygon/vertices'].reshape([sumN, 2])
 
-        for k in self.state:
-            if k not in self._valid_state:
-                raise RuntimeError('Not a valid state: ' + k)
+        # for k in self.state:
+        #     if k not in self._valid_state:
+        #         raise RuntimeError('Not a valid state: ' + k)
 
 
 class _HOOMDTrajectoryIterable(object):
@@ -797,9 +797,9 @@ class HOOMDTrajectory(object):
 
                     self.file.write_chunk(path + '/' + name, data)
 
-        # write state data
-        for state, data in snapshot.state.items():
-            self.file.write_chunk('state/' + state, data)
+        # # write state data
+        # for state, data in snapshot.state.items():
+        #     self.file.write_chunk('state/' + state, data)
 
         # write log data
         for log, data in snapshot.log.items():
@@ -1005,11 +1005,11 @@ class HOOMDTrajectory(object):
 
                     container.__dict__[name].flags.writeable = False
 
-        # read state data
-        for state in snap._valid_state:
-            if self.file.chunk_exists(frame=idx, name='state/' + state):
-                snap.state[state] = self.file.read_chunk(frame=idx,
-                                                         name='state/' + state)
+        # # read state data
+        # for state in snap._valid_state:
+        #     if self.file.chunk_exists(frame=idx, name='state/' + state):
+        #         snap.state[state] = self.file.read_chunk(frame=idx,
+        #                                                  name='state/' + state)
 
         # read log data
         logged_data_names = self.file.find_matching_chunk_names('log/')

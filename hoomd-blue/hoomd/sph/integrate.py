@@ -29,6 +29,8 @@ class _DynamicIntegrator(BaseIntegrator):
         forces = [] if forces is None else forces
         constraints = [] if constraints is None else constraints
         methods = [] if methods is None else methods
+        print("in Dynamic inegrator")
+        print("Forces {0}".format(forces))
         self._forces = syncedlist.SyncedList(
             Force, syncedlist._PartialGetAttr('_cpp_obj'), iterable=forces)
 
@@ -309,9 +311,9 @@ class Integrator(_DynamicIntegrator):
     def __setattr__(self, attr, value):
         """Hande group DOF update when setting integrate_rotational_dof."""
         super().__setattr__(attr, value)
-        if (attr == 'integrate_rotational_dof' and self._simulation is not None
-                and self._simulation.state is not None):
-            self._simulation.state.update_group_dof()
+        # if (attr == 'integrate_rotational_dof' and self._simulation is not None
+        #         and self._simulation.state is not None):
+        #     self._simulation.state.update_group_dof()
 
     @hoomd.logging.log(category="sequence", requires_run=True)
     def linear_momentum(self):

@@ -210,7 +210,7 @@ void SPHBaseClass<KT_, SET_>::setAcceleration(Scalar gx, Scalar gy, Scalar gz, u
         {
         m_body_acceleration = true;
         m_damptime = damptime;
-        m_exec_conf->msg->notice(7) << "Non-Zero volumetric acceleration" << std::endl;
+        m_exec_conf->msg->notice(7) << "Non-Zero volumetric acceleration: gx:" << gx << " gy:" << gy << " gz:" << gz << std::endl;
         }
     else
         {

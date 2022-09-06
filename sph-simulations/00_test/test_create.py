@@ -1,4 +1,4 @@
-#!/home/david/anaconda3/envs/sph3/bin/python
+#!/home/USADR/ac126015/software/anaconda3/envs/sph3/bin/python
 import hoomd
 from hoomd import *
 from hoomd import sph
