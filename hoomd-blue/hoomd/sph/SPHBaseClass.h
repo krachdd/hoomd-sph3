@@ -80,10 +80,10 @@ class PYBIND11_EXPORT SPHBaseClass : public ForceCompute
         /*! Helper function to apply external body force to a given group of particles
          * \param pgroup Group of particles to apply body force to
          */
-        void applyBodyForce(unsigned int timestep, std::shared_ptr<ParticleGroup> pgroup);
+        void applyBodyForce(uint64_t timestep, std::shared_ptr<ParticleGroup> pgroup);
         
 // #ifdef ENABLE_HIP
-//         void applyBodyForceGPU(unsigned int timestep, std::shared_ptr<ParticleGroup> pgroup);
+//         void applyBodyForceGPU(uint64_t timestep, std::shared_ptr<ParticleGroup> pgroup);
 // #endif
 
         /*! Set the volumetric acceleration
@@ -95,8 +95,9 @@ class PYBIND11_EXPORT SPHBaseClass : public ForceCompute
         void setAcceleration(Scalar gx, Scalar gy, Scalar gz, unsigned int damptime);
 
         // Get the volumetric acceleration
-        Scalar3 getAcceleration(unsigned int timestep);
+        Scalar3 getAcceleration(uint64_t timestep);
 
+        
 // #ifdef ENABLE_MPI
 //         /// The system's communicator.
 //         std::shared_ptr<Communicator> m_comm;
@@ -122,6 +123,8 @@ class PYBIND11_EXPORT SPHBaseClass : public ForceCompute
         Scalar3 m_bodyforce; //!< Volumetric force
         unsigned int m_damptime; //!< Damping time
         bool m_body_acceleration; //!< True if body acceleration has been set and not null
+        
+
 
     // private:
     //     //! Connection to the signal notifying when number of particle types changes

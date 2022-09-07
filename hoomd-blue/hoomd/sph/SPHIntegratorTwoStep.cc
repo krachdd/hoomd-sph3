@@ -70,6 +70,8 @@ void SPHIntegratorTwoStep::update(uint64_t timestep)
         // deltaT should probably be passed as an argument, but that would require modifying many
         // files. Work around this by calling setDeltaT every timestep.
         // method->setAnisotropic(m_integrate_rotational_dof);
+        m_exec_conf->msg->notice(5) << "in SPHIntegratorTwoStep cc func uptdate" << endl;
+
         method->setDeltaT(m_deltaT);
         method->integrateStepOne(timestep);
         }

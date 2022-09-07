@@ -34,6 +34,7 @@ class _DynamicIntegrator(BaseIntegrator):
         self._forces = syncedlist.SyncedList(
             Force, syncedlist._PartialGetAttr('_cpp_obj'), iterable=forces)
 
+
         self._constraints = syncedlist.SyncedList(
             OnlyTypes(Constraint#, disallow_types=(Rigid,)
                 ),
@@ -304,6 +305,9 @@ class Integrator(_DynamicIntegrator):
         # initialize the reflected c++ class
         self._cpp_obj = _sph.SPHIntegratorTwoStep(
             self._simulation.state._cpp_sys_def, self.dt)
+
+        print("in _attach Integrator")
+
         # Call attach from DynamicIntegrator which attaches forces,
         # constraint_forces, and methods, and calls super()._attach() itself.
         super()._attach()

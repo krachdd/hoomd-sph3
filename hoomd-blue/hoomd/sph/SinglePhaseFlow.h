@@ -163,10 +163,10 @@ class PYBIND11_EXPORT SinglePhaseFlow : public SPHBaseClass<KT_, SET_>
         virtual std::vector< std::string > getProvidedLogQuantities();
 
         //! Calculates the requested log value and returns it
-        virtual Scalar getLogValue(const std::string& quantity, unsigned int timestep);
+        virtual Scalar getLogValue(const std::string& quantity, uint64_t timestep);
 
         //! Returns a list of log quantities this compute calculates
-        virtual std::vector<double> getProvidedTimestepQuantities(unsigned int timestep);
+        virtual std::vector<double> getProvidedTimestepQuantities(uint64_t timestep);
 
         /*! Set the parameters
          * \param mu Dynamic viscosity
@@ -257,7 +257,7 @@ class PYBIND11_EXPORT SinglePhaseFlow : public SPHBaseClass<KT_, SET_>
             }
 
         //! Computes forces
-        void computeForces(unsigned int timestep);
+        void computeForces(uint64_t timestep);
 
     #ifdef ENABLE_MPI
         /// The system's communicator.
@@ -266,7 +266,7 @@ class PYBIND11_EXPORT SinglePhaseFlow : public SPHBaseClass<KT_, SET_>
 
     #ifdef ENABLE_MPI
         //! Get requested ghost communication flags
-        virtual CommFlags getRequestedCommFlags(unsigned int timestep)
+        virtual CommFlags getRequestedCommFlags(uint64_t timestep)
             {
             // Request communication of all field required during ForceCompute
             CommFlags flags(0);
@@ -328,7 +328,7 @@ class PYBIND11_EXPORT SinglePhaseFlow : public SPHBaseClass<KT_, SET_>
         // Log parameters
         std::vector<std::string> m_logname_list;  //!< Cache all generated logged quantities names
         GPUArray<Scalar> m_properties; //!< Stores the computed properties
-        unsigned int m_log_computed_last_timestep; //!< Last time step where log quantities were computed
+        uint64_t m_log_computed_last_timestep; //!< Last time step where log quantities were computed
 
         // Timestep parameters
         std::vector<double> m_timestep_list = std::vector<double>(7);  //!< Cache all generated timestep quantities names
@@ -346,42 +346,42 @@ class PYBIND11_EXPORT SinglePhaseFlow : public SPHBaseClass<KT_, SET_>
          * \post For fluid particles, compute number density. For solid particles,
                  compute fluid normalization constant.
          */
-        void compute_ndensity(unsigned int timestep);
+        void compute_ndensity(uint64_t timestep);
 
         /*! Helper function to compute particle pressures
          *  \post Pressure of fluid particle computed
          */
-        void compute_pressure(unsigned int timestep);
+        void compute_pressure(uint64_t timestep);
 
         /*! Helper function to compute fictitious solid particle properties (pressures and velocities)
         * \pre Ghost particle number densities (i.e. dpe array) must be up-to-date
         * \pre Solid normalization constant \sum_j w_ij must be computed and stored in dpe array
         * \post Fictitious particle properties are computed and stored in aux1 array
         */
-        void compute_noslip(unsigned int timestep);
+        void compute_noslip(uint64_t timestep);
 
         /*! Helper function to apply Shepard density filter
         * \post Fluid particle densities are recomputed based on the Shepard renormalization
         */
-        void renormalize_density(unsigned int timestep);
+        void renormalize_density(uint64_t timestep);
 
         /*! Helper function where the actual force computation takes place
          * \pre Number densities and fictitious solid particle properties must be up-to-date
          * \post h_force stores forces acting on fluid particles and .w component stores rate of change of density
          */
-        void forcecomputation(unsigned int timestep);
+        void forcecomputation(uint64_t timestep);
 
         /*! Helper function to set communication flags and update ghosts densities
         * \param timestep The time step
         * \post Ghost particle dpe array is up-to-date
         */
-        void update_ghost_dpe(unsigned int timestep);
+        void update_ghost_dpe(uint64_t timestep);
 
         /*! Helper function to set communication flags and update ghosts auxiliary array 1
         * \param timestep The time step
         * \post Ghost particle auxiliary array 1 is up-to-date
         */
-        void update_ghost_aux1(unsigned int timestep);
+        void update_ghost_aux1(uint64_t timestep);
 
     private:
 

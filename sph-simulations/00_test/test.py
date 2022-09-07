@@ -1,11 +1,11 @@
-#!/home/USADR/ac126015/software/anaconda3/envs/sph3/bin/python
+#!/usr/bin/env python3
 import hoomd
 from hoomd import *
 from hoomd import sph
 from hoomd.sph import _sph
 import numpy as np
 import itertools
-import gsd.hoomd
+# import gsd.hoomd
 
 
 # -----------------------------------------------------------------------------------
@@ -39,8 +39,8 @@ UREF = FX*LREF*LREF*0.25/(MU/RHO0)
 
 
 
-device = hoomd.device.CPU(notice_level=10)
-# device = hoomd.device.CPU(notice_level=7)
+# device = hoomd.device.CPU(notice_level=10)
+device = hoomd.device.CPU(notice_level=7)
 # device = hoomd.device.CPU(notice_level=2)
 sim = hoomd.Simulation(device=device)
 # if device.communicator.rank == 0:
@@ -212,6 +212,11 @@ sim.operations.writers.append(table)
 print("before set intregrator")
 
 sim.operations.integrator = integrator
+print(sim.operations.integrator)
+
+print("integrator Forces: {0}".format(integrator.forces[:]))
+print("integrator Methods: {0}".format(integrator.methods[:]))
+
 
 print("before run")
 

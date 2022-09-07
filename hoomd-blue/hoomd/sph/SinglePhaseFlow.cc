@@ -116,7 +116,7 @@ std::vector< std::string > SinglePhaseFlow<KT_, SET_>::getProvidedLogQuantities(
 /*! Returns provided timestep Quantities to Compute
 */
 template<SmoothingKernelType KT_, StateEquationType SET_>
-std::vector<double> SinglePhaseFlow<KT_, SET_>::getProvidedTimestepQuantities(unsigned int timestep)
+std::vector<double> SinglePhaseFlow<KT_, SET_>::getProvidedTimestepQuantities(uint64_t timestep)
 {
     m_timestep_list[0] = m_rho0;
     m_timestep_list[1] = m_c;
@@ -149,7 +149,7 @@ void  SinglePhaseFlow<KT_, SET_>::activateShepardRenormalization(unsigned int sh
 /*! Return requested Log quantity
 */
 template<SmoothingKernelType KT_,StateEquationType SET_>
-Scalar SinglePhaseFlow<KT_, SET_>::getLogValue(const std::string& quantity, unsigned int timestep)
+Scalar SinglePhaseFlow<KT_, SET_>::getLogValue(const std::string& quantity, uint64_t timestep)
     {
     if ( m_log_computed_last_timestep != timestep )
         {
@@ -277,7 +277,7 @@ void SinglePhaseFlow<KT_, SET_>::setParams(Scalar mu)
  */
 
 template<SmoothingKernelType KT_,StateEquationType SET_>
-void SinglePhaseFlow<KT_, SET_>::update_ghost_dpe(unsigned int timestep)
+void SinglePhaseFlow<KT_, SET_>::update_ghost_dpe(uint64_t timestep)
     {
 #ifdef ENABLE_MPI
     if (this->m_comm)
@@ -302,7 +302,7 @@ void SinglePhaseFlow<KT_, SET_>::update_ghost_dpe(unsigned int timestep)
 #endif
     }
 template<SmoothingKernelType KT_,StateEquationType SET_>
-void SinglePhaseFlow<KT_, SET_>::update_ghost_aux1(unsigned int timestep)
+void SinglePhaseFlow<KT_, SET_>::update_ghost_aux1(uint64_t timestep)
     {
 #ifdef ENABLE_MPI
     if (this->m_comm)
@@ -335,7 +335,7 @@ void SinglePhaseFlow<KT_, SET_>::update_ghost_aux1(unsigned int timestep)
    in the x-component of the h_dpe Array.
  */
 template<SmoothingKernelType KT_,StateEquationType SET_>
-void SinglePhaseFlow<KT_, SET_>::compute_ndensity(unsigned int timestep)
+void SinglePhaseFlow<KT_, SET_>::compute_ndensity(uint64_t timestep)
     {
     this->m_exec_conf->msg->notice(7) << "Computing SinglePhaseFlow::Number Density" << std::endl;
 
@@ -470,7 +470,7 @@ void SinglePhaseFlow<KT_, SET_>::compute_ndensity(unsigned int timestep)
 /*! Perform pressure computation
  */
 template<SmoothingKernelType KT_,StateEquationType SET_>
-void SinglePhaseFlow<KT_, SET_>::compute_pressure(unsigned int timestep)
+void SinglePhaseFlow<KT_, SET_>::compute_pressure(uint64_t timestep)
     {
     this->m_exec_conf->msg->notice(7) << "Computing SinglePhaseFlow::Pressure" << std::endl;
 
@@ -500,7 +500,7 @@ void SinglePhaseFlow<KT_, SET_>::compute_pressure(unsigned int timestep)
  */
 
 template<SmoothingKernelType KT_,StateEquationType SET_>
-void SinglePhaseFlow<KT_, SET_>::compute_noslip(unsigned int timestep)
+void SinglePhaseFlow<KT_, SET_>::compute_noslip(uint64_t timestep)
     {
     this->m_exec_conf->msg->notice(7) << "Computing SinglePhaseFlow::NoSlip" << std::endl;
 
@@ -705,7 +705,7 @@ void SinglePhaseFlow<KT_, SET_>::compute_noslip(unsigned int timestep)
 /*! Perform Shepard density renormalization
  */
 template<SmoothingKernelType KT_,StateEquationType SET_>
-void SinglePhaseFlow<KT_, SET_>::renormalize_density(unsigned int timestep)
+void SinglePhaseFlow<KT_, SET_>::renormalize_density(uint64_t timestep)
     {
     this->m_exec_conf->msg->notice(7) << "Computing SinglePhaseFlow::Density renormalization" << std::endl;
 
@@ -846,7 +846,7 @@ void SinglePhaseFlow<KT_, SET_>::renormalize_density(unsigned int timestep)
  */
 
 template<SmoothingKernelType KT_,StateEquationType SET_>
-void SinglePhaseFlow<KT_, SET_>::forcecomputation(unsigned int timestep)
+void SinglePhaseFlow<KT_, SET_>::forcecomputation(uint64_t timestep)
     {
 
     if ( m_density_method == DENSITYSUMMATION )
@@ -1096,10 +1096,12 @@ void SinglePhaseFlow<KT_, SET_>::forcecomputation(unsigned int timestep)
 */
 
 template<SmoothingKernelType KT_,StateEquationType SET_>
-void SinglePhaseFlow<KT_, SET_>::computeForces(unsigned int timestep)
+void SinglePhaseFlow<KT_, SET_>::computeForces(uint64_t timestep)
     {
     // if (this->m_prof)
     //     this->m_prof->push("SinglePhaseFlow");
+    this->m_exec_conf->msg->notice(5) << "in SinglePhaseFlow cc in Compute Forces" << endl;
+
 
     // This is executed once to initialize protected/private variables
     if (!m_params_set)
@@ -1108,6 +1110,7 @@ void SinglePhaseFlow<KT_, SET_>::computeForces(unsigned int timestep)
             << std::endl;
         throw std::runtime_error("Error computing SinglePhaseFlow forces");
         }
+    this->m_exec_conf->msg->notice(5) << "after params set" << endl;
 
     // Make sure neighbor list is up-to-date
     this->m_nlist->compute(timestep);

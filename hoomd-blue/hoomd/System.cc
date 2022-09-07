@@ -158,9 +158,13 @@ void System::run(uint64_t nsteps, bool write_at_start)
         m_sysdef->getParticleData()->setFlags(determineFlags(m_cur_tstep + 1));
 
         // execute the integrator
-        if (m_integrator)
-            m_integrator->update(m_cur_tstep);
+        // m_exec_conf->msg->notice(5) << "in System cc before integrator uptdate" << endl;
 
+        if (m_integrator){
+            m_exec_conf->msg->notice(5) << "in System cc in loop integrator uptdate" << endl;
+            m_exec_conf->msg->notice(5) << "Integrator " << m_integrator << endl;
+            m_integrator->update(m_cur_tstep);
+        }
         m_cur_tstep++;
 
         // execute analyzers after incrementing the step counter

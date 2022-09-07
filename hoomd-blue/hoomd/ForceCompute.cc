@@ -584,7 +584,12 @@ void ForceCompute::compute(uint64_t timestep)
     // flags do not match
     if (m_particles_sorted || shouldCompute(timestep) || m_pdata->getFlags() != m_computed_flags)
         {
+        m_exec_conf->msg->notice(5) << "in ForceCompute cc in compute call Compute Forces" << endl;
+
         computeForces(timestep);
+
+        m_exec_conf->msg->notice(5) << "after ForceCompute cc in compute call Compute Forces" << endl;
+
         }
 
     m_particles_sorted = false;

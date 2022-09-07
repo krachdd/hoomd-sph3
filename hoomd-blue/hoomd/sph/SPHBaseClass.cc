@@ -122,18 +122,18 @@ void SPHBaseClass<KT_, SET_>::constructTypeVectors(std::shared_ptr<ParticleGroup
 /*! \post Return current body force
 */
 template<SmoothingKernelType KT_, StateEquationType SET_>
-Scalar3 SPHBaseClass<KT_, SET_>::getAcceleration(unsigned int timestep)
+Scalar3 SPHBaseClass<KT_, SET_>::getAcceleration(uint64_t timestep)
     {
     if ( m_damptime > 0 && timestep < m_damptime )
         return m_bodyforce * Scalar(0.5)*(sin(M_PI*(-Scalar(0.5)+Scalar(timestep)/Scalar(m_damptime)))+Scalar(1));
     else
         return m_bodyforce;
     }
-// template Scalar3 SPHBaseClass<wendlandc2, SET_>::getAcceleration(unsigned int timestep);
+// template Scalar3 SPHBaseClass<wendlandc2, SET_>::getAcceleration(uint64_t timestep);
 /*! \post Body forces mass*body acceleration are applied
 */
 template<SmoothingKernelType KT_, StateEquationType SET_>
-void SPHBaseClass<KT_, SET_>::applyBodyForce(unsigned int timestep, std::shared_ptr<ParticleGroup> pgroup)
+void SPHBaseClass<KT_, SET_>::applyBodyForce(uint64_t timestep, std::shared_ptr<ParticleGroup> pgroup)
     {
     if ( m_body_acceleration )
         {
@@ -169,7 +169,7 @@ void SPHBaseClass<KT_, SET_>::applyBodyForce(unsigned int timestep, std::shared_
 
 // #ifdef ENABLE_HIP
 // template<SmoothingKernelType KT_,StateEquationType SET_>
-// void SPHBaseClass<KT_, SET_>::applyBodyForceGPU(unsigned int timestep, std::shared_ptr<ParticleGroup> pgroup)
+// void SPHBaseClass<KT_, SET_>::applyBodyForceGPU(uint64_t timestep, std::shared_ptr<ParticleGroup> pgroup)
 //     {
 //     if ( this->m_body_acceleration )
 //         {
@@ -236,7 +236,7 @@ void SPHBaseClass<KT_, SET_>::setAcceleration(Scalar gx, Scalar gy, Scalar gz, u
 //         //! Calls the overidden ForceCompute::computeForces()
 //         /*! \param timestep parameter to pass on to the overidden method
 //          */
-//         void computeForces(unsigned int timestep)
+//         void computeForces(uint64_t timestep)
 //             {
 //             this->get_override("computeForces")(timestep);
 //             }
@@ -344,9 +344,9 @@ namespace detail
 #define INST_SPHBC_cTV(r,seq) template void SPHBaseClass<BOOST_PP_SEQ_ENUM(seq)>::constructTypeVectors(boost::shared_ptr<ParticleGroup> const pgroup, \
     std::vector<unsigned int> *global_typeids);
 
-#define INST_SPHBC_getAccel(r,seq) template Scalar3 SPHBaseClass<BOOST_PP_SEQ_ENUM(seq)>::getAcceleration(unsigned int timestep);
+#define INST_SPHBC_getAccel(r,seq) template Scalar3 SPHBaseClass<BOOST_PP_SEQ_ENUM(seq)>::getAcceleration(uint64_t timestep);
 
-#define INST_SPHBC_applyBF(r,seq)template void SPHBaseClass<BOOST_PP_SEQ_ENUM(seq)>::applyBodyForce(unsigned int timestep, boost::shared_ptr<ParticleGroup> pgroup);
+#define INST_SPHBC_applyBF(r,seq)template void SPHBaseClass<BOOST_PP_SEQ_ENUM(seq)>::applyBodyForce(uint64_t timestep, boost::shared_ptr<ParticleGroup> pgroup);
 
 
 BOOST_PP_SEQ_FOR_EACH_PRODUCT(INST_SPHBC, (KERNELTYPES)(SEQTYPES));
@@ -366,7 +366,7 @@ BOOST_PP_SEQ_FOR_EACH_PRODUCT(INST_SPHBC_applyBF, (KERNELTYPES)(SEQTYPES));
 #undef INST
 
 #ifdef ENABLE_HIP
-#define INST_SPHBC_applyBFGPU(r,seq)template void SPHBaseClass<BOOST_PP_SEQ_ENUM(seq)>::applyBodyForceGPU(unsigned int timestep, boost::shared_ptr<ParticleGroup> pgroup);
+#define INST_SPHBC_applyBFGPU(r,seq)template void SPHBaseClass<BOOST_PP_SEQ_ENUM(seq)>::applyBodyForceGPU(uint64_t timestep, boost::shared_ptr<ParticleGroup> pgroup);
 BOOST_PP_SEQ_FOR_EACH_PRODUCT(INST_SPHBC_applyBFGPU, (KERNELTYPES)(SEQTYPES));
 #undef INST_SPHBC_applyBFGPU
 #endif*/
