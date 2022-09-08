@@ -39,8 +39,8 @@ UREF = FX*LREF*LREF*0.25/(MU/RHO0)
 
 
 
-# device = hoomd.device.CPU(notice_level=10)
-device = hoomd.device.CPU(notice_level=7)
+device = hoomd.device.CPU(notice_level=10)
+# device = hoomd.device.CPU(notice_level=7)
 # device = hoomd.device.CPU(notice_level=2)
 sim = hoomd.Simulation(device=device)
 # if device.communicator.rank == 0:
@@ -67,8 +67,6 @@ with sim.state.cpu_local_snapshot as snap:
     N = len(snap.particles.position)
     print(f'{N} particles on rank {device.communicator.rank}')
 
-print("Before Kernel setup")
-
 # Kernel
 KERNEL  = 'WendlandC4'
 H       = hoomd.sph.kernel.OptimalH[KERNEL]*DX       # m
@@ -82,67 +80,39 @@ Kappa  = Kernel.Kappa()
 # print(hoomd.sph.kernel.Kernels['WendlandC4']
 # print(dir(hoomd.sph.kernel.WendlandC4))
 
-print("Before nlist setup")
-
-
 # # Neighbor list
 NList = hoomd.nsearch.nlist.Cell(buffer = RCUT*0.05, rebuild_check_delay = 1, kappa = Kappa)
+
 # NList = hoomd.nsearch.nlist.Stencil(buffer = RCUT*0.05, cell_width=1.5, rebuild_check_delay = 1, kappa = Kappa)
-
 # print(NList.__dict__)
-
 # print(NList._getattr_param('kappa'))
-
 # # print(help(NList._setattr_param))
 # print(NList._setattr_param('kappa', 2.1))
-
-
-
 # print(NList._getattr_param('kappa'))
-
 # Kernel.setNeighborList(NList)
 
-print("Before eos setup")
 
 
 # # Equation of State
 EOS = hoomd.sph.eos.Tait()
 EOS.set_params(RHO0,0.05)
 
-
-print("Before group setup")
-
-# # Define groups/filters
+# Define groups/filters
 filterFLUID  = hoomd.filter.Type(['F']) # is zero
 filterSOLID  = hoomd.filter.Type(['S']) # is one
-
-# print(type(groupSOLID))
 
 with sim.state.cpu_local_snapshot as data:
     print(f'{np.count_nonzero(data.particles.typeid == 0)} fluid particles on rank {device.communicator.rank}')
     print(f'{np.count_nonzero(data.particles.typeid == 1)} solid particles on rank {device.communicator.rank}')
 
 # # Set up SPH solver
-
-print("Before model setup")
-
-
 model = hoomd.sph.sphmodel.SinglePhaseFlow(kernel = Kernel,
                                            eos    = EOS,
                                            nlist  = NList,
                                            fluidgroup_filter = filterFLUID,
-                                           solidgroup_filter = filterSOLID,
-                                           #mu     = 0.01
-                                           )
-
-print("Before model parameters")
-
+                                           solidgroup_filter = filterSOLID)
 
 model.mu = 0.01
-
-# print(model)
-# model._attach()
-# print(model.__dict__)
 model.densitymethod = 'SUMMATION'
 model.gx = FX
 model.damp = 1000
@@ -150,44 +120,27 @@ model.artificialviscosity = True
 model.alpha = 0.2
 model.beta = 0.0
 
-# print(model.__dict__)
-
 # model.set_params(MU)
 # model.activateArtificialViscosity(0.2,0.0)
 # model.deactivateShepardRenormalization()
 # model.deactivateDensityDiffusion()
 # model.setBodyAcceleration(FX,0.0,0.0,1000)
 
-
-print("before timestep computed")
 dt = model.compute_dt(LREF,UREF,DRHO)
-
-print("before set dt")
 
 integrator = hoomd.sph.Integrator(dt=dt)
 
-
-print("Before VV")
-
 VelocityVerlet = hoomd.sph.methods.VelocityVerlet(filter=filterFLUID)
 
-
-print("before methods append")
 integrator.methods.append(VelocityVerlet)
-
-print("before model append")
 integrator.forces.append(model)
 
-# print(dt)
-
-# print(model.__dict__)
-
-
+print(f'Computed Time step: {dt}')
 print("integrator Forces: {0}".format(integrator.forces[:]))
 print("integrator Methods: {0}".format(integrator.methods[:]))
 
 gsd_writer = hoomd.write.GSD(filename='log.gsd',
-                             trigger=hoomd.trigger.Periodic(1000),
+                             trigger=hoomd.trigger.Periodic(1),
                              mode='wb' #,
                              # filter=hoomd.filter.Null()
                              )
@@ -199,7 +152,7 @@ sim.operations.writers.append(gsd_writer)
 
 logger = hoomd.logging.Logger(categories=['scalar', 'string'])
 logger.add(sim, quantities=['timestep', 'tps'])
-table = hoomd.write.Table(trigger=hoomd.trigger.Periodic(period=100),
+table = hoomd.write.Table(trigger=hoomd.trigger.Periodic(period=1),
                           logger=logger)
 # file = open('log.txt', mode='x', newline='\n')
 # table_file = hoomd.write.Table(output=file,
@@ -208,16 +161,6 @@ table = hoomd.write.Table(trigger=hoomd.trigger.Periodic(period=100),
 # sim.operations.writers.append(table_file)
 sim.operations.writers.append(table)
 
-
-print("before set intregrator")
-
 sim.operations.integrator = integrator
-print(sim.operations.integrator)
-
-print("integrator Forces: {0}".format(integrator.forces[:]))
-print("integrator Methods: {0}".format(integrator.methods[:]))
-
-
-print("before run")
-
+print("Starting Run")
 sim.run(10001)

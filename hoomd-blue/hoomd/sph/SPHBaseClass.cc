@@ -39,8 +39,13 @@ SPHBaseClass<KT_, SET_>::SPHBaseClass(std::shared_ptr<SystemDefinition> sysdef,
 
         // Sanity checks
         assert(m_nlist);
+
         assert(m_skernel);
         assert(m_eos);
+
+        m_exec_conf->msg->notice(5) << "SPHBASECLASS nlist type: " << m_nlist << endl;
+        m_exec_conf->msg->notice(5) << "SPHBASECLASS kernel type: " << m_skernel << endl;
+
 
         // Set default variables
         m_bodyforce = make_scalar3(Scalar(0), Scalar(0), Scalar(0));
@@ -205,6 +210,9 @@ template<SmoothingKernelType KT_, StateEquationType SET_>
 void SPHBaseClass<KT_, SET_>::setAcceleration(Scalar gx, Scalar gy, Scalar gz, unsigned int damptime)
     {
     m_exec_conf->msg->notice(7) << "Setting SPHBaseClass parameters" << std::endl;
+    m_exec_conf->msg->notice(5) << "nlist type: " << m_nlist << endl;
+    m_exec_conf->msg->notice(5) << "kernel type: " << m_skernel << endl;
+
     m_bodyforce = make_scalar3(gx,gy,gz);
     if ( gx != 0 || gy != 0 || gz != 0 )
         {

@@ -72,7 +72,9 @@ class SPHModel(force.Force):
 
     def _add(self, simulation):
         super()._add(simulation)
+        print("add nlist")
         self._add_nlist()
+        print("after add nlist")
 
     def _add_nlist(self):
         nlist = self.nlist
@@ -120,21 +122,23 @@ class SPHModel(force.Force):
         # self._cpp_obj = cls(self._simulation.state._cpp_sys_def,
         #                      self.nlist._cpp_obj)
 
-        # self._cpp_baseclass_name = 'SPHBaseClass' + '_' + Kernel[self.kernel.name] + '_' + EOS[self.eos.name]
-        # base_cls = getattr(_sph, self._cpp_baseclass_name)
-        # self._cpp_obj = base_cls(self._simulation.state._cpp_sys_def, self.kernel.cpp_smoothingkernel,
-        #                          self.eos.cpp_stateequation, self.nlist._cpp_obj)
+        self._cpp_baseclass_name = 'SPHBaseClass' + '_' + Kernel[self.kernel.name] + '_' + EOS[self.eos.name]
+        base_cls = getattr(_sph, self._cpp_baseclass_name)
+        self._cpp_base_obj = base_cls(self._simulation.state._cpp_sys_def, self.kernel.cpp_smoothingkernel,
+                                 self.eos.cpp_stateequation, self.nlist._cpp_obj)
         print("before super attach in SPH Model ")
         super()._attach()
 
 
     def _setattr_param(self, attr, value):
+        print("in _setattr_param nlist in sphmodel.py")
         if attr == "nlist":
             self._nlist_setter(value)
             return
         super()._setattr_param(attr, value)
 
     def _nlist_setter(self, new_nlist):
+        print("in _nlist_setter nlist in sphmodel.py")
         if new_nlist is self.nlist:
             return
         if self._attached:
@@ -265,9 +269,9 @@ class SinglePhaseFlow(SPHModel):
     def _add(self, simulation):
         print("in _add SinglePF")
         super()._add(simulation)
-        print("add nlist")
-        self._add_nlist()
-        print("after add nlist")
+        # print("add nlist")
+        # self._add_nlist()
+        # print("after add nlist")
 
     def _attach(self):
         if isinstance(self._simulation.device, hoomd.device.CPU):
@@ -299,7 +303,13 @@ class SinglePhaseFlow(SPHModel):
         cpp_eos = self.eos.cpp_stateequation
         cpp_nlist =  self.nlist._cpp_obj
 
-        print(dir(self.nlist))
+        # print(dir(self.nlist))
+        # print(dir(cpp_nlist))
+        # print(self.nlist)
+
+        print("NLIST to forward to cls: {0}".format(self.nlist._cpp_obj))
+        print("NLIST to forward to cls: {0}".format(cpp_nlist))
+
 
 
         print("first constructions sph base class")
@@ -344,6 +354,9 @@ class SinglePhaseFlow(SPHModel):
         # Attach param_dict and typeparam_dict
         super()._attach()
         print("after super attach in attach in SPHModel SinglePhaseFlow")
+        print(self._cpp_obj.__getattribute__)
+        print(self._cpp_obj.__module__)
+
 
 
 

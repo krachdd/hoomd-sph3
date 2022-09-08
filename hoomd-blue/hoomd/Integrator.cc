@@ -183,9 +183,6 @@ void Integrator::computeNetForce(uint64_t timestep)
 
     for (auto& force : m_forces)
         {
-        m_exec_conf->msg->notice(5) << "in Integrator cc in compute Net Forces call force->compute" << endl;
-        m_exec_conf->msg->notice(5) << "force " << force << endl;
-
         force->compute(timestep);
         }
 

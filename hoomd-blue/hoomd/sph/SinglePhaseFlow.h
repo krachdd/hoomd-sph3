@@ -293,7 +293,7 @@ class PYBIND11_EXPORT SinglePhaseFlow : public SPHBaseClass<KT_, SET_>
         std::shared_ptr<ParticleGroup> m_fluidgroup; //!< Group of fluid particles
         std::shared_ptr<ParticleGroup> m_solidgroup; //!< Group of fluid particles
 
-        std::shared_ptr<nsearch::NeighborList> m_nlist; //!< the neighborlist to use for the computation
+        // std::shared_ptr<nsearch::NeighborList> m_nlist; //!< the neighborlist to use for the computation
 
         // Model parameters
         Scalar m_ch; //!< Smoothing length to use if constant for all particles
