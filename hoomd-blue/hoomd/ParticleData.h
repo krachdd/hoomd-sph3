@@ -1803,6 +1803,7 @@ class PYBIND11_EXPORT LocalParticleData : public LocalDataAccess<Output, Particl
     //                                                     true);
     //     }
 
+
     Output getImages(GhostDataFlag flag)
         {
         return this->template getBuffer<int3, int>(m_image_handle,
@@ -1820,13 +1821,13 @@ class PYBIND11_EXPORT LocalParticleData : public LocalDataAccess<Output, Particl
                                                                     true);
         }
 
-    // Output getSlengths(GhostDataFlag flag)
-    //     {
-    //     return this->template getBuffer<unsigned int, unsigned int>(m_slength_handle,
-    //                                                                 &ParticleData::getSlengths,
-    //                                                                 flag,
-    //                                                                 true);
-    //     }
+    Output getSlengths(GhostDataFlag flag)
+        {
+        return this->template getBuffer<Scalar, Scalar>(m_slength_handle,
+                                                                    &ParticleData::getSlengths,
+                                                                    flag,
+                                                                    true);
+        }
 
     Output getRTags()
         {
@@ -1933,7 +1934,7 @@ class PYBIND11_EXPORT LocalParticleData : public LocalDataAccess<Output, Particl
     std::unique_ptr<ArrayHandle<Scalar3>> m_aux2_handle;
     std::unique_ptr<ArrayHandle<Scalar3>> m_aux3_handle;
     std::unique_ptr<ArrayHandle<Scalar3>> m_aux4_handle;
-    std::unique_ptr<ArrayHandle<Scalar3>> m_slength_handle;
+    std::unique_ptr<ArrayHandle<Scalar>> m_slength_handle;
     std::unique_ptr<ArrayHandle<Scalar3>> m_dpedt_handle;
     // std::unique_ptr<ArrayHandle<Scalar3>> m_inertia_handle;
     // std::unique_ptr<ArrayHandle<Scalar>> m_charge_handle;
@@ -1971,7 +1972,7 @@ template<class Output> void export_LocalParticleData(pybind11::module& m, std::s
         .def("getAuxiliaries3", &LocalParticleData<Output>::getAuxiliaries3)
         .def("getAuxiliaries4", &LocalParticleData<Output>::getAuxiliaries4)
         .def("getDPEs", &LocalParticleData<Output>::getDPEs)
-        // .def("getSlengths", &LocalParticleData<Output>::getSlengths)
+        .def("getSlengths", &LocalParticleData<Output>::getSlengths)
         .def("getDPEdts", &LocalParticleData<Output>::getDPEdts)
         .def("getMasses", &LocalParticleData<Output>::getMasses)
         // .def("getOrientation", &LocalParticleData<Output>::getOrientation)

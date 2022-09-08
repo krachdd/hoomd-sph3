@@ -52,10 +52,6 @@ SinglePhaseFlow<KT_, SET_>::SinglePhaseFlow(std::shared_ptr<SystemDefinition> sy
         assert(this->m_skernel);
         assert(this->m_eos);
 
-        this->m_exec_conf->msg->notice(5) << "nlist type: " << this->m_nlist << endl;
-        this->m_exec_conf->msg->notice(5) << "kernel type: " << this->m_skernel << endl;
-
-
         // Contruct type vectors
         this->constructTypeVectors(fluidgroup,&m_fluidtypes);
         this->constructTypeVectors(solidgroup,&m_solidtypes);
@@ -265,8 +261,6 @@ void SinglePhaseFlow<KT_, SET_>::reduceProperties()
 template<SmoothingKernelType KT_,StateEquationType SET_>
 void SinglePhaseFlow<KT_, SET_>::setParams(Scalar mu)
     {
-    this->m_exec_conf->msg->notice(7) << "Setting SinglePhaseFlow parameter mu" << std::endl;
-
     m_mu   = mu;
     if (m_mu <= 0)
          {
@@ -1104,8 +1098,6 @@ void SinglePhaseFlow<KT_, SET_>::computeForces(uint64_t timestep)
     {
     // if (this->m_prof)
     //     this->m_prof->push("SinglePhaseFlow");
-    this->m_exec_conf->msg->notice(5) << "in SinglePhaseFlow cc in Compute Forces" << endl;
-
 
     // This is executed once to initialize protected/private variables
     if (!m_params_set)
@@ -1114,16 +1106,9 @@ void SinglePhaseFlow<KT_, SET_>::computeForces(uint64_t timestep)
             << std::endl;
         throw std::runtime_error("Error computing SinglePhaseFlow forces");
         }
-    this->m_exec_conf->msg->notice(5) << "after params set" << endl;
-    this->m_exec_conf->msg->notice(5) << "nlist type: " << this->m_nlist << endl;
-    this->m_exec_conf->msg->notice(5) << "kernel type: " << this->m_skernel << endl;
 
     // Make sure neighbor list is up-to-date
     this->m_nlist->compute(timestep);
-    // this->m_nlist->setRBuff(0.4);
-
-    this->m_exec_conf->msg->notice(5) << "after compute nlist" << endl;
-
 
     // Apply density renormalization if requested
     if ( m_shepard_renormalization && timestep % m_shepardfreq == 0 )
@@ -1134,12 +1119,10 @@ void SinglePhaseFlow<KT_, SET_>::computeForces(uint64_t timestep)
         update_ghost_dpe(timestep);
 #endif
         }
-    this->m_exec_conf->msg->notice(5) << "before compute_ndensity" << endl;
 
     // Compute solid renormalization constant and, provided that SUMMATION approach is used,
     // particle mass densities.
     compute_ndensity(timestep);
-    this->m_exec_conf->msg->notice(5) << "after compute_ndensity" << endl;
 
     // Compute fluid pressure based on m_eos;
     compute_pressure(timestep);

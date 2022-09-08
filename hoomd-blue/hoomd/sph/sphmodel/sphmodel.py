@@ -298,18 +298,17 @@ class SinglePhaseFlow(SPHModel):
         globalN = pdata.getNGlobal()
 
         self.consth = pdata.constSmoothingLength()
-        print(f'self.consth: {self.consth}')
         if self.consth:
             self.maxh = pdata.getSmoothingLength(0)
+            print(f'Using constant Smooting Length: {self.maxh}')
 
             self._cpp_obj.setConstSmoothingLength(self.maxh)
-            print(f'Constant Smooting length: {self.maxh}')
         else: 
             self.maxh      = pdata.getMaxSmoothingLength()
             print('Non-Constant Smooting length')
         self.rcut = kappa * self.maxh
 
-        print(f'self.rcut: {self.rcut}')
+        # print(f'self.rcut: {self.rcut}')
 
         # get all params in line
         self.mu = self._param_dict['mu']
@@ -430,6 +429,8 @@ class SinglePhaseFlow(SPHModel):
 
         UREF = np.abs(UREF)
 
+        print(dir(self))
+
         # Compute required quantities
         # Magnitude of body force
         if not self.accel_set:
@@ -442,10 +443,6 @@ class SinglePhaseFlow(SPHModel):
         MU  = self._param_dict['mu']
         # Rest density
         RHO0 = self.eos.RestDensity
-
-        print(f'H: {H}')
-        print(f'MU: {MU}')
-        print(f'RHO0: {RHO0}')
 
         # Speed of sound
         # CFL condition

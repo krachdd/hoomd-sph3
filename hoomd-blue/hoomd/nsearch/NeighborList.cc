@@ -348,7 +348,6 @@ NeighborList::~NeighborList()
 */
 void NeighborList::compute(uint64_t timestep)
     {
-    m_exec_conf->msg->notice(5) << "in NeighborList cc compute" << endl;
     Compute::compute(timestep);
     // check if the rcut array has changed and update it
     if (m_rcut_changed)

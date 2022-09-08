@@ -133,11 +133,8 @@ uint3 CellList::computeDimensions()
 
 void CellList::compute(uint64_t timestep)
     {
-    m_exec_conf->msg->notice(10) << "Before Cell list compute" << endl;
     Compute::compute(timestep);
     bool force = false;
-
-    m_exec_conf->msg->notice(10) << "Cell list compute" << endl;
 
     if (m_params_changed)
         {

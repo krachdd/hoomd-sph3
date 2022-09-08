@@ -81,7 +81,7 @@ void VelocityVerlet::integrateStepOne(uint64_t timestep)
     {
     unsigned int group_size = m_group->getNumMembers();
 
-    m_exec_conf->msg->notice(5) << "in VelocityVerlet cc in loop integrate step one" << endl;
+    m_exec_conf->msg->notice(9) << "VelocityVerlet: Integrate Step one" << endl;
 
 
     ArrayHandle<Scalar4> h_vel(m_pdata->getVelocities(), access_location::host, access_mode::readwrite);
@@ -277,6 +277,7 @@ void VelocityVerlet::integrateStepOne(uint64_t timestep)
 */
 void VelocityVerlet::integrateStepTwo(uint64_t timestep)
     {
+    m_exec_conf->msg->notice(9) << "VelocityVerlet: Integrate Step two" << endl;
     unsigned int group_size = m_group->getNumMembers();
 
     const GlobalArray<Scalar4>& net_force = m_pdata->getNetForce();

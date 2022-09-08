@@ -5,6 +5,7 @@ from hoomd import sph
 from hoomd.sph import _sph
 import numpy as np
 import itertools
+# from mpi4py import MPI
 # import gsd.hoomd
 
 
@@ -39,10 +40,10 @@ UREF = FX*LREF*LREF*0.25/(MU/RHO0)
 
 
 
-# device = hoomd.device.CPU(notice_level=10)
-# device = hoomd.device.CPU(notice_level=7)
-device = hoomd.device.CPU(notice_level=2)
-sim = hoomd.Simulation(device=device)
+device = hoomd.device.CPU(notice_level = 10)
+# device = hoomd.device.CPU(notice_level = 7)
+# device = hoomd.device.CPU(notice_level = 2)
+sim = hoomd.Simulation(device = device)
 # if device.communicator.rank == 0:
 #     print("hoomd.version.mpi_enabled: {0}".format(hoomd.version.mpi_enabled))
 
@@ -121,13 +122,10 @@ model.damp = 1000
 model.artificialviscosity = True
 model.alpha = 0.2
 model.beta = 0.0
-model.max_sl = np.max(sim.state.get_snapshot().particles.slength[:])
+# Access the local snapshot, this is not ideal! 
 
-# model.set_params(MU)
-# model.activateArtificialViscosity(0.2,0.0)
-# model.deactivateShepardRenormalization()
-# model.deactivateDensityDiffusion()
-# model.setBodyAcceleration(FX,0.0,0.0,1000)
+with sim.state.cpu_local_snapshot as snapshot:
+    model.max_sl = np.max(snapshot.particles.slength[:])
 
 dt = model.compute_dt(LREF,UREF,DRHO)
 
@@ -142,8 +140,9 @@ print(f'Computed Time step: {dt}')
 print("Integrator Forces: {0}".format(integrator.forces[:]))
 print("Integrator Methods: {0}".format(integrator.methods[:]))
 
+gsd_trigger = hoomd.trigger.Periodic(100)
 gsd_writer = hoomd.write.GSD(filename=dumpname,
-                             trigger=hoomd.trigger.Periodic(1),
+                             trigger=gsd_trigger,
                              mode='wb' #,
                              # filter=hoomd.filter.Null()
                              )
@@ -152,10 +151,10 @@ sim.operations.writers.append(gsd_writer)
 
 
 # hoomd.write.GSD.write(filename = dumpname, state = sim.state, mode = 'wb')
-
+log_trigger = hoomd.trigger.Periodic(100)
 logger = hoomd.logging.Logger(categories=['scalar', 'string'])
 logger.add(sim, quantities=['timestep', 'tps'])
-table = hoomd.write.Table(trigger=hoomd.trigger.Periodic(period=1),
+table = hoomd.write.Table(trigger=log_trigger,
                           logger=logger)
 # file = open('log.txt', mode='x', newline='\n')
 # table_file = hoomd.write.Table(output=file,
@@ -165,9 +164,7 @@ table = hoomd.write.Table(trigger=hoomd.trigger.Periodic(period=1),
 sim.operations.writers.append(table)
 
 sim.operations.integrator = integrator
+
 print("Starting Run")
 
-snapshot = sim.state.get_snapshot()
-print(snapshot.particles.slength[:])
-
-sim.run(10001)
+sim.run(501)
