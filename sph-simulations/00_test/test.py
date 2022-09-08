@@ -17,12 +17,12 @@ import itertools
 LREF = 0.001                    # m
 
 LX = LREF*2
-LY = LREF*0.5
-LZ = LREF*0.5
+LY = LREF*2
+LZ = LREF*2
 
 # Parameters
 KERNEL  = 'WendlandC4'
-NL      = 20                       # INT
+NL      = 10                       # INT
 FX      = 0.1                      # m/s^2
 
 DX      = LREF/NL                  # m
@@ -39,28 +39,30 @@ UREF = FX*LREF*LREF*0.25/(MU/RHO0)
 
 
 
-device = hoomd.device.CPU(notice_level=10)
+# device = hoomd.device.CPU(notice_level=10)
 # device = hoomd.device.CPU(notice_level=7)
-# device = hoomd.device.CPU(notice_level=2)
+device = hoomd.device.CPU(notice_level=2)
 sim = hoomd.Simulation(device=device)
 # if device.communicator.rank == 0:
 #     print("hoomd.version.mpi_enabled: {0}".format(hoomd.version.mpi_enabled))
 
 
-filename = "test_parallelplates.gsd"
+filename = "test_tube.gsd"
 dumpname = "run_{0}".format(filename)
 
 sim.create_state_from_gsd(filename = filename)
 
+
+
 # Print the domain decomposition.
 domain_decomposition = sim.state.domain_decomposition
 if device.communicator.rank == 0:
-    print(domain_decomposition)
+    print(f'Domain Decomposition: {domain_decomposition}')
 
 # Print the location of the split planes.
 split_fractions = sim.state.domain_decomposition_split_fractions
 if device.communicator.rank == 0:
-    print(split_fractions)
+    print(f'Locations of SplitPlanes: {split_fractions}')
 
 # Print the number of particles on each rank.
 with sim.state.cpu_local_snapshot as snap:
@@ -119,6 +121,7 @@ model.damp = 1000
 model.artificialviscosity = True
 model.alpha = 0.2
 model.beta = 0.0
+model.max_sl = np.max(sim.state.get_snapshot().particles.slength[:])
 
 # model.set_params(MU)
 # model.activateArtificialViscosity(0.2,0.0)
@@ -136,10 +139,10 @@ integrator.methods.append(VelocityVerlet)
 integrator.forces.append(model)
 
 print(f'Computed Time step: {dt}')
-print("integrator Forces: {0}".format(integrator.forces[:]))
-print("integrator Methods: {0}".format(integrator.methods[:]))
+print("Integrator Forces: {0}".format(integrator.forces[:]))
+print("Integrator Methods: {0}".format(integrator.methods[:]))
 
-gsd_writer = hoomd.write.GSD(filename='log.gsd',
+gsd_writer = hoomd.write.GSD(filename=dumpname,
                              trigger=hoomd.trigger.Periodic(1),
                              mode='wb' #,
                              # filter=hoomd.filter.Null()
@@ -163,4 +166,8 @@ sim.operations.writers.append(table)
 
 sim.operations.integrator = integrator
 print("Starting Run")
+
+snapshot = sim.state.get_snapshot()
+print(snapshot.particles.slength[:])
+
 sim.run(10001)

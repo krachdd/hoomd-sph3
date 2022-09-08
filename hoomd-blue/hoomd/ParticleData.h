@@ -650,7 +650,8 @@ class PYBIND11_EXPORT ParticleData
         ArrayHandle<Scalar> h_slength(m_slength, access_location::host, access_mode::read);
         auto result = std::minmax_element(h_slength.data, h_slength.data+m_slength.getNumElements());
 
-if( std::abs(*result.first - *result.second)< std::numeric_limits<Scalar>::epsilon() * 2. * std::abs(*result.first + *result.second))
+        if( std::abs(*result.first - *result.second)< 
+            std::numeric_limits<Scalar>::epsilon() * 2. * std::abs(*result.first + *result.second))
             {
             #ifdef ENABLE_MPI
             if (m_decomposition)
@@ -664,11 +665,10 @@ if( std::abs(*result.first - *result.second)< std::numeric_limits<Scalar>::epsil
                 *result.second = *result2.second;
                 }
             #endif
+            return (std::abs(*result.first - *result.second)< std::numeric_limits<Scalar>::epsilon() * 2. * std::abs(*result.first + *result.second));
             }
             else
                 return false;
-
-            return(std::abs(*result.first - *result.second)< std::numeric_limits<Scalar>::epsilon() * 2. * std::abs(*result.first + *result.second));
         }
 
 
@@ -1248,7 +1248,7 @@ if( std::abs(*result.first - *result.second)< std::numeric_limits<Scalar>::epsil
     Scalar4 getNetRateDPE(unsigned int tag) const;
 
     //! Get the maximum smoothing length of all particles
-    Scalar getMaxSmoothingLength(unsigned int tag) const;
+    Scalar getMaxSmoothingLength() const;
 
     //! Set the current position of a particle
     /*! \param move If true, particle is automatically placed into correct domain

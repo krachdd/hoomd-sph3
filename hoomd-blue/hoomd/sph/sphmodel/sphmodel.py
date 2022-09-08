@@ -72,9 +72,7 @@ class SPHModel(force.Force):
 
     def _add(self, simulation):
         super()._add(simulation)
-        print("add nlist")
         self._add_nlist()
-        print("after add nlist")
 
     def _add_nlist(self):
         nlist = self.nlist
@@ -102,7 +100,6 @@ class SPHModel(force.Force):
         self._add_dependency(self.nlist)
 
     def _attach(self):
-        print("in _attach of SPH Model")
         # check that some Particles are defined
         if self._simulation.state._cpp_sys_def.getParticleData().getNGlobal() == 0:
             self._simulation.device._cpp_msg.warning("No particles are defined.\n")
@@ -126,19 +123,16 @@ class SPHModel(force.Force):
         base_cls = getattr(_sph, self._cpp_baseclass_name)
         self._cpp_base_obj = base_cls(self._simulation.state._cpp_sys_def, self.kernel.cpp_smoothingkernel,
                                  self.eos.cpp_stateequation, self.nlist._cpp_obj)
-        print("before super attach in SPH Model ")
         super()._attach()
 
 
     def _setattr_param(self, attr, value):
-        print("in _setattr_param nlist in sphmodel.py")
         if attr == "nlist":
             self._nlist_setter(value)
             return
         super()._setattr_param(attr, value)
 
     def _nlist_setter(self, new_nlist):
-        print("in _nlist_setter nlist in sphmodel.py")
         if new_nlist is self.nlist:
             return
         if self._attached:
@@ -200,7 +194,8 @@ class SinglePhaseFlow(SPHModel):
                           ddiff = float(0.0),
                           shepardrenormanlization = bool(False),
                           shepardfreq = int(30),
-                          compute_solid_forces = bool(False)
+                          compute_solid_forces = bool(False),
+                          max_sl = float(0.0)
                           ))
 
 
@@ -213,12 +208,6 @@ class SinglePhaseFlow(SPHModel):
         self.str_viscositymethod = self._param_dict._dict["viscositymethod"]
         self.accel_set = False
         self.params_set = False
-
-        print("First check on densitymethod")
-        print(self.densitymethod)
-        print(self.str_densitymethod)
-
-
 
         if self.str_densitymethod == str('SUMMATION'):
             self.cpp_densitymethod = hoomd.sph._sph.PhaseFlowDensityMethod.DENSITYSUMMATION
@@ -267,11 +256,7 @@ class SinglePhaseFlow(SPHModel):
         #     self.maxh = pdata.getMaxSmoothingLength()
 
     def _add(self, simulation):
-        print("in _add SinglePF")
         super()._add(simulation)
-        # print("add nlist")
-        # self._add_nlist()
-        # print("after add nlist")
 
     def _attach(self):
         if isinstance(self._simulation.device, hoomd.device.CPU):
@@ -303,18 +288,28 @@ class SinglePhaseFlow(SPHModel):
         cpp_eos = self.eos.cpp_stateequation
         cpp_nlist =  self.nlist._cpp_obj
 
-        # print(dir(self.nlist))
-        # print(dir(cpp_nlist))
-        # print(self.nlist)
-
-        print("NLIST to forward to cls: {0}".format(self.nlist._cpp_obj))
-        print("NLIST to forward to cls: {0}".format(cpp_nlist))
-
-
-
-        print("first constructions sph base class")
         self._cpp_obj = spf_cls(cpp_sys_def, cpp_kernel, cpp_eos, cpp_nlist, cpp_fluidgroup, 
                                 cpp_solidgroup, self.cpp_densitymethod, self.cpp_viscositymethod)
+
+        # Set kernel parameters
+        kappa = self.kernel.Kappa()
+        # print(dir(self._simulation.state._cpp_sys_def))
+        pdata = self._simulation.state._cpp_sys_def.getParticleData()
+        globalN = pdata.getNGlobal()
+
+        self.consth = pdata.constSmoothingLength()
+        print(f'self.consth: {self.consth}')
+        if self.consth:
+            self.maxh = pdata.getSmoothingLength(0)
+
+            self._cpp_obj.setConstSmoothingLength(self.maxh)
+            print(f'Constant Smooting length: {self.maxh}')
+        else: 
+            self.maxh      = pdata.getMaxSmoothingLength()
+            print('Non-Constant Smooting length')
+        self.rcut = kappa * self.maxh
+
+        print(f'self.rcut: {self.rcut}')
 
         # get all params in line
         self.mu = self._param_dict['mu']
@@ -327,8 +322,6 @@ class SinglePhaseFlow(SPHModel):
         self.shepardfreq = self._param_dict['shepardfreq']
         self.compute_solid_forces = self._param_dict['compute_solid_forces']
 
-
-        print("before set params")
         self.set_params(self.mu)
         self.setdensitymethod(self.str_densitymethod)
         self.setviscositymethod(self.str_viscositymethod)
@@ -350,16 +343,8 @@ class SinglePhaseFlow(SPHModel):
 
         self.setBodyAcceleration(self.gx, self.gy, self.gz, self.damp)
 
-        print("before super attach in attach in SPHModel SinglePhaseFlow")
         # Attach param_dict and typeparam_dict
         super()._attach()
-        print("after super attach in attach in SPHModel SinglePhaseFlow")
-        print(self._cpp_obj.__getattribute__)
-        print(self._cpp_obj.__module__)
-
-
-
-
 
     def set_params(self,mu):
         # self.mu   = mu.item()   if isinstance(mu, np.generic)   else mu
@@ -375,9 +360,6 @@ class SinglePhaseFlow(SPHModel):
 
     # @densitymethod.setter
     def setdensitymethod(self, method):
-        print('in densitymethod setter')
-        print('method {0}'.format(method))
-
         if method not in self.DENSITYMETHODS:
             raise ValueError("Undefined DensityMethod.")
         self._cpp_obj.setDensityMethod(self.DENSITYMETHODS[method])
@@ -443,6 +425,9 @@ class SinglePhaseFlow(SPHModel):
             raise ValueError('Reference length LREF may not be zero.')
         if DRHO == 0.0:
             raise ValueError('Maximum density variation DRHO may not be zero.')
+        # if max_sl == 0.0:
+        #     raise ValueError('Maximum Smooting length must not be zero.')
+
         UREF = np.abs(UREF)
 
         # Compute required quantities
@@ -452,12 +437,15 @@ class SinglePhaseFlow(SPHModel):
         else:
             GMAG = np.sqrt(self.gx**2+self.gy**2+self.gz**2)
         # Smoothing length
-        # H   = self.maxh
-        H   = self.kernel.Kappa()
+        H   = self._param_dict['max_sl']
         # Viscosity
-        MU  = self.mu
+        MU  = self._param_dict['mu']
         # Rest density
         RHO0 = self.eos.RestDensity
+
+        print(f'H: {H}')
+        print(f'MU: {MU}')
+        print(f'RHO0: {RHO0}')
 
         # Speed of sound
         # CFL condition

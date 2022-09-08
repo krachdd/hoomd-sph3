@@ -3162,11 +3162,11 @@ Scalar ParticleData::getSmoothingLength(unsigned int tag) const
     {
     unsigned int idx = getRTag(tag);
     bool found = (idx < getN());
-    unsigned int result = 0;
+    Scalar result = 0;
     if (found)
         {
         ArrayHandle<Scalar> h_slength(m_slength, access_location::host, access_mode::read);
-        result = __scalar_as_int(h_slength.data[idx]);
+        result = h_slength.data[idx];
         }
 #ifdef ENABLE_MPI
     if (m_decomposition)
@@ -3341,18 +3341,14 @@ Scalar4 ParticleData::getNetRateDPE(unsigned int tag) const
 
 
 //! Get the current slength of a particle
-Scalar ParticleData::getMaxSmoothingLength(unsigned int tag) const
+Scalar ParticleData::getMaxSmoothingLength() const
     {
-    unsigned int idx = getRTag(tag);
-    bool found = (idx < getN());
-    Scalar result = 0;
 
+    Scalar result = 0.0;
 
-    if (found)
-        {
-        ArrayHandle<Scalar> h_slength(m_slength, access_location::host, access_mode::read);
-        result = *std::max_element(h_slength.data, h_slength.data+m_slength.getNumElements());
-        }
+    ArrayHandle<Scalar> h_slength(m_slength, access_location::host, access_mode::read);
+    result = *std::max_element(h_slength.data, h_slength.data+m_slength.getNumElements());
+
 #ifdef ENABLE_MPI
     if (m_decomposition)
         {
@@ -3361,10 +3357,6 @@ Scalar ParticleData::getMaxSmoothingLength(unsigned int tag) const
         std::vector<Scalar> tmp(size);
         all_gather_v(result, tmp, m_exec_conf->getMPICommunicator());
         result = __scalar_as_int(*std::max_element(tmp.begin(), tmp.end()));
-        
-        unsigned int owner_rank = getOwnerRank(tag);
-        bcast(result, owner_rank, m_exec_conf->getMPICommunicator());
-        found = true;
         }
 #endif
     assert(found);
