@@ -1,5 +1,6 @@
-// Copyright (c) 2009-2022 The Regents of the University of Michigan.
-// Part of HOOMD-blue, released under the BSD 3-Clause License.
+/* ---------------------------------------------------------
+maintainer: dkrach, david.krach@mib.uni-stuttgart.de
+----------------------------------------------------------*/
 
 #include "hoomd/ParticleGroup.h"
 #include "hoomd/SystemDefinition.h"

@@ -1598,6 +1598,8 @@ void Communicator::communicate(uint64_t timestep)
         m_force_migrate = false;
 
         // If so, migrate atoms
+        m_exec_conf->msg->notice(7) << "Communicator: communicate before migrate particles" << std::endl;
+
         migrateParticles();
 
         // Construct ghost send lists, exchange ghost atom data
@@ -1716,8 +1718,13 @@ void Communicator::migrateParticles()
         //     }
 
         // fill send buffer
+        m_exec_conf->msg->notice(7) << "Communicator communicate before removeParticles" << std::endl;
+
         std::vector<unsigned int> comm_flag_out; // not currently used
         m_pdata->removeParticles(m_sendbuf, comm_flag_out);
+
+        m_exec_conf->msg->notice(7) << "Communicator communicate after removeParticles" << std::endl;
+
 
         unsigned int send_neighbor = m_decomposition->getNeighborRank(dir);
 

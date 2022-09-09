@@ -1,5 +1,6 @@
-""" sph
-
+"""----------------------------------------------------------
+maintainer: dkrach, david.krach@mib.uni-stuttgart.de
+-----------------------------------------------------------
 Smoothed-Particle Hydrodynamics Plugin 
 """
 

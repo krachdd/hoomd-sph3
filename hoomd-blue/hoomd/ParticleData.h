@@ -1167,7 +1167,7 @@ class PYBIND11_EXPORT ParticleData
     Scalar3 getAcceleration(unsigned int tag) const;
 
     //! Get the current rate of change of density, pressure and energy of a particle
-    Scalar3 getDPErateofchange(unsigned int tag) const;
+    Scalar3 getDPEdt(unsigned int tag) const;
 
     //! Get the current image flags of a particle
     int3 getImage(unsigned int tag) const;
@@ -1733,6 +1733,8 @@ class PYBIND11_EXPORT LocalParticleData : public LocalDataAccess<Output, Particl
         }
     Output getAuxiliaries4(GhostDataFlag flag)
         {
+        std::cout << "in getAuxiliaries4" << std::endl;
+
         return this->template getBuffer<Scalar3, Scalar>(m_aux4_handle,
                                                          &ParticleData::getAuxiliaries4,
                                                          flag,
@@ -1743,6 +1745,7 @@ class PYBIND11_EXPORT LocalParticleData : public LocalDataAccess<Output, Particl
 
     Output getDPEdts(GhostDataFlag flag)
         {
+        std::cout << "in getDPEdts" << std::endl;
         return this->template getBuffer<Scalar3, Scalar>(m_dpedt_handle,
                                                          &ParticleData::getDPEdts,
                                                          flag,

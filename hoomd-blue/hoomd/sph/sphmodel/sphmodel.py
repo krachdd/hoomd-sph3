@@ -1,3 +1,7 @@
+"""----------------------------------------------------------
+maintainer: dkrach, david.krach@mib.uni-stuttgart.de
+-----------------------------------------------------------"""
+
 """SPH Momentum interaction forces."""
 
 import copy

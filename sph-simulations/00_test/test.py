@@ -5,6 +5,7 @@ from hoomd import sph
 from hoomd.sph import _sph
 import numpy as np
 import itertools
+import export_gsd2vtu 
 # from mpi4py import MPI
 # import gsd.hoomd
 
@@ -170,3 +171,5 @@ print(model.loggables)
 print("Starting Run")
 
 sim.run(501)
+
+export_gsd2vtu.export_basic(dumpname)

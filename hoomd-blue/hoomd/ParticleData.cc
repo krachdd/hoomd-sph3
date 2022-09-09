@@ -3182,7 +3182,7 @@ Scalar ParticleData::getSmoothingLength(unsigned int tag) const
 
 
 //! Get the current dperate  of a particle
-Scalar3 ParticleData::getDPErateofchange(unsigned int tag) const
+Scalar3 ParticleData::getDPEdt(unsigned int tag) const
     {
     unsigned int idx = getRTag(tag);
     bool found = (idx < getN());
@@ -4287,7 +4287,7 @@ void export_ParticleData(pybind11::module& m)
         .def("getMaxSmoothingLength", &ParticleData::getMaxSmoothingLength)
         .def("constSmoothingLength", &ParticleData::constSmoothingLength)
         .def("getAcceleration", &ParticleData::getAcceleration)
-        .def("getDPErateofchange", &ParticleData::getDPErateofchange)
+        .def("getDPEdt", &ParticleData::getDPEdt)
         .def("getImage", &ParticleData::getImage)
         // .def("getCharge", &ParticleData::getCharge)
         .def("getMass", &ParticleData::getMass)
@@ -4423,6 +4423,8 @@ struct comm_flag_select : std::unary_function<const unsigned int, bool>
 void ParticleData::removeParticles(std::vector<detail::pdata_element>& out,
                                    std::vector<unsigned int>& comm_flags)
     {
+    m_exec_conf->msg->notice(7) << "ParticleData: start remove particles" << std::endl;
+
     unsigned int num_remove_ptls = 0;
 
         {
@@ -4445,15 +4447,23 @@ void ParticleData::removeParticles(std::vector<detail::pdata_element>& out,
                 }
         }
 
+    m_exec_conf->msg->notice(7) << "ParticleData: remove particles: Handles imported" << std::endl;
+
+
     unsigned int old_nparticles = getN();
     unsigned int new_nparticles = m_nparticles - num_remove_ptls;
 
     // resize output buffers
     out.resize(num_remove_ptls);
+    m_exec_conf->msg->notice(7) << "ParticleData: remove particles: out resized" << std::endl;
+
     comm_flags.resize(num_remove_ptls);
+    m_exec_conf->msg->notice(7) << "ParticleData: remove particles: comm resized" << std::endl;
+
 
     // resize particle data using amortized O(1) array resizing
     resize(new_nparticles);
+    m_exec_conf->msg->notice(7) << "ParticleData: remove particles: new_nparticles resized" << std::endl;
 
         {
         // access particle data arrays
@@ -4550,6 +4560,10 @@ void ParticleData::removeParticles(std::vector<detail::pdata_element>& out,
                                             access_location::host,
                                             access_mode::overwrite);
 
+        m_exec_conf->msg->notice(7) << "ParticleData: remove particles: read ArrayHandles" << std::endl;
+        m_exec_conf->msg->notice(7) << "ParticleData: remove particles: old_nparticles " << old_nparticles << std::endl;
+
+
         unsigned int n = 0;
         unsigned int m = 0;
         // unsigned int net_virial_pitch = (unsigned int)m_net_virial.getPitch();
@@ -4558,36 +4572,70 @@ void ParticleData::removeParticles(std::vector<detail::pdata_element>& out,
             unsigned int tag = h_tag.data[i];
             if (h_rtag.data[tag] != NOT_LOCAL)
                 {
+                m_exec_conf->msg->notice(7) << "ParticleData: remove particles: over to alternate pdata arrays" << std::endl;
+
                 // copy over to alternate pdata arrays
                 h_pos_alt.data[n] = h_pos.data[i];
+                m_exec_conf->msg->notice(7) << "ParticleData: remove particles: over to alternate pdata arrays: pos" << std::endl;
+
                 h_vel_alt.data[n] = h_vel.data[i];
+                m_exec_conf->msg->notice(7) << "ParticleData: remove particles: over to alternate pdata arrays: h_vel" << std::endl;
+                
                 h_dpe_alt.data[n] = h_dpe.data[i];
+                m_exec_conf->msg->notice(7) << "ParticleData: remove particles: over to alternate pdata arrays: h_dpe" << std::endl;
+                
                 h_aux1_alt.data[n] = h_aux1.data[i];
+                m_exec_conf->msg->notice(7) << "ParticleData: remove particles: over to alternate pdata arrays: h_aux1" << std::endl;
+                
                 h_aux2_alt.data[n] = h_aux2.data[i];
+                m_exec_conf->msg->notice(7) << "ParticleData: remove particles: over to alternate pdata arrays: h_aux2" << std::endl;
+                
                 h_aux3_alt.data[n] = h_aux3.data[i];
+                m_exec_conf->msg->notice(7) << "ParticleData: remove particles: over to alternate pdata arrays: h_aux3" << std::endl;
+                
                 h_aux4_alt.data[n] = h_aux4.data[i];
+                m_exec_conf->msg->notice(7) << "ParticleData: remove particles: over to alternate pdata arrays: h_aux4" << std::endl;
+                
                 h_slength_alt.data[n] = h_slength.data[i];
+                m_exec_conf->msg->notice(7) << "ParticleData: remove particles: over to alternate pdata arrays: h_slength" << std::endl;
+                
                 h_accel_alt.data[n] = h_accel.data[i];
+                m_exec_conf->msg->notice(7) << "ParticleData: remove particles: over to alternate pdata arrays: h_accel" << std::endl;
+                
                 h_dpedt_alt.data[n] = h_dpedt.data[i];
+                m_exec_conf->msg->notice(7) << "ParticleData: remove particles: over to alternate pdata arrays: h_dpedt" << std::endl;
+                
                 // h_charge_alt.data[n] = h_charge.data[i];
                 // h_diameter_alt.data[n] = h_diameter.data[i];
                 h_image_alt.data[n] = h_image.data[i];
+                m_exec_conf->msg->notice(7) << "ParticleData: remove particles: over to alternate pdata arrays: h_image" << std::endl;
+                
                 h_body_alt.data[n] = h_body.data[i];
+                m_exec_conf->msg->notice(7) << "ParticleData: remove particles: over to alternate pdata arrays: h_body" << std::endl;
+                
                 // h_orientation_alt.data[n] = h_orientation.data[i];
                 // h_angmom_alt.data[n] = h_angmom.data[i];
                 // h_inertia_alt.data[n] = h_inertia.data[i];
                 h_net_force_alt.data[n] = h_net_force.data[i];
+                m_exec_conf->msg->notice(7) << "ParticleData: remove particles: over to alternate pdata arrays: h_net_force" << std::endl;
+                
                 h_net_ratedpe_alt.data[n] = h_net_ratedpe.data[i];
+                m_exec_conf->msg->notice(7) << "ParticleData: remove particles: over to alternate pdata arrays: h_net_ratedpe" << std::endl;
+                
                 // h_net_torque_alt.data[n] = h_net_torque.data[i];
                 // for (unsigned int j = 0; j < 6; ++j)
                 //     h_net_virial_alt.data[net_virial_pitch * j + n]
                 //         = h_net_virial.data[net_virial_pitch * j + i];
                 h_tag_alt.data[n] = h_tag.data[i];
+                m_exec_conf->msg->notice(7) << "ParticleData: remove particles: over to alternate pdata arrays: h_tag" << std::endl;
+                
                 ++n;
                 }
             else
                 {
                 // write to packed array
+                m_exec_conf->msg->notice(7) << "ParticleData: remove particles: write to packed arrays" << std::endl;
+
                 detail::pdata_element p;
                 p.pos = h_pos.data[i];
                 p.vel = h_vel.data[i];
@@ -4616,6 +4664,8 @@ void ParticleData::removeParticles(std::vector<detail::pdata_element>& out,
                 }
             }
 
+        m_exec_conf->msg->notice(7) << "ParticleData: remove particles: after loop" << std::endl;
+
         // write out non-zero communication flags
         std::remove_copy_if(h_comm_flags.data,
                             h_comm_flags.data + old_nparticles,
@@ -4625,6 +4675,9 @@ void ParticleData::removeParticles(std::vector<detail::pdata_element>& out,
         // reset communication flags to zero
         std::fill(h_comm_flags.data, h_comm_flags.data + new_nparticles, 0);
         }
+
+    m_exec_conf->msg->notice(7) << "ParticleData: remove particles: Before swap" << std::endl;
+
 
     // swap particle data arrays
     swapPositions();
