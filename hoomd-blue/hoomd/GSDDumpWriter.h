@@ -189,8 +189,9 @@ class PYBIND11_EXPORT GSDDumpWriter : public Analyzer
                        // AngleData::Snapshot& angle,
                        // DihedralData::Snapshot& dihedral,
                        // ImproperData::Snapshot& improper,
-                       ConstraintData::Snapshot& constraint,
-                       PairData::Snapshot& pair);
+                       ConstraintData::Snapshot& constraint
+                       // PairData::Snapshot& pair
+                       );
 
     //! Write user defined log data
     void writeUser(uint64_t timestep, bool root);

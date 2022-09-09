@@ -93,7 +93,8 @@ class NeighborList(_HOOMDBaseObject):
             #'angle', 
             'constraint', 
             #'dihedral', 
-            'special_pair', 'body',
+            # 'special_pair', 
+            'body',
             '1-3', '1-4', 'meshbond'
         ])
 

@@ -196,11 +196,11 @@ class PYBIND11_EXPORT SystemDefinition
         return m_constraint_data;
         }
 
-    //! Get the pair data
-    std::shared_ptr<PairData> getPairData() const
-        {
-        return m_pair_data;
-        }
+    // //! Get the pair data
+    // std::shared_ptr<PairData> getPairData() const
+    //     {
+    //     return m_pair_data;
+    //     }
 
     //! Return a snapshot of the current system data
     template<class Real> std::shared_ptr<SnapshotSystemData<Real>> takeSnapshot();
@@ -218,7 +218,7 @@ class PYBIND11_EXPORT SystemDefinition
     // std::shared_ptr<DihedralData> m_dihedral_data;     //!< Dihedral data for the system
     // std::shared_ptr<ImproperData> m_improper_data;     //!< Improper data for the system
     std::shared_ptr<ConstraintData> m_constraint_data; //!< Improper data for the system
-    std::shared_ptr<PairData> m_pair_data;             //!< Special pairs data for the system
+    // std::shared_ptr<PairData> m_pair_data;             //!< Special pairs data for the system
 
 #ifdef ENABLE_MPI
     /// The system communicator

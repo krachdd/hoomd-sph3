@@ -35,7 +35,7 @@ void SnapshotSystemData<Real>::replicate(unsigned int nx, unsigned int ny, unsig
     // dihedral_data.replicate(n, old_n);
     // improper_data.replicate(n, old_n);
     constraint_data.replicate(n, old_n);
-    pair_data.replicate(n, old_n);
+    // pair_data.replicate(n, old_n);
     }
 
 template<class Real> void SnapshotSystemData<Real>::wrap()
@@ -86,7 +86,7 @@ void SnapshotSystemData<Real>::broadcast(unsigned int root,
         // dihedral_data.bcast(root, communicator);
         // improper_data.bcast(root, communicator);
         constraint_data.bcast(root, communicator);
-        pair_data.bcast(root, communicator);
+        // pair_data.bcast(root, communicator);
         }
 #endif
     }
@@ -110,7 +110,7 @@ void SnapshotSystemData<Real>::broadcast_all(unsigned int root,
         // dihedral_data.bcast(root, hoomd_world);
         // improper_data.bcast(root, hoomd_world);
         constraint_data.bcast(root, hoomd_world);
-        pair_data.bcast(root, hoomd_world);
+        // pair_data.bcast(root, hoomd_world);
         }
 #endif
     }
@@ -135,7 +135,7 @@ void export_SnapshotSystemData(pybind11::module& m)
         // .def_readonly("dihedrals", &SnapshotSystemData<float>::dihedral_data)
         // .def_readonly("impropers", &SnapshotSystemData<float>::improper_data)
         .def_readonly("constraints", &SnapshotSystemData<float>::constraint_data)
-        .def_readonly("pairs", &SnapshotSystemData<float>::pair_data)
+        // .def_readonly("pairs", &SnapshotSystemData<float>::pair_data)
         .def("replicate", &SnapshotSystemData<float>::replicate)
         .def("wrap", &SnapshotSystemData<float>::wrap)
         .def("_broadcast_box", &SnapshotSystemData<float>::broadcast_box)
@@ -154,7 +154,7 @@ void export_SnapshotSystemData(pybind11::module& m)
         // .def_readonly("dihedrals", &SnapshotSystemData<double>::dihedral_data)
         // .def_readonly("impropers", &SnapshotSystemData<double>::improper_data)
         .def_readonly("constraints", &SnapshotSystemData<double>::constraint_data)
-        .def_readonly("pairs", &SnapshotSystemData<double>::pair_data)
+        // .def_readonly("pairs", &SnapshotSystemData<double>::pair_data)
         .def("replicate", &SnapshotSystemData<double>::replicate)
         .def("wrap", &SnapshotSystemData<double>::wrap)
         .def("_broadcast_box", &SnapshotSystemData<double>::broadcast_box)

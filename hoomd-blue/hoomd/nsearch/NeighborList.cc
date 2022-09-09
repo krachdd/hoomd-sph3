@@ -234,9 +234,9 @@ NeighborList::NeighborList(std::shared_ptr<SystemDefinition> sysdef, Scalar r_bu
         ->getGroupNumChangeSignal()
         .connect<NeighborList, &NeighborList::slotGlobalTopologyNumberChange>(this);
 
-    m_sysdef->getPairData()
-        ->getGroupNumChangeSignal()
-        .connect<NeighborList, &NeighborList::slotGlobalTopologyNumberChange>(this);
+    // m_sysdef->getPairData()
+    //     ->getGroupNumChangeSignal()
+    //     .connect<NeighborList, &NeighborList::slotGlobalTopologyNumberChange>(this);
 
     // connect locally to the rcut changing signal
     getRCutChangeSignal().connect<NeighborList, &NeighborList::slotRCutChange>(this);
@@ -325,9 +325,9 @@ NeighborList::~NeighborList()
         ->getGroupNumChangeSignal()
         .disconnect<NeighborList, &NeighborList::slotGlobalTopologyNumberChange>(this);
 
-    m_sysdef->getPairData()
-        ->getGroupNumChangeSignal()
-        .disconnect<NeighborList, &NeighborList::slotGlobalTopologyNumberChange>(this);
+    // m_sysdef->getPairData()
+    //     ->getGroupNumChangeSignal()
+    //     .disconnect<NeighborList, &NeighborList::slotGlobalTopologyNumberChange>(this);
 
 #ifdef ENABLE_MPI
     if (m_sysdef->isDomainDecomposed())
@@ -746,11 +746,11 @@ void NeighborList::setSingleExclusion(std::string exclusion)
     //     addExclusionsFromMeshBonds();
     //     m_exclusions.insert("meshbond");
     //     }
-    else if (exclusion == "special_pair")
-        {
-        addExclusionsFromPairs();
-        m_exclusions.insert("special_pair");
-        }
+    // else if (exclusion == "special_pair")
+    //     {
+    //     addExclusionsFromPairs();
+    //     m_exclusions.insert("special_pair");
+    //     }
     else if (exclusion == "constraint")
         {
         addExclusionsFromConstraints();
@@ -1033,36 +1033,36 @@ void NeighborList::addExclusionsFromConstraints()
     added as exclusions. Any additional pairs added after this will not be automatically added as
    exclusions.
 */
-void NeighborList::addExclusionsFromPairs()
-    {
-    std::shared_ptr<PairData> pair_data = m_sysdef->getPairData();
+// void NeighborList::addExclusionsFromPairs()
+//     {
+//     std::shared_ptr<PairData> pair_data = m_sysdef->getPairData();
 
-    // access pair data by snapshot
-    PairData::Snapshot snapshot;
-    pair_data->takeSnapshot(snapshot);
+//     // access pair data by snapshot
+//     PairData::Snapshot snapshot;
+//     pair_data->takeSnapshot(snapshot);
 
-    // broadcast global bond list
-    std::vector<PairData::members_t> pairs;
+//     // broadcast global bond list
+//     std::vector<PairData::members_t> pairs;
 
-#ifdef ENABLE_MPI
-    if (m_pdata->getDomainDecomposition())
-        {
-        if (m_exec_conf->getRank() == 0)
-            pairs = snapshot.groups;
+// #ifdef ENABLE_MPI
+//     if (m_pdata->getDomainDecomposition())
+//         {
+//         if (m_exec_conf->getRank() == 0)
+//             pairs = snapshot.groups;
 
-        bcast(pairs, 0, m_exec_conf->getMPICommunicator());
-        }
-    else
-#endif
-        {
-        pairs = snapshot.groups;
-        }
+//         bcast(pairs, 0, m_exec_conf->getMPICommunicator());
+//         }
+//     else
+// #endif
+//         {
+//         pairs = snapshot.groups;
+//         }
 
-    // for each pair
-    for (unsigned int i = 0; i < pairs.size(); i++)
-        // add an exclusion
-        addExclusion(pairs[i].tag[0], pairs[i].tag[1]);
-    }
+//     // for each pair
+//     for (unsigned int i = 0; i < pairs.size(); i++)
+//         // add an exclusion
+//         addExclusion(pairs[i].tag[0], pairs[i].tag[1]);
+//     }
 
 /*! \param tag1 First particle tag in the pair
     \param tag2 Second particle tag in the pair

@@ -9,7 +9,8 @@ from hoomd.data.local_access import (ParticleLocalAccessBase,
                                      # DihedralLocalAccessBase,
                                      # ImproperLocalAccessBase,
                                      ConstraintLocalAccessBase,
-                                     PairLocalAccessBase, _LocalSnapshot)
+                                     # PairLocalAccessBase, 
+                                     _LocalSnapshot)
 from hoomd.data.array import HOOMDArray
 from hoomd import _hoomd
 
@@ -50,10 +51,10 @@ class ConstraintLocalAccessCPU(ConstraintLocalAccessBase):
     _array_cls = HOOMDArray
 
 
-class PairLocalAccessCPU(PairLocalAccessBase):
-    """Access special pair data on the GPU."""
-    _cpp_cls = _hoomd.LocalPairDataHost
-    _array_cls = HOOMDArray
+# class PairLocalAccessCPU(PairLocalAccessBase):
+#     """Access special pair data on the GPU."""
+#     _cpp_cls = _hoomd.LocalPairDataHost
+#     _array_cls = HOOMDArray
 
 
 class LocalSnapshot(_LocalSnapshot):
@@ -90,5 +91,5 @@ class LocalSnapshot(_LocalSnapshot):
         # self._angles = AngleLocalAccessCPU(state)
         # self._dihedrals = DihedralLocalAccessCPU(state)
         # self._impropers = ImproperLocalAccessCPU(state)
-        self._pairs = PairLocalAccessCPU(state)
+        # self._pairs = PairLocalAccessCPU(state)
         self._constraints = ConstraintLocalAccessCPU(state)

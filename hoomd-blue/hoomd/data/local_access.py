@@ -327,27 +327,27 @@ class ConstraintLocalAccessBase(_GroupLocalAccess):
     _cpp_get_data_method_name = "getConstraintData"
 
 
-class PairLocalAccessBase(_GroupLocalAccess):
-    """Class for directly accessing HOOMD-blue special pair data.
+# class PairLocalAccessBase(_GroupLocalAccess):
+#     """Class for directly accessing HOOMD-blue special pair data.
 
-    Attributes:
-        typeid ((N_pairs) `hoomd.data.array` object of ``float``): The type of
-            special pair.
-        members ((N_pairs, 3) `hoomd.data.array` object of ``int``): the tags of
-            particles in a special pair.
-        tag ((N_special_pairs) `hoomd.data.array` object of ``int``):
-            The special pair tags. MPI domain migration reorder special
-            pairs in memory. The special pair tag identifies each special pair
-            in the order it existed in the initial configuration.
-        rtag ((N_special_pairs_global) `hoomd.data.array` object of ``int``):
-            The special pair reverse tags. For a given special pair tag
-            ``tag``, ``i = pairs.rtag[tag]`` is the array index holding that
-            special pair.
+#     Attributes:
+#         typeid ((N_pairs) `hoomd.data.array` object of ``float``): The type of
+#             special pair.
+#         members ((N_pairs, 3) `hoomd.data.array` object of ``int``): the tags of
+#             particles in a special pair.
+#         tag ((N_special_pairs) `hoomd.data.array` object of ``int``):
+#             The special pair tags. MPI domain migration reorder special
+#             pairs in memory. The special pair tag identifies each special pair
+#             in the order it existed in the initial configuration.
+#         rtag ((N_special_pairs_global) `hoomd.data.array` object of ``int``):
+#             The special pair reverse tags. For a given special pair tag
+#             ``tag``, ``i = pairs.rtag[tag]`` is the array index holding that
+#             special pair.
 
-    See Also:
-        `hoomd.State`
-    """
-    _cpp_get_data_method_name = "getPairData"
+#     See Also:
+#         `hoomd.State`
+#     """
+#     _cpp_get_data_method_name = "getPairData"
 
 
 class _LocalSnapshot:
@@ -397,10 +397,10 @@ class _LocalSnapshot:
         """hoomd.data.ConstraintLocalAccessBase: Local constraint data."""
         return self._constraints
 
-    @property
-    def pairs(self):
-        """hoomd.data.PairLocalAccessBase: Local special pair data."""
-        return self._pairs
+    # @property
+    # def pairs(self):
+    #     """hoomd.data.PairLocalAccessBase: Local special pair data."""
+    #     return self._pairs
 
     def __enter__(self):
         self._state._in_context_manager = True
@@ -410,7 +410,7 @@ class _LocalSnapshot:
         # self._dihedrals._enter()
         # self._impropers._enter()
         self._constraints._enter()
-        self._pairs._enter()
+        # self._pairs._enter()
         return self
 
     def __exit__(self, type, value, traceback):
@@ -421,4 +421,4 @@ class _LocalSnapshot:
         # self._dihedrals._exit()
         # self._impropers._exit()
         self._constraints._exit()
-        self._pairs._exit()
+        # self._pairs._exit()

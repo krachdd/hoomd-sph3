@@ -690,7 +690,7 @@ class PYBIND11_EXPORT NeighborList : public Compute
     void addExclusionsFromConstraints();
 
     //! Add an exclusion for every pair in the ParticleData
-    void addExclusionsFromPairs();
+    // void addExclusionsFromPairs();
 
     //! Test if an exclusion has been made
     bool isExcluded(unsigned int tag1, unsigned int tag2);

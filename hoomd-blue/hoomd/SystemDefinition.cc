@@ -61,7 +61,7 @@ SystemDefinition::SystemDefinition(unsigned int N,
     // m_improper_data
     //     = std::shared_ptr<ImproperData>(new ImproperData(m_particle_data, n_improper_types));
     m_constraint_data = std::shared_ptr<ConstraintData>(new ConstraintData(m_particle_data, 0));
-    m_pair_data = std::shared_ptr<PairData>(new PairData(m_particle_data, 0));
+    // m_pair_data = std::shared_ptr<PairData>(new PairData(m_particle_data, 0));
     }
 
 // Mostly exists as test pass a plain box rather than a std::shared_ptr.
@@ -137,7 +137,7 @@ SystemDefinition::SystemDefinition(std::shared_ptr<SnapshotSystemData<Real>> sna
 
     m_constraint_data = std::shared_ptr<ConstraintData>(
         new ConstraintData(m_particle_data, snapshot->constraint_data));
-    m_pair_data = std::shared_ptr<PairData>(new PairData(m_particle_data, snapshot->pair_data));
+    // m_pair_data = std::shared_ptr<PairData>(new PairData(m_particle_data, snapshot->pair_data));
     }
 
 /*! Sets the dimensionality of the system.  When quantities involving the dof of
@@ -179,7 +179,7 @@ template<class Real> std::shared_ptr<SnapshotSystemData<Real>> SystemDefinition:
     // m_dihedral_data->takeSnapshot(snap->dihedral_data);
     // m_improper_data->takeSnapshot(snap->improper_data);
     m_constraint_data->takeSnapshot(snap->constraint_data);
-    m_pair_data->takeSnapshot(snap->pair_data);
+    // m_pair_data->takeSnapshot(snap->pair_data);
 
     return snap;
     }
@@ -205,7 +205,7 @@ void SystemDefinition::initializeFromSnapshot(std::shared_ptr<SnapshotSystemData
     // m_dihedral_data->initializeFromSnapshot(snapshot->dihedral_data);
     // m_improper_data->initializeFromSnapshot(snapshot->improper_data);
     m_constraint_data->initializeFromSnapshot(snapshot->constraint_data);
-    m_pair_data->initializeFromSnapshot(snapshot->pair_data);
+    // m_pair_data->initializeFromSnapshot(snapshot->pair_data);
     }
 
 // instantiate both float and double methods
@@ -268,7 +268,7 @@ void export_SystemDefinition(pybind11::module& m)
         // .def("getDihedralData", &SystemDefinition::getDihedralData)
         // .def("getImproperData", &SystemDefinition::getImproperData)
         .def("getConstraintData", &SystemDefinition::getConstraintData)
-        .def("getPairData", &SystemDefinition::getPairData)
+        // .def("getPairData", &SystemDefinition::getPairData)
         .def("takeSnapshot_float", &SystemDefinition::takeSnapshot<float>)
         .def("takeSnapshot_double", &SystemDefinition::takeSnapshot<double>)
         .def("initializeFromSnapshot", &SystemDefinition::initializeFromSnapshot<float>)

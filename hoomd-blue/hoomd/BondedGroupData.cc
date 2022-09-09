@@ -22,14 +22,14 @@ namespace hoomd
     {
 //! Names of bonded groups
 char name_bond_data[] = "bond";
-char name_angle_data[] = "angle";
+// char name_angle_data[] = "angle";
 // char name_triangle_data[] = "triangle";
 // char name_dihedral_data[] = "dihedral";
 // char name_improper_data[] = "improper";
 // char name_meshbond_data[] = "meshbond";
 // char name_meshtriangle_data[] = "meshtriangle";
 char name_constraint_data[] = "constraint";
-char name_pair_data[] = "pair";
+// char name_pair_data[] = "pair";
 
 /*
  * Implementation of BondedGroupData methods
@@ -1541,7 +1541,7 @@ template class PYBIND11_EXPORT BondedGroupData<2, Bond, name_bond_data>;
 // template class PYBIND11_EXPORT BondedGroupData<6, MeshTriangle, name_meshtriangle_data>;
 // template class PYBIND11_EXPORT BondedGroupData<4, Dihedral, name_improper_data>;
 template class PYBIND11_EXPORT BondedGroupData<2, Constraint, name_constraint_data, false>;
-template class PYBIND11_EXPORT BondedGroupData<2, Bond, name_pair_data>;
+// template class PYBIND11_EXPORT BondedGroupData<2, Bond, name_pair_data>;
 
 namespace detail
     {
@@ -1575,10 +1575,10 @@ template void export_BondedGroupData<ConstraintData, Constraint>(pybind11::modul
                                                                  std::string snapshot_name,
                                                                  bool export_struct);
 
-template void export_BondedGroupData<PairData, Bond>(pybind11::module& m,
-                                                     std::string name,
-                                                     std::string snapshot_name,
-                                                     bool export_struct);
+// template void export_BondedGroupData<PairData, Bond>(pybind11::module& m,
+//                                                      std::string name,
+//                                                      std::string snapshot_name,
+//                                                      bool export_struct);
 
     } // end namespace detail
 

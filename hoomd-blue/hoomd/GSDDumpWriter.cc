@@ -225,16 +225,17 @@ void GSDDumpWriter::analyze(uint64_t timestep)
         ConstraintData::Snapshot cdata_snapshot;
         m_sysdef->getConstraintData()->takeSnapshot(cdata_snapshot);
 
-        PairData::Snapshot pdata_snapshot;
-        m_sysdef->getPairData()->takeSnapshot(pdata_snapshot);
+        // PairData::Snapshot pdata_snapshot;
+        // m_sysdef->getPairData()->takeSnapshot(pdata_snapshot);
 
         if (root)
             writeTopology(bdata_snapshot,
                           // adata_snapshot,
                           // ddata_snapshot,
                           // idata_snapshot,
-                          cdata_snapshot,
-                          pdata_snapshot);
+                          cdata_snapshot
+                          // pdata_snapshot
+                          );
         }
 
     // emit on all ranks, the slot needs to handle the mpi logic.
@@ -982,8 +983,9 @@ void GSDDumpWriter::writeTopology(BondData::Snapshot& bond,
                                   // AngleData::Snapshot& angle,
                                   // DihedralData::Snapshot& dihedral,
                                   // ImproperData::Snapshot& improper,
-                                  ConstraintData::Snapshot& constraint,
-                                  PairData::Snapshot& pair)
+                                  ConstraintData::Snapshot& constraint
+                                  // PairData::Snapshot& pair
+                                  )
     {
     if (bond.size > 0)
         {
@@ -1138,35 +1140,35 @@ void GSDDumpWriter::writeTopology(BondData::Snapshot& bond,
         GSDUtils::checkError(retval, m_fname);
         }
 
-    if (pair.size > 0)
-        {
-        m_exec_conf->msg->notice(10) << "GSD: writing pairs/N" << endl;
-        uint32_t N = pair.size;
-        int retval = gsd_write_chunk(&m_handle, "pairs/N", GSD_TYPE_UINT32, 1, 1, 0, (void*)&N);
-        GSDUtils::checkError(retval, m_fname);
+    // if (pair.size > 0)
+    //     {
+    //     m_exec_conf->msg->notice(10) << "GSD: writing pairs/N" << endl;
+    //     uint32_t N = pair.size;
+    //     int retval = gsd_write_chunk(&m_handle, "pairs/N", GSD_TYPE_UINT32, 1, 1, 0, (void*)&N);
+    //     GSDUtils::checkError(retval, m_fname);
 
-        writeTypeMapping("pairs/types", pair.type_mapping);
+    //     writeTypeMapping("pairs/types", pair.type_mapping);
 
-        m_exec_conf->msg->notice(10) << "GSD: writing pairs/typeid" << endl;
-        retval = gsd_write_chunk(&m_handle,
-                                 "pairs/typeid",
-                                 GSD_TYPE_UINT32,
-                                 N,
-                                 1,
-                                 0,
-                                 (void*)&pair.type_id[0]);
-        GSDUtils::checkError(retval, m_fname);
+    //     m_exec_conf->msg->notice(10) << "GSD: writing pairs/typeid" << endl;
+    //     retval = gsd_write_chunk(&m_handle,
+    //                              "pairs/typeid",
+    //                              GSD_TYPE_UINT32,
+    //                              N,
+    //                              1,
+    //                              0,
+    //                              (void*)&pair.type_id[0]);
+    //     GSDUtils::checkError(retval, m_fname);
 
-        m_exec_conf->msg->notice(10) << "GSD: writing pairs/group" << endl;
-        retval = gsd_write_chunk(&m_handle,
-                                 "pairs/group",
-                                 GSD_TYPE_UINT32,
-                                 N,
-                                 2,
-                                 0,
-                                 (void*)&pair.groups[0]);
-        GSDUtils::checkError(retval, m_fname);
-        }
+    //     m_exec_conf->msg->notice(10) << "GSD: writing pairs/group" << endl;
+    //     retval = gsd_write_chunk(&m_handle,
+    //                              "pairs/group",
+    //                              GSD_TYPE_UINT32,
+    //                              N,
+    //                              2,
+    //                              0,
+    //                              (void*)&pair.groups[0]);
+    //     GSDUtils::checkError(retval, m_fname);
+    //     }
     }
 
 void GSDDumpWriter::writeLogQuantities(pybind11::dict dict)

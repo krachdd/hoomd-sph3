@@ -50,7 +50,7 @@ template<class Real> struct SnapshotSystemData
     // DihedralData::Snapshot dihedral_data;     //!< The dihedral data
     // ImproperData::Snapshot improper_data;     //!< The improper data
     ConstraintData::Snapshot constraint_data; //!< The constraint data
-    PairData::Snapshot pair_data;             //!< The pair data
+    // PairData::Snapshot pair_data;             //!< The pair data
 
     //! Constructor
     SnapshotSystemData() : dimensions(3), global_box(std::make_shared<BoxDim>()) { }

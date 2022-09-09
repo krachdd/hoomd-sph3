@@ -1149,10 +1149,10 @@ typedef BondedGroupData<2, Constraint, name_constraint_data, false> ConstraintDa
  *
  * used for pair potentials between special particle pairs
  */
-extern char name_pair_data[];
+// extern char name_pair_data[];
 
 //! Definition of PairData
-typedef BondedGroupData<2, Bond, name_pair_data> PairData;
+// typedef BondedGroupData<2, Bond, name_pair_data> PairData;
 
 /// Allows the usage of group data arrays in Python.
 /** Uses the LocalDataAccess templated class to expose group data arrays to

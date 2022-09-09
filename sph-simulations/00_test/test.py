@@ -153,7 +153,7 @@ sim.operations.writers.append(gsd_writer)
 # hoomd.write.GSD.write(filename = dumpname, state = sim.state, mode = 'wb')
 log_trigger = hoomd.trigger.Periodic(100)
 logger = hoomd.logging.Logger(categories=['scalar', 'string'])
-logger.add(sim, quantities=['timestep', 'tps'])
+logger.add(sim, quantities=['timestep', 'tps', 'walltime'])
 table = hoomd.write.Table(trigger=log_trigger,
                           logger=logger)
 # file = open('log.txt', mode='x', newline='\n')
@@ -164,6 +164,8 @@ table = hoomd.write.Table(trigger=log_trigger,
 sim.operations.writers.append(table)
 
 sim.operations.integrator = integrator
+
+print(model.loggables)
 
 print("Starting Run")
 

@@ -7,7 +7,8 @@ from hoomd import _hoomd
 from hoomd.data.local_access import (
     ParticleLocalAccessBase, BondLocalAccessBase, ConstraintLocalAccessBase,
     #DihedralLocalAccessBase, AngleLocalAccessBase, ImproperLocalAccessBase,
-    PairLocalAccessBase, _LocalSnapshot)
+    # PairLocalAccessBase, 
+    _LocalSnapshot)
 
 from hoomd.data.array import HOOMDGPUArray
 import hoomd
@@ -44,10 +45,10 @@ if hoomd.version.gpu_enabled:
         _cpp_cls = _hoomd.LocalConstraintDataDevice
         _array_cls = HOOMDGPUArray
 
-    class PairLocalAccessGPU(PairLocalAccessBase):
-        """Access special pair data on the GPU."""
-        _cpp_cls = _hoomd.LocalPairDataDevice
-        _array_cls = HOOMDGPUArray
+    # class PairLocalAccessGPU(PairLocalAccessBase):
+    #     """Access special pair data on the GPU."""
+    #     _cpp_cls = _hoomd.LocalPairDataDevice
+    #     _array_cls = HOOMDGPUArray
 
     class LocalSnapshotGPU(_LocalSnapshot):
         """Access system state data on the GPU."""
@@ -59,7 +60,7 @@ if hoomd.version.gpu_enabled:
             # self._angles = AngleLocalAccessGPU(state)
             # self._dihedrals = DihedralLocalAccessGPU(state)
             # self._impropers = ImproperLocalAccessGPU(state)
-            self._pairs = PairLocalAccessGPU(state)
+            # self._pairs = PairLocalAccessGPU(state)
             self._constraints = ConstraintLocalAccessGPU(state)
 
 else:
@@ -85,9 +86,9 @@ else:
         """GPU data access is not available in CPU builds."""
         pass
 
-    class PairLocalAccessGPU(_NoGPU):
-        """GPU data access is not available in CPU builds."""
-        pass
+    # class PairLocalAccessGPU(_NoGPU):
+    #     """GPU data access is not available in CPU builds."""
+    #     pass
 
     class ParticleLocalAccessGPU(_NoGPU):
         """GPU data access is not available in CPU builds."""

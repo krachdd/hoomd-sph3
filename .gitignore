@@ -3,6 +3,7 @@ dependencies/gsd-2.5.3/build
 *.gsd
 *.vtu
 *.raw
+*.log
 
 # Prerequisites
 *.d

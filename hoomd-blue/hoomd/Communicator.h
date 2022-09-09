@@ -635,12 +635,12 @@ class PYBIND11_EXPORT Communicator
         m_constraints_changed = true;
         }
 
-    /* Pairs communication */
-    bool m_pairs_changed; //!< True if pair information needs to be refreshed
-    void setPairsChanged()
-        {
-        m_pairs_changed = true;
-        }
+    // /* Pairs communication */
+    // bool m_pairs_changed; //!< True if pair information needs to be refreshed
+    // void setPairsChanged()
+    //     {
+    //     m_pairs_changed = true;
+    //     }
 
     // bool m_meshbonds_changed; //!< True if mesh bond information needs to be refreshed
     // void setMeshbondsChanged()
@@ -710,8 +710,8 @@ class PYBIND11_EXPORT Communicator
     friend class GroupCommunicator<ConstraintData>;
 
     /* Communication of bonded groups */
-    GroupCommunicator<PairData> m_pair_comm; //!< Communication helper for special pairs
-    friend class GroupCommunicator<PairData>;
+    // GroupCommunicator<PairData> m_pair_comm; //!< Communication helper for special pairs
+    // friend class GroupCommunicator<PairData>;
 
     /* Communication of mesh bonded groups */
     // GroupCommunicator<MeshBondData, true> m_meshbond_comm; //!< Communication helper for mesh bonds

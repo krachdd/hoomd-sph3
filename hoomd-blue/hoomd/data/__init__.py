@@ -16,7 +16,7 @@ from .local_access import ( #AngleLocalAccessBase,
                            ConstraintLocalAccessBase, 
                            #DihedralLocalAccessBase,
                            #ImproperLocalAccessBase, 
-                           PairLocalAccessBase,
+                           # PairLocalAccessBase,
                            ParticleLocalAccessBase)
 from .local_access_cpu import LocalSnapshot
 from .local_access_gpu import LocalSnapshotGPU
