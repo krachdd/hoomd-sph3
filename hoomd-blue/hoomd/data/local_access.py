@@ -34,8 +34,6 @@ class _LocalAccess(ABC):
         else:
             raw_attr, flag = self._get_raw_attr_and_flag(attr)
             if raw_attr in self._fields:
-                print(dir(self))
-                print(dir(self._cpp_obj))
                 buff = getattr(self._cpp_obj, self._fields[raw_attr])(flag)
             else:
                 raise AttributeError("{} object has no attribute {}".format(

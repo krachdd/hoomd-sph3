@@ -28,3 +28,8 @@ struct singlephaseflow_logger_index
         num_quantities // final element to count number of quantities
         };
     };
+
+    } // end namespace sph
+    } // end namespace hoomd
+
+#endif

@@ -41,9 +41,9 @@ UREF = FX*LREF*LREF*0.25/(MU/RHO0)
 
 
 
-device = hoomd.device.CPU(notice_level = 10)
+# device = hoomd.device.CPU(notice_level = 10)
 # device = hoomd.device.CPU(notice_level = 7)
-# device = hoomd.device.CPU(notice_level = 2)
+device = hoomd.device.CPU(notice_level = 2)
 sim = hoomd.Simulation(device = device)
 # if device.communicator.rank == 0:
 #     print("hoomd.version.mpi_enabled: {0}".format(hoomd.version.mpi_enabled))
@@ -137,9 +137,18 @@ VelocityVerlet = hoomd.sph.methods.VelocityVerlet(filter=filterFLUID)
 integrator.methods.append(VelocityVerlet)
 integrator.forces.append(model)
 
+compute_filter_all = hoomd.filter.All()
+spf_properties = hoomd.sph.compute.SinglePhaseFlowBasicProperties(compute_filter_all)
+sim.operations.computes.append(spf_properties)
+
+
 print(f'Computed Time step: {dt}')
 print("Integrator Forces: {0}".format(integrator.forces[:]))
 print("Integrator Methods: {0}".format(integrator.methods[:]))
+print("Simulation Computes: {0}".format(sim.operations.computes[:]))
+
+
+
 
 gsd_trigger = hoomd.trigger.Periodic(100)
 gsd_writer = hoomd.write.GSD(filename=dumpname,
@@ -155,6 +164,7 @@ sim.operations.writers.append(gsd_writer)
 log_trigger = hoomd.trigger.Periodic(100)
 logger = hoomd.logging.Logger(categories=['scalar', 'string'])
 logger.add(sim, quantities=['timestep', 'tps', 'walltime'])
+logger.add(spf_properties, quantities=['kinetic_energy'])
 table = hoomd.write.Table(trigger=log_trigger,
                           logger=logger)
 # file = open('log.txt', mode='x', newline='\n')
@@ -167,9 +177,11 @@ sim.operations.writers.append(table)
 sim.operations.integrator = integrator
 
 print(model.loggables)
+print(sim.loggables)
+print(spf_properties.loggables)
 
 print("Starting Run")
 
-sim.run(501)
+sim.run(101)
 
 export_gsd2vtu.export_basic(dumpname)

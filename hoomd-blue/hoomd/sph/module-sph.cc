@@ -1,7 +1,6 @@
-// Copyright (c) 2009-2022 The Regents of the University of Michigan.
-// Part of HOOMD-blue, released under the BSD 3-Clause License.
-
-// Maintainer: David Krach
+/* ---------------------------------------------------------
+maintainer: dkrach, david.krach@mib.uni-stuttgart.de
+----------------------------------------------------------*/
 
 // Include the defined classes that are to be exported to python
 // #include <hoomd/HOOMDMath.h>
@@ -72,6 +71,8 @@ namespace detail
     void export_StateEquation_Tait(pybind11::module& m);
     void export_StateEquation_Linear(pybind11::module& m);
 
+    void export_ComputeSPFMechanicalProperties(pybind11::module& m);
+
 
 // #ifdef ENABLE_HIP
 //     void export_VelocityVerletGPU(pybind11::module& m);
@@ -131,6 +132,8 @@ PYBIND11_MODULE(_sph, m){
     export_SinglePhaseFlow<cubicspline, tait>(m, "SinglePF_CS_T");
 
     export_CustomForceCompute(m);
+
+    export_ComputeSPFMechanicalProperties(m);
 
     export_DensityMethod(m);
     export_ViscosityMethod(m);

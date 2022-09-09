@@ -1,4 +1,4 @@
-
+# maintainer: dkrach, david.krach@mib.uni-stuttgart.de
 
 set(COMPONENT_NAME sph)
 
@@ -17,6 +17,7 @@ set(_${COMPONENT_NAME}_sources
 #     SmoothingKernelExport.cc
     SmoothingKernel.cc
     CustomForceCompute.cc
+    ComputeSPFBasicProperties.cc
     )
 
 set(_${COMPONENT_NAME}_headers
@@ -45,6 +46,8 @@ set(_${COMPONENT_NAME}_headers
 #     SuspendedObjectIntegrator.h       
     VelocityVerlet.h
     CustomForceCompute.h
+    ComputeSPFBasicProperties.h
+    ComputeMechanicalProp.h
     )
 
 set(_${COMPONENT_NAME}_cu_sources
@@ -105,6 +108,7 @@ set(files
     eos.py
 #     models.py
     constrain.py
+    compute.py
     )
 
 install(FILES ${files}

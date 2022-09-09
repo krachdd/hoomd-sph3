@@ -357,38 +357,38 @@ class Simulation(metaclass=Loggable):
         else:
             return self._cpp_sys.initial_timestep
 
-    @property
-    def always_compute_pressure(self):
-        """bool: Always compute the virial and pressure (defaults to ``False``).
+    # @property
+    # def always_compute_pressure(self):
+    #     """bool: Always compute the virial and pressure (defaults to ``False``).
 
-        By default, HOOMD only computes the virial and pressure on timesteps
-        where it is needed (when `hoomd.write.GSD` writes
-        log data to a file or when using an NPT integrator). Set
-        `always_compute_pressure` to True to make the per particle virial,
-        net virial, and system pressure available to query any time by property
-        or through the `hoomd.logging.Logger` interface.
+    #     By default, HOOMD only computes the virial and pressure on timesteps
+    #     where it is needed (when `hoomd.write.GSD` writes
+    #     log data to a file or when using an NPT integrator). Set
+    #     `always_compute_pressure` to True to make the per particle virial,
+    #     net virial, and system pressure available to query any time by property
+    #     or through the `hoomd.logging.Logger` interface.
 
-        Note:
-            Enabling this flag will result in a moderate performance penalty
-            when using MD pair potentials.
-        """
-        if not hasattr(self, '_cpp_sys'):
-            return False
-        else:
-            return self._cpp_sys.getPressureFlag()
+    #     Note:
+    #         Enabling this flag will result in a moderate performance penalty
+    #         when using MD pair potentials.
+    #     """
+    #     if not hasattr(self, '_cpp_sys'):
+    #         return False
+    #     else:
+    #         return self._cpp_sys.getPressureFlag()
 
-    @always_compute_pressure.setter
-    def always_compute_pressure(self, value):
-        if not hasattr(self, '_cpp_sys'):
-            # TODO make this work when not attached by automatically setting
-            # flag when state object is instantiated.
-            raise RuntimeError('Cannot set flag without state')
-        else:
-            self._cpp_sys.setPressureFlag(value)
+    # @always_compute_pressure.setter
+    # def always_compute_pressure(self, value):
+    #     if not hasattr(self, '_cpp_sys'):
+    #         # TODO make this work when not attached by automatically setting
+    #         # flag when state object is instantiated.
+    #         raise RuntimeError('Cannot set flag without state')
+    #     else:
+    #         self._cpp_sys.setPressureFlag(value)
 
-            # if the flag is true, also set it in the particle data
-            if value:
-                self._state._cpp_sys_def.getParticleData().setPressureFlag()
+    #         # if the flag is true, also set it in the particle data
+    #         if value:
+    #             self._state._cpp_sys_def.getParticleData().setPressureFlag()
 
     def run(self, steps, write_at_start=False):
         """Advance the simulation a number of steps.

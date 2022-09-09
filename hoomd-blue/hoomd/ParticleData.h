@@ -71,10 +71,12 @@ namespace hoomd
 struct pdata_flag
     {
     //! The enum
+
+    // TO DO
     enum Enum
         {
         // pressure_tensor = 0,       //!< Bit id in PDataFlags for the full virial
-        rotational_kinetic_energy, //!< Bit id in PDataFlags for the rotational kinetic energy
+        kinetic_energy = 0, //!< Bit id in PDataFlags for the rotational kinetic energy
         // external_field_virial      //!< Bit id in PDataFlags for the external virial contribution of
                                    //!< volume change
         };
@@ -617,7 +619,7 @@ class PYBIND11_EXPORT ParticleData
                           m_exec_conf->getMPICommunicator());
             }
 #endif
-        return Scalar(2.0)*maxdiam; // WARUM
+        return Scalar(2.0)*maxdiam; //  TODO WARUM
         }
 
 

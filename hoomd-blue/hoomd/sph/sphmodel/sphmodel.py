@@ -433,8 +433,6 @@ class SinglePhaseFlow(SPHModel):
 
         UREF = np.abs(UREF)
 
-        print(dir(self))
-
         # Compute required quantities
         # Magnitude of body force
         if not self.accel_set:
