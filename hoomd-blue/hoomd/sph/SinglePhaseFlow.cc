@@ -57,6 +57,7 @@ SinglePhaseFlow<KT_, SET_>::SinglePhaseFlow(std::shared_ptr<SystemDefinition> sy
 
         // all particle groups are based on the same particle data
         unsigned int num_types = this->m_sysdef->getParticleData()->getNTypes();
+
         m_type_property_map = GPUArray<unsigned int>(num_types, this->m_exec_conf);
         {
             ArrayHandle<unsigned int> h_type_property_map(m_type_property_map, access_location::host, access_mode::overwrite);
@@ -377,7 +378,9 @@ void SinglePhaseFlow<KT_, SET_>::compute_ndensity(uint64_t timestep)
         // Do not compute number density based mass density for fluid particle
         // if anything other that DensityMethod SUMMATION is used.
         if ( this->m_density_method != DENSITYSUMMATION && !(i_issolid) )
+            {
             continue;
+            }
 
         // Initialize number density with self density of kernel
         if ( i_issolid )
@@ -401,6 +404,7 @@ void SinglePhaseFlow<KT_, SET_>::compute_ndensity(uint64_t timestep)
                         }
                     }
             }
+
         if ( i_issolid && !(solid_w_fluid_neigh) )
             {
             h_dpe.data[i].x = this->m_rho0;
@@ -408,10 +412,14 @@ void SinglePhaseFlow<KT_, SET_>::compute_ndensity(uint64_t timestep)
             }
 
         // Loop over all of the neighbors of this particle
-        myHead = h_head_list.data[i];
-        size = (unsigned int)h_n_neigh.data[i];
+        size_t myHead = h_head_list.data[i];
+        unsigned int size = (unsigned int)h_n_neigh.data[i];
+        this->m_exec_conf->msg->notice(7) << "Computing SinglePhaseFlow::Number Density : Particle Loop: size " << size << std::endl;
+
         for (unsigned int j = 0; j < size; j++)
-            {
+            {   
+                // this->m_exec_conf->msg->notice(7) << "Computing SinglePhaseFlow::Number Density : Start neighbor loop" << std::endl;
+
                 // Index of neighbor
                 unsigned int k = h_nlist.data[myHead + j];
 
@@ -448,6 +456,8 @@ void SinglePhaseFlow<KT_, SET_>::compute_ndensity(uint64_t timestep)
                 // If i_issolid and j_isfluid - Add contribution to normalization constant
                 // If j_isfluid and j_issolid - Add contribution to particle number density
                 // If j_isfluid and j_isfluid - Add contribution to particle number density
+                this->m_exec_conf->msg->notice(7) << "Computing SinglePhaseFlow::Number Density : compute ndensity" << std::endl;
+
                 h_dpe.data[i].x += this->m_const_slength ? this->m_skernel->wij(m_ch,r) : this->m_skernel->wij(Scalar(0.5)*(h_h.data[i]+h_h.data[k]),r);
 
             } // End of neighbor loop
@@ -455,7 +465,11 @@ void SinglePhaseFlow<KT_, SET_>::compute_ndensity(uint64_t timestep)
         // Compute mass density from number density if particle i is a fluid particle
         // rho_i = m_i * \sum_j wij
         if ( this->m_density_method == DENSITYSUMMATION && i_isfluid )
+            {
+            // this->m_exec_conf->msg->notice(7) << "Computing SinglePhaseFlow::Number Density : compute real density" << std::endl;
+
             h_dpe.data[i].x= h_dpe.data[i].x * h_velocity.data[i].w;
+            }
 
         } // End of particle loop
 
@@ -847,9 +861,9 @@ void SinglePhaseFlow<KT_, SET_>::forcecomputation(uint64_t timestep)
     {
 
     if ( m_density_method == DENSITYSUMMATION )
-        this->m_exec_conf->msg->notice(7) << "Computing SinglePhaseFlow::Forces using SUMMATION approach" << endl;
+        this->m_exec_conf->msg->notice(7) << "Computing SinglePhaseFlow::Forces using SUMMATION approach " << m_density_method << endl;
     else if ( m_density_method == DENSITYCONTINUITY )
-        this->m_exec_conf->msg->notice(7) << "Computing SinglePhaseFlow::Forces using CONTINUITY approach" << endl;
+        this->m_exec_conf->msg->notice(7) << "Computing SinglePhaseFlow::Forces using CONTINUITY approach " << m_density_method << endl;
 
     // Start the profile for this compute
     // if (this->m_prof)
@@ -1095,6 +1109,10 @@ void SinglePhaseFlow<KT_, SET_>::forcecomputation(uint64_t timestep)
 template<SmoothingKernelType KT_,StateEquationType SET_>
 void SinglePhaseFlow<KT_, SET_>::computeForces(uint64_t timestep)
     {
+
+    // this->m_exec_conf->msg->notice(5) << "nlist type: " << this->m_nlist << std::endl;
+    // start by updating the neighborlist
+    this->m_nlist->compute(timestep);
     // if (this->m_prof)
     //     this->m_prof->push("SinglePhaseFlow");
 

@@ -114,10 +114,12 @@ ParticleData::ParticleData(unsigned int N,
     GlobalVector<unsigned int>(exec_conf).swap(m_rtag);
     TAG_ALLOCATION(m_rtag);
     if (!distributed){
+
         // initialize all processors
         initializeFromSnapshot(snap);
     }
     else {
+        m_exec_conf->msg->notice(5) << "Initializing from Distributed Snapshot" << endl;
         #ifndef ENABLE_MPI
         m_exec_conf->msg->warning() << " MPI is necessary for distributed snapshots " << endl;
         throw runtime_error("Error initializing ParticleData - try to use not distributed varinte or enable MPI");
@@ -624,6 +626,11 @@ void ParticleData::allocateAlternateArrays(unsigned int N)
     GlobalArray<Scalar> slength_alt(N, m_exec_conf);
     m_slength_alt.swap(slength_alt);
     TAG_ALLOCATION(m_slength_alt);
+
+    // aux4
+    GlobalArray<Scalar3> dpedt_alt(N, m_exec_conf);
+    m_dpedt_alt.swap(dpedt_alt);
+    TAG_ALLOCATION(m_dpedt_alt);
 
     // // charge
     // GlobalArray<Scalar> charge_alt(N, m_exec_conf);
@@ -1556,10 +1563,10 @@ void ParticleData::initializeFromSnapshot(const SnapshotParticleData<Real>& snap
 
     unsigned int snapshot_size = snapshot.size;
 
-// Raise an exception if there are any invalid type ids. This is done here (instead of in the
-// loops above) to avoid MPI communication deadlocks when only some ranks have invalid types.
-// As a convenience, broadcast the values needed to evaluate the condition the same on all
-// ranks.
+    // Raise an exception if there are any invalid type ids. This is done here (instead of in the
+    // loops above) to avoid MPI communication deadlocks when only some ranks have invalid types.
+    // As a convenience, broadcast the values needed to evaluate the condition the same on all
+    // ranks.
 #ifdef ENABLE_MPI
     if (m_decomposition)
         {
@@ -1582,7 +1589,7 @@ template<class Real>
 void ParticleData::initializeFromDistrSnapshot(const SnapshotParticleData<Real>& snapshot,
                                           bool ignore_bodies)
     {
-    m_exec_conf->msg->notice(4) << "ParticleData: initializing from snapshot" << std::endl;
+    m_exec_conf->msg->notice(4) << "ParticleData: initializing from distributed snapshot" << std::endl;
 
     // remove all ghost particles
     removeAllGhostParticles();
@@ -1945,93 +1952,93 @@ void ParticleData::initializeFromDistrSnapshot(const SnapshotParticleData<Real>&
 
             h_comm_flag.data[idx] = 0; // initialize with zero
             }
-//         }
-//     else
-// #endif
-//         {
-//         // allocate array for reverse lookup tags
-//         m_rtag.resize(snapshot.size);
+    //         }
+    //     else
+    // #endif
+    //         {
+    //         // allocate array for reverse lookup tags
+    //         m_rtag.resize(snapshot.size);
 
-//         // Now that active tag list has changed, invalidate the cache
-//         m_invalid_cached_tags = true;
+    //         // Now that active tag list has changed, invalidate the cache
+    //         m_invalid_cached_tags = true;
 
-//         // allocate particle data such that we can accommodate the particles
-//         resize(snapshot.size);
+    //         // allocate particle data such that we can accommodate the particles
+    //         resize(snapshot.size);
 
-//         ArrayHandle<Scalar4> h_pos(m_pos, access_location::host, access_mode::overwrite);
-//         ArrayHandle<Scalar4> h_vel(m_vel, access_location::host, access_mode::overwrite);
-//         ArrayHandle< Scalar3 > h_dpe(m_dpe, access_location::host, access_mode::overwrite);
-//         ArrayHandle< Scalar3 > h_aux1(m_aux1, access_location::host, access_mode::overwrite);
-//         ArrayHandle< Scalar3 > h_aux2(m_aux2, access_location::host, access_mode::overwrite);
-//         ArrayHandle< Scalar3 > h_aux3(m_aux3, access_location::host, access_mode::overwrite);
-//         ArrayHandle< Scalar3 > h_aux4(m_aux4, access_location::host, access_mode::overwrite);
-//         ArrayHandle< Scalar > h_slength(m_slength, access_location::host, access_mode::overwrite);
-//         ArrayHandle< Scalar3 > h_accel(m_accel, access_location::host, access_mode::overwrite);
-//         ArrayHandle< Scalar3 > h_dpedt(m_dpedt, access_location::host, access_mode::overwrite);
-//         ArrayHandle<int3> h_image(m_image, access_location::host, access_mode::overwrite);
-//         // ArrayHandle<Scalar> h_charge(m_charge, access_location::host, access_mode::overwrite);
-//         // ArrayHandle<Scalar> h_diameter(m_diameter, access_location::host, access_mode::overwrite);
-//         ArrayHandle<unsigned int> h_body(m_body, access_location::host, access_mode::overwrite);
-//         // ArrayHandle<Scalar4> h_orientation(m_orientation,
-//         //                                    access_location::host,
-//         //                                    access_mode::overwrite);
-//         // ArrayHandle<Scalar4> h_angmom(m_angmom, access_location::host, access_mode::overwrite);
-//         // ArrayHandle<Scalar3> h_inertia(m_inertia, access_location::host, access_mode::overwrite);
-//         ArrayHandle<unsigned int> h_tag(m_tag, access_location::host, access_mode::overwrite);
-//         ArrayHandle<unsigned int> h_rtag(m_rtag, access_location::host, access_mode::readwrite);
+    //         ArrayHandle<Scalar4> h_pos(m_pos, access_location::host, access_mode::overwrite);
+    //         ArrayHandle<Scalar4> h_vel(m_vel, access_location::host, access_mode::overwrite);
+    //         ArrayHandle< Scalar3 > h_dpe(m_dpe, access_location::host, access_mode::overwrite);
+    //         ArrayHandle< Scalar3 > h_aux1(m_aux1, access_location::host, access_mode::overwrite);
+    //         ArrayHandle< Scalar3 > h_aux2(m_aux2, access_location::host, access_mode::overwrite);
+    //         ArrayHandle< Scalar3 > h_aux3(m_aux3, access_location::host, access_mode::overwrite);
+    //         ArrayHandle< Scalar3 > h_aux4(m_aux4, access_location::host, access_mode::overwrite);
+    //         ArrayHandle< Scalar > h_slength(m_slength, access_location::host, access_mode::overwrite);
+    //         ArrayHandle< Scalar3 > h_accel(m_accel, access_location::host, access_mode::overwrite);
+    //         ArrayHandle< Scalar3 > h_dpedt(m_dpedt, access_location::host, access_mode::overwrite);
+    //         ArrayHandle<int3> h_image(m_image, access_location::host, access_mode::overwrite);
+    //         // ArrayHandle<Scalar> h_charge(m_charge, access_location::host, access_mode::overwrite);
+    //         // ArrayHandle<Scalar> h_diameter(m_diameter, access_location::host, access_mode::overwrite);
+    //         ArrayHandle<unsigned int> h_body(m_body, access_location::host, access_mode::overwrite);
+    //         // ArrayHandle<Scalar4> h_orientation(m_orientation,
+    //         //                                    access_location::host,
+    //         //                                    access_mode::overwrite);
+    //         // ArrayHandle<Scalar4> h_angmom(m_angmom, access_location::host, access_mode::overwrite);
+    //         // ArrayHandle<Scalar3> h_inertia(m_inertia, access_location::host, access_mode::overwrite);
+    //         ArrayHandle<unsigned int> h_tag(m_tag, access_location::host, access_mode::overwrite);
+    //         ArrayHandle<unsigned int> h_rtag(m_rtag, access_location::host, access_mode::readwrite);
 
-//         for (unsigned int snap_idx = 0; snap_idx < snapshot.size; snap_idx++)
-//             {
-//             // if requested, do not initialize constituent particles of rigid bodies
-//             if (ignore_bodies && snapshot.body[snap_idx] != NO_BODY)
-//                 {
-//                 continue;
-//                 }
+    //         for (unsigned int snap_idx = 0; snap_idx < snapshot.size; snap_idx++)
+    //             {
+    //             // if requested, do not initialize constituent particles of rigid bodies
+    //             if (ignore_bodies && snapshot.body[snap_idx] != NO_BODY)
+    //                 {
+    //                 continue;
+    //                 }
 
-//             max_typeid = std::max(max_typeid, snapshot.type[snap_idx]);
+    //             max_typeid = std::max(max_typeid, snapshot.type[snap_idx]);
 
-//             h_pos.data[nglobal] = make_scalar4(snapshot.pos[snap_idx].x,
-//                                                snapshot.pos[snap_idx].y,
-//                                                snapshot.pos[snap_idx].z,
-//                                                __int_as_scalar(snapshot.type[snap_idx]));
-//             h_vel.data[nglobal] = make_scalar4(snapshot.vel[snap_idx].x,
-//                                                snapshot.vel[snap_idx].y,
-//                                                snapshot.vel[snap_idx].z,
-//                                                snapshot.mass[snap_idx]);
-//              h_dpe.data[nglobal] = vec_to_scalar3(snapshot.dpe[snap_idx]);
-//             h_aux1.data[nglobal] = vec_to_scalar3(snapshot.aux1[snap_idx]);
-//             h_aux2.data[nglobal] = vec_to_scalar3(snapshot.aux2[snap_idx]);
-//             h_aux3.data[nglobal] = vec_to_scalar3(snapshot.aux3[snap_idx]);
-//             h_aux4.data[nglobal] = vec_to_scalar3(snapshot.aux4[snap_idx]);
-//             h_slength.data[nglobal] = snapshot.slength[snap_idx];
-//             h_accel.data[nglobal] = vec_to_scalar3(snapshot.accel[snap_idx]);
-//             h_dpedt.data[nglobal] = vec_to_scalar3(snapshot.dpedt[snap_idx]);
-//             // h_charge.data[nglobal] = snapshot.charge[snap_idx];
-//             // h_diameter.data[nglobal] = snapshot.diameter[snap_idx];
-//             h_image.data[nglobal] = snapshot.image[snap_idx];
-//             h_tag.data[nglobal] = nglobal;
-//             h_rtag.data[nglobal] = nglobal;
-//             h_body.data[nglobal] = snapshot.body[snap_idx];
-//             // h_orientation.data[nglobal] = quat_to_scalar4(snapshot.orientation[snap_idx]);
-//             // h_angmom.data[nglobal] = quat_to_scalar4(snapshot.angmom[snap_idx]);
-//             // h_inertia.data[nglobal] = vec_to_scalar3(snapshot.inertia[snap_idx]);
-//             nglobal++;
-//             }
+    //             h_pos.data[nglobal] = make_scalar4(snapshot.pos[snap_idx].x,
+    //                                                snapshot.pos[snap_idx].y,
+    //                                                snapshot.pos[snap_idx].z,
+    //                                                __int_as_scalar(snapshot.type[snap_idx]));
+    //             h_vel.data[nglobal] = make_scalar4(snapshot.vel[snap_idx].x,
+    //                                                snapshot.vel[snap_idx].y,
+    //                                                snapshot.vel[snap_idx].z,
+    //                                                snapshot.mass[snap_idx]);
+    //              h_dpe.data[nglobal] = vec_to_scalar3(snapshot.dpe[snap_idx]);
+    //             h_aux1.data[nglobal] = vec_to_scalar3(snapshot.aux1[snap_idx]);
+    //             h_aux2.data[nglobal] = vec_to_scalar3(snapshot.aux2[snap_idx]);
+    //             h_aux3.data[nglobal] = vec_to_scalar3(snapshot.aux3[snap_idx]);
+    //             h_aux4.data[nglobal] = vec_to_scalar3(snapshot.aux4[snap_idx]);
+    //             h_slength.data[nglobal] = snapshot.slength[snap_idx];
+    //             h_accel.data[nglobal] = vec_to_scalar3(snapshot.accel[snap_idx]);
+    //             h_dpedt.data[nglobal] = vec_to_scalar3(snapshot.dpedt[snap_idx]);
+    //             // h_charge.data[nglobal] = snapshot.charge[snap_idx];
+    //             // h_diameter.data[nglobal] = snapshot.diameter[snap_idx];
+    //             h_image.data[nglobal] = snapshot.image[snap_idx];
+    //             h_tag.data[nglobal] = nglobal;
+    //             h_rtag.data[nglobal] = nglobal;
+    //             h_body.data[nglobal] = snapshot.body[snap_idx];
+    //             // h_orientation.data[nglobal] = quat_to_scalar4(snapshot.orientation[snap_idx]);
+    //             // h_angmom.data[nglobal] = quat_to_scalar4(snapshot.angmom[snap_idx]);
+    //             // h_inertia.data[nglobal] = vec_to_scalar3(snapshot.inertia[snap_idx]);
+    //             nglobal++;
+    //             }
 
-//         m_nparticles = nglobal;
+    //         m_nparticles = nglobal;
 
-//         // update list of active tags
-//         for (unsigned int tag = 0; tag < nglobal; tag++)
-//             {
-//             m_tag_set.insert(tag);
-//             }
+    //         // update list of active tags
+    //         for (unsigned int tag = 0; tag < nglobal; tag++)
+    //             {
+    //             m_tag_set.insert(tag);
+    //             }
 
-//         // rtag size reflects actual number of tags
-//         m_rtag.resize(nglobal);
+    //         // rtag size reflects actual number of tags
+    //         m_rtag.resize(nglobal);
 
-//         // initialize type mapping
-//         m_type_mapping = snapshot.type_mapping;
-//         }
+    //         // initialize type mapping
+    //         m_type_mapping = snapshot.type_mapping;
+    //         }
 
     // copy over accel_set flag from snapshot
     m_accel_set = snapshot.is_accel_set;
@@ -2050,10 +2057,10 @@ void ParticleData::initializeFromDistrSnapshot(const SnapshotParticleData<Real>&
 
     MPI_Waitall(15*size, send_req, MPI_STATUSES_IGNORE);
 
-// Raise an exception if there are any invalid type ids. This is done here (instead of in the
-// loops above) to avoid MPI communication deadlocks when only some ranks have invalid types.
-// As a convenience, broadcast the values needed to evaluate the condition the same on all
-// ranks.
+    // Raise an exception if there are any invalid type ids. This is done here (instead of in the
+    // loops above) to avoid MPI communication deadlocks when only some ranks have invalid types.
+    // As a convenience, broadcast the values needed to evaluate the condition the same on all
+    // ranks.
 #ifdef ENABLE_MPI
     if (m_decomposition)
         {
@@ -2291,7 +2298,7 @@ ParticleData::takeSnapshot(SnapshotParticleData<Real>& snapshot)
                 snapshot.aux2[snap_id] = vec3<Real>(aux2_proc[rank][idx]);
                 snapshot.aux3[snap_id] = vec3<Real>(aux3_proc[rank][idx]);
                 snapshot.aux4[snap_id] = vec3<Real>(aux4_proc[rank][idx]);
-                snapshot.slength[snap_id] = slength_proc[rank][idx];
+                snapshot.slength[snap_id] = Real(slength_proc[rank][idx]);
                 snapshot.accel[snap_id] = vec3<Real>(accel_proc[rank][idx]);
                 snapshot.dpedt[snap_id] = vec3<Real>(dpedt_proc[rank][idx]);
                 snapshot.type[snap_id] = type_proc[rank][idx];
@@ -2342,7 +2349,7 @@ ParticleData::takeSnapshot(SnapshotParticleData<Real>& snapshot)
             snapshot.aux2[snap_id] = vec3<Real>(h_aux2.data[idx]);
             snapshot.aux3[snap_id] = vec3<Real>(h_aux3.data[idx]);
             snapshot.aux4[snap_id] = vec3<Real>(h_aux4.data[idx]);
-            snapshot.slength[snap_id] = h_slength.data[idx];
+            snapshot.slength[snap_id] = Real(h_slength.data[idx]);
             snapshot.accel[snap_id] = vec3<Real>(h_accel.data[idx]);
             snapshot.dpedt[snap_id] = vec3<Real>(h_dpedt.data[idx]);
             snapshot.type[snap_id] = __scalar_as_int(h_pos.data[idx].w);
@@ -2383,7 +2390,7 @@ ParticleData::takeSnapshotDistr(SnapshotParticleData<Real>& snapshot)
     // a map to contain a particle tag-> snapshot idx lookup
     std::map<unsigned int, unsigned int> index;
 
-    m_exec_conf->msg->notice(4) << "ParticleData: taking snapshot" << std::endl;
+    m_exec_conf->msg->notice(4) << "ParticleData: taking distributed snapshot" << std::endl;
 
     ArrayHandle<Scalar4> h_pos(m_pos, access_location::host, access_mode::read);
     ArrayHandle<Scalar4> h_vel(m_vel, access_location::host, access_mode::read);
@@ -2405,213 +2412,213 @@ ParticleData::takeSnapshotDistr(SnapshotParticleData<Real>& snapshot)
     ArrayHandle<unsigned int> h_tag(m_tag, access_location::host, access_mode::read);
     ArrayHandle<unsigned int> h_rtag(m_rtag, access_location::host, access_mode::read);
 
-// #ifdef ENABLE_MPI
-//     if (m_decomposition)
-//         {
-//         // gather a global snapshot
-//         std::vector<Scalar3> pos(m_nparticles);
-//         std::vector<Scalar3> vel(m_nparticles);
-//         std::vector<Scalar3> dpe(m_nparticles);
-//         std::vector<Scalar3> aux1(m_nparticles);
-//         std::vector<Scalar3> aux2(m_nparticles);
-//         std::vector<Scalar3> aux3(m_nparticles);
-//         std::vector<Scalar3> aux4(m_nparticles);
-//         std::vector<Scalar> slength(m_nparticles);
-//         std::vector<Scalar3> accel(m_nparticles);
-//         std::vector<Scalar3> dpedt(m_nparticles);
-//         std::vector<unsigned int> type(m_nparticles);
-//         std::vector<Scalar> mass(m_nparticles);
-//         // std::vector<Scalar> charge(m_nparticles);
-//         // std::vector<Scalar> diameter(m_nparticles);
-//         std::vector<int3> image(m_nparticles);
-//         std::vector<unsigned int> body(m_nparticles);
-//         // std::vector<Scalar4> orientation(m_nparticles);
-//         // std::vector<Scalar4> angmom(m_nparticles);
-//         // std::vector<Scalar3> inertia(m_nparticles);
-//         std::vector<unsigned int> tag(m_nparticles);
-//         std::map<unsigned int, unsigned int> rtag_map;
-//         for (unsigned int idx = 0; idx < m_nparticles; idx++)
-//             {
-//             pos[idx]
-//                 = make_scalar3(h_pos.data[idx].x, h_pos.data[idx].y, h_pos.data[idx].z) - m_origin;
-//             vel[idx] = make_scalar3(h_vel.data[idx].x, h_vel.data[idx].y, h_vel.data[idx].z);
-//             dpe[idx] = h_dpe.data[idx];
-//             aux1[idx] = h_aux1.data[idx];
-//             aux2[idx] = h_aux2.data[idx];
-//             aux3[idx] = h_aux3.data[idx];
-//             aux4[idx] = h_aux4.data[idx];
-//             slength[idx] = h_slength.data[idx];
-//             accel[idx] = h_accel.data[idx];
-//             dpedt[idx] = h_dpedt.data[idx];
-//             type[idx] = __scalar_as_int(h_pos.data[idx].w);
-//             mass[idx] = h_vel.data[idx].w;
-//             // charge[idx] = h_charge.data[idx];
-//             // diameter[idx] = h_diameter.data[idx];
-//             image[idx] = h_image.data[idx];
-//             image[idx].x -= m_o_image.x;
-//             image[idx].y -= m_o_image.y;
-//             image[idx].z -= m_o_image.z;
-//             body[idx] = h_body.data[idx];
-//             // orientation[idx] = h_orientation.data[idx];
-//             // angmom[idx] = h_angmom.data[idx];
-//             // inertia[idx] = h_inertia.data[idx];
+            // #ifdef ENABLE_MPI
+            //     if (m_decomposition)
+            //         {
+            //         // gather a global snapshot
+            //         std::vector<Scalar3> pos(m_nparticles);
+            //         std::vector<Scalar3> vel(m_nparticles);
+            //         std::vector<Scalar3> dpe(m_nparticles);
+            //         std::vector<Scalar3> aux1(m_nparticles);
+            //         std::vector<Scalar3> aux2(m_nparticles);
+            //         std::vector<Scalar3> aux3(m_nparticles);
+            //         std::vector<Scalar3> aux4(m_nparticles);
+            //         std::vector<Scalar> slength(m_nparticles);
+            //         std::vector<Scalar3> accel(m_nparticles);
+            //         std::vector<Scalar3> dpedt(m_nparticles);
+            //         std::vector<unsigned int> type(m_nparticles);
+            //         std::vector<Scalar> mass(m_nparticles);
+            //         // std::vector<Scalar> charge(m_nparticles);
+            //         // std::vector<Scalar> diameter(m_nparticles);
+            //         std::vector<int3> image(m_nparticles);
+            //         std::vector<unsigned int> body(m_nparticles);
+            //         // std::vector<Scalar4> orientation(m_nparticles);
+            //         // std::vector<Scalar4> angmom(m_nparticles);
+            //         // std::vector<Scalar3> inertia(m_nparticles);
+            //         std::vector<unsigned int> tag(m_nparticles);
+            //         std::map<unsigned int, unsigned int> rtag_map;
+            //         for (unsigned int idx = 0; idx < m_nparticles; idx++)
+            //             {
+            //             pos[idx]
+            //                 = make_scalar3(h_pos.data[idx].x, h_pos.data[idx].y, h_pos.data[idx].z) - m_origin;
+            //             vel[idx] = make_scalar3(h_vel.data[idx].x, h_vel.data[idx].y, h_vel.data[idx].z);
+            //             dpe[idx] = h_dpe.data[idx];
+            //             aux1[idx] = h_aux1.data[idx];
+            //             aux2[idx] = h_aux2.data[idx];
+            //             aux3[idx] = h_aux3.data[idx];
+            //             aux4[idx] = h_aux4.data[idx];
+            //             slength[idx] = h_slength.data[idx];
+            //             accel[idx] = h_accel.data[idx];
+            //             dpedt[idx] = h_dpedt.data[idx];
+            //             type[idx] = __scalar_as_int(h_pos.data[idx].w);
+            //             mass[idx] = h_vel.data[idx].w;
+            //             // charge[idx] = h_charge.data[idx];
+            //             // diameter[idx] = h_diameter.data[idx];
+            //             image[idx] = h_image.data[idx];
+            //             image[idx].x -= m_o_image.x;
+            //             image[idx].y -= m_o_image.y;
+            //             image[idx].z -= m_o_image.z;
+            //             body[idx] = h_body.data[idx];
+            //             // orientation[idx] = h_orientation.data[idx];
+            //             // angmom[idx] = h_angmom.data[idx];
+            //             // inertia[idx] = h_inertia.data[idx];
 
-//             // insert reverse lookup global tag -> idx
-//             rtag_map.insert(std::pair<unsigned int, unsigned int>(h_tag.data[idx], idx));
-//             }
+            //             // insert reverse lookup global tag -> idx
+            //             rtag_map.insert(std::pair<unsigned int, unsigned int>(h_tag.data[idx], idx));
+            //             }
 
-//         std::vector<std::vector<Scalar3>> pos_proc;       // Position array of every processor
-//         std::vector<std::vector<Scalar3>> vel_proc;       // Velocities array of every processor
-//         std::vector< std::vector<Scalar3> > dpe_proc;              // Density, pressure and energy array of every processor
-//         std::vector< std::vector<Scalar3> > aux1_proc;             // Auxiliary 1 array of every processor
-//         std::vector< std::vector<Scalar3> > aux2_proc;             // Auxiliary 2 array of every processor
-//         std::vector< std::vector<Scalar3> > aux3_proc;             // Auxiliary 3 array of every processor
-//         std::vector< std::vector<Scalar3> > aux4_proc;             // Auxiliary 4 array of every processor
-//         std::vector< std::vector<Scalar> > slength_proc;           // Smoothing length array of every processor
-//         std::vector< std::vector<Scalar3> > accel_proc;            // Accelerations array of every processor
-//         std::vector< std::vector<Scalar3> > dpedt_proc;            // Density, pressure and energy rate of change array of every processor
-//         std::vector<std::vector<unsigned int>> type_proc; // Particle types array of every processor
-//         std::vector<std::vector<Scalar>> mass_proc;   // Particle masses array of every processor
-//         // std::vector<std::vector<Scalar>> charge_proc; // Particle charges array of every processor
-//         // std::vector<std::vector<Scalar>>
-//         //     diameter_proc;                         // Particle diameters array of every processor
-//         std::vector<std::vector<int3>> image_proc; // Particle images array of every processor
-//         std::vector<std::vector<unsigned int>> body_proc;   // Body ids of every processor
-//         // std::vector<std::vector<Scalar4>> orientation_proc; // Orientations of every processor
-//         // std::vector<std::vector<Scalar4>> angmom_proc;      // Angular momenta of every processor
-//         // std::vector<std::vector<Scalar3>> inertia_proc;     // Moments of inertia of every processor
+            //         std::vector<std::vector<Scalar3>> pos_proc;       // Position array of every processor
+            //         std::vector<std::vector<Scalar3>> vel_proc;       // Velocities array of every processor
+            //         std::vector< std::vector<Scalar3> > dpe_proc;              // Density, pressure and energy array of every processor
+            //         std::vector< std::vector<Scalar3> > aux1_proc;             // Auxiliary 1 array of every processor
+            //         std::vector< std::vector<Scalar3> > aux2_proc;             // Auxiliary 2 array of every processor
+            //         std::vector< std::vector<Scalar3> > aux3_proc;             // Auxiliary 3 array of every processor
+            //         std::vector< std::vector<Scalar3> > aux4_proc;             // Auxiliary 4 array of every processor
+            //         std::vector< std::vector<Scalar> > slength_proc;           // Smoothing length array of every processor
+            //         std::vector< std::vector<Scalar3> > accel_proc;            // Accelerations array of every processor
+            //         std::vector< std::vector<Scalar3> > dpedt_proc;            // Density, pressure and energy rate of change array of every processor
+            //         std::vector<std::vector<unsigned int>> type_proc; // Particle types array of every processor
+            //         std::vector<std::vector<Scalar>> mass_proc;   // Particle masses array of every processor
+            //         // std::vector<std::vector<Scalar>> charge_proc; // Particle charges array of every processor
+            //         // std::vector<std::vector<Scalar>>
+            //         //     diameter_proc;                         // Particle diameters array of every processor
+            //         std::vector<std::vector<int3>> image_proc; // Particle images array of every processor
+            //         std::vector<std::vector<unsigned int>> body_proc;   // Body ids of every processor
+            //         // std::vector<std::vector<Scalar4>> orientation_proc; // Orientations of every processor
+            //         // std::vector<std::vector<Scalar4>> angmom_proc;      // Angular momenta of every processor
+            //         // std::vector<std::vector<Scalar3>> inertia_proc;     // Moments of inertia of every processor
 
-//         std::vector<std::map<unsigned int, unsigned int>>
-//             rtag_map_proc; // List of reverse-lookup maps
+            //         std::vector<std::map<unsigned int, unsigned int>>
+            //             rtag_map_proc; // List of reverse-lookup maps
 
-//         const MPI_Comm mpi_comm = m_exec_conf->getMPICommunicator();
-//         unsigned int size = m_exec_conf->getNRanks();
-//         unsigned int rank = m_exec_conf->getRank();
+            //         const MPI_Comm mpi_comm = m_exec_conf->getMPICommunicator();
+            //         unsigned int size = m_exec_conf->getNRanks();
+            //         unsigned int rank = m_exec_conf->getRank();
 
-//         // resize to number of ranks in communicator
-//         pos_proc.resize(size);
-//         vel_proc.resize(size);
-//         dpe_proc.resize(size);
-//         aux1_proc.resize(size);
-//         aux2_proc.resize(size);
-//         aux3_proc.resize(size);
-//         aux4_proc.resize(size);
-//         slength_proc.resize(size);
-//         accel_proc.resize(size);
-//         dpedt_proc.resize(size);
-//         type_proc.resize(size);
-//         mass_proc.resize(size);
-//         // charge_proc.resize(size);
-//         // diameter_proc.resize(size);
-//         image_proc.resize(size);
-//         body_proc.resize(size);
-//         // orientation_proc.resize(size);
-//         // angmom_proc.resize(size);
-//         // inertia_proc.resize(size);
-//         rtag_map_proc.resize(size);
+            //         // resize to number of ranks in communicator
+            //         pos_proc.resize(size);
+            //         vel_proc.resize(size);
+            //         dpe_proc.resize(size);
+            //         aux1_proc.resize(size);
+            //         aux2_proc.resize(size);
+            //         aux3_proc.resize(size);
+            //         aux4_proc.resize(size);
+            //         slength_proc.resize(size);
+            //         accel_proc.resize(size);
+            //         dpedt_proc.resize(size);
+            //         type_proc.resize(size);
+            //         mass_proc.resize(size);
+            //         // charge_proc.resize(size);
+            //         // diameter_proc.resize(size);
+            //         image_proc.resize(size);
+            //         body_proc.resize(size);
+            //         // orientation_proc.resize(size);
+            //         // angmom_proc.resize(size);
+            //         // inertia_proc.resize(size);
+            //         rtag_map_proc.resize(size);
 
-//         unsigned int root = 0;
+            //         unsigned int root = 0;
 
-//         // collect all particle data on the root processor
-//         gather_v(pos, pos_proc, root, mpi_comm);
-//         gather_v(vel, vel_proc, root, mpi_comm);
-//         gather_v(dpe, dpe_proc, root, mpi_comm);
-//         gather_v(aux1, aux1_proc, root, mpi_comm);
-//         gather_v(aux2, aux2_proc, root, mpi_comm);
-//         gather_v(aux3, aux3_proc, root, mpi_comm);
-//         gather_v(aux4, aux4_proc, root, mpi_comm);
-//         gather_v(slength, slength_proc, root, mpi_comm);
-//         gather_v(accel, accel_proc, root, mpi_comm);
-//         gather_v(dpedt, dpedt_proc, root, mpi_comm);
-//         gather_v(type, type_proc, root, mpi_comm);
-//         gather_v(mass, mass_proc, root, mpi_comm);
-//         // gather_v(charge, charge_proc, root, mpi_comm);
-//         // gather_v(diameter, diameter_proc, root, mpi_comm);
-//         gather_v(image, image_proc, root, mpi_comm);
-//         gather_v(body, body_proc, root, mpi_comm);
-//         // gather_v(orientation, orientation_proc, root, mpi_comm);
-//         // gather_v(angmom, angmom_proc, root, mpi_comm);
-//         // gather_v(inertia, inertia_proc, root, mpi_comm);
+            //         // collect all particle data on the root processor
+            //         gather_v(pos, pos_proc, root, mpi_comm);
+            //         gather_v(vel, vel_proc, root, mpi_comm);
+            //         gather_v(dpe, dpe_proc, root, mpi_comm);
+            //         gather_v(aux1, aux1_proc, root, mpi_comm);
+            //         gather_v(aux2, aux2_proc, root, mpi_comm);
+            //         gather_v(aux3, aux3_proc, root, mpi_comm);
+            //         gather_v(aux4, aux4_proc, root, mpi_comm);
+            //         gather_v(slength, slength_proc, root, mpi_comm);
+            //         gather_v(accel, accel_proc, root, mpi_comm);
+            //         gather_v(dpedt, dpedt_proc, root, mpi_comm);
+            //         gather_v(type, type_proc, root, mpi_comm);
+            //         gather_v(mass, mass_proc, root, mpi_comm);
+            //         // gather_v(charge, charge_proc, root, mpi_comm);
+            //         // gather_v(diameter, diameter_proc, root, mpi_comm);
+            //         gather_v(image, image_proc, root, mpi_comm);
+            //         gather_v(body, body_proc, root, mpi_comm);
+            //         // gather_v(orientation, orientation_proc, root, mpi_comm);
+            //         // gather_v(angmom, angmom_proc, root, mpi_comm);
+            //         // gather_v(inertia, inertia_proc, root, mpi_comm);
 
-//         // gather the reverse-lookup maps
-//         gather_v(rtag_map, rtag_map_proc, root, mpi_comm);
+            //         // gather the reverse-lookup maps
+            //         gather_v(rtag_map, rtag_map_proc, root, mpi_comm);
 
-//         if (rank == root)
-//             {
-//             // allocate memory in snapshot
-//             snapshot.resize(getNGlobal());
+            //         if (rank == root)
+            //             {
+            //             // allocate memory in snapshot
+            //             snapshot.resize(getNGlobal());
 
-//             unsigned int n_ranks = m_exec_conf->getNRanks();
-//             assert(rtag_map_proc.size() == n_ranks);
+            //             unsigned int n_ranks = m_exec_conf->getNRanks();
+            //             assert(rtag_map_proc.size() == n_ranks);
 
-//             // create single map of all particle ranks and indices
-//             std::map<unsigned int, std::pair<unsigned int, unsigned int>> rank_rtag_map;
-//             std::map<unsigned int, unsigned int>::iterator it;
-//             for (unsigned int irank = 0; irank < n_ranks; ++irank)
-//                 for (it = rtag_map_proc[irank].begin(); it != rtag_map_proc[irank].end(); ++it)
-//                     rank_rtag_map.insert(
-//                         std::pair<unsigned int, std::pair<unsigned int, unsigned int>>(
-//                             it->first,
-//                             std::pair<unsigned int, unsigned int>(irank, it->second)));
+            //             // create single map of all particle ranks and indices
+            //             std::map<unsigned int, std::pair<unsigned int, unsigned int>> rank_rtag_map;
+            //             std::map<unsigned int, unsigned int>::iterator it;
+            //             for (unsigned int irank = 0; irank < n_ranks; ++irank)
+            //                 for (it = rtag_map_proc[irank].begin(); it != rtag_map_proc[irank].end(); ++it)
+            //                     rank_rtag_map.insert(
+            //                         std::pair<unsigned int, std::pair<unsigned int, unsigned int>>(
+            //                             it->first,
+            //                             std::pair<unsigned int, unsigned int>(irank, it->second)));
 
-//             // add particles to snapshot
-//             assert(m_tag_set.size() == getNGlobal());
-//             std::set<unsigned int>::const_iterator tag_set_it = m_tag_set.begin();
+            //             // add particles to snapshot
+            //             assert(m_tag_set.size() == getNGlobal());
+            //             std::set<unsigned int>::const_iterator tag_set_it = m_tag_set.begin();
 
-//             std::map<unsigned int, std::pair<unsigned int, unsigned int>>::iterator rank_rtag_it;
-//             for (unsigned int snap_id = 0; snap_id < getNGlobal(); snap_id++)
-//                 {
-//                 unsigned int tag = *tag_set_it;
-//                 assert(tag <= getMaximumTag());
-//                 rank_rtag_it = rank_rtag_map.find(tag);
+            //             std::map<unsigned int, std::pair<unsigned int, unsigned int>>::iterator rank_rtag_it;
+            //             for (unsigned int snap_id = 0; snap_id < getNGlobal(); snap_id++)
+            //                 {
+            //                 unsigned int tag = *tag_set_it;
+            //                 assert(tag <= getMaximumTag());
+            //                 rank_rtag_it = rank_rtag_map.find(tag);
 
-//                 if (rank_rtag_it == rank_rtag_map.end())
-//                     {
-//                     ostringstream o;
-//                     o << "Error gathering ParticleData: Could not find particle " << tag
-//                       << " on any processor.";
-//                     throw std::runtime_error(o.str());
-//                     }
+            //                 if (rank_rtag_it == rank_rtag_map.end())
+            //                     {
+            //                     ostringstream o;
+            //                     o << "Error gathering ParticleData: Could not find particle " << tag
+            //                       << " on any processor.";
+            //                     throw std::runtime_error(o.str());
+            //                     }
 
-//                 // rank contains the processor rank on which the particle was found
-//                 std::pair<unsigned int, unsigned int> rank_idx = rank_rtag_it->second;
-//                 unsigned int rank = rank_idx.first;
-//                 unsigned int idx = rank_idx.second;
+            //                 // rank contains the processor rank on which the particle was found
+            //                 std::pair<unsigned int, unsigned int> rank_idx = rank_rtag_it->second;
+            //                 unsigned int rank = rank_idx.first;
+            //                 unsigned int idx = rank_idx.second;
 
-//                 // store tag in index map
-//                 index.insert(std::make_pair(tag, snap_id));
+            //                 // store tag in index map
+            //                 index.insert(std::make_pair(tag, snap_id));
 
-//                 snapshot.pos[snap_id] = vec3<Real>(pos_proc[rank][idx]);
-//                 snapshot.vel[snap_id] = vec3<Real>(vel_proc[rank][idx]);
-//                 snapshot.dpe[snap_id] = vec3<Real>(dpe_proc[rank][idx]);
-//                 snapshot.aux1[snap_id] = vec3<Real>(aux1_proc[rank][idx]);
-//                 snapshot.aux2[snap_id] = vec3<Real>(aux2_proc[rank][idx]);
-//                 snapshot.aux3[snap_id] = vec3<Real>(aux3_proc[rank][idx]);
-//                 snapshot.aux4[snap_id] = vec3<Real>(aux4_proc[rank][idx]);
-//                 snapshot.slength[snap_id] = slength_proc[rank][idx];
-//                 snapshot.accel[snap_id] = vec3<Real>(accel_proc[rank][idx]);
-//                 snapshot.dpedt[snap_id] = vec3<Real>(dpedt_proc[rank][idx]);
-//                 snapshot.type[snap_id] = type_proc[rank][idx];
-//                 snapshot.mass[snap_id] = Real(mass_proc[rank][idx]);
-//                 // snapshot.charge[snap_id] = Real(charge_proc[rank][idx]);
-//                 // snapshot.diameter[snap_id] = Real(diameter_proc[rank][idx]);
-//                 snapshot.image[snap_id] = image_proc[rank][idx];
-//                 snapshot.body[snap_id] = body_proc[rank][idx];
-//                 // snapshot.orientation[snap_id] = quat<Real>(orientation_proc[rank][idx]);
-//                 // snapshot.angmom[snap_id] = quat<Real>(angmom_proc[rank][idx]);
-//                 // snapshot.inertia[snap_id] = vec3<Real>(inertia_proc[rank][idx]);
+            //                 snapshot.pos[snap_id] = vec3<Real>(pos_proc[rank][idx]);
+            //                 snapshot.vel[snap_id] = vec3<Real>(vel_proc[rank][idx]);
+            //                 snapshot.dpe[snap_id] = vec3<Real>(dpe_proc[rank][idx]);
+            //                 snapshot.aux1[snap_id] = vec3<Real>(aux1_proc[rank][idx]);
+            //                 snapshot.aux2[snap_id] = vec3<Real>(aux2_proc[rank][idx]);
+            //                 snapshot.aux3[snap_id] = vec3<Real>(aux3_proc[rank][idx]);
+            //                 snapshot.aux4[snap_id] = vec3<Real>(aux4_proc[rank][idx]);
+            //                 snapshot.slength[snap_id] = slength_proc[rank][idx];
+            //                 snapshot.accel[snap_id] = vec3<Real>(accel_proc[rank][idx]);
+            //                 snapshot.dpedt[snap_id] = vec3<Real>(dpedt_proc[rank][idx]);
+            //                 snapshot.type[snap_id] = type_proc[rank][idx];
+            //                 snapshot.mass[snap_id] = Real(mass_proc[rank][idx]);
+            //                 // snapshot.charge[snap_id] = Real(charge_proc[rank][idx]);
+            //                 // snapshot.diameter[snap_id] = Real(diameter_proc[rank][idx]);
+            //                 snapshot.image[snap_id] = image_proc[rank][idx];
+            //                 snapshot.body[snap_id] = body_proc[rank][idx];
+            //                 // snapshot.orientation[snap_id] = quat<Real>(orientation_proc[rank][idx]);
+            //                 // snapshot.angmom[snap_id] = quat<Real>(angmom_proc[rank][idx]);
+            //                 // snapshot.inertia[snap_id] = vec3<Real>(inertia_proc[rank][idx]);
 
-//                 // make sure the position stored in the snapshot is within the boundaries
-//                 Scalar3 tmp = vec_to_scalar3(snapshot.pos[snap_id]);
-//                 m_global_box->wrap(tmp, snapshot.image[snap_id]);
-//                 snapshot.pos[snap_id] = vec3<Real>(tmp);
+            //                 // make sure the position stored in the snapshot is within the boundaries
+            //                 Scalar3 tmp = vec_to_scalar3(snapshot.pos[snap_id]);
+            //                 m_global_box->wrap(tmp, snapshot.image[snap_id]);
+            //                 snapshot.pos[snap_id] = vec3<Real>(tmp);
 
-//                 std::advance(tag_set_it, 1);
-//                 }
-//             }
-//         }
-//     else
-// #endif
+            //                 std::advance(tag_set_it, 1);
+            //                 }
+            //             }
+            //         }
+            //     else
+            // #endif
         {
         // allocate memory in snapshot
         snapshot.resize(getN());
@@ -2654,7 +2661,7 @@ ParticleData::takeSnapshotDistr(SnapshotParticleData<Real>& snapshot)
             snapshot.aux2[loc_id] = vec3<Real>(h_aux2.data[idx]);
             snapshot.aux3[loc_id] = vec3<Real>(h_aux3.data[idx]);
             snapshot.aux4[loc_id] = vec3<Real>(h_aux4.data[idx]);
-            snapshot.slength[loc_id] = h_slength.data[idx];
+            snapshot.slength[loc_id] = Real(h_slength.data[idx]);
             snapshot.accel[loc_id] = vec3<Real>(h_accel.data[idx]);
             snapshot.dpedt[loc_id] = vec3<Real>(h_dpedt.data[idx]);
             snapshot.type[loc_id] = __scalar_as_int(h_pos.data[idx].w);
@@ -3182,7 +3189,7 @@ Scalar ParticleData::getSmoothingLength(unsigned int tag) const
 
 
 //! Get the current dperate  of a particle
-Scalar3 ParticleData::getDPEdt(unsigned int tag) const
+Scalar3 ParticleData::getDPErateofchange(unsigned int tag) const
     {
     unsigned int idx = getRTag(tag);
     bool found = (idx < getN());
@@ -4287,7 +4294,7 @@ void export_ParticleData(pybind11::module& m)
         .def("getMaxSmoothingLength", &ParticleData::getMaxSmoothingLength)
         .def("constSmoothingLength", &ParticleData::constSmoothingLength)
         .def("getAcceleration", &ParticleData::getAcceleration)
-        .def("getDPEdt", &ParticleData::getDPEdt)
+        .def("getDPErateofchange", &ParticleData::getDPErateofchange)
         .def("getImage", &ParticleData::getImage)
         // .def("getCharge", &ParticleData::getCharge)
         .def("getMass", &ParticleData::getMass)
@@ -4423,8 +4430,6 @@ struct comm_flag_select : std::unary_function<const unsigned int, bool>
 void ParticleData::removeParticles(std::vector<detail::pdata_element>& out,
                                    std::vector<unsigned int>& comm_flags)
     {
-    m_exec_conf->msg->notice(7) << "ParticleData: start remove particles" << std::endl;
-
     unsigned int num_remove_ptls = 0;
 
         {
@@ -4447,24 +4452,15 @@ void ParticleData::removeParticles(std::vector<detail::pdata_element>& out,
                 }
         }
 
-    m_exec_conf->msg->notice(7) << "ParticleData: remove particles: Handles imported" << std::endl;
-
-
     unsigned int old_nparticles = getN();
     unsigned int new_nparticles = m_nparticles - num_remove_ptls;
 
     // resize output buffers
     out.resize(num_remove_ptls);
-    m_exec_conf->msg->notice(7) << "ParticleData: remove particles: out resized" << std::endl;
-
     comm_flags.resize(num_remove_ptls);
-    m_exec_conf->msg->notice(7) << "ParticleData: remove particles: comm resized" << std::endl;
-
 
     // resize particle data using amortized O(1) array resizing
     resize(new_nparticles);
-    m_exec_conf->msg->notice(7) << "ParticleData: remove particles: new_nparticles resized" << std::endl;
-
         {
         // access particle data arrays
         ArrayHandle<Scalar4> h_pos(getPositions(), access_location::host, access_mode::readwrite);
@@ -4560,10 +4556,6 @@ void ParticleData::removeParticles(std::vector<detail::pdata_element>& out,
                                             access_location::host,
                                             access_mode::overwrite);
 
-        m_exec_conf->msg->notice(7) << "ParticleData: remove particles: read ArrayHandles" << std::endl;
-        m_exec_conf->msg->notice(7) << "ParticleData: remove particles: old_nparticles " << old_nparticles << std::endl;
-
-
         unsigned int n = 0;
         unsigned int m = 0;
         // unsigned int net_virial_pitch = (unsigned int)m_net_virial.getPitch();
@@ -4572,70 +4564,36 @@ void ParticleData::removeParticles(std::vector<detail::pdata_element>& out,
             unsigned int tag = h_tag.data[i];
             if (h_rtag.data[tag] != NOT_LOCAL)
                 {
-                m_exec_conf->msg->notice(7) << "ParticleData: remove particles: over to alternate pdata arrays" << std::endl;
-
                 // copy over to alternate pdata arrays
                 h_pos_alt.data[n] = h_pos.data[i];
-                m_exec_conf->msg->notice(7) << "ParticleData: remove particles: over to alternate pdata arrays: pos" << std::endl;
-
                 h_vel_alt.data[n] = h_vel.data[i];
-                m_exec_conf->msg->notice(7) << "ParticleData: remove particles: over to alternate pdata arrays: h_vel" << std::endl;
-                
                 h_dpe_alt.data[n] = h_dpe.data[i];
-                m_exec_conf->msg->notice(7) << "ParticleData: remove particles: over to alternate pdata arrays: h_dpe" << std::endl;
-                
                 h_aux1_alt.data[n] = h_aux1.data[i];
-                m_exec_conf->msg->notice(7) << "ParticleData: remove particles: over to alternate pdata arrays: h_aux1" << std::endl;
-                
                 h_aux2_alt.data[n] = h_aux2.data[i];
-                m_exec_conf->msg->notice(7) << "ParticleData: remove particles: over to alternate pdata arrays: h_aux2" << std::endl;
-                
                 h_aux3_alt.data[n] = h_aux3.data[i];
-                m_exec_conf->msg->notice(7) << "ParticleData: remove particles: over to alternate pdata arrays: h_aux3" << std::endl;
-                
                 h_aux4_alt.data[n] = h_aux4.data[i];
-                m_exec_conf->msg->notice(7) << "ParticleData: remove particles: over to alternate pdata arrays: h_aux4" << std::endl;
-                
                 h_slength_alt.data[n] = h_slength.data[i];
-                m_exec_conf->msg->notice(7) << "ParticleData: remove particles: over to alternate pdata arrays: h_slength" << std::endl;
-                
                 h_accel_alt.data[n] = h_accel.data[i];
-                m_exec_conf->msg->notice(7) << "ParticleData: remove particles: over to alternate pdata arrays: h_accel" << std::endl;
-                
                 h_dpedt_alt.data[n] = h_dpedt.data[i];
-                m_exec_conf->msg->notice(7) << "ParticleData: remove particles: over to alternate pdata arrays: h_dpedt" << std::endl;
-                
                 // h_charge_alt.data[n] = h_charge.data[i];
                 // h_diameter_alt.data[n] = h_diameter.data[i];
                 h_image_alt.data[n] = h_image.data[i];
-                m_exec_conf->msg->notice(7) << "ParticleData: remove particles: over to alternate pdata arrays: h_image" << std::endl;
-                
                 h_body_alt.data[n] = h_body.data[i];
-                m_exec_conf->msg->notice(7) << "ParticleData: remove particles: over to alternate pdata arrays: h_body" << std::endl;
-                
                 // h_orientation_alt.data[n] = h_orientation.data[i];
                 // h_angmom_alt.data[n] = h_angmom.data[i];
                 // h_inertia_alt.data[n] = h_inertia.data[i];
                 h_net_force_alt.data[n] = h_net_force.data[i];
-                m_exec_conf->msg->notice(7) << "ParticleData: remove particles: over to alternate pdata arrays: h_net_force" << std::endl;
-                
                 h_net_ratedpe_alt.data[n] = h_net_ratedpe.data[i];
-                m_exec_conf->msg->notice(7) << "ParticleData: remove particles: over to alternate pdata arrays: h_net_ratedpe" << std::endl;
-                
                 // h_net_torque_alt.data[n] = h_net_torque.data[i];
                 // for (unsigned int j = 0; j < 6; ++j)
                 //     h_net_virial_alt.data[net_virial_pitch * j + n]
                 //         = h_net_virial.data[net_virial_pitch * j + i];
                 h_tag_alt.data[n] = h_tag.data[i];
-                m_exec_conf->msg->notice(7) << "ParticleData: remove particles: over to alternate pdata arrays: h_tag" << std::endl;
-                
                 ++n;
                 }
             else
                 {
                 // write to packed array
-                m_exec_conf->msg->notice(7) << "ParticleData: remove particles: write to packed arrays" << std::endl;
-
                 detail::pdata_element p;
                 p.pos = h_pos.data[i];
                 p.vel = h_vel.data[i];
@@ -4664,8 +4622,6 @@ void ParticleData::removeParticles(std::vector<detail::pdata_element>& out,
                 }
             }
 
-        m_exec_conf->msg->notice(7) << "ParticleData: remove particles: after loop" << std::endl;
-
         // write out non-zero communication flags
         std::remove_copy_if(h_comm_flags.data,
                             h_comm_flags.data + old_nparticles,
@@ -4675,9 +4631,6 @@ void ParticleData::removeParticles(std::vector<detail::pdata_element>& out,
         // reset communication flags to zero
         std::fill(h_comm_flags.data, h_comm_flags.data + new_nparticles, 0);
         }
-
-    m_exec_conf->msg->notice(7) << "ParticleData: remove particles: Before swap" << std::endl;
-
 
     // swap particle data arrays
     swapPositions();

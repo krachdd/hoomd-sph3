@@ -5,6 +5,7 @@ from hoomd import sph
 from hoomd.sph import _sph
 import numpy as np
 import itertools
+from datetime import datetime
 import export_gsd2vtu 
 # from mpi4py import MPI
 # import gsd.hoomd
@@ -41,9 +42,9 @@ UREF = FX*LREF*LREF*0.25/(MU/RHO0)
 
 
 
-# device = hoomd.device.CPU(notice_level = 10)
+device = hoomd.device.CPU(notice_level = 10)
 # device = hoomd.device.CPU(notice_level = 7)
-device = hoomd.device.CPU(notice_level = 2)
+# device = hoomd.device.CPU(notice_level = 2)
 sim = hoomd.Simulation(device = device)
 # if device.communicator.rank == 0:
 #     print("hoomd.version.mpi_enabled: {0}".format(hoomd.version.mpi_enabled))
@@ -85,9 +86,13 @@ Kappa  = Kernel.Kappa()
 # print(dir(hoomd.sph.kernel.WendlandC4))
 
 # # Neighbor list
-NList = hoomd.nsearch.nlist.Cell(buffer = RCUT*0.05, rebuild_check_delay = 1, kappa = Kappa)
+# NList = hoomd.nsearch.nlist.Cell(buffer = RCUT*0.05, rebuild_check_delay = 1, kappa = Kappa)
 
-# NList = hoomd.nsearch.nlist.Stencil(buffer = RCUT*0.05, cell_width=1.5, rebuild_check_delay = 1, kappa = Kappa)
+
+# print(NList.__dict__)
+# print(NList.loggables)
+
+NList = hoomd.nsearch.nlist.Stencil(buffer = RCUT*0.05, cell_width=1.5, rebuild_check_delay = 1, kappa = Kappa)
 # print(NList.__dict__)
 # print(NList._getattr_param('kappa'))
 # # print(help(NList._setattr_param))
@@ -116,6 +121,8 @@ model = hoomd.sph.sphmodel.SinglePhaseFlow(kernel = Kernel,
                                            fluidgroup_filter = filterFLUID,
                                            solidgroup_filter = filterSOLID)
 
+print("SetModelParameter")
+
 model.mu = 0.01
 model.densitymethod = 'SUMMATION'
 model.gx = FX
@@ -124,6 +131,8 @@ model.artificialviscosity = True
 model.alpha = 0.2
 model.beta = 0.0
 # Access the local snapshot, this is not ideal! 
+
+print(model.__dict__)
 
 with sim.state.cpu_local_snapshot as snapshot:
     model.max_sl = np.max(snapshot.particles.slength[:])
@@ -141,11 +150,11 @@ compute_filter_all = hoomd.filter.All()
 spf_properties = hoomd.sph.compute.SinglePhaseFlowBasicProperties(compute_filter_all)
 sim.operations.computes.append(spf_properties)
 
-
-print(f'Computed Time step: {dt}')
-print("Integrator Forces: {0}".format(integrator.forces[:]))
-print("Integrator Methods: {0}".format(integrator.methods[:]))
-print("Simulation Computes: {0}".format(sim.operations.computes[:]))
+if device.communicator.rank == 0:
+    print(f'Computed Time step: {dt}')
+    print("Integrator Forces: {0}".format(integrator.forces[:]))
+    print("Integrator Methods: {0}".format(integrator.methods[:]))
+    print("Simulation Computes: {0}".format(sim.operations.computes[:]))
 
 
 
@@ -161,7 +170,7 @@ sim.operations.writers.append(gsd_writer)
 
 
 # hoomd.write.GSD.write(filename = dumpname, state = sim.state, mode = 'wb')
-log_trigger = hoomd.trigger.Periodic(100)
+log_trigger = hoomd.trigger.Periodic(1)
 logger = hoomd.logging.Logger(categories=['scalar', 'string'])
 logger.add(sim, quantities=['timestep', 'tps', 'walltime'])
 logger.add(spf_properties, quantities=['kinetic_energy'])
@@ -176,12 +185,14 @@ sim.operations.writers.append(table)
 
 sim.operations.integrator = integrator
 
-print(model.loggables)
-print(sim.loggables)
-print(spf_properties.loggables)
+# print(model.loggables)
+# print(sim.loggables)
+# print(spf_properties.loggables)
 
-print("Starting Run")
+if device.communicator.rank == 0:
+    print("Starting Run at {0}".format(datetime.now().strftime("%d/%m/%Y %H:%M:%S")))
 
-sim.run(101)
+sim.run(1001)
 
-export_gsd2vtu.export_basic(dumpname)
+if device.communicator.rank == 0:
+    export_gsd2vtu.export_basic(dumpname)

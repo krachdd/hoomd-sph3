@@ -50,6 +50,8 @@ void NeighborListBinned::buildNlist(uint64_t timestep)
 
     uint3 dim = m_cl->getDim();
     Scalar3 ghost_width = m_cl->getGhostWidth();
+    std::cout << "ghost width " << ghost_width << std::endl;
+
 
     // acquire the particle data and box dimension
     ArrayHandle<Scalar4> h_pos(m_pdata->getPositions(), access_location::host, access_mode::read);
@@ -97,6 +99,8 @@ void NeighborListBinned::buildNlist(uint64_t timestep)
 
     // for each local particle
     unsigned int nparticles = m_pdata->getN();
+    std::cout << "number of particles " << nparticles << std::endl;
+
 
     for (int i = 0; i < (int)nparticles; i++)
         {
@@ -106,7 +110,9 @@ void NeighborListBinned::buildNlist(uint64_t timestep)
         const unsigned int type_i = __scalar_as_int(h_pos.data[i].w);
         const unsigned int body_i = h_body.data[i];
         // const Scalar diam_i = h_diameter.data[i];
-        const Scalar diam_i = m_kappa*Scalar(2)*h_slength.data[i];
+        std::cout << "kappa " << m_kappa << std::endl;
+
+        const Scalar diam_i = m_kappa*Scalar(2)*h_slength.data[i]; // TODO check
 
         const unsigned int Nmax_i = h_Nmax.data[type_i];
         const size_t head_idx_i = h_head_list.data[i];
@@ -135,6 +141,8 @@ void NeighborListBinned::buildNlist(uint64_t timestep)
 
             // check against all the particles in that neighboring bin to see if it is a neighbor
             unsigned int size = h_cell_size.data[neigh_cell];
+            // std::cout << "size " << size  << std::endl;
+
             for (unsigned int cur_offset = 0; cur_offset < size; cur_offset++)
                 {
                 Scalar4& cur_xyzf = h_cell_xyzf.data[cli(cur_offset, neigh_cell)];
@@ -168,7 +176,10 @@ void NeighborListBinned::buildNlist(uint64_t timestep)
                     // r^2 < (r_list + delta)^2
                     // r^2 < r_listsq + delta^2 + 2*r_list*delta
                     sqshift = (delta + Scalar(2.0) * r_list) * delta;
+                    std::cout << "sqshift " << sqshift  << std::endl;
+
                     }
+
 
                 Scalar dr_sq = dot(dx, dx);
 
@@ -182,6 +193,8 @@ void NeighborListBinned::buildNlist(uint64_t timestep)
                         if (cur_n_neigh < Nmax_i)
                             {
                             h_nlist.data[head_idx_i + cur_n_neigh] = cur_neigh;
+                            std::cout << "add neighbor "  << std::endl;
+
                             }
                         else
                             h_conditions.data[type_i]

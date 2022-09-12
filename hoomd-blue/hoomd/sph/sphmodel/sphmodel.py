@@ -263,6 +263,7 @@ class SinglePhaseFlow(SPHModel):
         super()._add(simulation)
 
     def _attach(self):
+        print("Attach SPHModel SinglePhaseFlow")
         if isinstance(self._simulation.device, hoomd.device.CPU):
             spf_cls = getattr(_sph, self._cpp_SPFclass_name)
         else:
@@ -304,13 +305,31 @@ class SinglePhaseFlow(SPHModel):
         self.consth = pdata.constSmoothingLength()
         if self.consth:
             self.maxh = pdata.getSmoothingLength(0)
-            print(f'Using constant Smooting Length: {self.maxh}')
+            if (self._simulation.device.communicator.rank == 0):
+                print(f'Using constant Smooting Length: {self.maxh}')
 
             self._cpp_obj.setConstSmoothingLength(self.maxh)
         else: 
             self.maxh      = pdata.getMaxSmoothingLength()
-            print('Non-Constant Smooting length')
+            if (self._simulation.device.communicator.rank == 0):
+                print('Non-Constant Smooting length')
         self.rcut = kappa * self.maxh
+
+        # Reload density and viscosity methods from __dict__
+        self.str_densitymethod = self._param_dict._dict["densitymethod"]
+        self.str_viscositymethod = self._param_dict._dict["viscositymethod"]
+
+        if self.str_densitymethod == str('SUMMATION'):
+            self.cpp_densitymethod = hoomd.sph._sph.PhaseFlowDensityMethod.DENSITYSUMMATION
+        elif self.str_densitymethod == str('CONTINUITY'):
+            self.cpp_densitymethod = hoomd.sph._sph.PhaseFlowDensityMethod.DENSITYCONTINUITY
+        else:
+            raise ValueError("Using undefined DensityMethod.")
+
+        if self.str_viscositymethod == str('HARMONICAVERAGE'):
+            self.cpp_viscositymethod = hoomd.sph._sph.PhaseFlowViscosityMethod.HARMONICAVERAGE
+        else:
+            raise ValueError("Using undefined ViscosityMethod.")
 
         # print(f'self.rcut: {self.rcut}')
 
@@ -346,6 +365,8 @@ class SinglePhaseFlow(SPHModel):
 
         self.setBodyAcceleration(self.gx, self.gy, self.gz, self.damp)
 
+        print(self._param_dict)
+
         # Attach param_dict and typeparam_dict
         super()._attach()
 
@@ -365,6 +386,7 @@ class SinglePhaseFlow(SPHModel):
     def setdensitymethod(self, method):
         if method not in self.DENSITYMETHODS:
             raise ValueError("Undefined DensityMethod.")
+        print("self.DENSITYMETHODS[method]: {0}".format(self.DENSITYMETHODS[method]))
         self._cpp_obj.setDensityMethod(self.DENSITYMETHODS[method])
 
     # @property

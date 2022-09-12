@@ -1598,8 +1598,6 @@ void Communicator::communicate(uint64_t timestep)
         m_force_migrate = false;
 
         // If so, migrate atoms
-        m_exec_conf->msg->notice(7) << "Communicator: communicate before migrate particles" << std::endl;
-
         migrateParticles();
 
         // Construct ghost send lists, exchange ghost atom data
@@ -1617,20 +1615,13 @@ void Communicator::communicate(uint64_t timestep)
 //! Transfer particles between neighboring domains
 void Communicator::migrateParticles()
     {
-    m_exec_conf->msg->notice(7) << "Communicator: migrate particles" << std::endl;
-
     updateGhostWidth();
 
     // check if simulation box is sufficiently large for domain decomposition
     checkBoxSize();
 
-    m_exec_conf->msg->notice(7) << "Communicator: start to remove all ghost particles" << std::endl;
-
     // remove ghost particles from system
     m_pdata->removeAllGhostParticles();
-
-    m_exec_conf->msg->notice(7) << "Communicator: finised remove all ghost particles" << std::endl;
-
 
     // get box dimensions
     const BoxDim& box = m_pdata->getBox();
@@ -1718,13 +1709,8 @@ void Communicator::migrateParticles()
         //     }
 
         // fill send buffer
-        m_exec_conf->msg->notice(7) << "Communicator communicate before removeParticles" << std::endl;
-
         std::vector<unsigned int> comm_flag_out; // not currently used
         m_pdata->removeParticles(m_sendbuf, comm_flag_out);
-
-        m_exec_conf->msg->notice(7) << "Communicator communicate after removeParticles" << std::endl;
-
 
         unsigned int send_neighbor = m_decomposition->getNeighborRank(dir);
 

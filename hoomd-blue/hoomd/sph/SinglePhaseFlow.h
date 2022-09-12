@@ -179,6 +179,8 @@ class PYBIND11_EXPORT SinglePhaseFlow : public SPHBaseClass<KT_, SET_>
             }
         void setDensityMethod(DensityMethod densitymethod)
             {
+            this->m_exec_conf->msg->notice(7) << "Set densitymethod " << densitymethod  << std::endl;
+
             m_density_method = densitymethod;
             }
 

@@ -31,7 +31,7 @@ namespace nsearch
 */
 NeighborList::NeighborList(std::shared_ptr<SystemDefinition> sysdef, Scalar r_buff)
     : Compute(sysdef), m_typpair_idx(m_pdata->getNTypes()), m_rcut_max_max(0.0), m_rcut_min(0.0),
-      m_r_buff(r_buff), m_d_max(1.0), m_kappa(3), m_filter_body(false), m_diameter_shift(false),
+      m_r_buff(r_buff), m_d_max(1.0), m_kappa(3.0), m_filter_body(false), m_diameter_shift(false),
       m_storage_mode(half), 
       // m_meshbond_data(NULL), 
       m_rcut_changed(true), m_updates(0),
