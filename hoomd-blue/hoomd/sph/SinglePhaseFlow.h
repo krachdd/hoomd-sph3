@@ -201,6 +201,9 @@ class PYBIND11_EXPORT SinglePhaseFlow : public SPHBaseClass<KT_, SET_>
             m_ch = h;
             m_rcut = m_kappa * m_ch;
             m_rcutsq = m_rcut * m_rcut;
+            std::cout << "m_ch " << m_ch << std::endl; 
+            std::cout << "m_rcut " << m_rcut << std::endl; 
+            std::cout << "m_rcutsq " << m_rcutsq << std::endl; 
             }
 
         /*! Set compute solid forces option to true. This is necessary if suspended object

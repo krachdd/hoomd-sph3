@@ -50,8 +50,6 @@ void NeighborListBinned::buildNlist(uint64_t timestep)
 
     uint3 dim = m_cl->getDim();
     Scalar3 ghost_width = m_cl->getGhostWidth();
-    std::cout << "ghost width " << ghost_width << std::endl;
-
 
     // acquire the particle data and box dimension
     ArrayHandle<Scalar4> h_pos(m_pdata->getPositions(), access_location::host, access_mode::read);
@@ -151,6 +149,7 @@ void NeighborListBinned::buildNlist(uint64_t timestep)
                 // get the current neighbor type from the position data (will use tdb on the GPU)
                 unsigned int cur_neigh_type = __scalar_as_int(h_pos.data[cur_neigh].w);
                 Scalar r_cut = h_r_cut.data[m_typpair_idx(type_i, cur_neigh_type)];
+                std::cout << "Scalar r_cut " << r_cut << std::endl;
 
                 // automatically exclude particles without a distance check when:
                 // (1) they are the same particle, or

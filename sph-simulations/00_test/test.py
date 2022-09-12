@@ -86,13 +86,13 @@ Kappa  = Kernel.Kappa()
 # print(dir(hoomd.sph.kernel.WendlandC4))
 
 # # Neighbor list
-# NList = hoomd.nsearch.nlist.Cell(buffer = RCUT*0.05, rebuild_check_delay = 1, kappa = Kappa)
+NList = hoomd.nsearch.nlist.Cell(buffer = RCUT*0.05, rebuild_check_delay = 1, kappa = Kappa)
 
 
-# print(NList.__dict__)
+print(NList.__dict__)
 # print(NList.loggables)
 
-NList = hoomd.nsearch.nlist.Stencil(buffer = RCUT*0.05, cell_width=1.5, rebuild_check_delay = 1, kappa = Kappa)
+# NList = hoomd.nsearch.nlist.Stencil(buffer = RCUT*0.05, cell_width=1.5, rebuild_check_delay = 1, kappa = Kappa)
 # print(NList.__dict__)
 # print(NList._getattr_param('kappa'))
 # # print(help(NList._setattr_param))
