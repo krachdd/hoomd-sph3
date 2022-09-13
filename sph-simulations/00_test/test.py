@@ -4,7 +4,7 @@ from hoomd import *
 from hoomd import sph
 from hoomd.sph import _sph
 import numpy as np
-import itertools
+# import itertools
 from datetime import datetime
 import export_gsd2vtu 
 # from mpi4py import MPI
@@ -42,9 +42,9 @@ UREF = FX*LREF*LREF*0.25/(MU/RHO0)
 
 
 
-# device = hoomd.device.CPU(notice_level = 10)
-# device = hoomd.device.CPU(notice_level = 7)
-device = hoomd.device.CPU(notice_level = 2)
+# device = hoomd.device.CPU(notice_level = 10, msg_file = 'log.txt')
+# device = hoomd.device.CPU(notice_level = 7, msg_file = 'log.txt')
+device = hoomd.device.CPU(notice_level = 2, msg_file = 'log.txt')
 sim = hoomd.Simulation(device = device)
 # if device.communicator.rank == 0:
 #     print("hoomd.version.mpi_enabled: {0}".format(hoomd.version.mpi_enabled))
@@ -147,7 +147,8 @@ integrator.methods.append(VelocityVerlet)
 integrator.forces.append(model)
 
 compute_filter_all = hoomd.filter.All()
-spf_properties = hoomd.sph.compute.SinglePhaseFlowBasicProperties(compute_filter_all)
+compute_filter_fluid = hoomd.filter.Type(['F'])
+spf_properties = hoomd.sph.compute.SinglePhaseFlowBasicProperties(compute_filter_fluid)
 sim.operations.computes.append(spf_properties)
 
 if device.communicator.rank == 0:
@@ -173,9 +174,9 @@ sim.operations.writers.append(gsd_writer)
 log_trigger = hoomd.trigger.Periodic(1)
 logger = hoomd.logging.Logger(categories=['scalar', 'string'])
 logger.add(sim, quantities=['timestep', 'tps', 'walltime'])
-logger.add(spf_properties, quantities=['kinetic_energy', 'num_particles', 'fluid_vel_x_sum'])
-table = hoomd.write.Table(trigger=log_trigger,
-                          logger=logger)
+logger.add(spf_properties, quantities=['kinetic_energy', 'num_particles', 'fluid_vel_x_sum', 'mean_density'])
+table = hoomd.write.Table(trigger=log_trigger, 
+                          logger=logger, max_header_len = 10)
 # file = open('log.txt', mode='x', newline='\n')
 # table_file = hoomd.write.Table(output=file,
 #                                trigger=hoomd.trigger.Periodic(period=5000),
@@ -187,12 +188,12 @@ sim.operations.integrator = integrator
 
 # print(model.loggables)
 # print(sim.loggables)
-print(spf_properties.loggables)
+# print(spf_properties.loggables)
 
 if device.communicator.rank == 0:
     print("Starting Run at {0}".format(datetime.now().strftime("%d/%m/%Y %H:%M:%S")))
 
-sim.run(1001, write_at_start=True)
+sim.run(101, write_at_start=True)
 
 if device.communicator.rank == 0:
     export_gsd2vtu.export_basic(dumpname)

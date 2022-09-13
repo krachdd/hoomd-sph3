@@ -120,6 +120,23 @@ class PYBIND11_EXPORT ComputeSPFBasicProperties : public Compute
         return h_properties.data[singlephaseflow_logger_index::sum_fluid_velocity_z];
         }
 
+
+    //! Returns the mean fluid partcile density last computed by compute()
+    /*! \returns Instantaneous mean fluid particle density 
+     */
+
+    Scalar getMeanFluidDensity()
+        {
+#ifdef ENABLE_MPI
+        if (!m_properties_reduced)
+            reduceProperties();
+#endif
+
+        // return only translational component if the flags are not valid
+        ArrayHandle<Scalar> h_properties(m_properties, access_location::host, access_mode::read);
+        return h_properties.data[singlephaseflow_logger_index::sum_fluid_density]/m_group->getNumMembersGlobal();
+        }
+
     unsigned int getNumParticles()
         {
         return m_group->getNumMembersGlobal();

@@ -316,6 +316,8 @@ class SinglePhaseFlow(SPHModel):
                 print('Non-Constant Smooting length')
         self.rcut = kappa * self.maxh
 
+        print(f'self.rcut {self.rcut}')
+
         # Set rcut in neigbour list
         self._param_dict.update(ParameterDict(
                           rcut = self.rcut

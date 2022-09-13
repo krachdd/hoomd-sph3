@@ -377,6 +377,81 @@ void SinglePhaseFlow<KT_, SET_>::setRCutPython(pybind11::tuple types, Scalar r_c
     setRcut(typ1, typ2, r_cut);
     }
 
+/*! Perform number density computation
+ * This method computes and stores
+     - the density based on a real mass density ( rho_i = m_i * n_neighbours / volume_sphere_of_influnece ) for fluid particles
+   in the x-component of the h_dpe Array.
+   It overestimates density, but is superfast in comparison to compute_ndensity.
+ */
+template<SmoothingKernelType KT_,StateEquationType SET_>
+void SinglePhaseFlow<KT_, SET_>::compute_particlenumberdensity(uint64_t timestep)
+    {
+    this->m_exec_conf->msg->notice(7) << "Computing SinglePhaseFlow::Particle Number Density" << std::endl;
+
+    // if (this->m_prof)
+    //     this->m_prof->push("SinglePhaseFlowNDensity");
+
+    // Grab handles for particle data
+    ArrayHandle<Scalar3> h_dpe(this->m_pdata->getDPEs(), access_location::host, access_mode::readwrite);
+    ArrayHandle<Scalar4> h_pos(this->m_pdata->getPositions(), access_location::host, access_mode::read);
+    ArrayHandle<Scalar4> h_velocity(this->m_pdata->getVelocities(), access_location::host, access_mode::read);
+    // ArrayHandle<Scalar>  h_h(this->m_pdata->getSlengths(), access_location::host, access_mode::read);
+
+    // Grab handles for neighbor data
+    ArrayHandle<unsigned int> h_n_neigh(this->m_nlist->getNNeighArray(), access_location::host, access_mode::read);
+    ArrayHandle<unsigned int> h_nlist(this->m_nlist->getNListArray(), access_location::host, access_mode::read);
+    ArrayHandle<size_t> h_head_list(this->m_nlist->getHeadList(), access_location::host, access_mode::read);
+    // ArrayHandle<unsigned int> h_head_list(this->m_nlist->getHeadList(), access_location::host, access_mode::read);
+    ArrayHandle<unsigned int> h_type_property_map(this->m_type_property_map, access_location::host, access_mode::read);
+
+    unsigned int size;
+    long unsigned int myHead;
+
+    // Volume of sphere with radius m_rcut
+    double sphere_vol = Scalar(4.0)/Scalar(3.0) * Scalar(3.14159265359) * pow(m_rcut, 3);
+
+    // Particle loop
+    for (unsigned int i = 0; i < this->m_pdata->getN(); i++)
+        {
+
+        // Determine particle i type
+        bool i_issolid = checksolid(h_type_property_map.data, h_pos.data[i].w);
+
+        // Skip neighbor loop if this solid solid particle does not have fluid neighbors
+        bool solid_w_fluid_neigh = false;
+        if ( i_issolid )
+            {
+            myHead = h_head_list.data[i];
+            size = (unsigned int)h_n_neigh.data[i];
+            for (unsigned int j = 0; j < size; j++)
+                {
+                    unsigned int k = h_nlist.data[myHead + j];
+                    if ( checkfluid(h_type_property_map.data, h_pos.data[k].w) )
+                        {
+                        solid_w_fluid_neigh = true;
+                        break;
+                        }
+                    }
+            }
+
+        if ( i_issolid && !(solid_w_fluid_neigh) )
+            {
+            h_dpe.data[i].x = this->m_rho0;
+            continue;
+            }
+
+        // All of the neighbors of this particle
+        unsigned int size = (unsigned int)h_n_neigh.data[i];
+
+        h_dpe.data[i].x = size * h_velocity.data[i].w / sphere_vol;
+        std::cout << "Mass: " << h_velocity.data[i].w << " size " << size << " sphere_vol " << sphere_vol << " density " << h_dpe.data[i].x << std::endl;
+
+
+        } // End of particle loop
+    }
+
+
+
 
 /*! Perform number density computation
  * This method computes and stores
@@ -517,9 +592,8 @@ void SinglePhaseFlow<KT_, SET_>::compute_ndensity(uint64_t timestep)
         // rho_i = m_i * \sum_j wij
         if ( this->m_density_method == DENSITYSUMMATION && i_isfluid )
             {
-            // this->m_exec_conf->msg->notice(7) << "Computing SinglePhaseFlow::Number Density : compute real density" << std::endl;
-
             h_dpe.data[i].x= h_dpe.data[i].x * h_velocity.data[i].w;
+
             }
 
         } // End of particle loop
@@ -1161,11 +1235,8 @@ template<SmoothingKernelType KT_,StateEquationType SET_>
 void SinglePhaseFlow<KT_, SET_>::computeForces(uint64_t timestep)
     {
 
-    // this->m_exec_conf->msg->notice(5) << "nlist type: " << this->m_nlist << std::endl;
     // start by updating the neighborlist
     this->m_nlist->compute(timestep);
-    // if (this->m_prof)
-    //     this->m_prof->push("SinglePhaseFlow");
 
     // This is executed once to initialize protected/private variables
     if (!m_params_set)
@@ -1188,6 +1259,7 @@ void SinglePhaseFlow<KT_, SET_>::computeForces(uint64_t timestep)
     // Compute solid renormalization constant and, provided that SUMMATION approach is used,
     // particle mass densities.
     compute_ndensity(timestep);
+    // compute_particlenumberdensity(timestep);
 
     // Compute fluid pressure based on m_eos;
     compute_pressure(timestep);

@@ -365,6 +365,8 @@ class PYBIND11_EXPORT SinglePhaseFlow : public SPHBaseClass<KT_, SET_>
                  compute fluid normalization constant.
          */
         void compute_ndensity(uint64_t timestep);
+        
+        void compute_particlenumberdensity(uint64_t timestep);
 
         /*! Helper function to compute particle pressures
          *  \post Pressure of fluid particle computed

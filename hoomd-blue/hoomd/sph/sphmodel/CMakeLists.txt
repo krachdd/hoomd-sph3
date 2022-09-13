@@ -1,3 +1,7 @@
+#-----------------------------------------------------------
+# maintainer: dkrach, david.krach@mib.uni-stuttgart.de
+# ----------------------------------------------------------
+
 set(files __init__.py
           sphmodel.py
    )

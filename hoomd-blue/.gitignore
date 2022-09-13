@@ -1,5 +1,6 @@
 build/
-__pycache__/
+
+CMakeCache.txt
 
 *.sublime-workspace
 *.DS_Store
