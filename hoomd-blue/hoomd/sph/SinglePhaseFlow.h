@@ -50,19 +50,19 @@ namespace hoomd
 namespace sph
 {
 //! Enum for indexing the GPUArray of computed values
-struct singlephaseflow_logger_index
-    {
-    enum Enum
-        {
-        sum_fluid_velocity_x=0, //!< Index for the sum of fluid x-velocity in the GPUArray
-        sum_fluid_velocity_y,   //!< Index for the sum of fluid y-velocity in the GPUArray
-        sum_fluid_velocity_z,   //!< Index for the sum of fluid z-velocity in the GPUArray
-        kinetic_energy,         //!< Index for the overall kinetic energy of the system
-        total_fluid_particles,  //!< Total number of fluid particles
-        // dt_adapt,               //!< Adaptive timestep size
-        num_quantities // final element to count number of quantities
-        };
-    };
+// struct singlephaseflow_logger_index
+//     {
+//     enum Enum
+//         {
+//         sum_fluid_velocity_x=0, //!< Index for the sum of fluid x-velocity in the GPUArray
+//         sum_fluid_velocity_y,   //!< Index for the sum of fluid y-velocity in the GPUArray
+//         sum_fluid_velocity_z,   //!< Index for the sum of fluid z-velocity in the GPUArray
+//         kinetic_energy,         //!< Index for the overall kinetic energy of the system
+//         total_fluid_particles,  //!< Total number of fluid particles
+//         // dt_adapt,               //!< Adaptive timestep size
+//         num_quantities // final element to count number of quantities
+//         };
+//     };
 
 
 //! Computes SinglePhaseFlow forces on each particle
@@ -90,73 +90,73 @@ class PYBIND11_EXPORT SinglePhaseFlow : public SPHBaseClass<KT_, SET_>
         //! Returns sum of fluid x-velocity last computed by compute()
         /*! \returns Instantaneous translational kinetic energy of the system
         */
-        Scalar GetSumFluidXVelocity()
-            {
-            #ifdef ENABLE_MPI
-            if (!m_properties_reduced) reduceProperties();
-            #endif
-            ArrayHandle<Scalar> h_properties(m_properties, access_location::host, access_mode::read);
-            return h_properties.data[singlephaseflow_logger_index::sum_fluid_velocity_x];
-            }
-
-        //! Returns sum of fluid y-velocity last computed by compute()
-        /*! \returns Sum of fluid y-velocity
-        */
-        Scalar GetSumFluidYVelocity()
-            {
-            #ifdef ENABLE_MPI
-            if (!m_properties_reduced) reduceProperties();
-            #endif
-            ArrayHandle<Scalar> h_properties(m_properties, access_location::host, access_mode::read);
-            return h_properties.data[singlephaseflow_logger_index::sum_fluid_velocity_y];
-            }
-
-        //! Returns sum of fluid z-velocity last computed by compute()
-        /*! \returns Sum of fluid z-velocity
-        */
-        Scalar GetSumFluidZVelocity()
-            {
-            #ifdef ENABLE_MPI
-            if (!m_properties_reduced) reduceProperties();
-            #endif
-            ArrayHandle<Scalar> h_properties(m_properties, access_location::host, access_mode::read);
-            return h_properties.data[singlephaseflow_logger_index::sum_fluid_velocity_z];
-            }
-
-        Scalar GetFluidParticleNum()
-            {
-            #ifdef ENABLE_MPI
-            if (!m_properties_reduced) reduceProperties();
-            #endif
-            ArrayHandle<Scalar> h_properties(m_properties, access_location::host, access_mode::read);
-            return h_properties.data[singlephaseflow_logger_index::total_fluid_particles];
-            }
-        Scalar GetKineticEnergy()
-            {
-            #ifdef ENABLE_MPI
-            if (!m_properties_reduced) reduceProperties();
-            #endif
-            ArrayHandle<Scalar> h_properties(m_properties, access_location::host, access_mode::read);
-            return h_properties.data[singlephaseflow_logger_index::kinetic_energy];
-            }
-        // Scalar GetAdaptTimestep()
+        // Scalar GetSumFluidXVelocity()
         //     {
         //     #ifdef ENABLE_MPI
         //     if (!m_properties_reduced) reduceProperties();
         //     #endif
         //     ArrayHandle<Scalar> h_properties(m_properties, access_location::host, access_mode::read);
-        //     return h_properties.data[singlephaseflow_logger_index::dt_adapt];
+        //     return h_properties.data[singlephaseflow_logger_index::sum_fluid_velocity_x];
         //     }
 
-        //! Get the GPU array of properties
-        const GPUArray<Scalar>& getProperties()
-            {
-            #ifdef ENABLE_MPI
-            if (!m_properties_reduced) reduceProperties();
-            #endif
+        // //! Returns sum of fluid y-velocity last computed by compute()
+        // /*! \returns Sum of fluid y-velocity
+        // */
+        // Scalar GetSumFluidYVelocity()
+        //     {
+        //     #ifdef ENABLE_MPI
+        //     if (!m_properties_reduced) reduceProperties();
+        //     #endif
+        //     ArrayHandle<Scalar> h_properties(m_properties, access_location::host, access_mode::read);
+        //     return h_properties.data[singlephaseflow_logger_index::sum_fluid_velocity_y];
+        //     }
 
-            return m_properties;
-            }
+        // //! Returns sum of fluid z-velocity last computed by compute()
+        // /*! \returns Sum of fluid z-velocity
+        // */
+        // Scalar GetSumFluidZVelocity()
+        //     {
+        //     #ifdef ENABLE_MPI
+        //     if (!m_properties_reduced) reduceProperties();
+        //     #endif
+        //     ArrayHandle<Scalar> h_properties(m_properties, access_location::host, access_mode::read);
+        //     return h_properties.data[singlephaseflow_logger_index::sum_fluid_velocity_z];
+        //     }
+
+        // Scalar GetFluidParticleNum()
+        //     {
+        //     #ifdef ENABLE_MPI
+        //     if (!m_properties_reduced) reduceProperties();
+        //     #endif
+        //     ArrayHandle<Scalar> h_properties(m_properties, access_location::host, access_mode::read);
+        //     return h_properties.data[singlephaseflow_logger_index::total_fluid_particles];
+        //     }
+        // Scalar GetKineticEnergy()
+        //     {
+        //     #ifdef ENABLE_MPI
+        //     if (!m_properties_reduced) reduceProperties();
+        //     #endif
+        //     ArrayHandle<Scalar> h_properties(m_properties, access_location::host, access_mode::read);
+        //     return h_properties.data[singlephaseflow_logger_index::kinetic_energy];
+        //     }
+        // // Scalar GetAdaptTimestep()
+        // //     {
+        // //     #ifdef ENABLE_MPI
+        // //     if (!m_properties_reduced) reduceProperties();
+        // //     #endif
+        // //     ArrayHandle<Scalar> h_properties(m_properties, access_location::host, access_mode::read);
+        // //     return h_properties.data[singlephaseflow_logger_index::dt_adapt];
+        // //     }
+
+        // //! Get the GPU array of properties
+        // const GPUArray<Scalar>& getProperties()
+        //     {
+        //     #ifdef ENABLE_MPI
+        //     if (!m_properties_reduced) reduceProperties();
+        //     #endif
+
+        //     return m_properties;
+        //     }
 
         //! Set the rcut for a single type pair
         virtual void setRcut(unsigned int typ1, unsigned int typ2, Scalar rcut);
@@ -169,10 +169,10 @@ class PYBIND11_EXPORT SinglePhaseFlow : public SPHBaseClass<KT_, SET_>
 
 
         //! Returns a list of log quantities this compute calculates
-        virtual std::vector< std::string > getProvidedLogQuantities();
+        // virtual std::vector< std::string > getProvidedLogQuantities();
 
         //! Calculates the requested log value and returns it
-        virtual Scalar getLogValue(const std::string& quantity, uint64_t timestep);
+        // virtual Scalar getLogValue(const std::string& quantity, uint64_t timestep);
 
         //! Returns a list of log quantities this compute calculates
         virtual std::vector<double> getProvidedTimestepQuantities(uint64_t timestep);
@@ -352,13 +352,13 @@ class PYBIND11_EXPORT SinglePhaseFlow : public SPHBaseClass<KT_, SET_>
         std::vector<double> m_timestep_list = std::vector<double>(7);  //!< Cache all generated timestep quantities names
 
         //! Computes log properties
-        void computeProperties();
+        // void computeProperties();
 
-#ifdef ENABLE_MPI
-        bool m_properties_reduced;      //!< True if properties have been reduced across MPI
-        //! Reduce properties over MPI
-        void reduceProperties();
-#endif
+// #ifdef ENABLE_MPI
+//         bool m_properties_reduced;      //!< True if properties have been reduced across MPI
+//         //! Reduce properties over MPI
+//         void reduceProperties();
+// #endif
 
         /*! Helper function to compute particle number density
          * \post For fluid particles, compute number density. For solid particles,

@@ -173,7 +173,7 @@ sim.operations.writers.append(gsd_writer)
 log_trigger = hoomd.trigger.Periodic(1)
 logger = hoomd.logging.Logger(categories=['scalar', 'string'])
 logger.add(sim, quantities=['timestep', 'tps', 'walltime'])
-logger.add(spf_properties, quantities=['kinetic_energy'])
+logger.add(spf_properties, quantities=['kinetic_energy', 'num_particles', 'fluid_vel_x_sum'])
 table = hoomd.write.Table(trigger=log_trigger,
                           logger=logger)
 # file = open('log.txt', mode='x', newline='\n')
@@ -187,7 +187,7 @@ sim.operations.integrator = integrator
 
 # print(model.loggables)
 # print(sim.loggables)
-# print(spf_properties.loggables)
+print(spf_properties.loggables)
 
 if device.communicator.rank == 0:
     print("Starting Run at {0}".format(datetime.now().strftime("%d/%m/%Y %H:%M:%S")))

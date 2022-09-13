@@ -68,6 +68,36 @@ class SinglePhaseFlowBasicProperties(Compute):
         self._cpp_obj.compute(self._simulation.timestep)
         return self._cpp_obj.kinetic_energy
 
+    @log(requires_run=True)
+    def num_particles(self):
+        """Number of particles :math:`N` in the subset."""
+        return self._cpp_obj.num_particles
+
+    @log(requires_run=True)
+    def volume(self):
+        """Volume :math:`V` of the simulation box (area in 2D) \
+        :math:`[\\mathrm{length}^{D}]`."""
+        return self._cpp_obj.volume
+
+    @log(requires_run=True)
+    def fluid_vel_x_sum(self):
+        """Sum of Fluid Particle velocity in xdir """
+        self._cpp_obj.compute(self._simulation.timestep)
+        return self._cpp_obj.fluid_vel_x_sum
+
+    @log(requires_run=True)
+    def fluid_vel_y_sum(self):
+        """Sum of Fluid Particle velocity in xdir """
+        self._cpp_obj.compute(self._simulation.timestep)
+        return self._cpp_obj.fluid_vel_y_sum
+
+    @log(requires_run=True)
+    def fluid_vel_z_sum(self):
+        """Sum of Fluid Particle velocity in xdir """
+        self._cpp_obj.compute(self._simulation.timestep)
+        return self._cpp_obj.fluid_vel_z_sum
+
+
 
 # class ThermodynamicQuantities(Compute):
 #     """Compute thermodynamic properties of a subset of the system.
