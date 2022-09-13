@@ -32,7 +32,7 @@ SPHBaseClass<KT_, SET_>::SPHBaseClass(std::shared_ptr<SystemDefinition> sysdef,
                            std::shared_ptr<SmoothingKernel<KT_> > skernel,
                            std::shared_ptr<StateEquation<SET_> > eos,
                            std::shared_ptr<nsearch::NeighborList> nlist)
-    : ForceCompute(sysdef), m_skernel(skernel), m_eos(eos), m_nlist(nlist)
+    : ForceCompute(sysdef), m_skernel(skernel), m_eos(eos), m_nlist(nlist), m_typpair_idx(m_pdata->getNTypes())
       {
         m_exec_conf->msg->notice(5) << "Constructing SPHBaseClass" << std::endl;
 

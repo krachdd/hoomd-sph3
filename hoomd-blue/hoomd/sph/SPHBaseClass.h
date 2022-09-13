@@ -116,6 +116,8 @@ class PYBIND11_EXPORT SPHBaseClass : public ForceCompute
         std::shared_ptr<StateEquation<SET_> > m_eos; //!< The equation of state class this method is associated with
         std::shared_ptr<nsearch::NeighborList> m_nlist; //!< The neighbor list to use for the computation
 
+        Index2D m_typpair_idx;        //!< Helper class for indexing per type pair arrays
+
         DensityMethod m_densitymethod;
         ViscosityMethod m_viscositymethod;
 

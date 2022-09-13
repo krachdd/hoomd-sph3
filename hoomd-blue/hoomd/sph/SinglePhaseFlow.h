@@ -158,6 +158,16 @@ class PYBIND11_EXPORT SinglePhaseFlow : public SPHBaseClass<KT_, SET_>
             return m_properties;
             }
 
+        //! Set the rcut for a single type pair
+        virtual void setRcut(unsigned int typ1, unsigned int typ2, Scalar rcut);
+
+        /// Set the rcut for a single type pair using a tuple of strings
+        virtual void setRCutPython(pybind11::tuple types, Scalar r_cut);
+
+        /// Validate that types are within Ntypes
+        void validateTypes(unsigned int typ1, unsigned int typ2, std::string action);
+
+
         //! Returns a list of log quantities this compute calculates
         virtual std::vector< std::string > getProvidedLogQuantities();
 
@@ -201,9 +211,6 @@ class PYBIND11_EXPORT SinglePhaseFlow : public SPHBaseClass<KT_, SET_>
             m_ch = h;
             m_rcut = m_kappa * m_ch;
             m_rcutsq = m_rcut * m_rcut;
-            std::cout << "m_ch " << m_ch << std::endl; 
-            std::cout << "m_rcut " << m_rcut << std::endl; 
-            std::cout << "m_rcutsq " << m_rcutsq << std::endl; 
             }
 
         /*! Set compute solid forces option to true. This is necessary if suspended object
@@ -296,6 +303,13 @@ class PYBIND11_EXPORT SinglePhaseFlow : public SPHBaseClass<KT_, SET_>
         // Shared pointers
         std::shared_ptr<ParticleGroup> m_fluidgroup; //!< Group of fluid particles
         std::shared_ptr<ParticleGroup> m_solidgroup; //!< Group of fluid particles
+
+        /// r_cut (not squared) given to the neighbor list
+        std::shared_ptr<GlobalArray<Scalar>> m_r_cut_nlist;
+
+
+        // Index for rcut pair info -> nlist
+        Index2D m_typpair_idx;        //!< Helper class for indexing per type pair arrays
 
         // std::shared_ptr<nsearch::NeighborList> m_nlist; //!< the neighborlist to use for the computation
 

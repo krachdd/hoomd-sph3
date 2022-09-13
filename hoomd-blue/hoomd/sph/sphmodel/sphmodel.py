@@ -263,7 +263,6 @@ class SinglePhaseFlow(SPHModel):
         super()._add(simulation)
 
     def _attach(self):
-        print("Attach SPHModel SinglePhaseFlow")
         if isinstance(self._simulation.device, hoomd.device.CPU):
             spf_cls = getattr(_sph, self._cpp_SPFclass_name)
         else:
@@ -293,12 +292,14 @@ class SinglePhaseFlow(SPHModel):
         cpp_eos = self.eos.cpp_stateequation
         cpp_nlist =  self.nlist._cpp_obj
 
+        # Set Kernel specific Kappa in cpp-Nlist
+        self.kernel.setNeighborList(self.nlist)
+
         self._cpp_obj = spf_cls(cpp_sys_def, cpp_kernel, cpp_eos, cpp_nlist, cpp_fluidgroup, 
                                 cpp_solidgroup, self.cpp_densitymethod, self.cpp_viscositymethod)
 
         # Set kernel parameters
         kappa = self.kernel.Kappa()
-        # print(dir(self._simulation.state._cpp_sys_def))
         pdata = self._simulation.state._cpp_sys_def.getParticleData()
         globalN = pdata.getNGlobal()
 
@@ -315,6 +316,11 @@ class SinglePhaseFlow(SPHModel):
                 print('Non-Constant Smooting length')
         self.rcut = kappa * self.maxh
 
+        # Set rcut in neigbour list
+        self._param_dict.update(ParameterDict(
+                          rcut = self.rcut
+                          ))
+
         # Reload density and viscosity methods from __dict__
         self.str_densitymethod = self._param_dict._dict["densitymethod"]
         self.str_viscositymethod = self._param_dict._dict["viscositymethod"]
@@ -330,8 +336,6 @@ class SinglePhaseFlow(SPHModel):
             self.cpp_viscositymethod = hoomd.sph._sph.PhaseFlowViscosityMethod.HARMONICAVERAGE
         else:
             raise ValueError("Using undefined ViscosityMethod.")
-
-        # print(f'self.rcut: {self.rcut}')
 
         # get all params in line
         self.mu = self._param_dict['mu']
@@ -363,9 +367,9 @@ class SinglePhaseFlow(SPHModel):
         if (self.compute_solid_forces == True):
             self.computeSolidForces()
 
-        self.setBodyAcceleration(self.gx, self.gy, self.gz, self.damp)
+        self.setrcut(self.rcut)
 
-        print(self._param_dict)
+        self.setBodyAcceleration(self.gx, self.gy, self.gz, self.damp)
 
         # Attach param_dict and typeparam_dict
         super()._attach()
@@ -375,6 +379,14 @@ class SinglePhaseFlow(SPHModel):
         self._cpp_obj.setParams(self.mu)
         self.params_set = True
         self._param_dict.__setattr__('params_set', True)
+
+    # @rcut.setter
+    def setrcut(self, rcut):
+        if rcut <= 0.0:
+            raise ValueError("Rcut has to be > 0.0.")
+        self._cpp_obj.setRCut(('F', 'S'), rcut)
+        self._cpp_obj.setRCut(('S', 'S'), rcut)
+        self._cpp_obj.setRCut(('F', 'F'), rcut)
 
     # @property
     def densitymethod(self):
@@ -386,7 +398,6 @@ class SinglePhaseFlow(SPHModel):
     def setdensitymethod(self, method):
         if method not in self.DENSITYMETHODS:
             raise ValueError("Undefined DensityMethod.")
-        print("self.DENSITYMETHODS[method]: {0}".format(self.DENSITYMETHODS[method]))
         self._cpp_obj.setDensityMethod(self.DENSITYMETHODS[method])
 
     # @property

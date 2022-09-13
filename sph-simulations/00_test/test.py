@@ -42,9 +42,9 @@ UREF = FX*LREF*LREF*0.25/(MU/RHO0)
 
 
 
-device = hoomd.device.CPU(notice_level = 10)
+# device = hoomd.device.CPU(notice_level = 10)
 # device = hoomd.device.CPU(notice_level = 7)
-# device = hoomd.device.CPU(notice_level = 2)
+device = hoomd.device.CPU(notice_level = 2)
 sim = hoomd.Simulation(device = device)
 # if device.communicator.rank == 0:
 #     print("hoomd.version.mpi_enabled: {0}".format(hoomd.version.mpi_enabled))
@@ -89,8 +89,10 @@ Kappa  = Kernel.Kappa()
 NList = hoomd.nsearch.nlist.Cell(buffer = RCUT*0.05, rebuild_check_delay = 1, kappa = Kappa)
 
 
-print(NList.__dict__)
+# print(NList.__dict__)
 # print(NList.loggables)
+
+
 
 # NList = hoomd.nsearch.nlist.Stencil(buffer = RCUT*0.05, cell_width=1.5, rebuild_check_delay = 1, kappa = Kappa)
 # print(NList.__dict__)
@@ -120,8 +122,8 @@ model = hoomd.sph.sphmodel.SinglePhaseFlow(kernel = Kernel,
                                            nlist  = NList,
                                            fluidgroup_filter = filterFLUID,
                                            solidgroup_filter = filterSOLID)
-
-print("SetModelParameter")
+if device.communicator.rank == 0:
+    print("SetModelParameter")
 
 model.mu = 0.01
 model.densitymethod = 'SUMMATION'
@@ -131,8 +133,6 @@ model.artificialviscosity = True
 model.alpha = 0.2
 model.beta = 0.0
 # Access the local snapshot, this is not ideal! 
-
-print(model.__dict__)
 
 with sim.state.cpu_local_snapshot as snapshot:
     model.max_sl = np.max(snapshot.particles.slength[:])
@@ -159,7 +159,7 @@ if device.communicator.rank == 0:
 
 
 
-gsd_trigger = hoomd.trigger.Periodic(100)
+gsd_trigger = hoomd.trigger.Periodic(1)
 gsd_writer = hoomd.write.GSD(filename=dumpname,
                              trigger=gsd_trigger,
                              mode='wb' #,
@@ -192,7 +192,7 @@ sim.operations.integrator = integrator
 if device.communicator.rank == 0:
     print("Starting Run at {0}".format(datetime.now().strftime("%d/%m/%Y %H:%M:%S")))
 
-sim.run(1001)
+sim.run(1001, write_at_start=True)
 
 if device.communicator.rank == 0:
     export_gsd2vtu.export_basic(dumpname)

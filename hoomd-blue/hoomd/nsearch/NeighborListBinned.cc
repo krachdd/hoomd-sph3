@@ -97,9 +97,7 @@ void NeighborListBinned::buildNlist(uint64_t timestep)
 
     // for each local particle
     unsigned int nparticles = m_pdata->getN();
-    std::cout << "number of particles " << nparticles << std::endl;
-
-
+    
     for (int i = 0; i < (int)nparticles; i++)
         {
         unsigned int cur_n_neigh = 0;
@@ -108,7 +106,6 @@ void NeighborListBinned::buildNlist(uint64_t timestep)
         const unsigned int type_i = __scalar_as_int(h_pos.data[i].w);
         const unsigned int body_i = h_body.data[i];
         // const Scalar diam_i = h_diameter.data[i];
-        std::cout << "kappa " << m_kappa << std::endl;
 
         const Scalar diam_i = m_kappa*Scalar(2)*h_slength.data[i]; // TODO check
 
@@ -139,7 +136,6 @@ void NeighborListBinned::buildNlist(uint64_t timestep)
 
             // check against all the particles in that neighboring bin to see if it is a neighbor
             unsigned int size = h_cell_size.data[neigh_cell];
-            // std::cout << "size " << size  << std::endl;
 
             for (unsigned int cur_offset = 0; cur_offset < size; cur_offset++)
                 {
@@ -149,7 +145,6 @@ void NeighborListBinned::buildNlist(uint64_t timestep)
                 // get the current neighbor type from the position data (will use tdb on the GPU)
                 unsigned int cur_neigh_type = __scalar_as_int(h_pos.data[cur_neigh].w);
                 Scalar r_cut = h_r_cut.data[m_typpair_idx(type_i, cur_neigh_type)];
-                std::cout << "Scalar r_cut " << r_cut << std::endl;
 
                 // automatically exclude particles without a distance check when:
                 // (1) they are the same particle, or
@@ -175,7 +170,6 @@ void NeighborListBinned::buildNlist(uint64_t timestep)
                     // r^2 < (r_list + delta)^2
                     // r^2 < r_listsq + delta^2 + 2*r_list*delta
                     sqshift = (delta + Scalar(2.0) * r_list) * delta;
-                    std::cout << "sqshift " << sqshift  << std::endl;
 
                     }
 
@@ -192,7 +186,6 @@ void NeighborListBinned::buildNlist(uint64_t timestep)
                         if (cur_n_neigh < Nmax_i)
                             {
                             h_nlist.data[head_idx_i + cur_n_neigh] = cur_neigh;
-                            std::cout << "add neighbor "  << std::endl;
 
                             }
                         else
