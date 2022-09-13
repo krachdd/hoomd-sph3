@@ -235,7 +235,7 @@ void Integrator::computeNetForce(uint64_t timestep)
             // assert(nparticles <= h_torque_array.getNumElements());
 
             ArrayHandle<Scalar4> h_force(h_force_array, access_location::host, access_mode::read);
-            ArrayHandle<Scalar4> h_ratedpe(h_force_array, access_location::host, access_mode::read);
+            ArrayHandle<Scalar4> h_ratedpe(h_ratedpe_array, access_location::host, access_mode::read);
             // ArrayHandle<Scalar> h_virial(h_virial_array, access_location::host, access_mode::read);
             // ArrayHandle<Scalar4> h_torque(h_torque_array, access_location::host, access_mode::read);
 

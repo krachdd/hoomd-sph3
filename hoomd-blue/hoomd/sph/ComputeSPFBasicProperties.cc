@@ -85,7 +85,7 @@ void ComputeSPFBasicProperties::computeProperties()
 
     assert(m_pdata);
 
-    PDataFlags flags = m_pdata->getFlags();
+    // PDataFlags flags = m_pdata->getFlags();
 
     // access the particle data
     ArrayHandle<Scalar4> h_vel(m_pdata->getVelocities(), access_location::host, access_mode::read);
