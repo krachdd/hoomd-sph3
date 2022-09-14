@@ -73,78 +73,6 @@ class PYBIND11_EXPORT SinglePhaseFlow : public SPHBaseClass<KT_, SET_>
         //! Destructor
         virtual ~SinglePhaseFlow();
 
-
-        //! Returns sum of fluid x-velocity last computed by compute()
-        /*! \returns Instantaneous translational kinetic energy of the system
-        */
-        // Scalar GetSumFluidXVelocity()
-        //     {
-        //     #ifdef ENABLE_MPI
-        //     if (!m_properties_reduced) reduceProperties();
-        //     #endif
-        //     ArrayHandle<Scalar> h_properties(m_properties, access_location::host, access_mode::read);
-        //     return h_properties.data[singlephaseflow_logger_index::sum_fluid_velocity_x];
-        //     }
-
-        // //! Returns sum of fluid y-velocity last computed by compute()
-        // /*! \returns Sum of fluid y-velocity
-        // */
-        // Scalar GetSumFluidYVelocity()
-        //     {
-        //     #ifdef ENABLE_MPI
-        //     if (!m_properties_reduced) reduceProperties();
-        //     #endif
-        //     ArrayHandle<Scalar> h_properties(m_properties, access_location::host, access_mode::read);
-        //     return h_properties.data[singlephaseflow_logger_index::sum_fluid_velocity_y];
-        //     }
-
-        // //! Returns sum of fluid z-velocity last computed by compute()
-        // /*! \returns Sum of fluid z-velocity
-        // */
-        // Scalar GetSumFluidZVelocity()
-        //     {
-        //     #ifdef ENABLE_MPI
-        //     if (!m_properties_reduced) reduceProperties();
-        //     #endif
-        //     ArrayHandle<Scalar> h_properties(m_properties, access_location::host, access_mode::read);
-        //     return h_properties.data[singlephaseflow_logger_index::sum_fluid_velocity_z];
-        //     }
-
-        // Scalar GetFluidParticleNum()
-        //     {
-        //     #ifdef ENABLE_MPI
-        //     if (!m_properties_reduced) reduceProperties();
-        //     #endif
-        //     ArrayHandle<Scalar> h_properties(m_properties, access_location::host, access_mode::read);
-        //     return h_properties.data[singlephaseflow_logger_index::total_fluid_particles];
-        //     }
-        // Scalar GetKineticEnergy()
-        //     {
-        //     #ifdef ENABLE_MPI
-        //     if (!m_properties_reduced) reduceProperties();
-        //     #endif
-        //     ArrayHandle<Scalar> h_properties(m_properties, access_location::host, access_mode::read);
-        //     return h_properties.data[singlephaseflow_logger_index::kinetic_energy];
-        //     }
-        // // Scalar GetAdaptTimestep()
-        // //     {
-        // //     #ifdef ENABLE_MPI
-        // //     if (!m_properties_reduced) reduceProperties();
-        // //     #endif
-        // //     ArrayHandle<Scalar> h_properties(m_properties, access_location::host, access_mode::read);
-        // //     return h_properties.data[singlephaseflow_logger_index::dt_adapt];
-        // //     }
-
-        // //! Get the GPU array of properties
-        // const GPUArray<Scalar>& getProperties()
-        //     {
-        //     #ifdef ENABLE_MPI
-        //     if (!m_properties_reduced) reduceProperties();
-        //     #endif
-
-        //     return m_properties;
-        //     }
-
         //! Set the rcut for a single type pair
         virtual void setRcut(unsigned int typ1, unsigned int typ2, Scalar rcut);
 
@@ -153,13 +81,6 @@ class PYBIND11_EXPORT SinglePhaseFlow : public SPHBaseClass<KT_, SET_>
 
         /// Validate that types are within Ntypes
         void validateTypes(unsigned int typ1, unsigned int typ2, std::string action);
-
-
-        //! Returns a list of log quantities this compute calculates
-        // virtual std::vector< std::string > getProvidedLogQuantities();
-
-        //! Calculates the requested log value and returns it
-        // virtual Scalar getLogValue(const std::string& quantity, uint64_t timestep);
 
         //! Returns a list of log quantities this compute calculates
         virtual std::vector<double> getProvidedTimestepQuantities(uint64_t timestep);
@@ -329,21 +250,10 @@ class PYBIND11_EXPORT SinglePhaseFlow : public SPHBaseClass<KT_, SET_>
         bool m_params_set; //!< True if parameters are set
 
         // Log parameters
-        std::vector<std::string> m_logname_list;  //!< Cache all generated logged quantities names
-        GPUArray<Scalar> m_properties; //!< Stores the computed properties
         uint64_t m_log_computed_last_timestep; //!< Last time step where log quantities were computed
 
         // Timestep parameters
         std::vector<double> m_timestep_list = std::vector<double>(7);  //!< Cache all generated timestep quantities names
-
-        //! Computes log properties
-        // void computeProperties();
-
-// #ifdef ENABLE_MPI
-//         bool m_properties_reduced;      //!< True if properties have been reduced across MPI
-//         //! Reduce properties over MPI
-//         void reduceProperties();
-// #endif
 
         /*! Helper function to compute particle number density
          * \post For fluid particles, compute number density. For solid particles,
@@ -397,17 +307,8 @@ namespace detail
 {
 template<SmoothingKernelType KT_, StateEquationType SET_>
 void export_SinglePhaseFlow(pybind11::module& m, std::string name);
-}
 
-// namespace detail
-// {
-// //! Exports the SinglePhaseFlow class to python
-// // template<SmoothingKernelType KT_,StateEquationType SET_>
-// // void export_SinglePhaseFlow_templ();
-// // template<SmoothingKernelType KT_,StateEquationType SET_>
-// void export_SinglePhaseFlow(pybind11::module& m);
-
-// } // end namespace detail
+} // end namespace detail
 } // end namespace sph
 } // end namespace hoomd
 

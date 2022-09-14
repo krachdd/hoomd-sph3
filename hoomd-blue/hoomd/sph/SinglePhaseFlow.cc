@@ -43,7 +43,6 @@ SinglePhaseFlow<KT_, SET_>::SinglePhaseFlow(std::shared_ptr<SystemDefinition> sy
         m_avbeta = Scalar(0.0);
         m_ddiff = Scalar(0.0);
         m_shepardfreq = 1;
-        m_log_computed_last_timestep = -1;
 
         // Sanity checks
         assert(this->m_pdata);
@@ -80,24 +79,9 @@ SinglePhaseFlow<KT_, SET_>::SinglePhaseFlow(std::shared_ptr<SystemDefinition> sy
         m_c     = equationofstate->getSpeedOfSound();
         m_kappa = skernel->getKernelKappa();
 
-        // Allocate space for log quantities
-        // GPUArray< Scalar > properties(singlephaseflow_logger_index::num_quantities, this->m_exec_conf);
-        // m_properties.swap(properties);
-
         m_r_cut_nlist = std::make_shared<GlobalArray<Scalar>>(m_typpair_idx.getNumElements(), this->m_exec_conf);
         this->m_nlist->addRCutMatrix(m_r_cut_nlist);
 
-//         // Define log quantities
-//         m_logname_list.push_back(std::string("sum_fluid_velocity_x"));
-//         m_logname_list.push_back(std::string("sum_fluid_velocity_y"));
-//         m_logname_list.push_back(std::string("sum_fluid_velocity_z"));
-//         m_logname_list.push_back(std::string("total_fluid_particles"));
-//         m_logname_list.push_back(std::string("kinetic_energy"));
-//         // m_logname_list.push_back(std::string("dt_adapt"));
-
-// #ifdef ENABLE_MPI
-//         m_properties_reduced = false;
-// #endif
       }
 
 /*! Destructor
@@ -108,13 +92,6 @@ SinglePhaseFlow<KT_, SET_>::~SinglePhaseFlow()
     this->m_exec_conf->msg->notice(5) << "Destroying SinglePhaseFlow" << std::endl;
     }
 
-/*! Returns provided Log Quantities to Logger
-*/
-// template<SmoothingKernelType KT_,StateEquationType SET_>
-// std::vector< std::string > SinglePhaseFlow<KT_, SET_>::getProvidedLogQuantities()
-//     {
-//     return m_logname_list;
-// }
 
 /*! Returns provided timestep Quantities to Compute
 */
@@ -148,115 +125,6 @@ void  SinglePhaseFlow<KT_, SET_>::activateShepardRenormalization(unsigned int sh
             m_shepardfreq = shepardfreq;
             }
 
-
-/*! Return requested Log quantity
-*/
-// template<SmoothingKernelType KT_,StateEquationType SET_>
-// Scalar SinglePhaseFlow<KT_, SET_>::getLogValue(const std::string& quantity, uint64_t timestep)
-//     {
-//     if ( m_log_computed_last_timestep != timestep )
-//         {
-//         // Compute log quantities
-//         computeProperties();
-//         m_log_computed_last_timestep = timestep;
-//         }
-
-//     if (quantity == m_logname_list[0])
-//         {
-//         return GetSumFluidXVelocity();
-//         }
-//     else if (quantity == m_logname_list[1])
-//         {
-//         return GetSumFluidYVelocity();
-//         }
-//     else if (quantity == m_logname_list[2])
-//         {
-//         return GetSumFluidZVelocity();
-//         }
-//     else if (quantity == m_logname_list[3])
-//         {
-//         return GetFluidParticleNum();
-//         }
-//     else if (quantity == m_logname_list[4])
-//         {
-//         return GetKineticEnergy();
-//         }
-//     // else if (quantity == m_logname_list[4])
-//     //     {
-//     //     return GetAdaptTimestep();
-//     //     }
-//     else
-//         {
-//         this->m_exec_conf->msg->error() << "sph.SinglePhaseFlow: " << quantity << " is not a valid log quantity" << std::endl;
-//         throw std::runtime_error("Error getting log value");
-//         }
-//     }
-
-/*! Computes all log quantities
-*/
-// template<SmoothingKernelType KT_,StateEquationType SET_>
-// void SinglePhaseFlow<KT_, SET_>::computeProperties()
-//     {
-//     // if (this->m_prof)
-//     //     this->m_prof->push("SinglePhaseFlowlogger");
-
-//     ArrayHandle<Scalar4> h_pos(this->m_pdata->getPositions(), access_location::host, access_mode::read);
-//     ArrayHandle<Scalar4> h_velocity(this->m_pdata->getVelocities(), access_location::host, access_mode::read);
-
-//     double fluid_vel_x_sum  = 0.0;
-//     double fluid_vel_y_sum  = 0.0;
-//     double fluid_vel_z_sum  = 0.0;
-//     double fluid_prtl = 0;
-//     double kinetic_energy = 0.0;
-//     // double adaptive_tstep = 0.0;
-    
-
-//     // for each fluid particle
-//     unsigned int group_size = m_fluidgroup->getNumMembers();
-//     for (unsigned int group_idx = 0; group_idx < group_size; group_idx++)
-//         {
-//         // Read particle index
-//         unsigned int i = m_fluidgroup->getMemberIndex(group_idx);
-//         // Count fluid particles
-//         fluid_prtl += Scalar(1);
-//         // Sum velocities
-//         fluid_vel_x_sum += h_velocity.data[i].x;
-//         fluid_vel_y_sum += h_velocity.data[i].y;
-//         fluid_vel_z_sum += h_velocity.data[i].z;
-//         kinetic_energy  += abs(0.5*h_velocity.data[i].w*sqrt(pow(h_velocity.data[i].x,2)+pow(h_velocity.data[i].y,2)+pow(h_velocity.data[i].z,2)));
-//     }
-
-//     ArrayHandle<Scalar> h_properties(m_properties, access_location::host, access_mode::overwrite);
-//     h_properties.data[singlephaseflow_logger_index::sum_fluid_velocity_x]  = Scalar(fluid_vel_x_sum);
-//     h_properties.data[singlephaseflow_logger_index::sum_fluid_velocity_y]  = Scalar(fluid_vel_y_sum);
-//     h_properties.data[singlephaseflow_logger_index::sum_fluid_velocity_z]  = Scalar(fluid_vel_z_sum);
-//     h_properties.data[singlephaseflow_logger_index::total_fluid_particles] = Scalar(fluid_prtl);
-//     h_properties.data[singlephaseflow_logger_index::kinetic_energy]        = Scalar(kinetic_energy);
-//     // h_properties.data[singlephaseflow_logger_index::dt_adapt] = Scalar(adaptive_tstep);
-
-// #ifdef ENABLE_MPI
-//     this->m_properties_reduced = !this->m_pdata->getDomainDecomposition();
-// #endif
-
-//     // if (this->m_prof)
-//     //     this->m_prof->pop();
-//     }
-
-// #ifdef ENABLE_MPI
-
-// template<SmoothingKernelType KT_,StateEquationType SET_>
-// void SinglePhaseFlow<KT_, SET_>::reduceProperties()
-//     {
-//     if (m_properties_reduced) return;
-
-//     // reduce properties
-//     ArrayHandle<Scalar> h_properties(m_properties, access_location::host, access_mode::readwrite);
-//     MPI_Allreduce(MPI_IN_PLACE, h_properties.data, singlephaseflow_logger_index::num_quantities, MPI_HOOMD_SCALAR,
-//             MPI_SUM, this->m_exec_conf->getMPICommunicator());
-
-//     m_properties_reduced = true;
-//     }
-// #endif
 
 /*! \post Set model parameters
  */
@@ -598,8 +466,6 @@ void SinglePhaseFlow<KT_, SET_>::compute_ndensity(uint64_t timestep)
 
         } // End of particle loop
 
-    // if (this->m_prof)
-    //     this->m_prof->pop();
     }
 
 
@@ -1313,52 +1179,6 @@ void export_SinglePhaseFlow(pybind11::module& m, std::string name)
         ;
 
     }
-
-// void export_SinglePhaseFlow()
-// {
-//     #define EXPORT(r,seq) export_SinglePhaseFlow_templ<BOOST_PP_SEQ_ENUM(seq)>();
-//     BOOST_PP_SEQ_FOR_EACH_PRODUCT(EXPORT, (KERNELTYPES)(SEQTYPES))
-//     #undef EXPORT
-// }
-
-
-// template<SmoothingKernelType KT_, StateEquationType SET_>
-// void export_SinglePhaseFlow_templ()
-// {
-//     std::string name="SinglePF_" + get_SE_name<SET_>() + "_" + get_kernel_name<KT_>();
-//     pybind11::class_<SinglePhaseFlow<KT_, SET_> , std::shared_ptr<SinglePhaseFlow<KT_, SET_>>>(m, name.c_str()) 
-//         .def(pybind11::init< std::shared_ptr<SystemDefinition>,
-//                              std::shared_ptr<SmoothingKernel<KT_> >,
-//                              std::shared_ptr<StateEquation<SET_> >,
-//                              std::shared_ptr<nsearch::NeighborList>,
-//                              std::shared_ptr<ParticleGroup>,
-//                              std::shared_ptr<ParticleGroup>,
-//                              DensityMethod,
-//                              ViscosityMethod >())
-//         .def("setParams", &SinglePhaseFlow<KT_, SET_>::setParams)
-//         .def("getDensityMethod", &SinglePhaseFlow<KT_, SET_>::getDensityMethod)
-//         .def("setDensityMethod", &SinglePhaseFlow<KT_, SET_>::setDensityMethod)
-//         .def("getViscosityMethod", &SinglePhaseFlow<KT_, SET_>::getViscosityMethod)
-//         .def("setViscosityMethod", &SinglePhaseFlow<KT_, SET_>::setViscosityMethod)
-//         .def("setConstSmoothingLength", &SinglePhaseFlow<KT_, SET_>::setConstSmoothingLength)
-//         .def("computeSolidForces", &SinglePhaseFlow<KT_, SET_>::computeSolidForces)
-//         .def("activateArtificialViscosity", &SinglePhaseFlow<KT_, SET_>::activateArtificialViscosity)
-//         .def("deactivateArtificialViscosity", &SinglePhaseFlow<KT_, SET_>::deactivateArtificialViscosity)
-//         .def("activateDensityDiffusion", &SinglePhaseFlow<KT_, SET_>::activateDensityDiffusion)
-//         .def("deactivateDensityDiffusion", &SinglePhaseFlow<KT_, SET_>::deactivateDensityDiffusion)
-//         .def("activateShepardRenormalization", &SinglePhaseFlow<KT_, SET_>::activateShepardRenormalization)
-//         .def("deactivateShepardRenormalization", &SinglePhaseFlow<KT_, SET_>::deactivateShepardRenormalization)
-//         .def("setAcceleration", &SPHBaseClass<KT_, SET_>::setAcceleration)
-//         ;
-//     }
-
-// void export_SinglePhaseFlow()
-// {
-//     #define EXPORT(r,seq) export_SinglePhaseFlow_templ<BOOST_PP_SEQ_ENUM(seq)>();
-//     BOOST_PP_SEQ_FOR_EACH_PRODUCT(EXPORT, (KERNELTYPES)(SEQTYPES))
-//     #undef EXPORT
-// }
-
 
 } // end namespace detail
 
