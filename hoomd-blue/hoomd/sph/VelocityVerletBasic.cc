@@ -2,18 +2,14 @@
 maintainer: dkrach, david.krach@mib.uni-stuttgart.de
 ----------------------------------------------------------*/
 
-/*
-The Velocity Verlet algorithm originally used in Rakulans old code
-*/
-
-#include "VelocityVerlet.h"
+#include "VelocityVerletBasic.h"
 #include "hoomd/VectorMath.h"
 #include <vector>
 
 using namespace std;
 
-/*! \file VelocityVerlet.h
-    \brief Contains code for the VelocityVerlet class
+/*! \file VelocityVerletBasic.h
+    \brief Contains code for the VelocityVerletBasic class
 */
 
 namespace hoomd
@@ -23,16 +19,16 @@ namespace sph
 /*! \param sysdef SystemDefinition this method will act on. Must not be NULL.
     \param group The group of particles this integration method is to work on
 */
-VelocityVerlet::VelocityVerlet(std::shared_ptr<SystemDefinition> sysdef,
+VelocityVerletBasic::VelocityVerletBasic(std::shared_ptr<SystemDefinition> sysdef,
                        std::shared_ptr<ParticleGroup> group)
     : SPHIntegrationMethodTwoStep(sysdef, group), m_limit(false), m_limit_val(1.0), m_zero_force(false)
     {
-    m_exec_conf->msg->notice(5) << "Constructing VelocityVerlet" << endl;
+    m_exec_conf->msg->notice(5) << "Constructing VelocityVerletBasic" << endl;
     }
 
-VelocityVerlet::~VelocityVerlet()
+VelocityVerletBasic::~VelocityVerletBasic()
     {
-    m_exec_conf->msg->notice(5) << "Destroying VelocityVerlet" << endl;
+    m_exec_conf->msg->notice(5) << "Destroying VelocityVerletBasic" << endl;
     }
 
 /*! \param limit Distance to limit particle movement each time step
@@ -41,7 +37,7 @@ VelocityVerlet::~VelocityVerlet()
     a distance larger than the limit in a single time step
 */
 
-pybind11::object VelocityVerlet::getLimit()
+pybind11::object VelocityVerletBasic::getLimit()
     {
     pybind11::object result;
     if (m_limit)
@@ -55,7 +51,7 @@ pybind11::object VelocityVerlet::getLimit()
     return result;
     }
 
-void VelocityVerlet::setLimit(pybind11::object limit)
+void VelocityVerletBasic::setLimit(pybind11::object limit)
     {
     if (limit.is_none())
         {
@@ -68,12 +64,12 @@ void VelocityVerlet::setLimit(pybind11::object limit)
         }
     }
 
-bool VelocityVerlet::getZeroForce()
+bool VelocityVerletBasic::getZeroForce()
     {
     return m_zero_force;
     }
 
-void VelocityVerlet::setZeroForce(bool zero_force)
+void VelocityVerletBasic::setZeroForce(bool zero_force)
     {
     m_zero_force = zero_force;
     }
@@ -82,11 +78,11 @@ void VelocityVerlet::setZeroForce(bool zero_force)
     \post Particle positions are moved forward to timestep+1 and velocities to timestep+1/2 per the
    velocity verlet method.
 */
-void VelocityVerlet::integrateStepOne(uint64_t timestep)
+void VelocityVerletBasic::integrateStepOne(uint64_t timestep)
     {
     unsigned int group_size = m_group->getNumMembers();
 
-    m_exec_conf->msg->notice(9) << "VelocityVerlet: Integrate Step one" << endl;
+    m_exec_conf->msg->notice(9) << "VelocityVerletBasic: Integrate Step one" << endl;
 
 
     ArrayHandle<Scalar4> h_vel(m_pdata->getVelocities(), access_location::host, access_mode::readwrite);
@@ -131,19 +127,16 @@ void VelocityVerlet::integrateStepOne(uint64_t timestep)
         h_dpe.data[j].y += Scalar(1.0/2.0)*h_dpedt.data[j].y*m_deltaT;
         h_dpe.data[j].z += Scalar(1.0/2.0)*h_dpedt.data[j].z*m_deltaT;
 
-        // std::cout << "step 1 mass " << h_vel.data[j].w << std::endl;
-        // std::cout << "step 1 accelx " << h_accel.data[j].x << std::endl;
-
         // Original HOOMD Velocity Verlet Two Step NVE
         h_vel.data[j].x += Scalar(1.0 / 2.0) * h_accel.data[j].x * m_deltaT;
         h_vel.data[j].y += Scalar(1.0 / 2.0) * h_accel.data[j].y * m_deltaT;
         h_vel.data[j].z += Scalar(1.0 / 2.0) * h_accel.data[j].z * m_deltaT;
 
         // David 
-        // r(t+deltaT/2) = r(t) + v(t+deltaT/2)*deltaT/2
-        h_pos.data[j].x += Scalar(1.0/2.0)*h_vel.data[j].x*m_deltaT;
-        h_pos.data[j].y += Scalar(1.0/2.0)*h_vel.data[j].y*m_deltaT;
-        h_pos.data[j].z += Scalar(1.0/2.0)*h_vel.data[j].z*m_deltaT;
+        // r(t+deltaT) = r(t) + v(t+deltaT/2)*deltaT
+        h_pos.data[j].x += h_vel.data[j].x*m_deltaT;
+        h_pos.data[j].y += h_vel.data[j].y*m_deltaT;
+        h_pos.data[j].z += h_vel.data[j].z*m_deltaT;
         }
 
     // particles may have been moved slightly outside the box by the above steps, wrap them back
@@ -162,14 +155,14 @@ void VelocityVerlet::integrateStepOne(uint64_t timestep)
 /*! \param timestep Current time step
     \post particle velocities are moved forward to timestep+1
 */
-void VelocityVerlet::integrateStepTwo(uint64_t timestep)
+void VelocityVerletBasic::integrateStepTwo(uint64_t timestep)
     {
-    m_exec_conf->msg->notice(9) << "VelocityVerlet: Integrate Step two" << endl;
+    m_exec_conf->msg->notice(9) << "VelocityVerletBasic: Integrate Step two" << endl;
     unsigned int group_size = m_group->getNumMembers();
 
     const GlobalArray<Scalar4>& net_force = m_pdata->getNetForce();
 
-    ArrayHandle<Scalar4> h_pos(m_pdata->getPositions(), access_location::host, access_mode::readwrite);
+    // ArrayHandle<Scalar4> h_pos(m_pdata->getPositions(), access_location::host, access_mode::readwrite);
     ArrayHandle<Scalar4> h_vel(m_pdata->getVelocities(), access_location::host, access_mode::readwrite);
     ArrayHandle<Scalar3> h_accel(m_pdata->getAccelerations(), access_location::host, access_mode::readwrite);
     ArrayHandle<Scalar3> h_dpe(m_pdata->getDPEs(), access_location::host, access_mode::readwrite);
@@ -214,19 +207,19 @@ void VelocityVerlet::integrateStepTwo(uint64_t timestep)
         h_dpe.data[j].y += Scalar(1.0/2.0)*h_dpedt.data[j].y*m_deltaT;
         h_dpe.data[j].z += Scalar(1.0/2.0)*h_dpedt.data[j].z*m_deltaT;
 
-        // r(t+deltaT) = r(t+deltaT/2) + v(t+deltaT/2)*deltaT/2
-        h_pos.data[j].x += Scalar(1.0/2.0)*h_vel.data[j].x*m_deltaT;
-        h_pos.data[j].y += Scalar(1.0/2.0)*h_vel.data[j].y*m_deltaT;
-        h_pos.data[j].z += Scalar(1.0/2.0)*h_vel.data[j].z*m_deltaT;
+
+        // not done in original VV Algorithm
+        // // r(t+deltaT) = r(t+deltaT/2) + v(t+deltaT/2)*deltaT/2
+        // h_pos.data[j].x += Scalar(1.0/2.0)*h_vel.data[j].x*m_deltaT;
+        // h_pos.data[j].y += Scalar(1.0/2.0)*h_vel.data[j].y*m_deltaT;
+        // h_pos.data[j].z += Scalar(1.0/2.0)*h_vel.data[j].z*m_deltaT;
 
         // Original HOOMD Velocity Verlet Two Step NVE
         // then, update the velocity
+        // v(t+deltaT) = v(t+deltaT/2) + 1/2 * a(t+deltaT) deltaT
         h_vel.data[j].x += Scalar(1.0 / 2.0) * h_accel.data[j].x * m_deltaT;
         h_vel.data[j].y += Scalar(1.0 / 2.0) * h_accel.data[j].y * m_deltaT;
         h_vel.data[j].z += Scalar(1.0 / 2.0) * h_accel.data[j].z * m_deltaT;
-
-        // std::cout << "step 2 vel " << h_vel.data[j].x << std::endl;
-
 
         // // limit the movement of the particles
         // if (m_limit)
@@ -245,14 +238,14 @@ void VelocityVerlet::integrateStepTwo(uint64_t timestep)
 
 namespace detail
     {
-void export_VelocityVerlet(pybind11::module& m)
+void export_VelocityVerletBasic(pybind11::module& m)
     {
-    pybind11::class_<VelocityVerlet, SPHIntegrationMethodTwoStep, std::shared_ptr<VelocityVerlet>>(
+    pybind11::class_<VelocityVerletBasic, SPHIntegrationMethodTwoStep, std::shared_ptr<VelocityVerletBasic>>(
         m,
-        "VelocityVerlet")
+        "VelocityVerletBasic")
         .def(pybind11::init<std::shared_ptr<SystemDefinition>, std::shared_ptr<ParticleGroup>>())
-        .def_property("limit", &VelocityVerlet::getLimit, &VelocityVerlet::setLimit)
-        .def_property("zero_force", &VelocityVerlet::getZeroForce, &VelocityVerlet::setZeroForce);
+        .def_property("limit", &VelocityVerletBasic::getLimit, &VelocityVerletBasic::setLimit)
+        .def_property("zero_force", &VelocityVerletBasic::getZeroForce, &VelocityVerletBasic::setZeroForce);
     }
     } // end namespace detail
     } // end namespace sph

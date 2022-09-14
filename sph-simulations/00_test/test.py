@@ -42,9 +42,9 @@ UREF = FX*LREF*LREF*0.25/(MU/RHO0)
 
 
 
-# device = hoomd.device.CPU(notice_level = 10, msg_file = 'log.txt')
+# device = hoomd.device.CPU(notice_level = 10)# , msg_file = 'log.txt')
 # device = hoomd.device.CPU(notice_level = 7, msg_file = 'log.txt')
-device = hoomd.device.CPU(notice_level = 2, msg_file = 'log.txt')
+device = hoomd.device.CPU(notice_level = 2)# , msg_file = 'log.txt')
 sim = hoomd.Simulation(device = device)
 # if device.communicator.rank == 0:
 #     print("hoomd.version.mpi_enabled: {0}".format(hoomd.version.mpi_enabled))
@@ -111,6 +111,7 @@ EOS.set_params(RHO0,0.05)
 # Define groups/filters
 filterFLUID  = hoomd.filter.Type(['F']) # is zero
 filterSOLID  = hoomd.filter.Type(['S']) # is one
+filterAll    = hoomd.filter.All()
 
 with sim.state.cpu_local_snapshot as data:
     print(f'{np.count_nonzero(data.particles.typeid == 0)} fluid particles on rank {device.communicator.rank}')
@@ -126,7 +127,7 @@ if device.communicator.rank == 0:
     print("SetModelParameter")
 
 model.mu = 0.01
-model.densitymethod = 'SUMMATION'
+model.densitymethod = 'CONTINUITY'
 model.gx = FX
 model.damp = 1000
 model.artificialviscosity = True
@@ -141,7 +142,7 @@ dt = model.compute_dt(LREF,UREF,DRHO)
 
 integrator = hoomd.sph.Integrator(dt=dt)
 
-VelocityVerlet = hoomd.sph.methods.VelocityVerlet(filter=filterFLUID)
+VelocityVerlet = hoomd.sph.methods.VelocityVerlet(filter=filterAll)
 
 integrator.methods.append(VelocityVerlet)
 integrator.forces.append(model)
@@ -160,11 +161,11 @@ if device.communicator.rank == 0:
 
 
 
-gsd_trigger = hoomd.trigger.Periodic(1)
+gsd_trigger = hoomd.trigger.Periodic(10)
 gsd_writer = hoomd.write.GSD(filename=dumpname,
                              trigger=gsd_trigger,
-                             mode='wb' #,
-                             # filter=hoomd.filter.Null()
+                             mode='wb',
+                             dynamic = ['property', 'momentum']
                              )
 sim.operations.writers.append(gsd_writer)
 
@@ -193,7 +194,7 @@ sim.operations.integrator = integrator
 if device.communicator.rank == 0:
     print("Starting Run at {0}".format(datetime.now().strftime("%d/%m/%Y %H:%M:%S")))
 
-sim.run(101, write_at_start=True)
+sim.run(10001, write_at_start=True)
 
 if device.communicator.rank == 0:
-    export_gsd2vtu.export_basic(dumpname)
+    export_gsd2vtu.export_spf(dumpname)

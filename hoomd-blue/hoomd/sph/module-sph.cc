@@ -11,6 +11,7 @@ maintainer: dkrach, david.krach@mib.uni-stuttgart.de
 // #include "SPHIntegratorTwoStep.h"
 // #include "SPHIntegrationMethodTwoStep.h"
 #include "VelocityVerlet.h"
+#include "VelocityVerletBasic.h"
 // // #include "SuspendedObjectIntegrator.h"
 // // #include "RigidBodyIntegrator.h"
 #include "SinglePhaseFlow.h"
@@ -97,6 +98,7 @@ PYBIND11_MODULE(_sph, m){
     export_SPHIntegratorTwoStep(m);
     export_SPHIntegrationMethodTwoStep(m);
     export_VelocityVerlet(m);
+    export_VelocityVerletBasic(m);
     // export_SuspendedObjectIntegrator(m);
     // export_RigidBodyIntegrator(m);
     export_WendlandC2(m);

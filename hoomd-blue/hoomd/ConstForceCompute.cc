@@ -81,7 +81,7 @@ void ConstForceCompute::setForce(Scalar fx, Scalar fy, Scalar fz, Scalar tx, Sca
     m_tz = tz;
 
     ArrayHandle<Scalar4> h_force(m_force, access_location::host, access_mode::overwrite);
-    ArrayHandle<Scalar4> h_torque(m_torque, access_location::host, access_mode::overwrite);
+    // ArrayHandle<Scalar4> h_torque(m_torque, access_location::host, access_mode::overwrite);
     // Don't need to zero data for force calculation.
 
     assert(h_force.data);
@@ -95,10 +95,10 @@ void ConstForceCompute::setForce(Scalar fx, Scalar fy, Scalar fz, Scalar tx, Sca
         h_force.data[i].z = fz;
         h_force.data[i].w = 0;
 
-        h_torque.data[i].x = tx;
-        h_torque.data[i].y = ty;
-        h_torque.data[i].z = tz;
-        h_torque.data[i].w = 0;
+        // h_torque.data[i].x = tx;
+        // h_torque.data[i].y = ty;
+        // h_torque.data[i].z = tz;
+        // h_torque.data[i].w = 0;
         }
     }
 
@@ -167,10 +167,10 @@ void ConstForceCompute::setGroupForce(std::shared_ptr<ParticleGroup> group,
         h_force.data[i].z = 0;
         h_force.data[i].w = 0;
 
-        h_torque.data[i].x = 0;
-        h_torque.data[i].y = 0;
-        h_torque.data[i].z = 0;
-        h_torque.data[i].w = 0;
+        // h_torque.data[i].x = 0;
+        // h_torque.data[i].y = 0;
+        // h_torque.data[i].z = 0;
+        // h_torque.data[i].w = 0;
         }
 
     for (unsigned int i = 0; i < group->getNumMembers(); i++)
@@ -182,10 +182,10 @@ void ConstForceCompute::setGroupForce(std::shared_ptr<ParticleGroup> group,
         h_force.data[idx].z = fz;
         h_force.data[idx].w = 0;
 
-        h_torque.data[idx].x = tx;
-        h_torque.data[idx].y = ty;
-        h_torque.data[idx].z = tz;
-        h_torque.data[idx].w = 0;
+        // h_torque.data[idx].x = tx;
+        // h_torque.data[idx].y = ty;
+        // h_torque.data[idx].z = tz;
+        // h_torque.data[idx].w = 0;
         }
     }
 
@@ -227,10 +227,10 @@ void ConstForceCompute::rearrangeForces()
                 h_force.data[idx].z = f.z;
                 h_force.data[idx].w = 0;
 
-                h_torque.data[idx].x = t.x;
-                h_torque.data[idx].y = t.y;
-                h_torque.data[idx].z = t.z;
-                h_torque.data[idx].w = 0;
+                // h_torque.data[idx].x = t.x;
+                // h_torque.data[idx].y = t.y;
+                // h_torque.data[idx].z = t.z;
+                // h_torque.data[idx].w = 0;
                 }
             }
         }

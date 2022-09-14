@@ -11,4 +11,4 @@ Constraints can be added.
 
 """
 
-from .methods import (Method, VelocityVerlet) 
+from .methods import (Method, VelocityVerlet, VelocityVerletBasic) 

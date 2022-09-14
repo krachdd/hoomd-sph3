@@ -444,7 +444,7 @@ void SinglePhaseFlow<KT_, SET_>::compute_particlenumberdensity(uint64_t timestep
         unsigned int size = (unsigned int)h_n_neigh.data[i];
 
         h_dpe.data[i].x = size * h_velocity.data[i].w / sphere_vol;
-        std::cout << "Mass: " << h_velocity.data[i].w << " size " << size << " sphere_vol " << sphere_vol << " density " << h_dpe.data[i].x << std::endl;
+        // std::cout << "Mass: " << h_velocity.data[i].w << " size " << size << " sphere_vol " << sphere_vol << " density " << h_dpe.data[i].x << std::endl;
 
 
         } // End of particle loop
@@ -990,10 +990,6 @@ void SinglePhaseFlow<KT_, SET_>::forcecomputation(uint64_t timestep)
     else if ( m_density_method == DENSITYCONTINUITY )
         this->m_exec_conf->msg->notice(7) << "Computing SinglePhaseFlow::Forces using CONTINUITY approach " << m_density_method << endl;
 
-    // Start the profile for this compute
-    // if (this->m_prof)
-    //     this->m_prof->push("SinglePhaseFlowForces");
-
     // Grab handles for particle data
     // Access mode overwrite implies that data does not need to be read in
     ArrayHandle<Scalar4> h_force(this->m_force,access_location::host, access_mode::readwrite);
@@ -1205,7 +1201,10 @@ void SinglePhaseFlow<KT_, SET_>::forcecomputation(uint64_t timestep)
                     }
 
                 // Compute density rate of change
+                // std::cout << "Compute density rate of change: rhoi " << rhoi << " Vj " << Vj << " dot(dv,dwdr_r*dx) " << dot(dv,dwdr_r*dx) << std::endl;
                 h_ratedpe.data[i].x += rhoi*Vj*dot(dv,dwdr_r*dx);
+                // std::cout << "Compute density rate of change: h_ratedpe.data[i].x " << h_ratedpe.data[i].x << std::endl;
+
                 //h_ratedpe.data[i].x += mj*dot(dv,dwdr_r*dx);
 
                 // Add density diffusion if requested
@@ -1224,8 +1223,6 @@ void SinglePhaseFlow<KT_, SET_>::forcecomputation(uint64_t timestep)
     if ( m_compute_solid_forces )
         this->applyBodyForce(timestep, m_solidgroup);
 
-    // if (this->m_prof)
-    //     this->m_prof->pop();
     }
 
 /*! Compute forces definition

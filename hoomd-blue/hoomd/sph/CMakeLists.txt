@@ -9,6 +9,7 @@ set(_${COMPONENT_NAME}_sources
     SPHIntegratorTwoStep.cc
     SPHIntegrationMethodTwoStep.cc
     VelocityVerlet.cc
+    VelocityVerletBasic.cc
 #     SuspendedObjectIntegrator.cc
 #     RigidBodyIntegrator.cc
 #     StateEquationsExport.cc
@@ -47,6 +48,7 @@ set(_${COMPONENT_NAME}_headers
     SPHBaseClass.h        
 #     SuspendedObjectIntegrator.h       
     VelocityVerlet.h
+    VelocityVerletBasic.h
     CustomForceCompute.h
     ComputeSPFBasicProperties.h
     ComputeMechanicalProp.h
@@ -108,7 +110,6 @@ set(files
     force.py
     kernel.py
     eos.py
-#     models.py
     constrain.py
     compute.py
     )

@@ -4,7 +4,6 @@
 
 set(files __init__.py
           methods.py
-#           rattle.py
    )
 
 install(FILES ${files}

@@ -81,16 +81,14 @@ class GSD(Writer):
     * **property**
 
         * particles/position
-        * particles/orientation (*only written when values are not the
-          default: [1,0,0,0]*)
 
     * **momentum**
 
         * particles/velocity
-        * particles/angmom (*only written when values are not the
-          default: [0,0,0,0]*)
-        * particles/image (*only written when values are not the
-          default: [0,0,0]*)
+        * particles/aux1
+        * particles/aux2
+        * particles/aux3
+        * particles/aux4
 
     * **attribute**
 

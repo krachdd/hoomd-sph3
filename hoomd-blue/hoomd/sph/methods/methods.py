@@ -660,9 +660,8 @@ class VelocityVerlet(Method):
         filter (hoomd.filter.filter_like): Subset of particles on which to
             apply this method.
 
-    Based on md-`NVE` integrates integrates translational and rotational degrees of freedom
-    using Velocity-Verlet and the rotational degrees of freedom with a scheme
-    based on `Kamberaj 2005`_.
+    Based on md-`NVE` integrates integrates translational degrees of freedom
+    using Velocity-Verlet.
 
     Examples::
 
@@ -687,6 +686,46 @@ class VelocityVerlet(Method):
                                            sim.state._get_group(self.filter))
         else:
             self._cpp_obj = _sph.VelocityVerletGPU(sim.state._cpp_sys_def,
+                                              sim.state._get_group(self.filter))
+
+        # Attach param_dict and typeparam_dict
+        super()._attach()
+
+
+
+class VelocityVerletBasic(Method):
+    r"""
+
+    Args:
+        filter (hoomd.filter.filter_like): Subset of particles on which to
+            apply this method.
+
+    Based on md-`NVE` integrates integrates translational degrees of freedom
+    using Velocity-Verlet.
+
+    Examples::
+
+    Attributes:
+        filter (hoomd.filter.filter_like): Subset of particles on which to
+            apply this method.
+    """
+
+    def __init__(self, filter):
+        # store metadata
+        param_dict = ParameterDict(filter=ParticleFilter,)
+        param_dict.update(dict(filter=filter, zero_force=False))
+
+        # set defaults
+        self._param_dict.update(param_dict)
+
+    def _attach(self):
+        sim = self._simulation
+        # initialize the reflected c++ class
+        if isinstance(sim.device, hoomd.device.CPU):
+            self._cpp_obj = _sph.VelocityVerletBasic(sim.state._cpp_sys_def,
+                                           sim.state._get_group(self.filter))
+        else:
+            self._cpp_obj = _sph.VelocityVerletBasicGPU(sim.state._cpp_sys_def,
                                               sim.state._get_group(self.filter))
 
         # Attach param_dict and typeparam_dict
