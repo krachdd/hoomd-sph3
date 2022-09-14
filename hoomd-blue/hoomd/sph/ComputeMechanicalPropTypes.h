@@ -1,8 +1,8 @@
 /* ---------------------------------------------------------
 maintainer: dkrach, david.krach@mib.uni-stuttgart.de
 ----------------------------------------------------------*/
-#ifndef _COMPUTE_MECHANICALPROP_TYPES_H_
-#define _COMPUTE_MECHANICALPROP_TYPES_H_
+#ifndef __COMPUTE_MECHANICALPROP_TYPES_H__
+#define __COMPUTE_MECHANICALPROP_TYPES_H__
 
 #include "hoomd/HOOMDMath.h"
 /*! \file ComputeMechanicalPropTypes.h

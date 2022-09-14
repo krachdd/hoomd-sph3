@@ -23,6 +23,8 @@ maintainer: dkrach, david.krach@mib.uni-stuttgart.de
 #include "SmoothingKernel.h"
 #include "StateEquations.h"
 
+#include "EvaluationMethodDefinition.h"
+
 /*! \file SPHBaseClass.cc
     \brief Contains base class for any SPH Force compute. Takes care of
            storing SmoothingKernel and NeighborList class instances.
@@ -43,18 +45,18 @@ namespace hoomd
 {
 namespace sph
 {
-//! Enum for various density evaluation approaches
-enum DensityMethod
-{
-    DENSITYSUMMATION,    //!< Summation approach
-    DENSITYCONTINUITY,    //!< Continuity approach
-};
+// //! Enum for various density evaluation approaches
+// enum DensityMethod
+// {
+//     DENSITYSUMMATION,    //!< Summation approach
+//     DENSITYCONTINUITY,    //!< Continuity approach
+// };
 
-//! Enum for various viscosity evaluation approaches
-enum ViscosityMethod
-{
-    HARMONICAVERAGE, //!< Viscosity operator based on inter-particle averaged shear stress
-};
+// //! Enum for various viscosity evaluation approaches
+// enum ViscosityMethod
+// {
+//     HARMONICAVERAGE, //!< Viscosity operator based on inter-particle averaged shear stress
+// };
 
 template<SmoothingKernelType KT_, StateEquationType SET_>
 class PYBIND11_EXPORT SPHBaseClass : public ForceCompute

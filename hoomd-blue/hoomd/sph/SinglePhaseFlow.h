@@ -31,6 +31,8 @@ maintainer: dkrach, david.krach@mib.uni-stuttgart.de
 #include "SPHBaseClass.h"
 #include "SolidFluidTypeBit.h"
 
+#include "EvaluationMethodDefinition.h"
+
 
 /*! \file SinglePhaseFlow.h
     \brief Contains code for the Quasi-incompressible Navier-Stokes solver
@@ -49,21 +51,6 @@ namespace hoomd
 {
 namespace sph
 {
-//! Enum for indexing the GPUArray of computed values
-// struct singlephaseflow_logger_index
-//     {
-//     enum Enum
-//         {
-//         sum_fluid_velocity_x=0, //!< Index for the sum of fluid x-velocity in the GPUArray
-//         sum_fluid_velocity_y,   //!< Index for the sum of fluid y-velocity in the GPUArray
-//         sum_fluid_velocity_z,   //!< Index for the sum of fluid z-velocity in the GPUArray
-//         kinetic_energy,         //!< Index for the overall kinetic energy of the system
-//         total_fluid_particles,  //!< Total number of fluid particles
-//         // dt_adapt,               //!< Adaptive timestep size
-//         num_quantities // final element to count number of quantities
-//         };
-//     };
-
 
 //! Computes SinglePhaseFlow forces on each particle
 /*!
@@ -189,8 +176,6 @@ class PYBIND11_EXPORT SinglePhaseFlow : public SPHBaseClass<KT_, SET_>
             }
         void setDensityMethod(DensityMethod densitymethod)
             {
-            this->m_exec_conf->msg->notice(7) << "Set densitymethod " << densitymethod  << std::endl;
-
             m_density_method = densitymethod;
             }
 

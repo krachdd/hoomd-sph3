@@ -38,6 +38,8 @@ MU   = 0.01                        # Pa s
 
 UREF = FX*LREF*LREF*0.25/(MU/RHO0)
 
+densitymethod = 'CONTINUITY'
+
 # ------------------------------------------------------------------------------------
 
 
@@ -127,7 +129,7 @@ if device.communicator.rank == 0:
     print("SetModelParameter")
 
 model.mu = 0.01
-model.densitymethod = 'CONTINUITY'
+model.densitymethod = densitymethod
 model.gx = FX
 model.damp = 1000
 model.artificialviscosity = True
@@ -142,7 +144,7 @@ dt = model.compute_dt(LREF,UREF,DRHO)
 
 integrator = hoomd.sph.Integrator(dt=dt)
 
-VelocityVerlet = hoomd.sph.methods.VelocityVerlet(filter=filterAll)
+VelocityVerlet = hoomd.sph.methods.VelocityVerlet(filter=filterAll, densitymethod = densitymethod)
 
 integrator.methods.append(VelocityVerlet)
 integrator.forces.append(model)
@@ -194,7 +196,7 @@ sim.operations.integrator = integrator
 if device.communicator.rank == 0:
     print("Starting Run at {0}".format(datetime.now().strftime("%d/%m/%Y %H:%M:%S")))
 
-sim.run(10001, write_at_start=True)
+sim.run(11, write_at_start=True)
 
 if device.communicator.rank == 0:
     export_gsd2vtu.export_spf(dumpname)

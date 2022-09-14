@@ -3,6 +3,7 @@ maintainer: dkrach, david.krach@mib.uni-stuttgart.de
 ----------------------------------------------------------*/
 
 #include "SPHIntegrationMethodTwoStep.h"
+#include "EvaluationMethodDefinition.h"
 
 #ifndef __VELOCITY_VERLET_H__
 #define __VELOCITY_VERLET_H__
@@ -54,10 +55,25 @@ class PYBIND11_EXPORT VelocityVerlet : public SPHIntegrationMethodTwoStep
     //! Performs the second step of the integration
     virtual void integrateStepTwo(uint64_t timestep);
 
+    //! Getter and Setter methods for density method
+    DensityMethod getDensityMethod()
+        {
+        return m_density_method;
+        }
+    void setDensityMethod(DensityMethod densitymethod)
+        {
+        m_density_method = densitymethod;
+        m_densitymethod_set = true;
+        std::cout << "VV set densitymethod" << std::endl;
+        }
+
     protected:
     bool m_limit;       //!< True if we should limit the distance a particle moves in one step
     Scalar m_limit_val; //!< The maximum distance a particle is to move in one step
     bool m_zero_force;  //!< True if the integration step should ignore computed forces
+    bool m_densitymethod_set; //!< True if method was set
+    DensityMethod m_density_method; //!< Density approach to use
+
     };
 
     namespace detail 

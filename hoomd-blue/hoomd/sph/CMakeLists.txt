@@ -52,6 +52,7 @@ set(_${COMPONENT_NAME}_headers
     CustomForceCompute.h
     ComputeSPFBasicProperties.h
     ComputeMechanicalProp.h
+    EvaluationMethodDefinition.h
     )
 
 set(_${COMPONENT_NAME}_cu_sources
