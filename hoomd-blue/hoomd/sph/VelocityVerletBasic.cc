@@ -24,6 +24,7 @@ VelocityVerletBasic::VelocityVerletBasic(std::shared_ptr<SystemDefinition> sysde
     : SPHIntegrationMethodTwoStep(sysdef, group), m_limit(false), m_limit_val(1.0), m_zero_force(false)
     {
     m_exec_conf->msg->notice(5) << "Constructing VelocityVerletBasic" << endl;
+    m_densitymethod_set = false;
     }
 
 VelocityVerletBasic::~VelocityVerletBasic()
@@ -83,6 +84,15 @@ void VelocityVerletBasic::integrateStepOne(uint64_t timestep)
     unsigned int group_size = m_group->getNumMembers();
 
     m_exec_conf->msg->notice(9) << "VelocityVerletBasic: Integrate Step one" << endl;
+
+    // if (m_densitymethod_set == true){
+    //     if ( m_density_method == DENSITYSUMMATION ){
+    //         std::cout << "Using DENSITYSUMMATION in Verlet" << std::endl;
+    //     }
+    //     else if (m_density_method == DENSITYCONTINUITY ){
+    //         std::cout << "Using DENSITYCONTINUITY in Verlet" << std::endl;
+    //     }
+    // }
 
 
     ArrayHandle<Scalar4> h_vel(m_pdata->getVelocities(), access_location::host, access_mode::readwrite);
@@ -244,6 +254,8 @@ void export_VelocityVerletBasic(pybind11::module& m)
         m,
         "VelocityVerletBasic")
         .def(pybind11::init<std::shared_ptr<SystemDefinition>, std::shared_ptr<ParticleGroup>>())
+	.def("getDensityMethod", &VelocityVerlet::getDensityMethod)
+        .def("setDensityMethod", &VelocityVerlet::setDensityMethod)
         .def_property("limit", &VelocityVerletBasic::getLimit, &VelocityVerletBasic::setLimit)
         .def_property("zero_force", &VelocityVerletBasic::getZeroForce, &VelocityVerletBasic::setZeroForce);
     }

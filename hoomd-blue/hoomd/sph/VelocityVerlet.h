@@ -64,7 +64,6 @@ class PYBIND11_EXPORT VelocityVerlet : public SPHIntegrationMethodTwoStep
         {
         m_density_method = densitymethod;
         m_densitymethod_set = true;
-        std::cout << "VV set densitymethod" << std::endl;
         }
 
     protected:

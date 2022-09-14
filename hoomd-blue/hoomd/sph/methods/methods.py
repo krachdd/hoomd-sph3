@@ -749,13 +749,28 @@ class VelocityVerletBasic(Method):
             apply this method.
     """
 
-    def __init__(self, filter):
+    DENSITYMETHODS = {'SUMMATION':_sph.PhaseFlowDensityMethod.DENSITYSUMMATION,
+                      'CONTINUITY':_sph.PhaseFlowDensityMethod.DENSITYCONTINUITY}
+
+    VISCOSITYMETHODS = {'HARMONICAVERAGE':_sph.PhaseFlowViscosityMethod.HARMONICAVERAGE}
+
+    def __init__(self, filter, densitymethod):
         # store metadata
         param_dict = ParameterDict(filter=ParticleFilter,)
-        param_dict.update(dict(filter=filter, zero_force=False))
+        param_dict.update(dict(filter=filter, zero_force=False, 
+            densitymethod=densitymethod))
 
         # set defaults
         self._param_dict.update(param_dict)
+
+        self.str_densitymethod = self._param_dict._dict["densitymethod"]
+
+        if self.str_densitymethod == str('SUMMATION'):
+            self.cpp_densitymethod = hoomd.sph._sph.PhaseFlowDensityMethod.DENSITYSUMMATION
+        elif self.str_densitymethod == str('CONTINUITY'):
+            self.cpp_densitymethod = hoomd.sph._sph.PhaseFlowDensityMethod.DENSITYCONTINUITY
+        else:
+            raise ValueError("Using undefined DensityMethod.")
 
     def _attach(self):
         sim = self._simulation
@@ -766,6 +781,30 @@ class VelocityVerletBasic(Method):
         else:
             self._cpp_obj = _sph.VelocityVerletBasicGPU(sim.state._cpp_sys_def,
                                               sim.state._get_group(self.filter))
+
+        # Reload density and viscosity methods from __dict__
+        self.str_densitymethod = self._param_dict._dict["densitymethod"]
+        if self.str_densitymethod == str('SUMMATION'):
+            self.cpp_densitymethod = hoomd.sph._sph.PhaseFlowDensityMethod.DENSITYSUMMATION
+        elif self.str_densitymethod == str('CONTINUITY'):
+            self.cpp_densitymethod = hoomd.sph._sph.PhaseFlowDensityMethod.DENSITYCONTINUITY
+        else:
+            raise ValueError("Using undefined DensityMethod.")
+
+        self.setdensitymethod(self.str_densitymethod)
+
+
+    # @property
+    def densitymethod(self):
+        # Invert key mapping
+        invD = dict((v,k) for k, v in self.DENSITYMETHODS.iteritems())
+        return invD[self._cpp_obj.getDensityMethod()]
+
+    # @densitymethod.setter
+    def setdensitymethod(self, method):
+        if method not in self.DENSITYMETHODS:
+            raise ValueError("Undefined DensityMethod.")
+        self._cpp_obj.setDensityMethod(self.DENSITYMETHODS[method])
 
         # Attach param_dict and typeparam_dict
         super()._attach()

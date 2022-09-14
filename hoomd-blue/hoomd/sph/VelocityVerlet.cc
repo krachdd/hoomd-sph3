@@ -89,14 +89,14 @@ void VelocityVerlet::integrateStepOne(uint64_t timestep)
 
     m_exec_conf->msg->notice(9) << "VelocityVerlet: Integrate Step one" << endl;
 
-    if (m_densitymethod_set == true){
-        if ( m_density_method == DENSITYSUMMATION ){
-            std::cout << "Using DENSITYSUMMATION in Verlet" << std::endl;
-        }
-        else if (m_density_method == DENSITYCONTINUITY ){
-            std::cout << "Using DENSITYCONTINUITY in Verlet" << std::endl;
-        }
-    }
+    // if (m_densitymethod_set == true){
+    //     if ( m_density_method == DENSITYSUMMATION ){
+    //         std::cout << "Using DENSITYSUMMATION in Verlet" << std::endl;
+    //     }
+    //     else if (m_density_method == DENSITYCONTINUITY ){
+    //         std::cout << "Using DENSITYCONTINUITY in Verlet" << std::endl;
+    //     }
+    // }
 
 
     ArrayHandle<Scalar4> h_vel(m_pdata->getVelocities(), access_location::host, access_mode::readwrite);
