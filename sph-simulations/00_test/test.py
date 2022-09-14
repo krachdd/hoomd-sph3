@@ -172,7 +172,7 @@ sim.operations.writers.append(gsd_writer)
 
 
 # hoomd.write.GSD.write(filename = dumpname, state = sim.state, mode = 'wb')
-log_trigger = hoomd.trigger.Periodic(1)
+log_trigger = hoomd.trigger.Periodic(10)
 logger = hoomd.logging.Logger(categories=['scalar', 'string'])
 logger.add(sim, quantities=['timestep', 'tps', 'walltime'])
 logger.add(spf_properties, quantities=['kinetic_energy', 'num_particles', 'fluid_vel_x_sum', 'mean_density'])
