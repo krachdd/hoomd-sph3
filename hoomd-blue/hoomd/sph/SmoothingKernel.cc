@@ -39,7 +39,7 @@ SmoothingKernel<wendlandc2>::SmoothingKernel()
     }
 template<>
 SmoothingKernel<wendlandc4>::SmoothingKernel()
-    : m_kappa(Scalar(2.0)), m_self_density(Scalar(3.0)), m_alpha(Scalar(0.198192948))
+    : m_kappa(Scalar(2.0)), m_self_density(Scalar(3.0)), m_alpha(Scalar(0.20516066882939635))
     {
     }
 template<>

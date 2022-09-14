@@ -333,9 +333,6 @@ void SinglePhaseFlow<KT_, SET_>::compute_ndensity(uint64_t timestep)
     {
     this->m_exec_conf->msg->notice(7) << "Computing SinglePhaseFlow::Number Density" << std::endl;
 
-    // if (this->m_prof)
-    //     this->m_prof->push("SinglePhaseFlowNDensity");
-
     // Grab handles for particle data
     ArrayHandle<Scalar3> h_dpe(this->m_pdata->getDPEs(), access_location::host, access_mode::readwrite);
     ArrayHandle<Scalar4> h_pos(this->m_pdata->getPositions(), access_location::host, access_mode::read);
