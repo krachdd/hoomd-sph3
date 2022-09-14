@@ -254,8 +254,8 @@ void export_VelocityVerletBasic(pybind11::module& m)
         m,
         "VelocityVerletBasic")
         .def(pybind11::init<std::shared_ptr<SystemDefinition>, std::shared_ptr<ParticleGroup>>())
-	.def("getDensityMethod", &VelocityVerlet::getDensityMethod)
-        .def("setDensityMethod", &VelocityVerlet::setDensityMethod)
+        .def("getDensityMethod", &VelocityVerletBasic::getDensityMethod)
+        .def("setDensityMethod", &VelocityVerletBasic::setDensityMethod)
         .def_property("limit", &VelocityVerletBasic::getLimit, &VelocityVerletBasic::setLimit)
         .def_property("zero_force", &VelocityVerletBasic::getZeroForce, &VelocityVerletBasic::setZeroForce);
     }
