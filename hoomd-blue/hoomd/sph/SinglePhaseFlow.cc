@@ -1147,6 +1147,8 @@ void SinglePhaseFlow<KT_, SET_>::computeForces(uint64_t timestep)
 
     if (!m_solid_removed)
         {
+        this->m_nlist->forceUpdate();
+        this->m_nlist->compute(timestep);
         mark_solid_particles_toremove(timestep);
         m_solid_removed = true;
         }

@@ -115,8 +115,8 @@ class SPHModel(force.Force):
                                "different simulation.".format(type(self)))
         self.nlist._attach()
         if isinstance(self._simulation.device, hoomd.device.CPU):
-            self.nlist._cpp_obj.setStorageMode(
-                _nsearch.NeighborList.storageMode.half)
+            self.nlist._cpp_obj.setStorageMode(_nsearch.NeighborList.storageMode.full)
+            # self.nlist._cpp_obj.setStorageMode(_nsearch.NeighborList.storageMode.half)
         else:
             self.nlist._cpp_obj.setStorageMode(
                 _nsearch.NeighborList.storageMode.full)

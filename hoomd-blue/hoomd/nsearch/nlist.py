@@ -114,7 +114,7 @@ class NeighborList(_HOOMDBaseObject):
     def _attach(self):
         # if self._mesh is not None:
         #     self._cpp_obj.addMesh(self._mesh._cpp_obj)
-
+        self._cpp_obj.setKernelFactor(self._param_dict._dict["kappa"])
         super()._attach()
 
     @log(requires_run=True)

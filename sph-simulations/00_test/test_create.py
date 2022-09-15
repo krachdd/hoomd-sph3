@@ -13,15 +13,15 @@ device = hoomd.device.CPU(notice_level=2)
 sim = hoomd.Simulation(device=device)
 
 # System sizes
-LREF = 0.001                    # m
+LREF = 0.002                    # m
 
-LX = LREF*2
-LY = LREF*2
-LZ = LREF*2
+LX = LREF
+LY = LREF
+LZ = LREF
 
 # Parameters
-KERNEL  = 'WendlandC4'
-NL      = 10                       # INT
+KERNEL  = 'CubicSpline'
+NL      = 100                       # INT
 FX      = 0.1                      # m/s^2
 
 DX      = LREF/NL                  # m
@@ -35,17 +35,31 @@ MU   = 0.01                        # Pa s
 H       = hoomd.sph.kernel.OptimalH[KERNEL]*DX       # m
 RCUT    = hoomd.sph.kernel.Kappa[KERNEL]*H           # m
 
+
 print(f'H: {H}')
+
 
 LX += 3*RCUT
 LY += 3*RCUT
 LZ += 3*RCUT
 
+# DX = LX/NL
+
+
+
+H       = hoomd.sph.kernel.OptimalH[KERNEL]*DX       # m
+RCUT    = hoomd.sph.kernel.Kappa[KERNEL]*H           # m
+
 print(f'RCUT: {RCUT}')
 
-Nx = int((LX + 3 * RCUT)/DX)                 # particles per box direction
-Ny = int((LY + 3 * RCUT)/DX)    # particles per box direction
-Nz = int((LZ + 3 * RCUT)/DX)    # particles per box direction
+# Nx = int((LX + 3 * RCUT)/DX)    # particles per box direction
+# Ny = int((LY + 3 * RCUT)/DX)    # particles per box direction
+# Nz = int((LZ + 3 * RCUT)/DX)    # particles per box direction
+Nx = int((LX)/DX)    # particles per box direction
+Ny = int((LY)/DX)    # particles per box direction
+Nz = int((LZ)/DX)    # particles per box direction
+
+
 N_particles = Nx * Ny * Nz      # Number of Particles
 
 box_Lx = LX  # box dimension
@@ -90,7 +104,7 @@ for i in range(len(x)):
     xi,yi,zi  = x[i][0], x[i][1], x[i][2]
     dpe[i][0] = RHO0
     tid[i]    = 0
-    if ( ((yi)**2 + (zi)**2) > NL*LREF*DX ):
+    if ( np.sqrt((yi)**2 + (zi)**2) > 0.5*(LREF) ):
     # if ( yi < -0.4*LY or yi > 0.4*LY ):
         tid[i] = 1
 

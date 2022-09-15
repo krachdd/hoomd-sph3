@@ -17,15 +17,15 @@ import export_gsd2vtu
 
 
 # System sizes
-LREF = 0.001                    # m
+LREF = 0.002                    # m
 
-LX = LREF*2
-LY = LREF*2
-LZ = LREF*2
+LX = LREF
+LY = LREF
+LZ = LREF
 
 # Parameters
-KERNEL  = 'WendlandC4'
-NL      = 10                       # INT
+KERNEL  = 'CubicSpline'
+NL      = 100                       # INT
 FX      = 0.1                      # m/s^2
 
 DX      = LREF/NL                  # m
@@ -215,7 +215,7 @@ if device.communicator.rank == 0:
 
 
 
-sim.run(1001, write_at_start=True)
+sim.run(501, write_at_start=True)
 
 if device.communicator.rank == 0:
     export_gsd2vtu.export_spf(dumpname)

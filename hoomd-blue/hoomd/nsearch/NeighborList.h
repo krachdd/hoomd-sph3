@@ -431,6 +431,8 @@ class PYBIND11_EXPORT NeighborList : public Compute
     void setKernelFactor(Scalar kappa)
         {
         m_kappa = kappa;
+        notifyRCutMatrixChange();
+        forceUpdate();
         }
 
     //! Get the maximum diameter value

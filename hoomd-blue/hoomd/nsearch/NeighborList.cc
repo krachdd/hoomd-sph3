@@ -214,9 +214,9 @@ NeighborList::NeighborList(std::shared_ptr<SystemDefinition> sysdef, Scalar r_bu
     m_pdata->getGlobalParticleNumberChangeSignal()
         .connect<NeighborList, &NeighborList::slotGlobalParticleNumberChange>(this);
 
-    m_sysdef->getBondData()
-        ->getGroupNumChangeSignal()
-        .connect<NeighborList, &NeighborList::slotGlobalTopologyNumberChange>(this);
+    // m_sysdef->getBondData()
+    //     ->getGroupNumChangeSignal()
+    //     .connect<NeighborList, &NeighborList::slotGlobalTopologyNumberChange>(this);
 
     // m_sysdef->getAngleData()
     //     ->getGroupNumChangeSignal()
@@ -305,9 +305,9 @@ NeighborList::~NeighborList()
     m_pdata->getGlobalParticleNumberChangeSignal()
         .disconnect<NeighborList, &NeighborList::slotGlobalParticleNumberChange>(this);
 
-    m_sysdef->getBondData()
-        ->getGroupNumChangeSignal()
-        .disconnect<NeighborList, &NeighborList::slotGlobalTopologyNumberChange>(this);
+    // m_sysdef->getBondData()
+    //     ->getGroupNumChangeSignal()
+    //     .disconnect<NeighborList, &NeighborList::slotGlobalTopologyNumberChange>(this);
 
     // m_sysdef->getAngleData()
     //     ->getGroupNumChangeSignal()
@@ -736,11 +736,11 @@ void NeighborList::setExclusions(pybind11::list exclusions)
 
 void NeighborList::setSingleExclusion(std::string exclusion)
     {
-    if (exclusion == "bond")
-        {
-        addExclusionsFromBonds();
-        m_exclusions.insert("bond");
-        }
+    // if (exclusion == "bond")
+    //     {
+    //     addExclusionsFromBonds();
+    //     m_exclusions.insert("bond");
+    //     }
     // else if (exclusion == "meshbond" && m_meshbond_data)
     //     {
     //     addExclusionsFromMeshBonds();
@@ -751,7 +751,7 @@ void NeighborList::setSingleExclusion(std::string exclusion)
     //     addExclusionsFromPairs();
     //     m_exclusions.insert("special_pair");
     //     }
-    else if (exclusion == "constraint")
+    if (exclusion == "constraint")
         {
         addExclusionsFromConstraints();
         m_exclusions.insert("constraint");
@@ -862,36 +862,36 @@ void NeighborList::countExclusions()
     added as exclusions. Any additional bonds added after this will not be automatically added as
    exclusions.
 */
-void NeighborList::addExclusionsFromBonds()
-    {
-    std::shared_ptr<BondData> bond_data = m_sysdef->getBondData();
+// void NeighborList::addExclusionsFromBonds()
+//     {
+//     std::shared_ptr<BondData> bond_data = m_sysdef->getBondData();
 
-    // access bond data by snapshot
-    BondData::Snapshot snapshot;
-    bond_data->takeSnapshot(snapshot);
+//     // access bond data by snapshot
+//     BondData::Snapshot snapshot;
+//     bond_data->takeSnapshot(snapshot);
 
-    // broadcast global bond list
-    std::vector<BondData::members_t> bonds;
+//     // broadcast global bond list
+//     std::vector<BondData::members_t> bonds;
 
-#ifdef ENABLE_MPI
-    if (m_pdata->getDomainDecomposition())
-        {
-        if (m_exec_conf->getRank() == 0)
-            bonds = snapshot.groups;
+// #ifdef ENABLE_MPI
+//     if (m_pdata->getDomainDecomposition())
+//         {
+//         if (m_exec_conf->getRank() == 0)
+//             bonds = snapshot.groups;
 
-        bcast(bonds, 0, m_exec_conf->getMPICommunicator());
-        }
-    else
-#endif
-        {
-        bonds = snapshot.groups;
-        }
+//         bcast(bonds, 0, m_exec_conf->getMPICommunicator());
+//         }
+//     else
+// #endif
+//         {
+//         bonds = snapshot.groups;
+//         }
 
-    // for each bond
-    for (unsigned int i = 0; i < bonds.size(); i++)
-        // add an exclusion
-        addExclusion(bonds[i].tag[0], bonds[i].tag[1]);
-    }
+//     // for each bond
+//     for (unsigned int i = 0; i < bonds.size(); i++)
+//         // add an exclusion
+//         addExclusion(bonds[i].tag[0], bonds[i].tag[1]);
+//     }
 
 /*! After calling addExclusionsFromMeshBonds() all meshbonds specified in the attached Mesh will be
     added as exclusions. Any additional meshbonds added after this will not be automatically added
