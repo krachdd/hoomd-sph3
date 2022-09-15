@@ -21,7 +21,7 @@ LZ = LREF
 
 # Parameters
 KERNEL  = 'CubicSpline'
-NL      = 100                       # INT
+NL      = 60                       # INT
 FX      = 0.1                      # m/s^2
 
 DX      = LREF/NL                  # m

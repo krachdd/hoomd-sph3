@@ -25,7 +25,7 @@ LZ = LREF
 
 # Parameters
 KERNEL  = 'CubicSpline'
-NL      = 100                       # INT
+NL      = 60                       # INT
 FX      = 0.1                      # m/s^2
 
 DX      = LREF/NL                  # m
@@ -215,7 +215,7 @@ if device.communicator.rank == 0:
 
 
 
-sim.run(501, write_at_start=True)
+sim.run(10001, write_at_start=True)
 
 if device.communicator.rank == 0:
     export_gsd2vtu.export_spf(dumpname)
