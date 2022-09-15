@@ -43,7 +43,7 @@ LZ += 3*RCUT
 
 print(f'RCUT: {RCUT}')
 
-Nx = int(LX/DX)                 # particles per box direction
+Nx = int((LX + 3 * RCUT)/DX)                 # particles per box direction
 Ny = int((LY + 3 * RCUT)/DX)    # particles per box direction
 Nz = int((LZ + 3 * RCUT)/DX)    # particles per box direction
 N_particles = Nx * Ny * Nz      # Number of Particles
@@ -61,6 +61,7 @@ x, y, z = np.meshgrid(*(np.linspace(-box_Lx / 2, box_Lx / 2, Nx, endpoint=False)
                       *(np.linspace(-box_Ly / 2, box_Ly / 2, Ny, endpoint=False),),
                       *(np.linspace(-box_Lz / 2, box_Lz / 2, Nz, endpoint=False),))
 
+
 positions = np.array((x.ravel(), y.ravel(), z.ravel())).T
 
 velocities = np.zeros((positions.shape[0], positions.shape[1]), dtype = np.float32)
@@ -68,7 +69,7 @@ masses     = np.ones((positions.shape[0]), dtype = np.float32) * M
 slengths   = np.ones((positions.shape[0]), dtype = np.float32) * H
 dpes       = np.zeros((positions.shape[0], positions.shape[1]), dtype = np.float32)
 
-print(slengths)
+# print(slengths)
 
 snapshot = hoomd.Snapshot(device.communicator)
 snapshot.configuration.box = [box_Lx, box_Ly, box_Lz] + [0, 0, 0]

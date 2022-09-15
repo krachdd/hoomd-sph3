@@ -248,12 +248,15 @@ class PYBIND11_EXPORT SinglePhaseFlow : public SPHBaseClass<KT_, SET_>
         bool m_density_diffusion; //!< Set to true if Molteni type density diffusion is to be used
         bool m_shepard_renormalization; //!< Set to true if Shepard type density reinitialization is to be used
         bool m_params_set; //!< True if parameters are set
+        bool m_solid_removed; //!< True if solid Particles have been marked to remove 
 
         // Log parameters
         uint64_t m_log_computed_last_timestep; //!< Last time step where log quantities were computed
 
         // Timestep parameters
         std::vector<double> m_timestep_list = std::vector<double>(7);  //!< Cache all generated timestep quantities names
+
+        void mark_solid_particles_toremove(uint64_t timestep);
 
         /*! Helper function to compute particle number density
          * \post For fluid particles, compute number density. For solid particles,

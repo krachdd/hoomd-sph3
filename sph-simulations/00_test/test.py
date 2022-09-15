@@ -174,7 +174,7 @@ sim.operations.writers.append(gsd_writer)
 
 
 # hoomd.write.GSD.write(filename = dumpname, state = sim.state, mode = 'wb')
-log_trigger = hoomd.trigger.Periodic(100)
+log_trigger = hoomd.trigger.Periodic(10)
 logger = hoomd.logging.Logger(categories=['scalar', 'string'])
 logger.add(sim, quantities=['timestep', 'tps', 'walltime'])
 logger.add(spf_properties, quantities=['kinetic_energy', 'num_particles', 'fluid_vel_x_sum', 'mean_density'])
@@ -196,7 +196,26 @@ sim.operations.integrator = integrator
 if device.communicator.rank == 0:
     print("Starting Run at {0}".format(datetime.now().strftime("%d/%m/%Y %H:%M:%S")))
 
-sim.run(10001, write_at_start=True)
+# sim.run(1, write_at_start=False)
+
+# Identify solid particles with zero charge and delete them ( redundant solid particles )
+# tags    = []
+# deleted = 0
+# with sim.state.cpu_local_snapshot as data:
+#     for i in range(len(data.particles.position)):
+#         if data.particles.typeid[i] == 1 and data.particles.dpe[i][2] == 1:
+#             tags.append(data.particles.tag[i])
+#             deleted += 1
+
+# for t in tags:
+#     sim.state.removeParticle(t)
+
+# if device.communicator.rank == 0:
+#     print(f'{deleted} unnecessary solid particles deleted.')
+
+
+
+sim.run(1001, write_at_start=True)
 
 if device.communicator.rank == 0:
     export_gsd2vtu.export_spf(dumpname)

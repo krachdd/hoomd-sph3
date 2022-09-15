@@ -44,6 +44,8 @@ SinglePhaseFlow<KT_, SET_>::SinglePhaseFlow(std::shared_ptr<SystemDefinition> sy
         m_ddiff = Scalar(0.0);
         m_shepardfreq = 1;
 
+        m_solid_removed = false;
+
         // Sanity checks
         assert(this->m_pdata);
         assert(this->m_nlist);
@@ -245,6 +247,59 @@ void SinglePhaseFlow<KT_, SET_>::setRCutPython(pybind11::tuple types, Scalar r_c
     setRcut(typ1, typ2, r_cut);
     }
 
+
+/*! Mark solid particles to remove
+    set energie of a particle to 1
+ */
+
+template<SmoothingKernelType KT_,StateEquationType SET_>
+void SinglePhaseFlow<KT_, SET_>::mark_solid_particles_toremove(uint64_t timestep)
+    {
+    this->m_exec_conf->msg->notice(7) << "Computing SinglePhaseFlow::Mark solid Particles to remove at timestep " << timestep << std::endl;
+
+    // Grab handles for particle and neighbor data
+    ArrayHandle<Scalar4> h_pos(this->m_pdata->getPositions(), access_location::host, access_mode::read);
+    ArrayHandle<Scalar3> h_dpe(this->m_pdata->getDPEs(), access_location::host, access_mode::readwrite);
+
+    // Grab handles for neighbor data
+    ArrayHandle<unsigned int> h_n_neigh(this->m_nlist->getNNeighArray(), access_location::host, access_mode::read);
+    ArrayHandle<unsigned int> h_nlist(this->m_nlist->getNListArray(), access_location::host, access_mode::read);
+    ArrayHandle<size_t> h_head_list(this->m_nlist->getHeadList(), access_location::host, access_mode::read);
+    ArrayHandle<unsigned int> h_type_property_map(this->m_type_property_map, access_location::host, access_mode::read);
+
+    unsigned int size;
+    long unsigned int myHead;
+
+    // For all solid particles
+    unsigned int group_size = this->m_solidgroup->getNumMembers();
+    for (unsigned int group_idx = 0; group_idx < group_size; group_idx++)
+        {
+        // Read particle index
+        unsigned int i = this->m_solidgroup->getMemberIndex(group_idx);
+
+        // check if solid particle has any fluid neighbor
+        bool solid_w_fluid_neigh = false;
+        myHead = h_head_list.data[i];
+        size = (unsigned int)h_n_neigh.data[i];
+        for (unsigned int j = 0; j < size; j++)
+            {
+            unsigned int k = h_nlist.data[myHead + j];
+            if ( checkfluid(h_type_property_map.data, h_pos.data[k].w) )
+                {
+                solid_w_fluid_neigh = true;
+                break;
+                }
+            }
+        if ( !(solid_w_fluid_neigh) )
+            {
+            // Solid particles which do not have fluid neighbors are marked
+            // using energy=1 so that they can be deleted during simulation
+            h_dpe.data[i].z = Scalar(1);
+            }
+
+        } // End solid particle loop
+    }
+
 /*! Perform number density computation
  * This method computes and stores
      - the density based on a real mass density ( rho_i = m_i * n_neighbours / volume_sphere_of_influnece ) for fluid particles
@@ -256,20 +311,15 @@ void SinglePhaseFlow<KT_, SET_>::compute_particlenumberdensity(uint64_t timestep
     {
     this->m_exec_conf->msg->notice(7) << "Computing SinglePhaseFlow::Particle Number Density" << std::endl;
 
-    // if (this->m_prof)
-    //     this->m_prof->push("SinglePhaseFlowNDensity");
-
     // Grab handles for particle data
     ArrayHandle<Scalar3> h_dpe(this->m_pdata->getDPEs(), access_location::host, access_mode::readwrite);
     ArrayHandle<Scalar4> h_pos(this->m_pdata->getPositions(), access_location::host, access_mode::read);
     ArrayHandle<Scalar4> h_velocity(this->m_pdata->getVelocities(), access_location::host, access_mode::read);
-    // ArrayHandle<Scalar>  h_h(this->m_pdata->getSlengths(), access_location::host, access_mode::read);
 
     // Grab handles for neighbor data
     ArrayHandle<unsigned int> h_n_neigh(this->m_nlist->getNNeighArray(), access_location::host, access_mode::read);
     ArrayHandle<unsigned int> h_nlist(this->m_nlist->getNListArray(), access_location::host, access_mode::read);
     ArrayHandle<size_t> h_head_list(this->m_nlist->getHeadList(), access_location::host, access_mode::read);
-    // ArrayHandle<unsigned int> h_head_list(this->m_nlist->getHeadList(), access_location::host, access_mode::read);
     ArrayHandle<unsigned int> h_type_property_map(this->m_type_property_map, access_location::host, access_mode::read);
 
     unsigned int size;
@@ -503,9 +553,6 @@ void SinglePhaseFlow<KT_, SET_>::compute_noslip(uint64_t timestep)
     {
     this->m_exec_conf->msg->notice(7) << "Computing SinglePhaseFlow::NoSlip" << std::endl;
 
-    // if (this->m_prof)
-    //     this->m_prof->push("SinglePhaseFlowNoSlip");
-
     // Grab handles for particle and neighbor data
     ArrayHandle<Scalar3> h_vf(this->m_pdata->getAuxiliaries1(), access_location::host,access_mode::readwrite);
     ArrayHandle<Scalar4> h_pos(this->m_pdata->getPositions(), access_location::host, access_mode::read);
@@ -585,7 +632,7 @@ void SinglePhaseFlow<KT_, SET_>::compute_noslip(uint64_t timestep)
             {
             // Solid particles which do not have fluid neighbors are marked
             // using energy=1 so that they can be deleted during simulation
-            h_dpe.data[i].z = Scalar(1);
+            // h_dpe.data[i].z = Scalar(1);
             // Set fictitious solid velocity to zero
             h_vf.data[i].x = 0;
             h_vf.data[i].y = 0;
@@ -1097,6 +1144,12 @@ void SinglePhaseFlow<KT_, SET_>::computeForces(uint64_t timestep)
 
     // start by updating the neighborlist
     this->m_nlist->compute(timestep);
+
+    if (!m_solid_removed)
+        {
+        mark_solid_particles_toremove(timestep);
+        m_solid_removed = true;
+        }
 
     // This is executed once to initialize protected/private variables
     if (!m_params_set)
