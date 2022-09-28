@@ -135,7 +135,8 @@ void VelocityVerletBasic::integrateStepOne(uint64_t timestep)
         // dpe(t+deltaT/2) = dpe(t) + (1/2)*dpedt(t)*deltaT
         h_dpe.data[j].x += Scalar(1.0/2.0)*h_dpedt.data[j].x*m_deltaT;
         h_dpe.data[j].y += Scalar(1.0/2.0)*h_dpedt.data[j].y*m_deltaT;
-        h_dpe.data[j].z += Scalar(1.0/2.0)*h_dpedt.data[j].z*m_deltaT;
+        // DK: Energy change can be ignored
+        // h_dpe.data[j].z += Scalar(1.0/2.0)*h_dpedt.data[j].z*m_deltaT;
 
         // Original HOOMD Velocity Verlet Two Step NVE
         h_vel.data[j].x += Scalar(1.0 / 2.0) * h_accel.data[j].x * m_deltaT;
@@ -215,7 +216,7 @@ void VelocityVerletBasic::integrateStepTwo(uint64_t timestep)
         // dpe(t+deltaT) = dpe(t+deltaT/2) + 1/2 * dpedt(t+deltaT)*deltaT
         h_dpe.data[j].x += Scalar(1.0/2.0)*h_dpedt.data[j].x*m_deltaT;
         h_dpe.data[j].y += Scalar(1.0/2.0)*h_dpedt.data[j].y*m_deltaT;
-        h_dpe.data[j].z += Scalar(1.0/2.0)*h_dpedt.data[j].z*m_deltaT;
+        // h_dpe.data[j].z += Scalar(1.0/2.0)*h_dpedt.data[j].z*m_deltaT;
 
 
         // not done in original VV Algorithm

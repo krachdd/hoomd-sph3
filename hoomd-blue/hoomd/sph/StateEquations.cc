@@ -38,6 +38,8 @@ void StateEquation<SET_>::setParams(Scalar rho0, Scalar c, Scalar bpfactor)
         m_bp = m_bpfactor*m_rho0*m_c*m_c;
         m_params_set = true;
 
+        std::cout << "set StateEquation params m_rho0, m_c, m_bpfactor " << m_rho0 << " " << m_c << " " << m_bpfactor << std::endl;
+
     }
 template<StateEquationType SET_>
 void StateEquation<SET_>::setBackPressure(Scalar bp)

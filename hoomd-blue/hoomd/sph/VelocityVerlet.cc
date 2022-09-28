@@ -139,7 +139,8 @@ void VelocityVerlet::integrateStepOne(uint64_t timestep)
         // dpe(t+deltaT/2) = dpe(t) + (1/2)*dpedt(t)*deltaT
         h_dpe.data[j].x += Scalar(1.0/2.0)*h_dpedt.data[j].x*m_deltaT;
         h_dpe.data[j].y += Scalar(1.0/2.0)*h_dpedt.data[j].y*m_deltaT;
-        h_dpe.data[j].z += Scalar(1.0/2.0)*h_dpedt.data[j].z*m_deltaT;
+        // DK: Energy change can be ignored
+        // h_dpe.data[j].z += Scalar(1.0/2.0)*h_dpedt.data[j].z*m_deltaT;
 
         // std::cout << "step 1 mass " << h_vel.data[j].w << std::endl;
         // std::cout << "step 1 accelx " << h_accel.data[j].x << std::endl;
@@ -217,7 +218,8 @@ void VelocityVerlet::integrateStepTwo(uint64_t timestep)
         // actually not necessary to compute the next 6 lines if m_densitymethod == DENSITYSUMMATION and j_isfluid 
         h_dpedt.data[j].x = h_net_ratedpe.data[j].x;
         h_dpedt.data[j].y = h_net_ratedpe.data[j].y;
-        h_dpedt.data[j].z = h_net_ratedpe.data[j].z;
+        // DK: Energy change can be ignored
+        // h_dpedt.data[j].z = h_net_ratedpe.data[j].z;
 
         // dpe(t+deltaT) = dpe(t+deltaT/2) + 1/2 * dpedt(t+deltaT)*deltaT
         h_dpe.data[j].x += Scalar(1.0/2.0)*h_dpedt.data[j].x*m_deltaT;

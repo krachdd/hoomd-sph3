@@ -38,6 +38,7 @@ class SPHModel(force.Force):
         self._param_dict.update(params)
 
         self.kernel     = kernel
+        # print(kernel)
         self.eos        = eos
         self.nlist      = nlist
         # self.accel_set  = False
@@ -184,7 +185,7 @@ class SinglePhaseFlow(SPHModel):
                  solidgroup_filter = None,
                  densitymethod='SUMMATION',
                  viscositymethod='HARMONICAVERAGE'):
-
+        print(kernel)
         super().__init__(kernel, eos, nlist)
 
         self._param_dict.update(ParameterDict(
@@ -300,6 +301,8 @@ class SinglePhaseFlow(SPHModel):
 
         # Set kernel parameters
         kappa = self.kernel.Kappa()
+        mycpp_kappa = self.kernel.cpp_smoothingkernel.getKernelKappa()
+
         pdata = self._simulation.state._cpp_sys_def.getParticleData()
         globalN = pdata.getNGlobal()
 
@@ -506,7 +509,7 @@ class SinglePhaseFlow(SPHModel):
 
 
 # Dicts
-Kernel = {'_WendlandC2':'WC2','_WendlandC4':'WC4','_WendlandC6':'WC6','_Quintic':'Q','_CubicSplibe':'CS'}
+Kernel = {'_WendlandC2':'WC2','_WendlandC4':'WC4','_WendlandC6':'WC6','_Quintic':'Q','_CubicSpline':'CS'}
 EOS = {'_Linear':'L','_Tait':'T'}
 
 

@@ -10,7 +10,6 @@ import export_gsd2vtu
 # from mpi4py import MPI
 # import gsd.hoomd
 
-
 # -----------------------------------------------------------------------------------
 # KEEP SAME AS IN TEST CREATE 
 # -----------------------------------------------------------------------------------
@@ -81,7 +80,8 @@ RCUT    = hoomd.sph.kernel.Kappa[KERNEL]*H           # m
 Kernel = hoomd.sph.kernel.Kernels[KERNEL]()
 Kappa  = Kernel.Kappa()
 
-# print(Kernel.__dict__)
+print(f'H: {H}, RCUT: {RCUT}, Kappa: {Kappa}')
+
 
 # print(dir(hoomd.sph._sph))
 # print(hoomd.sph.kernel.Kernels['WendlandC4']
@@ -107,7 +107,7 @@ NList = hoomd.nsearch.nlist.Cell(buffer = RCUT*0.05, rebuild_check_delay = 1, ka
 
 
 # # Equation of State
-EOS = hoomd.sph.eos.Tait()
+EOS = hoomd.sph.eos.Linear()
 EOS.set_params(RHO0,0.05)
 
 # Define groups/filters
@@ -126,7 +126,7 @@ model = hoomd.sph.sphmodel.SinglePhaseFlow(kernel = Kernel,
                                            fluidgroup_filter = filterFLUID,
                                            solidgroup_filter = filterSOLID)
 if device.communicator.rank == 0:
-    print("SetModelParameter")
+    print("SetModelParameter on all ranks")
 
 model.mu = 0.01
 model.densitymethod = densitymethod
@@ -196,22 +196,27 @@ sim.operations.integrator = integrator
 if device.communicator.rank == 0:
     print("Starting Run at {0}".format(datetime.now().strftime("%d/%m/%Y %H:%M:%S")))
 
+
+# Deleting Particles only works on one core at the moment TODO
+
 # sim.run(1, write_at_start=False)
 
-# Identify solid particles with zero charge and delete them ( redundant solid particles )
+# # Identify solid particles with zero charge and delete them ( redundant solid particles )
 # tags    = []
 # deleted = 0
 # with sim.state.cpu_local_snapshot as data:
 #     for i in range(len(data.particles.position)):
 #         if data.particles.typeid[i] == 1 and data.particles.dpe[i][2] == 1:
 #             tags.append(data.particles.tag[i])
+#             # print(f'Rank: {device.communicator.rank} -> Delete Particle {data.particles.tag[i]}')
 #             deleted += 1
 
 # for t in tags:
+#     # print(f'Rank: {device.communicator.rank} --> Remove particle {t} of {deleted}')
 #     sim.state.removeParticle(t)
 
-# if device.communicator.rank == 0:
-#     print(f'{deleted} unnecessary solid particles deleted.')
+# # if device.communicator.rank == 0:
+# print(f'Rank: {device.communicator.rank}: {deleted} unnecessary solid particles deleted.')
 
 
 

@@ -54,6 +54,7 @@ class _SmoothingKernel(_HOOMDBaseObject):
         # Neighbor list
         self.nlist = nlist
         # Set kernel scaling factor in neighbor list class
+        print("kernel.py: set kappa in neighbourlist: {0}".format(self.kappa))
         self.nlist._cpp_obj.setKernelFactor(self.kappa)
 
 
@@ -122,7 +123,6 @@ class Quintic(_SmoothingKernel):
     R""" Quintic Kernel
     """
     def __init__(self):
-        # hoomd.util.print_status_line();
         # Initialize base class
         _SmoothingKernel.__init__(self, "Quintic");
 
@@ -142,15 +142,14 @@ class CubicSpline(_SmoothingKernel):
     R""" Cubic Spline Kernel
     """
     def __init__(self):
-        # hoomd.util.print_status_line();
         # Initialize base class
-        _SmoothingKernel.__init__(self, "Quintic");
+        _SmoothingKernel.__init__(self, "CubicSpline");
 
         # Kernel scaling parameter
         self.kappa = 2.0
 
         # create the c++ mirror class
-        self.cpp_smoothingkernel = _sph.Quintic();
+        self.cpp_smoothingkernel = _sph.CubicSpline();
 
     def OptimalH(self):
         return 1.7

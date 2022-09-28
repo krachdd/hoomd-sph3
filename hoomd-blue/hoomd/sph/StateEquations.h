@@ -7,11 +7,11 @@ maintainer: dkrach, david.krach@mib.uni-stuttgart.de
 
 #include <memory>
 #include <vector>
-
 #include <pybind11/pybind11.h>
 #include <pybind11/numpy.h>
 
-// #include <boost/shared_ptr.hpp>
+#include <iostream>
+
 
 #ifndef __SPH_STATE_EQUATIONS_H__
 #define __SPH_STATE_EQUATIONS_H__

@@ -117,6 +117,7 @@ class PYBIND11_EXPORT SinglePhaseFlow : public SPHBaseClass<KT_, SET_>
             m_ch = h;
             m_rcut = m_kappa * m_ch;
             m_rcutsq = m_rcut * m_rcut;
+
             }
 
         /*! Set compute solid forces option to true. This is necessary if suspended object
@@ -265,6 +266,11 @@ class PYBIND11_EXPORT SinglePhaseFlow : public SPHBaseClass<KT_, SET_>
         void compute_ndensity(uint64_t timestep);
         
         void compute_particlenumberdensity(uint64_t timestep);
+
+        /*! Helper function to compute normalization constant for solid particles
+         * \post For solid particles, compute fluid normalization constant.
+         */
+        void compute_normalization_constant_solid(uint64_t timestep);
 
         /*! Helper function to compute particle pressures
          *  \post Pressure of fluid particle computed

@@ -193,7 +193,7 @@ Scalar SmoothingKernel<cubicspline>::wij(const Scalar h, const Scalar rij)
         else if ( q >= Scalar(1) && q < Scalar(2) )
         {
             // (alpha/h^D)*( 0.25*(2.0-q)^3 );
-            w = normalizationfactor(h)* ( Scalar(0.25)* (pow((Scalar(2.0)-q),Scalar(3)))  );
+            w = normalizationfactor(h)* ( Scalar(0.25)* (Scalar(2.0)-q) * (Scalar(2.0)-q) * (Scalar(2.0)-q)  );
         }
 
         return w;
@@ -278,55 +278,6 @@ Scalar SmoothingKernel<cubicspline>::dwijdr(const Scalar h, const Scalar rij)
         return dwdr;
 }
 
-//! Explicit template instantiations
-// template void PYBIND11_EXPORT SmoothingKernel<wendlandc2>::setAlpha;
-// template void PYBIND11_EXPORT SmoothingKernel<wendlandc2>::setSelfDensity;
-// template void PYBIND11_EXPORT SmoothingKernel<wendlandc2>::setKernelKappa;
-// template Scalar PYBIND11_EXPORT SmoothingKernel<wendlandc2>::getKernelKappa;
-// template Scalar PYBIND11_EXPORT SmoothingKernel<wendlandc2>::w0;
-// template Scalar PYBIND11_EXPORT SmoothingKernel<wendlandc2>::normalizationfactor;
-
-// template void PYBIND11_EXPORT SmoothingKernel<wendlandc4>::setAlpha;
-// template void PYBIND11_EXPORT SmoothingKernel<wendlandc4>::setSelfDensity;
-// template void PYBIND11_EXPORT SmoothingKernel<wendlandc4>::setKernelKappa;
-// template Scalar PYBIND11_EXPORT SmoothingKernel<wendlandc4>::getKernelKappa;
-// template Scalar PYBIND11_EXPORT SmoothingKernel<wendlandc4>::w0;
-// template Scalar PYBIND11_EXPORT SmoothingKernel<wendlandc4>::normalizationfactor;
-
-// template void PYBIND11_EXPORT SmoothingKernel<wendlandc6>::setAlpha;
-// template void PYBIND11_EXPORT SmoothingKernel<wendlandc6>::setSelfDensity;
-// template void PYBIND11_EXPORT SmoothingKernel<wendlandc6>::setKernelKappa;
-// template Scalar PYBIND11_EXPORT SmoothingKernel<wendlandc6>::getKernelKappa;
-// template Scalar PYBIND11_EXPORT SmoothingKernel<wendlandc6>::w0;
-// template Scalar PYBIND11_EXPORT SmoothingKernel<wendlandc6>::normalizationfactor;
-
-// template void PYBIND11_EXPORT SmoothingKernel<quintic>::setAlpha;
-// template void PYBIND11_EXPORT SmoothingKernel<quintic>::setSelfDensity;
-// template void PYBIND11_EXPORT SmoothingKernel<quintic>::setKernelKappa;
-// template Scalar PYBIND11_EXPORT SmoothingKernel<quintic>::getKernelKappa;
-// template Scalar PYBIND11_EXPORT SmoothingKernel<quintic>::w0;
-// template Scalar PYBIND11_EXPORT SmoothingKernel<quintic>::normalizationfactor;
-
-// template void PYBIND11_EXPORT SmoothingKernel<cubicspline>::setAlpha;
-// template void PYBIND11_EXPORT SmoothingKernel<cubicspline>::setSelfDensity;
-// template void PYBIND11_EXPORT SmoothingKernel<cubicspline>::setKernelKappa;
-// template Scalar PYBIND11_EXPORT SmoothingKernel<cubicspline>::getKernelKappa;
-// template Scalar PYBIND11_EXPORT SmoothingKernel<cubicspline>::w0;
-// template Scalar PYBIND11_EXPORT SmoothingKernel<cubicspline>::normalizationfactor;
-
-// template<> std::string get_kernel_name<wendlandc2>()
-// {return "WC2";}
-// template<> std::string get_kernel_name<wendlandc4>()
-// {return "WC4";}
-// template<> std::string get_kernel_name<wendlandc6>()
-// {return "WC6";}
-// template<> std::string get_kernel_name<quintic>()
-// {return "Q";}
-// template<> std::string get_kernel_name<cubicspline>()
-// {return "CS";}
-
-//! Explicit template instantiations
-
 namespace detail
 {
 void export_WendlandC2(pybind11::module& m)
@@ -399,7 +350,7 @@ void export_Quintic(pybind11::module& m)
 
 void export_CubicSpline(pybind11::module& m)
      {
-     pybind11::class_<SmoothingKernel<cubicspline>, std::shared_ptr<SmoothingKernel<cubicspline>>>(m, "Cubicspline")
+     pybind11::class_<SmoothingKernel<cubicspline>, std::shared_ptr<SmoothingKernel<cubicspline>>>(m, "CubicSpline")
          .def(pybind11::init<>())
          .def("getKernelKappa", &SmoothingKernel<cubicspline>::getKernelKappa)
          //.def("setNeighborList", &SmoothingKernel<cubicspline>::setNeighborList)
