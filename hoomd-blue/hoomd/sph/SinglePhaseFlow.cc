@@ -150,6 +150,8 @@ void SinglePhaseFlow<KT_, SET_>::setParams(Scalar mu)
 template<SmoothingKernelType KT_,StateEquationType SET_>
 void SinglePhaseFlow<KT_, SET_>::update_ghost_dpe(uint64_t timestep)
     {
+    this->m_exec_conf->msg->notice(7) << "Computing SinglePhaseFlow::Update Ghost DPE" << std::endl;
+
 #ifdef ENABLE_MPI
     if (this->m_comm)
         {
@@ -175,6 +177,8 @@ void SinglePhaseFlow<KT_, SET_>::update_ghost_dpe(uint64_t timestep)
 template<SmoothingKernelType KT_,StateEquationType SET_>
 void SinglePhaseFlow<KT_, SET_>::update_ghost_aux1(uint64_t timestep)
     {
+    this->m_exec_conf->msg->notice(7) << "Computing SinglePhaseFlow::Update Ghost aux1" << std::endl;
+
 #ifdef ENABLE_MPI
     if (this->m_comm)
         {
@@ -653,9 +657,6 @@ void SinglePhaseFlow<KT_, SET_>::compute_pressure(uint64_t timestep)
     {
     this->m_exec_conf->msg->notice(7) << "Computing SinglePhaseFlow::Pressure" << std::endl;
 
-    // if (this->m_prof)
-    //     this->m_prof->push("SinglePhaseFlowPressure");
-
     // Define ArrayHandles
     ArrayHandle<Scalar3> h_dpe(this->m_pdata->getDPEs(), access_location::host, access_mode::readwrite);
 
@@ -668,9 +669,6 @@ void SinglePhaseFlow<KT_, SET_>::compute_pressure(uint64_t timestep)
         // Evaluate pressure
         h_dpe.data[i].y = this->m_eos->Pressure(h_dpe.data[i].x);
         }
-
-    // if (this->m_prof)
-    //     this->m_prof->pop();
     }
 
 /*! Compute fictitious solid particle properties
