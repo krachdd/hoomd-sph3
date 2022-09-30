@@ -5,7 +5,7 @@ SPH Implementation in HOOMD-Blue 3.3.0 (as of 01.08.2022)
 additional: cereal - A C++11 library for serialization
 ```bash
 sudo apt install libcereal-dev
-````
+```
 
 ## Main Modifications
 ### Technical aspects
@@ -42,3 +42,4 @@ super().__init__(arg1, ...)
 ### Fundamental Errors in old Code
 - fictitious pressure computation, specifically the hydrostatic contribution. See Adami2012!
 - Velocity Verlet not correct implemented
+- Density dependent on discretisation/ this might be kernel related
