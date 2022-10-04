@@ -209,6 +209,7 @@ class Cell(NeighborList):
 
         self._param_dict.update(
             ParameterDict(deterministic=bool(deterministic),kappa=float(kappa)))
+        print(self._param_dict)
 
     def _attach(self):
         if isinstance(self._simulation.device, hoomd.device.CPU):

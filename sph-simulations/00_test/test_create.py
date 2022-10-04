@@ -21,7 +21,7 @@ LZ = LREF
 
 # Parameters
 KERNEL  = 'CubicSpline'
-NL      = 60                       # INT
+NL      = 20                       # INT
 FX      = 0.1                      # m/s^2
 
 DX      = LREF/NL                  # m
@@ -113,4 +113,6 @@ snapshot.particles.typeid[:]   = tid
 
 sim.create_state_from_snapshot(snapshot)
 
-hoomd.write.GSD.write(state = sim.state, mode = 'wb', filename = "test_tube.gsd")
+hoomd.write.GSD.write(state = sim.state, mode = 'wb', filename = "test_tube_{0}.gsd".format(N_particles))
+
+print(f'Filename: test_tube_{N_particles}.gsd, Number of particles: {N_particles}')

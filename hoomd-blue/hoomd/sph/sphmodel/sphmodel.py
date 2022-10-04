@@ -75,6 +75,7 @@ class SPHModel(force.Force):
 
 
 
+
     def _add(self, simulation):
         super()._add(simulation)
         self._add_nlist()
@@ -280,8 +281,12 @@ class SinglePhaseFlow(SPHModel):
                                "different simulation.".format(type(self)))
         self.nlist._attach()
         if isinstance(self._simulation.device, hoomd.device.CPU):
+            # self.nlist._cpp_obj.setStorageMode(
+            #     _nsearch.NeighborList.storageMode.half)
             self.nlist._cpp_obj.setStorageMode(
-                _nsearch.NeighborList.storageMode.half)
+                _nsearch.NeighborList.storageMode.full)
+        # TODO: understand why _nsearch.NeighborList.storageMode.half makes wierd errors!
+
         else:
             self.nlist._cpp_obj.setStorageMode(
                 _nsearch.NeighborList.storageMode.full)

@@ -38,6 +38,16 @@ super().__init__(arg1, ...)
 - rename Tait Eq. to Cole see Paper: Cole 1948 Underwater Explosions
 - get rid of not needed request on functoins. Low hanging fruit with impact on performance. Reduce access times and number of requests.
 - Literature Review on kernels: which on to use when.
+- plug compute_normalization_constant_solid into compute noslip
+- understand why 
+```python 
+# in sphmodel.py 
+def _attach(self):
+    """
+    """
+    self.nlist._cpp_obj.setStorageMode(_nsearch.NeighborList.storageMode.half)
+``` 
+makes wierd errors?
 
 ### Fundamental Errors in old Code
 - fictitious pressure computation, specifically the hydrostatic contribution. See Adami2012!

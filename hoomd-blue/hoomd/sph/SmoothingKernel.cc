@@ -52,11 +52,22 @@ SmoothingKernel<quintic>::SmoothingKernel()
     : m_kappa(Scalar(3.0)), m_self_density(Scalar(66.0)), m_alpha(Scalar(0.0026525825))
     {
     }
+
+/*
+Cubic Spline
+m_alpha = 1./PI, 
+m_kappa = 2.0, only needed in renormalze density and ndensity
+m_self_density
+see: J. Monaghan, Smoothed Particle Hydrodynamics, “Annual Review of Astronomy and Astrophysics”, 30 (1992), pp. 543-574.
+and https://pysph.readthedocs.io/en/latest/reference/kernels.html
+*/
 template<>
 SmoothingKernel<cubicspline>::SmoothingKernel()
     : m_kappa(Scalar(2.0)), m_self_density(Scalar(1.0)), m_alpha(Scalar(0.31830987))
     {
     }
+
+
 
 template<SmoothingKernelType KT_>
 Scalar SmoothingKernel<KT_>::wij(const Scalar h, const Scalar rij)
@@ -180,20 +191,22 @@ Scalar SmoothingKernel<quintic>::wij(const Scalar h, const Scalar rij)
 
         return w;
 }
+
+/* checked DK 10/2022 */
 template<>
 Scalar SmoothingKernel<cubicspline>::wij(const Scalar h, const Scalar rij)
 {
         Scalar q = rij / h;
-        Scalar w = Scalar(0.0);
-        if( q >= Scalar(0.0) && q < Scalar(1) )
+        Scalar w = 0.0;
+        if( q >= 0.0 && q <= 1.0)
         {
-            // (alpha/h^D)*( 1.0 - 1.5*q^2 + 0.75*q^3 );
-            w = normalizationfactor(h)* ( Scalar(1) - Scalar(1.5)*q*q + Scalar(0.75)*q*q*q );
+            // (alpha/h^3)*( 1.0 - 1.5*q^2 + 0.75*q^3 );
+            w = normalizationfactor(h)* ( 1.0 - 1.5*q*q + 0.75*q*q*q);
         }
-        else if ( q >= Scalar(1) && q < Scalar(2) )
+        else if ( q > 1.0 && q <= 2.0 )
         {
             // (alpha/h^D)*( 0.25*(2.0-q)^3 );
-            w = normalizationfactor(h)* ( Scalar(0.25)* (Scalar(2.0)-q) * (Scalar(2.0)-q) * (Scalar(2.0)-q)  );
+            w = normalizationfactor(h)* ( 0.25* (2.0-q) * (2.0-q) * (2.0-q));
         }
 
         return w;
@@ -258,21 +271,25 @@ Scalar SmoothingKernel<quintic>::dwijdr(const Scalar h, const Scalar rij)
         return dwdr;
 }
 
+
+/* checked DK 10/2022 
+adapted limits, removed additional datatyping
+*/
 template<>
 Scalar SmoothingKernel<cubicspline>::dwijdr(const Scalar h, const Scalar rij)
 {
         Scalar q = rij / h;
         Scalar dwdr = Scalar(0.0);
 
-        if( q >= Scalar(0.0) && q < Scalar(1) )
+        if( q >= 0.0 && q <= 1.0 )
         {
-            // (alpha/(h^D+1))*-5*( (3.0-q) + 2.25*q^2 );
-            dwdr = -(normalizationfactor(h)/h)*( Scalar(3)*q + Scalar(2.25)*q*q );
-        }else if ( q >= Scalar(1) && q < Scalar(2) )
+            // (alpha/(h^D+1))*-1*( (3.0-q) + 2.25*q^2 );
+            dwdr = -(normalizationfactor(h)/h)*( 3*q + 2.25*q*q );
+        }
+        else if ( q > 1.0 && q <= 2.0 )
         {
-            // (alpha/(h^D+1))*-5*( 0.75*(2.0-q)^2 );
-            dwdr = -(normalizationfactor(h)/h)*( Scalar(0.75)*(Scalar(2.0)-q)*(Scalar(2.0)-q) );
-
+            // (alpha/(h^D+1))*-1*( 0.75*(2.0-q)^2 );
+            dwdr = -(normalizationfactor(h)/h)*( 0.75*(2.0-q)*(2.0-q) );
         }
 
         return dwdr;
@@ -361,60 +378,10 @@ void export_CubicSpline(pybind11::module& m)
          .def("setKernelKappa", &SmoothingKernel<cubicspline>::setKernelKappa)
          .def("w0", &SmoothingKernel<cubicspline>::w0)
          .def("normalizationfactor", &SmoothingKernel<cubicspline>::normalizationfactor)
-
          ;
      }
 
-
-
-
-
- // void export_WendlandC4(pybind11::module& m)
- //     {
- //     pybind11::class_<SmoothingKernel<wendlandc4>, std::shared_ptr<SmoothingKernel<wendlandc4>>>(m, "WendlandC4")
- //         .def("getKernelKappa", &SmoothingKernel<wendlandc4>::getKernelKappa)
- //         //.def("setNeighborList", &SmoothingKernel<wendlandc2>::setNeighborList)
- //         .def("EvalKernel", &SmoothingKernel<wendlandc4>::wij)
- //         .def("EvalKernelDerivative", &SmoothingKernel<wendlandc4>::dwijdr)
- //         ;
- //     }
- // void export_WendlandC6(pybind11::module& m)
- //     {
- //     pybind11::class_<SmoothingKernel<wendlandc6>, std::shared_ptr<SmoothingKernel<wendlandc6>>>(m, "WendlandC6")
- //         .def("getKernelKappa", &SmoothingKernel<wendlandc6>::getKernelKappa)
- //         //.def("setNeighborList", &SmoothingKernel<wendlandc2>::setNeighborList)
- //         .def("EvalKernel", &SmoothingKernel<wendlandc6>::wij)
- //         .def("EvalKernelDerivative", &SmoothingKernel<wendlandc6>::dwijdr)
- //         ;
- //     }
- // void export_Quintic(pybind11::module& m)
- //     {
- //     pybind11::class_<SmoothingKernel<quintic>, std::shared_ptr<SmoothingKernel<quintic>>>(m, "Quintic")
- //         .def("getKernelKappa", &SmoothingKernel<quintic>::getKernelKappa)
- //         //.def("setNeighborList", &SmoothingKernel<wendlandc2>::setNeighborList)
- //         .def("EvalKernel", &SmoothingKernel<quintic>::wij)
- //         .def("EvalKernelDerivative", &SmoothingKernel<quintic>::dwijdr)
- //         ;
- //     }
- // void export_CubicSpline(pybind11::module& m)
- //     {
- //     pybind11::class_<SmoothingKernel<cubicspline>, std::shared_ptr<SmoothingKernel<cubicspline>>>(m, "CubicSpline")
- //         .def("getKernelKappa", &SmoothingKernel<cubicspline>::getKernelKappa)
- //         //.def("setNeighborList", &SmoothingKernel<wendlandc2>::setNeighborList)
- //         .def("EvalKernel", &SmoothingKernel<cubicspline>::wij)
- //         .def("EvalKernelDerivative", &SmoothingKernel<cubicspline>::dwijdr)
- //         ;
- //     }
- } // end namespace detail
-
-// #define INST_getKernelKappa(r,data,k) template Scalar SmoothingKernel<k>::getKernelKappa();
-// BOOST_PP_SEQ_FOR_EACH(INST_getKernelKappa, ~, KERNELTYPES);
-// #undef INST_getKernelKappa
-
-// #define INST_w0(r,data,k) template Scalar SmoothingKernel<k>::w0(const Scalar h);
-// BOOST_PP_SEQ_FOR_EACH(INST_w0, ~, KERNELTYPES);
-// #undef INST_w0
-
+} // end namespace detail
 } // end namespace sph
 } // end namespace hoomd
 

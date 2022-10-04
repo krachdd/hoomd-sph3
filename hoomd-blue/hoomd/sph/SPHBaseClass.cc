@@ -217,31 +217,6 @@ void SPHBaseClass<KT_, SET_>::setAcceleration(Scalar gx, Scalar gy, Scalar gz, u
         }
     }
 
-//! Wrapper class for wrapping pure virtual methods of SPHBaseClass in python
-// template<SmoothingKernelType KT_, StateEquationType SET_>
-// class SPHBaseClassWrap : public SPHBaseClass<KT_, SET_>, public wrapper<SPHBaseClass<KT_, SET_> >
-//     {
-//     public:
-//         //! Constructor
-//         /*! \param sysdef Particle data passed to the base class
-//             \param skernel Smoothing kernel data passed to the base class
-//             \param nlist Neighbor list data passed to the base class
-//         */
-//         SPHBaseClassWrap(std::shared_ptr<SystemDefinition> sysdef,
-//                          std::shared_ptr<SmoothingKernel<KT_> > skernel,
-//                          std::shared_ptr<StateEquation<SET_> > eos,
-//                          std::shared_ptr<nsearch::NeighborList> nlist) : SPHBaseClass<KT_, SET_>(sysdef,skernel,eos,nlist) { }
-//     protected:
-//         //! Calls the overidden ForceCompute::computeForces()
-//         /*! \param timestep parameter to pass on to the overidden method
-//          */
-//         void computeForces(uint64_t timestep)
-//             {
-//             this->get_override("computeForces")(timestep);
-//             }
-//     };
-
-
 namespace detail {
 
 template<SmoothingKernelType KT_, StateEquationType SET_>
@@ -260,18 +235,6 @@ void export_SPHBaseClass(pybind11::module& m, std::string name)
         .def("applyBodyForce", &SPHBaseClass<KT_, SET_>::applyBodyForce)
         // .def("applyBodyForceGPU", &SPHBaseClass<KT_, SET_>::applyBodyForceGPU)
         .def("setAcceleration", &SPHBaseClass<KT_, SET_>::setAcceleration);
-
-    // std::string dmethodname = "_PhaseFlowDensityMethod";
-    // pybind11::enum_<SPHBaseClass<KT_, SET_>::DensityMethod>(sphbaseclass, (name + dmethodname).c_str())
-    //     .value("DENSITYSUMMATION", SPHBaseClass<KT_, SET_>::DensityMethod::DENSITYSUMMATION)
-    //     .value("DENSITYCONTINUITY", SPHBaseClass<KT_, SET_>::DensityMethod::DENSITYCONTINUITY)
-    //     .export_values();
-
-    // std::string vmethodname = "_PhaseFlowViscosityMethod";
-    // pybind11::enum_<SPHBaseClass<KT_, SET_>::ViscosityMethod>(sphbaseclass, (name + vmethodname).c_str())
-    //     .value("HARMONICAVERAGE", SPHBaseClass<KT_, SET_>::ViscosityMethod::HARMONICAVERAGE)
-    //     .export_values();
-
 }
 
 
@@ -322,53 +285,5 @@ namespace detail
     template void export_SPHBaseClass<cubicspline, tait>(pybind11::module& m, std::string name = "SPHBaseClass_CS_T");
 
 }  // end namespace detail
-
-
-
-// template SPHBaseClass<linear, wendlandc2>::SPHBaseClass(std::shared_ptr<SystemDefinition> sysdef, std::shared_ptr<SmoothingKernel<wendlandc2> > skernel, std::shared_ptr<StateEquation<linear> > eos, std::shared_ptr<nsearch::NeighborList> nlist);
-
-
-/*
- * explicit template instantiation
- */
-
-/*#define INST_SPHBC(r,seq) template SPHBaseClass<BOOST_PP_SEQ_ENUM(seq)>::SPHBaseClass(boost::shared_ptr<SystemDefinition> sysdef, \
-    boost::shared_ptr<SmoothingKernel<BOOST_PP_SEQ_ELEM(0,seq)> > skernel, boost::shared_ptr<StateEquation<BOOST_PP_SEQ_ELEM(1,seq)> > eos, \
-    boost::shared_ptr<nsearch::NeighborList> nlist);
-
-#define INST_dSPHBC(r,seq) template SPHBaseClass<BOOST_PP_SEQ_ENUM(seq)>::~SPHBaseClass();
-
-#define INST_SPHBC_setAccel(r,seq) template void SPHBaseClass<BOOST_PP_SEQ_ENUM(seq)>::setAcceleration(Scalar gx, Scalar gy, Scalar gz, unsigned int damptime);
-
-#define INST_SPHBC_cTV(r,seq) template void SPHBaseClass<BOOST_PP_SEQ_ENUM(seq)>::constructTypeVectors(boost::shared_ptr<ParticleGroup> const pgroup, \
-    std::vector<unsigned int> *global_typeids);
-
-#define INST_SPHBC_getAccel(r,seq) template Scalar3 SPHBaseClass<BOOST_PP_SEQ_ENUM(seq)>::getAcceleration(uint64_t timestep);
-
-#define INST_SPHBC_applyBF(r,seq)template void SPHBaseClass<BOOST_PP_SEQ_ENUM(seq)>::applyBodyForce(uint64_t timestep, boost::shared_ptr<ParticleGroup> pgroup);
-
-
-BOOST_PP_SEQ_FOR_EACH_PRODUCT(INST_SPHBC, (KERNELTYPES)(SEQTYPES));
-BOOST_PP_SEQ_FOR_EACH_PRODUCT(INST_dSPHBC, (KERNELTYPES)(SEQTYPES));
-BOOST_PP_SEQ_FOR_EACH_PRODUCT(INST_SPHBC_setAccel, (KERNELTYPES)(SEQTYPES));
-BOOST_PP_SEQ_FOR_EACH_PRODUCT(INST_SPHBC_cTV, (KERNELTYPES)(SEQTYPES));
-BOOST_PP_SEQ_FOR_EACH_PRODUCT(INST_SPHBC_getAccel, (KERNELTYPES)(SEQTYPES));
-BOOST_PP_SEQ_FOR_EACH_PRODUCT(INST_SPHBC_applyBF, (KERNELTYPES)(SEQTYPES));
-
-
-#undef INST_SPHBC
-#undef INST_dSPHBC
-#undef INST_SPHBC_setAccel
-#undef INST_SPHBC_cTV
-#undef INST_SPHBC_getAccel
-#undef INST_SPHBC_applyBF
-#undef INST
-
-#ifdef ENABLE_HIP
-#define INST_SPHBC_applyBFGPU(r,seq)template void SPHBaseClass<BOOST_PP_SEQ_ENUM(seq)>::applyBodyForceGPU(uint64_t timestep, boost::shared_ptr<ParticleGroup> pgroup);
-BOOST_PP_SEQ_FOR_EACH_PRODUCT(INST_SPHBC_applyBFGPU, (KERNELTYPES)(SEQTYPES));
-#undef INST_SPHBC_applyBFGPU
-#endif*/
-
 } // end namespace sph
 } // end namespace hoomd

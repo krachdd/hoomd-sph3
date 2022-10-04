@@ -459,9 +459,9 @@ void CellList::computeCellList()
                                           access_location::host,
                                           access_mode::overwrite);
     ArrayHandle<Scalar4> h_xyzf(m_xyzf, access_location::host, access_mode::overwrite);
-    // ArrayHandle<Scalar4> h_cell_orientation(m_orientation,
-    //                                         access_location::host,
-    //                                         access_mode::overwrite);
+    ArrayHandle<Scalar4> h_cell_orientation(m_orientation,
+                                            access_location::host,
+                                            access_mode::overwrite);
     ArrayHandle<unsigned int> h_cell_idx(m_idx, access_location::host, access_mode::overwrite);
     ArrayHandle<Scalar4> h_tdb(m_tdb, access_location::host, access_mode::overwrite);
     uint3 conditions = make_uint3(0, 0, 0);

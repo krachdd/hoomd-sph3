@@ -25,7 +25,7 @@ LZ = LREF
 # Parameters
 KERNEL  = 'CubicSpline'
 NL      = 60                       # INT
-FX      = 0.1                      # m/s^2
+FX      = 0.01                      # m/s^2
 
 DX      = LREF/NL                  # m
 V       = DX*DX*DX                 # m^3
@@ -38,6 +38,9 @@ MU   = 0.01                        # Pa s
 UREF = FX*LREF*LREF*0.25/(MU/RHO0)
 
 densitymethod = 'CONTINUITY'
+# densitymethod = 'SUMMATION'
+
+steps = 10001
 
 # ------------------------------------------------------------------------------------
 
@@ -51,7 +54,10 @@ sim = hoomd.Simulation(device = device)
 #     print("hoomd.version.mpi_enabled: {0}".format(hoomd.version.mpi_enabled))
 
 
-filename = "test_tube.gsd"
+# filename = "test_tube.gsd"
+filename = "test_tube_343000.gsd" # NL = 60
+# filename = "test_tube_125000.gsd" # NL = 40
+# filename = "test_tube_27000.gsd" # NL = 20
 dumpname = "run_{0}".format(filename)
 
 sim.create_state_from_gsd(filename = filename)
@@ -90,12 +96,6 @@ print(f'H: {H}, RCUT: {RCUT}, Kappa: {Kappa}')
 # # Neighbor list
 NList = hoomd.nsearch.nlist.Cell(buffer = RCUT*0.05, rebuild_check_delay = 1, kappa = Kappa)
 
-
-# print(NList.__dict__)
-# print(NList.loggables)
-
-
-
 # NList = hoomd.nsearch.nlist.Stencil(buffer = RCUT*0.05, cell_width=1.5, rebuild_check_delay = 1, kappa = Kappa)
 # print(NList.__dict__)
 # print(NList._getattr_param('kappa'))
@@ -132,9 +132,12 @@ model.mu = 0.01
 model.densitymethod = densitymethod
 model.gx = FX
 model.damp = 1000
-model.artificialviscosity = True
+# model.artificialviscosity = True
+model.artificialviscosity = False 
 model.alpha = 0.2
 model.beta = 0.0
+model.densitydiffusion = False
+model.shepardrenormanlization = False 
 # Access the local snapshot, this is not ideal! 
 
 with sim.state.cpu_local_snapshot as snapshot:
@@ -144,7 +147,8 @@ dt = model.compute_dt(LREF,UREF,DRHO)
 
 integrator = hoomd.sph.Integrator(dt=dt)
 
-VelocityVerlet = hoomd.sph.methods.VelocityVerlet(filter=filterAll, densitymethod = densitymethod)
+# VelocityVerlet = hoomd.sph.methods.VelocityVerlet(filter=filterFLUID, densitymethod = densitymethod)
+VelocityVerlet = hoomd.sph.methods.VelocityVerletBasic(filter=filterFLUID, densitymethod = densitymethod)
 
 integrator.methods.append(VelocityVerlet)
 integrator.forces.append(model)
@@ -220,7 +224,7 @@ if device.communicator.rank == 0:
 
 
 
-sim.run(10001, write_at_start=True)
+sim.run(steps, write_at_start=True)
 
 if device.communicator.rank == 0:
     export_gsd2vtu.export_spf(dumpname)

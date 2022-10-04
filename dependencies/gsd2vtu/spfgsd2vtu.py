@@ -45,7 +45,7 @@ for snapshot in t:
            'Velocity y' :np.array(snapshot.particles.velocity.T[1]),
            'Velocity z' :np.array(snapshot.particles.velocity.T[2]),
            'TypeId'     :np.array(snapshot.particles.typeid),
-           'H'          :np.array(snapshot.particles.slength),
+           'Slength'    :np.array(snapshot.particles.slength),
            'Mass'       :np.array(snapshot.particles.mass),
            'Density'    :np.array(snapshot.particles.dpe.T[0]),
            'Pressure'   :np.array(snapshot.particles.dpe.T[1]),
