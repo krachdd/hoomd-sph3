@@ -54,7 +54,6 @@ class _SmoothingKernel(_HOOMDBaseObject):
         # Neighbor list
         self.nlist = nlist
         # Set kernel scaling factor in neighbor list class
-        print("kernel.py: set kappa in neighbourlist: {0}".format(self.kappa))
         self.nlist._cpp_obj.setKernelFactor(self.kappa)
 
 

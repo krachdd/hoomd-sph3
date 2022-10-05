@@ -3,7 +3,7 @@
 """----------------------------------------------------------
 maintainer: dkrach, david.krach@mib.uni-stuttgart.de
 -----------------------------------------------------------"""
-
+# ----- HEADER -----------------------------------------------
 import hoomd
 from hoomd import *
 from hoomd import sph
@@ -12,61 +12,27 @@ import numpy as np
 # import itertools
 from datetime import datetime
 import export_gsd2vtu 
-# from mpi4py import MPI
-# import gsd.hoomd
+import read_input_fromtxt
 
-# -----------------------------------------------------------------------------------
-# KEEP SAME AS IN TEST CREATE 
-# -----------------------------------------------------------------------------------
+# ------------------------------------------------------------
 
+device = hoomd.device.CPU(notice_level=2)
+# device = hoomd.device.CPU(notice_level=10)
+sim = hoomd.Simulation(device=device)
 
-# System sizes
-LREF = 0.002                    # m
+# get stuff from input file
+infile = str(sys.argv[1])
+params = read_input_fromtxt.get_input_data_from_file(infile)
 
-LX = LREF
-LY = LREF
-LZ = LREF
-
-# Parameters
-KERNEL  = 'CubicSpline'
-NL      = 20                       # INT
-FX      = 0.01                      # m/s^2
-
-DX      = LREF/NL                  # m
-V       = DX*DX*DX                 # m^3
-
-RHO0 = 1000.0                      # kg / m^3
-M    = RHO0*V                      # kg
-DRHO = 0.05                        # %
-MU   = 0.01                        # Pa s
-
-UREF = FX*LREF*LREF*0.25/(MU/RHO0)
-
-densitymethod = 'CONTINUITY'
-# densitymethod = 'SUMMATION'
-
-steps = 50001
-
-# ------------------------------------------------------------------------------------
-
-
-
-# device = hoomd.device.CPU(notice_level = 10)# , msg_file = 'log.txt')
-# device = hoomd.device.CPU(notice_level = 7, msg_file = 'log.txt')
-device = hoomd.device.CPU(notice_level = 2)# , msg_file = 'log.txt')
-sim = hoomd.Simulation(device = device)
-# if device.communicator.rank == 0:
-#     print("hoomd.version.mpi_enabled: {0}".format(hoomd.version.mpi_enabled))
-
-
-# filename = "test_tube.gsd"
-# filename = "test_tube_343000.gsd" # NL = 60
-# filename = "test_tube_125000.gsd" # NL = 40
-filename = "test_tube_27000.gsd" # NL = 20
-dumpname = "run_{0}".format(filename)
+rawfilename = params['rawfilename']
+filename = rawfilename.replace('.raw', '_init.gsd')
+dt_string = datetime.now().strftime("%Y-%m-%d-%H-%M-%S")
+logname  = filename.replace('_init.gsd', '')
+logname  = f'{logname}_run_{dt_string}.log'
+dumpname = filename.replace('_init.gsd', '')
+dumpname = f'{dumpname}_run.gsd'
 
 sim.create_state_from_gsd(filename = filename)
-
 
 
 # Print the domain decomposition.
@@ -84,34 +50,34 @@ with sim.state.cpu_local_snapshot as snap:
     N = len(snap.particles.position)
     print(f'{N} particles on rank {device.communicator.rank}')
 
-# Kernel
-KERNEL  = 'CubicSpline'
+# Define necessary parameters
+# Fluid and particle properties
+voxelsize  = np.float64(params['vsize'])
+DX   = voxelsize
+V    = DX * DX * DX
+RHO0 = np.float64(params['fdensity'])
+MU   = np.float64(params['fviscosity'])
+M    = RHO0 * V
+# get simulation box sizes etc.
+NX, NY, NZ = np.int32(params['nx']), np.int32(params['ny']), np.int32(params['nz']) 
+
+# define model parameters
+densitymethod = 'CONTINUITY'
+steps = 1001
+FX    = 0.01
+DRHO = 0.05                        # %
+
+# get kernel properties
+KERNEL  = params['kernel']
 H       = hoomd.sph.kernel.OptimalH[KERNEL]*DX       # m
 RCUT    = hoomd.sph.kernel.Kappa[KERNEL]*H           # m
 Kernel = hoomd.sph.kernel.Kernels[KERNEL]()
 Kappa  = Kernel.Kappa()
 
-# print(f'H: {H}, RCUT: {RCUT}, Kappa: {Kappa}')
-
-
-# print(dir(hoomd.sph._sph))
-# print(hoomd.sph.kernel.Kernels['WendlandC4']
-# print(dir(hoomd.sph.kernel.WendlandC4))
-
-# # Neighbor list
+# Neighbor list
 NList = hoomd.nsearch.nlist.Cell(buffer = RCUT*0.05, rebuild_check_delay = 1, kappa = Kappa)
 
-# NList = hoomd.nsearch.nlist.Stencil(buffer = RCUT*0.05, cell_width=1.5, rebuild_check_delay = 1, kappa = Kappa)
-# print(NList.__dict__)
-# print(NList._getattr_param('kappa'))
-# # print(help(NList._setattr_param))
-# print(NList._setattr_param('kappa', 2.1))
-# print(NList._getattr_param('kappa'))
-# Kernel.setNeighborList(NList)
-
-
-
-# # Equation of State
+# Equation of State
 EOS = hoomd.sph.eos.Linear()
 EOS.set_params(RHO0,0.05)
 
@@ -143,12 +109,24 @@ model.alpha = 0.2
 model.beta = 0.0
 model.densitydiffusion = False
 model.shepardrenormanlization = False 
-# Access the local snapshot, this is not ideal! 
 
+# Access the local snapshot, this is not ideal! 
 with sim.state.cpu_local_snapshot as snapshot:
     model.max_sl = np.max(snapshot.particles.slength[:])
+    # porosity = np.count_nonzero(snapshot.particles.typeid[:] == 0)/(NX * NY * NZ)
 
-dt = model.compute_dt(LREF,UREF,DRHO)
+
+porosity = 0.5
+reference_length = NX * DX
+# reference_length = NX * DX
+# Compute reference_velocity via Reynolds number definition
+Re = 0.01
+reference_velocity = (Re * MU)/(RHO0 * reference_length)
+# Compute reference_velocity via permeability
+# reference_velocity = porosity * 
+# mydict['pestimate']*((mydict['lref']**2)/(8*options.mu))*options.rho0*options.fz
+
+dt = model.compute_dt(reference_length, reference_velocity, DRHO)
 
 integrator = hoomd.sph.Integrator(dt=dt)
 
@@ -189,21 +167,16 @@ logger.add(sim, quantities=['timestep', 'tps', 'walltime'])
 logger.add(spf_properties, quantities=['kinetic_energy', 'num_particles', 'fluid_vel_x_sum', 'mean_density'])
 table = hoomd.write.Table(trigger=log_trigger, 
                           logger=logger, max_header_len = 10)
-# file = open('log.txt', mode='x', newline='\n')
-# table_file = hoomd.write.Table(output=file,
-#                                trigger=hoomd.trigger.Periodic(period=5000),
-#                                logger=logger)
-# sim.operations.writers.append(table_file)
 sim.operations.writers.append(table)
 
-sim.operations.integrator = integrator
-
-# print(model.loggables)
-# print(sim.loggables)
-# print(spf_properties.loggables)
+file = open(logname, mode='w+', newline='\n')
+table_file = hoomd.write.Table(output=file,
+                               trigger=hoomd.trigger.Periodic(period=5000),
+                               logger=logger)
+sim.operations.writers.append(table_file)
 
 if device.communicator.rank == 0:
-    print("Starting Run at {0}".format(datetime.now().strftime("%d/%m/%Y %H:%M:%S")))
+    print("Starting Run at {0}".format(dt_string))
 
 sim.run(steps, write_at_start=True)
 

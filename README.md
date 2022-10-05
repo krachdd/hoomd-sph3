@@ -48,6 +48,9 @@ def _attach(self):
     self.nlist._cpp_obj.setStorageMode(_nsearch.NeighborList.storageMode.half)
 ``` 
 makes wierd errors?
+- standardized input files for parameter input
+- write standardized tests at least for the essentials 
+
 
 ### Fundamental Errors in old Code
 - fictitious pressure computation, specifically the hydrostatic contribution. See Adami2012!

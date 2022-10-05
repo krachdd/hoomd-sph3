@@ -1,0 +1,11 @@
+# Simulation inputs for create_gsd_from_raw_singlecore.py
+# See Readme.md for more
+SPHERE3D_fcc_N100_PHI0.799756_DIAMETER0.000457078149734_VSIZE1e-05.raw          # filename 
+CubicSpline                                                                     # kernel 
+1.0e-05                                                                         # voxelsize
+100                                         # number of voxels in xdirection
+100                                         # number of voxels in ydirection
+100                                         # number of voxels in zdirection
+1000                                        # density of the fluid 
+0.01                                        # viscosity of the fluid
+0                                           # 1 to delete not needed solid particles

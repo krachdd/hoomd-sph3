@@ -276,7 +276,6 @@ void SinglePhaseFlow<KT_, SET_>::mark_solid_particles_toremove(uint64_t timestep
 
     // For all solid particles
     unsigned int group_size = this->m_solidgroup->getNumMembers();
-    std::cout << "Group size solid: " << group_size << std::endl;
     for (unsigned int group_idx = 0; group_idx < group_size; group_idx++)
         {
         // Read particle index

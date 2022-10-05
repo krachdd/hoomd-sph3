@@ -1,4 +1,9 @@
 #!/usr/bin/env python3
+
+"""----------------------------------------------------------
+maintainer: dkrach, david.krach@mib.uni-stuttgart.de
+-----------------------------------------------------------"""
+
 import hoomd
 from hoomd import *
 from hoomd import sph
@@ -21,7 +26,7 @@ LZ = LREF
 
 # Parameters
 KERNEL  = 'CubicSpline'
-NL      = 20                       # INT
+NL      = 60                       # INT
 FX      = 0.1                      # m/s^2
 
 DX      = LREF/NL                  # m

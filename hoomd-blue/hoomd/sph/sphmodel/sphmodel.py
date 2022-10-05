@@ -186,7 +186,7 @@ class SinglePhaseFlow(SPHModel):
                  solidgroup_filter = None,
                  densitymethod='SUMMATION',
                  viscositymethod='HARMONICAVERAGE'):
-        print(kernel)
+
         super().__init__(kernel, eos, nlist)
 
         self._param_dict.update(ParameterDict(
