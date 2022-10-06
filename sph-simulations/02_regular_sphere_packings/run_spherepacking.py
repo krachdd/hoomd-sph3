@@ -175,6 +175,8 @@ table_file = hoomd.write.Table(output=file,
                                logger=logger)
 sim.operations.writers.append(table_file)
 
+sim.operations.integrator = integrator
+
 if device.communicator.rank == 0:
     print("Starting Run at {0}".format(dt_string))
 
