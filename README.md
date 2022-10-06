@@ -51,13 +51,14 @@ makes wierd errors?
 - standardized input files for parameter input
 - write standardized tests at least for the essentials 
 - dpe particle data array to 3 seperate ones
+- check if bcast_double function is working correctly
 
 
 ### Fundamental Errors in old Code
 - fictitious pressure computation, specifically the hydrostatic contribution. See Adami2012!
 - Velocity Verlet not correct implemented
 - Density dependent on discretisation/ this might be kernel related
-
+- no communication of the Smoothing length whatsoever
 
 ## Keep in Mind 
 - How to access information rank specific vs global
@@ -81,3 +82,16 @@ with sim.state.cpu_local_snapshot as snap:
 
 ```
 
+## Requierments on added modules, integrators etc
+- Suspension Flow class and Non-Newtonian Flow class/module should inherit from Singlephaseflow template class 
+- - initialize inheritence in python subclasses with
+```python
+super().__init__(arg1, ...)
+```
+- keep READMEs up to date
+- use filters if possible to avoid groups, makes it easier to reuse routines
+- keep 
+```bash 
+.gitignore
+```
+files in all levels up to date
