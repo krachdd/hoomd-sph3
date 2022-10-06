@@ -217,7 +217,7 @@ void SFCPackTuner::applySortOrder()
     for (unsigned int i = 0; i < m_pdata->getN(); i++)
         h_dpedt.data[i] = scal3_tmp[i];
 
-    Scalar *scal_tmp  = new Scalar[m_pdata->getN()];
+    Scalar* scal_tmp  = new Scalar[m_pdata->getN()];
     // sort slengths
     for (unsigned int i = 0; i < m_pdata->getN(); i++)
         scal_tmp[i] = h_slength.data[m_sort_order[i]];

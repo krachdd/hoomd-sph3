@@ -179,6 +179,13 @@ class Communicator(object):
         if hoomd.version.mpi_enabled:
             self.cpp_mpi_conf.barrier()
 
+    # added dkrach
+    def bcast_double(self, var):
+        """ Broadcast a single double from rank root 
+            to all others
+        """
+        self.cpp_mpi_conf.bcast_double(var)
+
     @contextlib.contextmanager
     def localize_abort(self):
         """Localize MPI_Abort to this partition.

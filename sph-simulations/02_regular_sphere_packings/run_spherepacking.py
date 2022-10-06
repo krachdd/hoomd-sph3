@@ -58,12 +58,13 @@ V    = DX * DX * DX
 RHO0 = np.float64(params['fdensity'])
 MU   = np.float64(params['fviscosity'])
 M    = RHO0 * V
+porosity = np.float64(params['porosity'])
 # get simulation box sizes etc.
 NX, NY, NZ = np.int32(params['nx']), np.int32(params['ny']), np.int32(params['nz']) 
 
 # define model parameters
 densitymethod = 'CONTINUITY'
-steps = 1001
+steps = 20001
 FX    = 0.01
 DRHO = 0.05                        # %
 
@@ -86,9 +87,9 @@ filterFLUID  = hoomd.filter.Type(['F']) # is zero
 filterSOLID  = hoomd.filter.Type(['S']) # is one
 filterAll    = hoomd.filter.All()
 
-with sim.state.cpu_local_snapshot as data:
-    print(f'{np.count_nonzero(data.particles.typeid == 0)} fluid particles on rank {device.communicator.rank}')
-    print(f'{np.count_nonzero(data.particles.typeid == 1)} solid particles on rank {device.communicator.rank}')
+with sim.state.cpu_local_snapshot as snap:
+    print(f'{np.count_nonzero(snap.particles.typeid == 0)} fluid particles on rank {device.communicator.rank}')
+    print(f'{np.count_nonzero(snap.particles.typeid == 1)} solid particles on rank {device.communicator.rank}')
 
 # # Set up SPH solver
 model = hoomd.sph.sphmodel.SinglePhaseFlow(kernel = Kernel,
@@ -110,13 +111,25 @@ model.beta = 0.0
 model.densitydiffusion = False
 model.shepardrenormanlization = False 
 
+
+
+
 # Access the local snapshot, this is not ideal! 
-with sim.state.cpu_local_snapshot as snapshot:
-    model.max_sl = np.max(snapshot.particles.slength[:])
-    # porosity = np.count_nonzero(snapshot.particles.typeid[:] == 0)/(NX * NY * NZ)
+with sim.state.cpu_local_snapshot as snap:
+    # model.max_sl = np.max(snap.particles.slength[:])
+    fluid_particle_ratio = np.count_nonzero(snap.particles.typeid[:] == 0)/(len(snap.particles.mass[:]))
 
 
-porosity = 0.5
+maximum_smoothing_length = 0.0
+# Call get_snapshot on all ranks.
+snapshot = sim.state.get_snapshot()
+# Access particle data on rank 0 only.
+if snapshot.communicator.rank == 0:
+    maximum_smoothing_length = np.max(snapshot.particles.slength)
+    total_number_fluid_particles = snapshot.particles.N
+device.communicator.bcast_double(maximum_smoothing_length)
+model.max_sl = maximum_smoothing_length
+
 reference_length = NX * DX
 # reference_length = NX * DX
 # Compute reference_velocity via Reynolds number definition
@@ -150,7 +163,7 @@ if device.communicator.rank == 0:
 
 
 
-gsd_trigger = hoomd.trigger.Periodic(100)
+gsd_trigger = hoomd.trigger.Periodic(10)
 gsd_writer = hoomd.write.GSD(filename=dumpname,
                              trigger=gsd_trigger,
                              mode='wb',
@@ -161,7 +174,7 @@ sim.operations.writers.append(gsd_writer)
 
 
 # hoomd.write.GSD.write(filename = dumpname, state = sim.state, mode = 'wb')
-log_trigger = hoomd.trigger.Periodic(100)
+log_trigger = hoomd.trigger.Periodic(10)
 logger = hoomd.logging.Logger(categories=['scalar', 'string'])
 logger.add(sim, quantities=['timestep', 'tps', 'walltime'])
 logger.add(spf_properties, quantities=['kinetic_energy', 'num_particles', 'fluid_vel_x_sum', 'mean_density'])
@@ -171,8 +184,8 @@ sim.operations.writers.append(table)
 
 file = open(logname, mode='w+', newline='\n')
 table_file = hoomd.write.Table(output=file,
-                               trigger=hoomd.trigger.Periodic(period=5000),
-                               logger=logger)
+                               trigger=log_trigger,
+                               logger=logger, max_header_len = 10)
 sim.operations.writers.append(table_file)
 
 sim.operations.integrator = integrator

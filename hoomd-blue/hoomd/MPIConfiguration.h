@@ -139,6 +139,14 @@ class PYBIND11_EXPORT MPIConfiguration
         return walltime;
         }
 
+    //! added dkrach 
+    void bcast_double(double v)
+    {
+#ifdef ENABLE_MPI
+        MPI_Bcast(&v, 1, MPI_DOUBLE, 0, m_mpi_comm);
+#endif
+    }
+
     protected:
 #ifdef ENABLE_MPI
     MPI_Comm m_mpi_comm;    //!< The MPI communicator

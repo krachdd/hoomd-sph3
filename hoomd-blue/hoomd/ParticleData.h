@@ -1163,7 +1163,7 @@ class PYBIND11_EXPORT ParticleData
     Scalar3 getAuxiliaryArray4(unsigned int tag) const;
 
     //! Get the smoothing length of a particle
-    Scalar getSmoothingLength(unsigned int tag) const;
+    Scalar getSlength(unsigned int tag) const;
 
     //! Get the current rate of change of density, pressure and energy of a particle
     Scalar3 getAcceleration(unsigned int tag) const;
@@ -1279,7 +1279,7 @@ class PYBIND11_EXPORT ParticleData
     void setAuxiliaryArray4(unsigned int tag, const Scalar3& aux4);
 
     //! Set the current smoothing length of a particle
-    void setSmoothingLength(unsigned int tag, Scalar slength);
+    void setSlength(unsigned int tag, Scalar slength);
 
     // //! Set the current charge of a particle
     // void setCharge(unsigned int tag, Scalar charge);
@@ -1823,7 +1823,7 @@ class PYBIND11_EXPORT LocalParticleData : public LocalDataAccess<Output, Particl
                                                                     true);
         }
 
-    Output getSlengths(GhostDataFlag flag)
+    Output getSlength(GhostDataFlag flag)
         {
         return this->template getBuffer<Scalar, Scalar>(m_slength_handle,
                                                                     &ParticleData::getSlengths,
@@ -1974,7 +1974,7 @@ template<class Output> void export_LocalParticleData(pybind11::module& m, std::s
         .def("getAuxiliaries3", &LocalParticleData<Output>::getAuxiliaries3)
         .def("getAuxiliaries4", &LocalParticleData<Output>::getAuxiliaries4)
         .def("getDPEs", &LocalParticleData<Output>::getDPEs)
-        .def("getSlengths", &LocalParticleData<Output>::getSlengths)
+        .def("getSlength", &LocalParticleData<Output>::getSlength)
         .def("getDPEdts", &LocalParticleData<Output>::getDPEdts)
         .def("getMasses", &LocalParticleData<Output>::getMasses)
         // .def("getOrientation", &LocalParticleData<Output>::getOrientation)

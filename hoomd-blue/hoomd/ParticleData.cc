@@ -1418,7 +1418,7 @@ void ParticleData::initializeFromSnapshot(const SnapshotParticleData<Real>& snap
         ArrayHandle< Scalar3 > h_aux2(m_aux2, access_location::host, access_mode::overwrite);
         ArrayHandle< Scalar3 > h_aux3(m_aux3, access_location::host, access_mode::overwrite);
         ArrayHandle< Scalar3 > h_aux4(m_aux4, access_location::host, access_mode::overwrite);
-        ArrayHandle< Scalar > h_slength(m_slength, access_location::host, access_mode::overwrite);
+        ArrayHandle<Scalar> h_slength(m_slength, access_location::host, access_mode::overwrite);
         ArrayHandle<int3> h_image(m_image, access_location::host, access_mode::overwrite);
         // ArrayHandle<Scalar> h_charge(m_charge, access_location::host, access_mode::overwrite);
         // ArrayHandle<Scalar> h_diameter(m_diameter, access_location::host, access_mode::overwrite);
@@ -1910,7 +1910,7 @@ void ParticleData::initializeFromDistrSnapshot(const SnapshotParticleData<Real>&
         ArrayHandle< Scalar3 > h_aux2(m_aux2, access_location::host, access_mode::overwrite);
         ArrayHandle< Scalar3 > h_aux3(m_aux3, access_location::host, access_mode::overwrite);
         ArrayHandle< Scalar3 > h_aux4(m_aux4, access_location::host, access_mode::overwrite);
-        ArrayHandle< Scalar > h_slength(m_slength, access_location::host, access_mode::overwrite);
+        ArrayHandle< Scalar> h_slength(m_slength, access_location::host, access_mode::overwrite);
         ArrayHandle<int3> h_image(m_image, access_location::host, access_mode::overwrite);
         // ArrayHandle<Scalar> h_charge(m_charge, access_location::host, access_mode::overwrite);
         // ArrayHandle<Scalar> h_diameter(m_diameter, access_location::host, access_mode::overwrite);
@@ -2102,7 +2102,7 @@ ParticleData::takeSnapshot(SnapshotParticleData<Real>& snapshot)
     ArrayHandle< Scalar3 > h_aux2(m_aux2, access_location::host, access_mode::read);
     ArrayHandle< Scalar3 > h_aux3(m_aux3, access_location::host, access_mode::read);
     ArrayHandle< Scalar3 > h_aux4(m_aux4, access_location::host, access_mode::read);
-    ArrayHandle< Scalar > h_slength(m_slength, access_location::host, access_mode::read);
+    ArrayHandle<Scalar> h_slength(m_slength, access_location::host, access_mode::read);
     ArrayHandle< Scalar3 > h_accel(m_accel, access_location::host, access_mode::read);
     ArrayHandle< Scalar3 > h_dpedt(m_dpedt, access_location::host, access_mode::read);
     ArrayHandle<int3> h_image(m_image, access_location::host, access_mode::read);
@@ -3165,7 +3165,7 @@ unsigned int ParticleData::getType(unsigned int tag) const
 
 
 //! Get the current slength of a particle
-Scalar ParticleData::getSmoothingLength(unsigned int tag) const
+Scalar ParticleData::getSlength(unsigned int tag) const
     {
     unsigned int idx = getRTag(tag);
     bool found = (idx < getN());
@@ -3799,7 +3799,7 @@ void ParticleData::setAuxiliaryArray4(unsigned int tag, const Scalar3& aux4)
 
 
 //! Set the current slenght of a particle
-void ParticleData::setSmoothingLength(unsigned int tag, Scalar slength)
+void ParticleData::setSlength(unsigned int tag, Scalar slength)
     {
     unsigned int idx = getRTag(tag);
     bool found = (idx < getN());
@@ -3815,8 +3815,6 @@ void ParticleData::setSmoothingLength(unsigned int tag, Scalar slength)
         h_slength.data[idx] = slength;
         }
     }
-
-
 
 // //! Set the orientation of a particle with a given tag
 // void ParticleData::setOrientation(unsigned int tag, const Scalar4& orientation)
@@ -4289,7 +4287,7 @@ void export_ParticleData(pybind11::module& m)
         .def("getAuxiliaryArray2", &ParticleData::getAuxiliaryArray2)
         .def("getAuxiliaryArray3", &ParticleData::getAuxiliaryArray3)
         .def("getAuxiliaryArray4", &ParticleData::getAuxiliaryArray4)
-        .def("getSmoothingLength", &ParticleData::getSmoothingLength)
+        .def("getSlength", &ParticleData::getSlength)
         // .def("getNetRateDPE", &ParticleData::getNetRateDPE)
         .def("getMaxSmoothingLength", &ParticleData::getMaxSmoothingLength)
         .def("constSmoothingLength", &ParticleData::constSmoothingLength)
@@ -4314,7 +4312,7 @@ void export_ParticleData(pybind11::module& m)
         .def("setAuxiliaryArray2", &ParticleData::setAuxiliaryArray2)
         .def("setAuxiliaryArray3", &ParticleData::setAuxiliaryArray3)
         .def("setAuxiliaryArray4", &ParticleData::setAuxiliaryArray4)
-        .def("setSmoothingLength", &ParticleData::setSmoothingLength)
+        .def("setSlength", &ParticleData::setSlength)
         .def("setImage", &ParticleData::setImage)
         // .def("setCharge", &ParticleData::setCharge)
         .def("setMass", &ParticleData::setMass)
@@ -4354,7 +4352,7 @@ template<class Real> void SnapshotParticleData<Real>::resize(unsigned int N)
     aux2.resize(N,vec3<Real>(0.0,0.0,0.0));
     aux3.resize(N,vec3<Real>(0.0,0.0,0.0));
     aux4.resize(N,vec3<Real>(0.0,0.0,0.0));
-    slength.resize(N,Scalar(0.0));
+    slength.resize(N,Scalar(1.0));
     accel.resize(N,vec3<Real>(0.0,0.0,0.0));
     dpedt.resize(N,vec3<Real>(0.0,0.0,0.0));
     type.resize(N, 0);
@@ -4385,7 +4383,7 @@ template<class Real> void SnapshotParticleData<Real>::insert(unsigned int i, uns
     aux2.insert(aux2.begin()+i,n,vec3<Real>(0.0,0.0,0.0));
     aux3.insert(aux3.begin()+i,n,vec3<Real>(0.0,0.0,0.0));
     aux4.insert(aux4.begin()+i,n,vec3<Real>(0.0,0.0,0.0));
-    slength.insert(slength.begin()+i,n,Scalar(0.0));
+    slength.insert(slength.begin()+i,n,Scalar(1.0));
     accel.insert(accel.begin()+i,n,vec3<Real>(0.0,0.0,0.0));
     dpedt.insert(dpedt.begin()+i,n,vec3<Real>(0.0,0.0,0.0));
     type.insert(type.begin() + i, n, 0);

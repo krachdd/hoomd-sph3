@@ -62,6 +62,10 @@ def sanity_check_input(input_dict):
     if d_handle != 0 and d_handle != 1:
         raise ValueError('Flag on deleting solids not set properly.')
 
+    porosity = input_dict['porosity']
+    if porosity < 0.0 or porosity >= 1.0:
+        raise ValueError('Porosity has to be 0 <= phi < 1.')
+
 
 
 def get_input_data_from_file(inputfile):
@@ -93,6 +97,7 @@ def get_input_data_from_file(inputfile):
     parameter_dict.update({'fdensity'    : np.float64(flts[4]) })
     parameter_dict.update({'fviscosity'  : np.float64(flts[5]) })
     parameter_dict.update({'delete_flag' : np.int32(flts[6]) })
+    parameter_dict.update({'porosity'    : np.float64(flts[7]) })
 
     sanity_check_input(parameter_dict)
 

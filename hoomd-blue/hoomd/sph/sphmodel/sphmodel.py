@@ -206,6 +206,7 @@ class SinglePhaseFlow(SPHModel):
 
 
 
+
         # self._state = self._simulation.state
         self._cpp_SPFclass_name = 'SinglePF' '_' + Kernel[self.kernel.name] + '_' + EOS[self.eos.name]
         self.fluidgroup_filter = fluidgroup_filter
@@ -313,7 +314,7 @@ class SinglePhaseFlow(SPHModel):
 
         self.consth = pdata.constSmoothingLength()
         if self.consth:
-            self.maxh = pdata.getSmoothingLength(0)
+            self.maxh = pdata.getSlength(0)
             if (self._simulation.device.communicator.rank == 0):
                 print(f'Using constant Smooting Length: {self.maxh}')
 
@@ -328,7 +329,8 @@ class SinglePhaseFlow(SPHModel):
 
         # Set rcut in neigbour list
         self._param_dict.update(ParameterDict(
-                          rcut = self.rcut
+                          rcut = self.rcut, 
+                          max_sl = self.maxh
                           ))
 
         # Reload density and viscosity methods from __dict__

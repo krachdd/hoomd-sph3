@@ -1203,6 +1203,7 @@ Communicator::Communicator(std::shared_ptr<SystemDefinition> sysdef,
       m_pos_copybuf(m_exec_conf), 
       // m_charge_copybuf(m_exec_conf),
       // m_diameter_copybuf(m_exec_conf), 
+      m_slength_copybuf(m_exec_conf), 
       m_body_copybuf(m_exec_conf), 
       m_image_copybuf(m_exec_conf),
       m_velocity_copybuf(m_exec_conf),
@@ -1340,9 +1341,9 @@ Communicator::Communicator(std::shared_ptr<SystemDefinition> sysdef,
     initializeNeighborArrays();
 
     /* create a type for pdata_element */
- const int nitems = 13;
-    int blocklengths[13] = {4, 4, 3, 3, 3, 3, 3, 3, 3, 1, 1, 4, 4};
-    MPI_Datatype types[13] = {MPI_HOOMD_SCALAR,
+ const int nitems = 14;
+    int blocklengths[14] = {4, 4, 3, 3, 3, 3, 3, 3, 3, 1, 1, 4, 4, 1};
+    MPI_Datatype types[14] = {MPI_HOOMD_SCALAR,
                               MPI_HOOMD_SCALAR,
                               MPI_HOOMD_SCALAR,
                               MPI_HOOMD_SCALAR,
@@ -1354,8 +1355,9 @@ Communicator::Communicator(std::shared_ptr<SystemDefinition> sysdef,
                               MPI_UNSIGNED,
                               MPI_UNSIGNED,
                               MPI_HOOMD_SCALAR,
+                              MPI_HOOMD_SCALAR,
                               MPI_HOOMD_SCALAR};
-    MPI_Aint offsets[13];
+    MPI_Aint offsets[14];
 
     offsets[0] = offsetof(detail::pdata_element, pos);
     offsets[1] = offsetof(detail::pdata_element, vel);
@@ -1375,6 +1377,7 @@ Communicator::Communicator(std::shared_ptr<SystemDefinition> sysdef,
     offsets[10] = offsetof(detail::pdata_element, tag);
     offsets[11] = offsetof(detail::pdata_element, net_force);
     offsets[12] = offsetof(detail::pdata_element, net_ratedpe);
+    offsets[13] = offsetof(detail::pdata_element, slength);
     // offsets[12] = offsetof(detail::pdata_element, net_torque);
     // offsets[13] = offsetof(detail::pdata_element, net_virial);
 
@@ -2011,6 +2014,9 @@ void Communicator::exchangeGhosts()
         if (flags[comm_flag::image])
             m_image_copybuf.resize(max_copy_ghosts);
 
+        if (flags[comm_flag::slength])
+            m_slength_copybuf.resize(max_copy_ghosts);
+
         // if (flags[comm_flag::diameter])
         //     m_diameter_copybuf.resize(max_copy_ghosts);
 
@@ -2033,6 +2039,9 @@ void Communicator::exchangeGhosts()
             // ArrayHandle<Scalar> h_diameter(m_pdata->getDiameters(),
             //                                access_location::host,
             //                                access_mode::read);
+            ArrayHandle<Scalar> h_slength(m_pdata->getSlengths(),
+                                           access_location::host,
+                                           access_mode::read);
             ArrayHandle<unsigned int> h_body(m_pdata->getBodies(),
                                              access_location::host,
                                              access_mode::read);
@@ -2082,6 +2091,9 @@ void Communicator::exchangeGhosts()
             // ArrayHandle<Scalar> h_diameter_copybuf(m_diameter_copybuf,
             //                                        access_location::host,
             //                                        access_mode::overwrite);
+            ArrayHandle<Scalar> h_slength_copybuf(m_slength_copybuf,
+                                                   access_location::host,
+                                                   access_mode::overwrite);
             ArrayHandle<unsigned int> h_body_copybuf(m_body_copybuf,
                                                      access_location::host,
                                                      access_mode::overwrite);
@@ -2121,6 +2133,8 @@ void Communicator::exchangeGhosts()
                     //     h_charge_copybuf.data[m_num_copy_ghosts[dir]] = h_charge.data[idx];
                     // if (flags[comm_flag::diameter])
                     //     h_diameter_copybuf.data[m_num_copy_ghosts[dir]] = h_diameter.data[idx];
+                    if (flags[comm_flag::slength])
+                        h_slength_copybuf.data[m_num_copy_ghosts[dir]] = h_slength.data[idx];
                     if (flags[comm_flag::body])
                         h_body_copybuf.data[m_num_copy_ghosts[dir]] = h_body.data[idx];
                     if (flags[comm_flag::image])
@@ -2206,6 +2220,9 @@ void Communicator::exchangeGhosts()
             // ArrayHandle<Scalar> h_diameter_copybuf(m_diameter_copybuf,
             //                                        access_location::host,
             //                                        access_mode::read);
+            ArrayHandle<Scalar> h_slength_copybuf(m_slength_copybuf,
+                                                   access_location::host,
+                                                   access_mode::read);
             ArrayHandle<unsigned int> h_body_copybuf(m_body_copybuf,
                                                      access_location::host,
                                                      access_mode::read);
@@ -2246,6 +2263,9 @@ void Communicator::exchangeGhosts()
             // ArrayHandle<Scalar> h_diameter(m_pdata->getDiameters(),
             //                                access_location::host,
             //                                access_mode::readwrite);
+            ArrayHandle<Scalar> h_slength(m_pdata->getSlengths(),
+                                           access_location::host,
+                                           access_mode::readwrite);
             ArrayHandle<unsigned int> h_body(m_pdata->getBodies(),
                                              access_location::host,
                                              access_mode::readwrite);
@@ -2376,6 +2396,7 @@ void Communicator::exchangeGhosts()
             //               &req);
             //     m_reqs.push_back(req);
             //     }
+
 
             if (flags[comm_flag::velocity])
                 {
@@ -2553,6 +2574,26 @@ void Communicator::exchangeGhosts()
                           MPI_BYTE,
                           recv_neighbor,
                           11,
+                          m_mpi_comm,
+                          &req);
+                m_reqs.push_back(req);
+                }
+
+            if (flags[comm_flag::slength])
+                {
+                MPI_Isend(h_slength_copybuf.data,
+                          int(m_num_copy_ghosts[dir] * sizeof(Scalar)),
+                          MPI_BYTE,
+                          send_neighbor,
+                          12,
+                          m_mpi_comm,
+                          &req);
+                m_reqs.push_back(req);
+                MPI_Irecv(h_slength.data + start_idx,
+                          int(m_num_recv_ghosts[dir] * sizeof(Scalar)),
+                          MPI_BYTE,
+                          recv_neighbor,
+                          12,
                           m_mpi_comm,
                           &req);
                 m_reqs.push_back(req);

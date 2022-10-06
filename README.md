@@ -50,9 +50,34 @@ def _attach(self):
 makes wierd errors?
 - standardized input files for parameter input
 - write standardized tests at least for the essentials 
+- dpe particle data array to 3 seperate ones
 
 
 ### Fundamental Errors in old Code
 - fictitious pressure computation, specifically the hydrostatic contribution. See Adami2012!
 - Velocity Verlet not correct implemented
 - Density dependent on discretisation/ this might be kernel related
+
+
+## Keep in Mind 
+- How to access information rank specific vs global
+```python
+# See e.g. run_spherepacking.py
+# global snapshot stores variable at root rank
+maximum_smoothing_length = 0.0
+# Call get_snapshot on all ranks.
+snapshot = sim.state.get_snapshot()
+# Access particle data on rank 0 only.
+if snapshot.communicator.rank == 0:
+    maximum_smoothing_length = np.max(snapshot.particles.slength)
+
+device.communicator.bcast_double(maximum_smoothing_length)
+
+# local 
+# Print the number of particles on each rank.
+with sim.state.cpu_local_snapshot as snap:
+    N = len(snap.particles.position)
+    print(f'{N} particles on rank {device.communicator.rank}')
+
+```
+

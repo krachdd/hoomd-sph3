@@ -76,6 +76,7 @@ struct comm_flag
         net_force,         //! Communicate net force
         reverse_net_force, //! Communicate net force on ghost particles. Added by Vyas
         net_ratedpe,       //! Communicate net_ratedpe
+        slength,       //! Communicate slength
         // net_torque,        //! Communicate net torque
         // net_virial         //! Communicate net virial
         };
@@ -491,6 +492,7 @@ class PYBIND11_EXPORT Communicator
     GlobalVector<Scalar4> m_pos_copybuf;         //!< Buffer for particle positions to be copied
     // GlobalVector<Scalar> m_charge_copybuf;       //!< Buffer for particle charges to be copied
     // GlobalVector<Scalar> m_diameter_copybuf;     //!< Buffer for particle diameters to be copied
+    GlobalVector<Scalar> m_slength_copybuf;     //!< Buffer for particle slengths to be copied
     GlobalVector<unsigned int> m_body_copybuf;   //!< Buffer for particle body ids to be copied
     GlobalVector<int3> m_image_copybuf;          //!< Buffer for particle body ids to be copied
     GlobalVector<Scalar4> m_velocity_copybuf;    //!< Buffer for particle velocities to be copied
