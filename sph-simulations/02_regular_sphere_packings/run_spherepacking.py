@@ -16,8 +16,8 @@ import read_input_fromtxt
 
 # ------------------------------------------------------------
 
-device = hoomd.device.CPU(notice_level=2)
-# device = hoomd.device.CPU(notice_level=10)
+# device = hoomd.device.CPU(notice_level=2)
+device = hoomd.device.CPU(notice_level=10)
 sim = hoomd.Simulation(device=device)
 
 # get stuff from input file
@@ -64,8 +64,8 @@ NX, NY, NZ = np.int32(params['nx']), np.int32(params['ny']), np.int32(params['nz
 
 # define model parameters
 densitymethod = 'CONTINUITY'
-steps = 20001
-FX    = 0.01
+steps = 201
+FX    = 0.0
 DRHO = 0.05                        # %
 
 # get kernel properties

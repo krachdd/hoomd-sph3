@@ -183,7 +183,7 @@ void Integrator::computeNetForce(uint64_t timestep)
 
     for (auto& force : m_forces)
         {
-        force->compute(timestep);
+            force->compute(timestep);
         }
 
     // Scalar external_virial[6];
@@ -620,7 +620,7 @@ void Integrator::computeNetForceGPU(uint64_t timestep)
                                          force_list,
                                          nparticles,
                                          clear,
-                                         flags[pdata_flag::pressure_tensor],
+                                         // flags[pdata_flag::pressure_tensor],
                                          m_pdata->getGPUPartition());
 
             if (m_exec_conf->isCUDAErrorCheckingEnabled())
@@ -658,7 +658,7 @@ void Integrator::computeNetForceGPU(uint64_t timestep)
     // compute all the constraint forces next
     for (auto& constraint_force : m_constraint_forces)
         {
-        constraint_force->compute(timestep);
+            constraint_force->compute(timestep);
         }
 
         {
@@ -876,7 +876,7 @@ void Integrator::computeNetForceGPU(uint64_t timestep)
                                          force_list,
                                          nparticles,
                                          clear,
-                                         flags[pdata_flag::pressure_tensor],
+                                         // flags[pdata_flag::pressure_tensor],
                                          m_pdata->getGPUPartition());
 
             if (m_exec_conf->isCUDAErrorCheckingEnabled())

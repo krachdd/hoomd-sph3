@@ -160,7 +160,7 @@ class ParticleLocalAccessBase(_LocalAccess):
         'auxiliary2': 'getAuxiliaries2',
         'auxiliary3': 'getAuxiliaries3',
         'auxiliary4': 'getAuxiliaries4',
-        'slength': 'getSlengths',
+        'slength': 'getSlength',
         # 'orientation': 'getOrientation',
         # 'angmom': 'getAngularMomentum',
         # 'moment_inertia': 'getMomentsOfInertia',

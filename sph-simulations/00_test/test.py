@@ -45,7 +45,7 @@ UREF = FX*LREF*LREF*0.25/(MU/RHO0)
 densitymethod = 'CONTINUITY'
 # densitymethod = 'SUMMATION'
 
-steps = 50001
+steps = 201
 
 # ------------------------------------------------------------------------------------
 
@@ -172,7 +172,7 @@ if device.communicator.rank == 0:
 
 
 
-gsd_trigger = hoomd.trigger.Periodic(100)
+gsd_trigger = hoomd.trigger.Periodic(10)
 gsd_writer = hoomd.write.GSD(filename=dumpname,
                              trigger=gsd_trigger,
                              mode='wb',
@@ -183,7 +183,7 @@ sim.operations.writers.append(gsd_writer)
 
 
 # hoomd.write.GSD.write(filename = dumpname, state = sim.state, mode = 'wb')
-log_trigger = hoomd.trigger.Periodic(100)
+log_trigger = hoomd.trigger.Periodic(10)
 logger = hoomd.logging.Logger(categories=['scalar', 'string'])
 logger.add(sim, quantities=['timestep', 'tps', 'walltime'])
 logger.add(spf_properties, quantities=['kinetic_energy', 'num_particles', 'fluid_vel_x_sum', 'mean_density'])

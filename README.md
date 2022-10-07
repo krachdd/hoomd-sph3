@@ -52,6 +52,8 @@ makes wierd errors?
 - write standardized tests at least for the essentials 
 - dpe particle data array to 3 seperate ones
 - check if bcast_double function is working correctly
+- write metadata to textfile, therefore create an additional helper module
+- can we remove slength from the flags, to communicate in Singlephaseflow.h virtual CommFlags getRequestedCommFlags ? 
 
 
 ### Fundamental Errors in old Code
