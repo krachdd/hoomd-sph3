@@ -184,7 +184,8 @@ class Communicator(object):
         """ Broadcast a single double from rank root 
             to all others
         """
-        self.cpp_mpi_conf.bcast_double(var)
+        res = self.cpp_mpi_conf.bcast_double(var)
+        return res
 
     @contextlib.contextmanager
     def localize_abort(self):

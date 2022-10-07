@@ -171,7 +171,7 @@ class ParticleData(object):
     # _default_value['orientation'] = numpy.array([1, 0, 0, 0],
     #                                             dtype=numpy.float32)
     _default_value['velocity'] = numpy.array([0, 0, 0], dtype=numpy.float32)
-    _default_value['slength'] = numpy.float32(0.0);
+    _default_value['slength'] = numpy.float32(1.0);
     _default_value['dpe'] = numpy.array([0,0,0], dtype=numpy.float32);
     _default_value['auxiliary1'] = numpy.array([0,0,0], dtype=numpy.float32);
     _default_value['auxiliary2'] = numpy.array([0,0,0], dtype=numpy.float32);

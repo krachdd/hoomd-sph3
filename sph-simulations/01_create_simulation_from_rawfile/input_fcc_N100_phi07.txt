@@ -8,4 +8,5 @@ CubicSpline                                                                     
 100                                         # number of voxels in zdirection
 1000                                        # density of the fluid 
 0.01                                        # viscosity of the fluid
-0                                           # 1 to delete not needed solid particles
+1                                           # 1 to delete not needed solid particles
+0.7                                         # porosity of the sample

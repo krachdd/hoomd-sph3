@@ -193,7 +193,7 @@ class PYBIND11_EXPORT SinglePhaseFlow : public SPHBaseClass<KT_, SET_>
             flags[comm_flag::velocity] = 1; // Stores velocity and mass
             flags[comm_flag::dpe] = 1; // Stores density and pressure
             flags[comm_flag::auxiliary1] = 1; // Stores fictitious velocity
-            flags[comm_flag::slength] = 1; // Stores smoothing length
+            flags[comm_flag::slength] = 1; // Stores smoothing length TODO is this needed
             // Add flags requested by base class
             flags |= ForceCompute::getRequestedCommFlags(timestep);
             return flags;

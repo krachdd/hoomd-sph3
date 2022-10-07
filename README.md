@@ -48,13 +48,14 @@ def _attach(self):
     self.nlist._cpp_obj.setStorageMode(_nsearch.NeighborList.storageMode.half)
 ``` 
 makes wierd errors?
-- standardized input files for parameter input
+- standardized input files for parameter input. USE this and add lines if neccessary
 - write standardized tests at least for the essentials 
 - dpe particle data array to 3 seperate ones
 - check if bcast_double function is working correctly
 - write metadata to textfile, therefore create an additional helper module
 - can we remove slength from the flags, to communicate in Singlephaseflow.h virtual CommFlags getRequestedCommFlags ? 
-
+- Write parallel IO Routines for Snapshot Reader and Writer
+- adjust logger quantities with flags, not with lists
 
 ### Fundamental Errors in old Code
 - fictitious pressure computation, specifically the hydrostatic contribution. See Adami2012!
@@ -74,7 +75,8 @@ snapshot = sim.state.get_snapshot()
 if snapshot.communicator.rank == 0:
     maximum_smoothing_length = np.max(snapshot.particles.slength)
 
-device.communicator.bcast_double(maximum_smoothing_length)
+maximum_smoothing_length = device.communicator.bcast_double(maximum_smoothing_length)
+model.max_sl = maximum_smoothing_length
 
 # local 
 # Print the number of particles on each rank.
@@ -83,6 +85,7 @@ with sim.state.cpu_local_snapshot as snap:
     print(f'{N} particles on rank {device.communicator.rank}')
 
 ```
+- if non-constant Smoothing length is implemented one has also to take care of the rcut particle field! This does not happen automatically at the moment. 
 
 ## Requierments on added modules, integrators etc
 - Suspension Flow class and Non-Newtonian Flow class/module should inherit from Singlephaseflow template class 

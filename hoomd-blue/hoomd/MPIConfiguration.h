@@ -140,11 +140,12 @@ class PYBIND11_EXPORT MPIConfiguration
         }
 
     //! added dkrach 
-    void bcast_double(double v)
+    double bcast_double(double v)
     {
 #ifdef ENABLE_MPI
         MPI_Bcast(&v, 1, MPI_DOUBLE, 0, m_mpi_comm);
 #endif
+    return v;
     }
 
     protected:

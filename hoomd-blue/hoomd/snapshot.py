@@ -243,8 +243,8 @@ class Snapshot:
     #     else:
     #         raise RuntimeError('Snapshot data is only present on rank 0')
 
-    @property
-    def pairs(self):
+    # @property
+    # def pairs(self):
         """Special pairs.
 
         Attributes:

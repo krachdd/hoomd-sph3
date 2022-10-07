@@ -5,6 +5,7 @@ maintainer: dkrach, david.krach@mib.uni-stuttgart.de
 -----------------------------------------------------------"""
 
 import os, glob
-
-for file in glob.glob("input*N60*.txt"):
-    os.system('mpirun -np 1 create_gsd_from_raw_singlecore.py {0}'.format(file))
+fs = [0.01, 0.05, 0.1, 0.5, 1.0, 2.5, 5.0, 10.0, 50.0, 100.]
+for f in range(len(fs)):
+    # print(fs[f])
+    os.system('mpirun -np 4 sphere_in_box_run.py {0}'.format(fs[f]))
