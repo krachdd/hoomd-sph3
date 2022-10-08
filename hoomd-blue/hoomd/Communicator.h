@@ -65,7 +65,10 @@ struct comm_flag
         // charge,            //! Bit id in CommFlags for particle charge
         // diameter,          //! Bit id in CommFlags for particle diameter
         velocity,          //! Bit id in CommFlags for particle velocity
-        dpe,               //! Bit id in CommFlags for particle density, pressure and energy
+        // dpe,               //! Bit id in CommFlags for particle density, pressure and energy
+        density,               //! Bit id in CommFlags for particle pressure 
+        pressure,               //! Bit id in CommFlags for particle energy
+        energy,               //! Bit id in CommFlags for particle energy
         auxiliary1,        //! Bit id in CommFlags for particle auxiliary 1
         auxiliary2,        //! Bit id in CommFlags for particle auxiliary 2
         auxiliary3,        //! Bit id in CommFlags for particle auxiliary 3
@@ -496,7 +499,10 @@ class PYBIND11_EXPORT Communicator
     GlobalVector<unsigned int> m_body_copybuf;   //!< Buffer for particle body ids to be copied
     GlobalVector<int3> m_image_copybuf;          //!< Buffer for particle body ids to be copied
     GlobalVector<Scalar4> m_velocity_copybuf;    //!< Buffer for particle velocities to be copied
-    GlobalVector<Scalar3> m_dpe_copybuf;         //!< Buffer for particle densities, pressure and energy to be copied
+    // GlobalVector<Scalar3> m_dpe_copybuf;         //!< Buffer for particle densities, pressure and energy to be copied
+    GlobalVector<Scalar> m_density_copybuf;         //!< Buffer for particle densitiesto be copied
+    GlobalVector<Scalar> m_pressure_copybuf;         //!< Buffer for particle pressure to be copied
+    GlobalVector<Scalar> m_energy_copybuf;         //!< Buffer for particle energy to be copied
     GlobalVector<Scalar3> m_aux1_copybuf;        //!< Buffer for particle auxiliary data 1
     GlobalVector<Scalar3> m_aux2_copybuf;        //!< Buffer for particle auxiliary data 2
     GlobalVector<Scalar3> m_aux3_copybuf;        //!< Buffer for particle auxiliary data 3

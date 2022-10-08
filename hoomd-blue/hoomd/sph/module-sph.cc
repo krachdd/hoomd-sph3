@@ -5,7 +5,7 @@ maintainer: dkrach, david.krach@mib.uni-stuttgart.de
 // Include the defined classes that are to be exported to python
 // #include <hoomd/HOOMDMath.h>
 
-#include "StateEquations.h"
+// #include "StateEquations.h"
 #include "SmoothingKernel.h"
 #include "SPHBaseClass.h"
 // #include "SPHIntegratorTwoStep.h"
@@ -69,8 +69,8 @@ namespace detail
     void export_Quintic(pybind11::module& m);
     void export_CubicSpline(pybind11::module& m);
 
-    void export_StateEquation_Tait(pybind11::module& m);
-    void export_StateEquation_Linear(pybind11::module& m);
+    // void export_StateEquation_Tait(pybind11::module& m);
+    // void export_StateEquation_Linear(pybind11::module& m);
 
     void export_ComputeSPFMechanicalProperties(pybind11::module& m);
 
@@ -107,8 +107,11 @@ PYBIND11_MODULE(_sph, m){
     export_Quintic(m);
     export_CubicSpline(m);
     // export_SinglePhaseFlow(m);
-    export_StateEquation_Tait(m);
-    export_StateEquation_Linear(m);
+    // export_StateEquation_Tait(m);
+    // export_StateEquation_Linear(m);
+    export_StateEquation<tait>(m, "Tait");
+    export_StateEquation<linear>(m, "Linear");
+
     // export_TwoPhaseFlow(m);
     // export_SPHBaseClass(m);
     export_SPHBaseClass<wendlandc2, linear>(m, "SPHBaseClass_WC2_L");

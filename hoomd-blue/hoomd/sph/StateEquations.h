@@ -47,7 +47,7 @@ template<StateEquationType SET_>
 struct StateEquation
     {
     public:
-        //! Construct the tait state equation
+        //! Construct the state equation
         StateEquation();
         virtual ~StateEquation() {};
 
@@ -96,14 +96,13 @@ struct StateEquation
         bool m_params_set; //!< True if parameters are set
     };
 
-template<StateEquationType SET_> std::string get_SE_name();
-// namespace detail 
-// {
-// //! Exports the StateEquations classes to python
-// void export_StateEquations(pybind11::module& m);
+// template<StateEquationType SET_> std::string get_SE_name();
 
-
-// } // end namespace  
+namespace detail
+{
+template<StateEquationType SET_>
+void export_StateEquation(pybind11::module& m, std::string name);
+} // end namespace detail 
 } // end namespace sph 
 } // end namespace hoomd 
 

@@ -379,6 +379,8 @@ class PYBIND11_EXPORT CellList : public Compute
     bool m_compute_idx;         //!< true if the idx list should be computed
     // bool m_flag_charge;      //!< true if the flag should be set to the charge, it will be index (or
                              //!< type) otherwise
+    Scalar m_kappa;              //!< Kernel scaling factor kappa
+
     bool m_flag_type;        //!< true if the flag should be set to type, it will be index otherwise
     bool m_params_changed;   //!< Set to true when parameters are changed
     bool m_particles_sorted; //!< Set to true when the particles have been sorted
@@ -393,7 +395,6 @@ class PYBIND11_EXPORT CellList : public Compute
     unsigned int m_Nmax;         //!< Numer of spaces reserved for particles in each cell
     Scalar3 m_actual_width;      //!< Actual width of a cell in each direction
     Scalar3 m_ghost_width;       //!< Width of ghost layer sized for (on one side only)
-    Scalar m_kappa;              //!< Kernel scaling factor kappa
 
     // values computed by compute()
     GlobalArray<unsigned int> m_cell_size; //!< Number of members in each cell

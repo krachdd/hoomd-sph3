@@ -1652,10 +1652,11 @@ class PYBIND11_EXPORT LocalParticleData : public LocalDataAccess<Output, Particl
     {
     public:
     LocalParticleData(ParticleData& data)
-        : LocalDataAccess<Output, ParticleData>(data), m_position_handle(), m_dpe_handle(),
-          m_velocities_handle(), m_aux1_handle(), m_aux2_handle(), m_aux3_handle(), m_aux4_handle(), m_dpedt_handle(), m_acceleration_handle(),
-          m_image_handle(), m_slength_handle(), m_net_ratedpe_handle(),
-          m_tag_handle(), m_rtag_handle(), m_rigid_body_ids_handle(), m_net_force_handle()
+        : LocalDataAccess<Output, ParticleData>(data), 
+          m_position_handle(), m_velocities_handle(), m_acceleration_handle(), 
+          m_dpe_handle(), m_aux1_handle(), m_aux2_handle(), m_aux3_handle(), m_aux4_handle(), 
+          m_slength_handle(), m_dpedt_handle(), m_image_handle(), m_tag_handle(), 
+          m_rtag_handle(), m_rigid_body_ids_handle(), m_net_force_handle(), m_net_ratedpe_handle()
         {
         }
 

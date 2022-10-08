@@ -528,9 +528,9 @@ class PYBIND11_EXPORT NeighborList : public Compute
     Scalar m_rcut_min;     //!< The smallest cutoff radius of any pair (that is > 0)
     Scalar m_r_buff;       //!< The buffer around the cutoff
     Scalar m_d_max;        //!< The maximum diameter of any particle in the system (or greater)
+    Scalar m_kappa;             //!< Kernel scaling factor
     bool m_filter_body;    //!< Set to true if particles in the same body are to be filtered
     bool m_diameter_shift; //!< Set to true if the neighborlist rcut(i,j) should be diameter shifted
-    Scalar m_kappa;             //!< Kernel scaling factor
     storageMode m_storage_mode; //!< The storage mode
 
     GlobalArray<unsigned int> m_nlist;   //!< Neighbor list data

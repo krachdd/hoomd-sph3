@@ -1207,7 +1207,10 @@ Communicator::Communicator(std::shared_ptr<SystemDefinition> sysdef,
       m_body_copybuf(m_exec_conf), 
       m_image_copybuf(m_exec_conf),
       m_velocity_copybuf(m_exec_conf),
-      m_dpe_copybuf(m_exec_conf), // added
+      // m_dpe_copybuf(m_exec_conf), // added
+      m_density_copybuf(m_exec_conf), // added
+      m_pressure_copybuf(m_exec_conf), // added
+      m_energy_copybuf(m_exec_conf), // added
       m_aux1_copybuf(m_exec_conf), // added
       m_aux2_copybuf(m_exec_conf), // added
       m_aux3_copybuf(m_exec_conf), // added
@@ -1341,9 +1344,11 @@ Communicator::Communicator(std::shared_ptr<SystemDefinition> sysdef,
     initializeNeighborArrays();
 
     /* create a type for pdata_element */
- const int nitems = 14;
-    int blocklengths[14] = {4, 4, 3, 3, 3, 3, 3, 3, 3, 1, 1, 4, 4, 1};
-    MPI_Datatype types[14] = {MPI_HOOMD_SCALAR,
+ const int nitems = 16;
+    int blocklengths[16] = {4, 4, 3, 1, 1, 1, 3, 3, 3, 3, 3, 1, 1, 4, 4, 1};
+    MPI_Datatype types[16] = {MPI_HOOMD_SCALAR,
+                              MPI_HOOMD_SCALAR,
+                              MPI_HOOMD_SCALAR,
                               MPI_HOOMD_SCALAR,
                               MPI_HOOMD_SCALAR,
                               MPI_HOOMD_SCALAR,
@@ -1357,27 +1362,30 @@ Communicator::Communicator(std::shared_ptr<SystemDefinition> sysdef,
                               MPI_HOOMD_SCALAR,
                               MPI_HOOMD_SCALAR,
                               MPI_HOOMD_SCALAR};
-    MPI_Aint offsets[14];
+    MPI_Aint offsets[16];
 
     offsets[0] = offsetof(detail::pdata_element, pos);
     offsets[1] = offsetof(detail::pdata_element, vel);
     offsets[2] = offsetof(detail::pdata_element, accel);
-    offsets[3] = offsetof(detail::pdata_element, dpe);
-    offsets[4] = offsetof(detail::pdata_element, aux1);
-    offsets[5] = offsetof(detail::pdata_element, aux2);
-    offsets[6] = offsetof(detail::pdata_element, aux3);
-    offsets[7] = offsetof(detail::pdata_element, aux4);
+    offsets[3] = offsetof(detail::pdata_element, density);
+    offsets[4] = offsetof(detail::pdata_element, pressure);
+    offsets[5] = offsetof(detail::pdata_element, energy);
+    // offsets[3] = offsetof(detail::pdata_element, dpe);
+    offsets[6] = offsetof(detail::pdata_element, aux1);
+    offsets[7] = offsetof(detail::pdata_element, aux2);
+    offsets[8] = offsetof(detail::pdata_element, aux3);
+    offsets[9] = offsetof(detail::pdata_element, aux4);
     // offsets[3] = offsetof(detail::pdata_element, charge);
     // offsets[4] = offsetof(detail::pdata_element, diameter);
-    offsets[8] = offsetof(detail::pdata_element, image);
-    offsets[9] = offsetof(detail::pdata_element, body);
+    offsets[10] = offsetof(detail::pdata_element, image);
+    offsets[11] = offsetof(detail::pdata_element, body);
     // offsets[7] = offsetof(detail::pdata_element, orientation);
     // offsets[8] = offsetof(detail::pdata_element, angmom);
     // offsets[9] = offsetof(detail::pdata_element, inertia);
-    offsets[10] = offsetof(detail::pdata_element, tag);
-    offsets[11] = offsetof(detail::pdata_element, net_force);
-    offsets[12] = offsetof(detail::pdata_element, net_ratedpe);
-    offsets[13] = offsetof(detail::pdata_element, slength);
+    offsets[12] = offsetof(detail::pdata_element, tag);
+    offsets[13] = offsetof(detail::pdata_element, net_force);
+    offsets[14] = offsetof(detail::pdata_element, net_ratedpe);
+    offsets[15] = offsetof(detail::pdata_element, slength);
     // offsets[12] = offsetof(detail::pdata_element, net_torque);
     // offsets[13] = offsetof(detail::pdata_element, net_virial);
 
@@ -1990,8 +1998,17 @@ void Communicator::exchangeGhosts()
         if (flags[comm_flag::velocity])
             m_velocity_copybuf.resize(max_copy_ghosts);
 
-        if (flags[comm_flag::dpe])
-            m_dpe_copybuf.resize(max_copy_ghosts);
+        // if (flags[comm_flag::dpe])
+        //     m_dpe_copybuf.resize(max_copy_ghosts);
+
+        if (flags[comm_flag::density])
+            m_density_copybuf.resize(max_copy_ghosts);
+
+        if (flags[comm_flag::pressure])
+            m_pressure_copybuf.resize(max_copy_ghosts);
+
+        if (flags[comm_flag::energy])
+            m_energy_copybuf.resize(max_copy_ghosts);
 
         if (flags[comm_flag::auxiliary1])
             m_aux1_copybuf.resize(max_copy_ghosts);
@@ -2052,7 +2069,16 @@ void Communicator::exchangeGhosts()
                                        access_location::host,
                                        access_mode::read);
 
-            ArrayHandle<Scalar3> h_dpe(m_pdata->getDPEs(),
+            // ArrayHandle<Scalar3> h_dpe(m_pdata->getDPEs(),
+            //                            access_location::host,
+            //                            access_mode::read);
+            ArrayHandle<Scalar> h_density(m_pdata->getDensites(),
+                                       access_location::host,
+                                       access_mode::read);
+            ArrayHandle<Scalar> h_pressure(m_pdata->getPressures(),
+                                       access_location::host,
+                                       access_mode::read);
+            ArrayHandle<Scalar> h_energy(m_pdata->getEnergies(),
                                        access_location::host,
                                        access_mode::read);
             ArrayHandle<Scalar3> h_aux1(m_pdata->getAuxiliaries1(),
@@ -2103,7 +2129,16 @@ void Communicator::exchangeGhosts()
             ArrayHandle<Scalar4> h_velocity_copybuf(m_velocity_copybuf,
                                                     access_location::host,
                                                     access_mode::overwrite);
-            ArrayHandle<Scalar3>h_dpe_copybuf(m_dpe_copybuf,
+            // ArrayHandle<Scalar3>h_dpe_copybuf(m_dpe_copybuf,
+            //                                   access_location::host,
+            //                                   access_mode::overwrite);
+            ArrayHandle<Scalar>h_density_copybuf(m_density_copybuf,
+                                              access_location::host,
+                                              access_mode::overwrite);
+            ArrayHandle<Scalar>h_pressure_copybuf(m_pressure_copybuf,
+                                              access_location::host,
+                                              access_mode::overwrite);
+            ArrayHandle<Scalar>h_energy_copybuf(m_energy_copybuf,
                                               access_location::host,
                                               access_mode::overwrite);
             ArrayHandle<Scalar3>h_aux1_copybuf(m_aux1_copybuf,
@@ -2141,8 +2176,14 @@ void Communicator::exchangeGhosts()
                         h_image_copybuf.data[m_num_copy_ghosts[dir]] = h_image.data[idx];
                     if (flags[comm_flag::velocity])
                         h_velocity_copybuf.data[m_num_copy_ghosts[dir]] = h_vel.data[idx];
-                    if (flags[comm_flag::dpe])
-                        h_dpe_copybuf.data[m_num_copy_ghosts[dir]] = h_dpe.data[idx];
+                    // if (flags[comm_flag::dpe])
+                    //     h_dpe_copybuf.data[m_num_copy_ghosts[dir]] = h_dpe.data[idx];
+                    if (flags[comm_flag::density])
+                        h_density_copybuf.data[m_num_copy_ghosts[dir]] = h_density.data[idx];
+                    if (flags[comm_flag::pressure])
+                        h_pressure_copybuf.data[m_num_copy_ghosts[dir]] = h_pressure.data[idx];
+                    if (flags[comm_flag::energy])
+                        h_energy_copybuf.data[m_num_copy_ghosts[dir]] = h_energy.data[idx];
                     if (flags[comm_flag::auxiliary1])
                         h_aux1_copybuf.data[m_num_copy_ghosts[dir]] = h_aux1.data[idx];
                     if (flags[comm_flag::auxiliary2])
@@ -2233,7 +2274,16 @@ void Communicator::exchangeGhosts()
                                                     access_location::host,
                                                     access_mode::read);
 
-            ArrayHandle<Scalar3> h_dpe_copybuf(m_dpe_copybuf,
+            // ArrayHandle<Scalar3> h_dpe_copybuf(m_dpe_copybuf,
+            //                                         access_location::host,
+            //                                         access_mode::read);
+            ArrayHandle<Scalar> h_density_copybuf(m_density_copybuf,
+                                                    access_location::host,
+                                                    access_mode::read);
+            ArrayHandle<Scalar> h_pressure_copybuf(m_pressure_copybuf,
+                                                    access_location::host,
+                                                    access_mode::read);
+            ArrayHandle<Scalar> h_energy_copybuf(m_energy_copybuf,
                                                     access_location::host,
                                                     access_mode::read);
             ArrayHandle<Scalar3> h_aux1_copybuf(m_aux1_copybuf,
@@ -2276,9 +2326,19 @@ void Communicator::exchangeGhosts()
                                        access_location::host,
                                        access_mode::readwrite);
 
-            ArrayHandle<Scalar3> h_dpe(m_pdata->getDPEs(),
+            // ArrayHandle<Scalar3> h_dpe(m_pdata->getDPEs(),
+            //                            access_location::host,
+            //                            access_mode::readwrite);
+            ArrayHandle<Scalar> h_density(m_pdata->getDensites(),
                                        access_location::host,
                                        access_mode::readwrite);
+            ArrayHandle<Scalar> h_pressurer(m_pdata->getPressures(),
+                                       access_location::host,
+                                       access_mode::readwrite);
+            ArrayHandle<Scalar> h_energy(m_pdata->getEnergies(),
+                                       access_location::host,
+                                       access_mode::readwrite);
+
             ArrayHandle<Scalar3> h_aux1(m_pdata->getAuxiliaries1(),
                                        access_location::host,
                                        access_mode::readwrite);
@@ -2419,21 +2479,81 @@ void Communicator::exchangeGhosts()
                 }
 
 
-           if (flags[comm_flag::dpe])
+           // if (flags[comm_flag::dpe])
+           //      {
+           //      MPI_Isend(h_dpe_copybuf.data,
+           //                int(m_num_copy_ghosts[dir] * sizeof(Scalar3)),
+           //                MPI_BYTE,
+           //                send_neighbor,
+           //                5,
+           //                m_mpi_comm,
+           //                &req);
+           //      m_reqs.push_back(req);
+           //      MPI_Irecv(h_dpe.data + start_idx,
+           //                int(m_num_recv_ghosts[dir] * sizeof(Scalar3)),
+           //                MPI_BYTE,
+           //                recv_neighbor,
+           //                5,
+           //                m_mpi_comm,
+           //                &req);
+           //      m_reqs.push_back(req);
+           //      }
+
+           if (flags[comm_flag::density])
                 {
-                MPI_Isend(h_dpe_copybuf.data,
-                          int(m_num_copy_ghosts[dir] * sizeof(Scalar3)),
+                MPI_Isend(h_density_copybuf.data,
+                          int(m_num_copy_ghosts[dir] * sizeof(Scalar)),
                           MPI_BYTE,
                           send_neighbor,
                           5,
                           m_mpi_comm,
                           &req);
                 m_reqs.push_back(req);
-                MPI_Irecv(h_dpe.data + start_idx,
-                          int(m_num_recv_ghosts[dir] * sizeof(Scalar3)),
+                MPI_Irecv(h_density.data + start_idx,
+                          int(m_num_recv_ghosts[dir] * sizeof(Scalar)),
                           MPI_BYTE,
                           recv_neighbor,
                           5,
+                          m_mpi_comm,
+                          &req);
+                m_reqs.push_back(req);
+                }
+
+           if (flags[comm_flag::pressure])
+                {
+                MPI_Isend(h_pressure_copybuf.data,
+                          int(m_num_copy_ghosts[dir] * sizeof(Scalar)),
+                          MPI_BYTE,
+                          send_neighbor,
+                          6,
+                          m_mpi_comm,
+                          &req);
+                m_reqs.push_back(req);
+                MPI_Irecv(h_pressure.data + start_idx,
+                          int(m_num_recv_ghosts[dir] * sizeof(Scalar)),
+                          MPI_BYTE,
+                          recv_neighbor,
+                          6,
+                          m_mpi_comm,
+                          &req);
+                m_reqs.push_back(req);
+                }
+
+           if (flags[comm_flag::energy])
+                {
+                MPI_Isend(h_energy_copybuf.data,
+                          int(m_num_copy_ghosts[dir] * sizeof(Scalar)),
+                          MPI_BYTE,
+                          send_neighbor,
+                          7,
+                          m_mpi_comm,
+                          &req);
+                m_reqs.push_back(req);
+                MPI_Irecv(h_energy.data + start_idx,
+                          int(m_num_recv_ghosts[dir] * sizeof(Scalar)),
+                          MPI_BYTE,
+                          recv_neighbor,
+                          7,
                           m_mpi_comm,
                           &req);
                 m_reqs.push_back(req);
@@ -2445,7 +2565,7 @@ void Communicator::exchangeGhosts()
                           int(m_num_copy_ghosts[dir] * sizeof(Scalar3)),
                           MPI_BYTE,
                           send_neighbor,
-                          6,
+                          8,
                           m_mpi_comm,
                           &req);
                 m_reqs.push_back(req);
@@ -2453,7 +2573,7 @@ void Communicator::exchangeGhosts()
                           int(m_num_recv_ghosts[dir] * sizeof(Scalar3)),
                           MPI_BYTE,
                           recv_neighbor,
-                          6,
+                          8,
                           m_mpi_comm,
                           &req);
                 m_reqs.push_back(req);
@@ -2465,7 +2585,7 @@ void Communicator::exchangeGhosts()
                           int(m_num_copy_ghosts[dir] * sizeof(Scalar3)),
                           MPI_BYTE,
                           send_neighbor,
-                          7,
+                          9,
                           m_mpi_comm,
                           &req);
                 m_reqs.push_back(req);
@@ -2473,7 +2593,7 @@ void Communicator::exchangeGhosts()
                           int(m_num_recv_ghosts[dir] * sizeof(Scalar3)),
                           MPI_BYTE,
                           recv_neighbor,
-                          7,
+                          9,
                           m_mpi_comm,
                           &req);
                 m_reqs.push_back(req);
@@ -2485,7 +2605,7 @@ void Communicator::exchangeGhosts()
                           int(m_num_copy_ghosts[dir] * sizeof(Scalar3)),
                           MPI_BYTE,
                           send_neighbor,
-                          8,
+                          10,
                           m_mpi_comm,
                           &req);
                 m_reqs.push_back(req);
@@ -2493,7 +2613,7 @@ void Communicator::exchangeGhosts()
                           int(m_num_recv_ghosts[dir] * sizeof(Scalar3)),
                           MPI_BYTE,
                           recv_neighbor,
-                          8,
+                          10,
                           m_mpi_comm,
                           &req);
                 m_reqs.push_back(req);
@@ -2505,7 +2625,7 @@ void Communicator::exchangeGhosts()
                           int(m_num_copy_ghosts[dir] * sizeof(Scalar3)),
                           MPI_BYTE,
                           send_neighbor,
-                          9,
+                          11,
                           m_mpi_comm,
                           &req);
                 m_reqs.push_back(req);
@@ -2513,7 +2633,7 @@ void Communicator::exchangeGhosts()
                           int(m_num_recv_ghosts[dir] * sizeof(Scalar3)),
                           MPI_BYTE,
                           recv_neighbor,
-                          9,
+                          11,
                           m_mpi_comm,
                           &req);
                 m_reqs.push_back(req);
@@ -2545,7 +2665,7 @@ void Communicator::exchangeGhosts()
                           int(m_num_copy_ghosts[dir] * sizeof(unsigned int)),
                           MPI_BYTE,
                           send_neighbor,
-                          10,
+                          12,
                           m_mpi_comm,
                           &req);
                 m_reqs.push_back(req);
@@ -2553,7 +2673,7 @@ void Communicator::exchangeGhosts()
                           int(m_num_recv_ghosts[dir] * sizeof(unsigned int)),
                           MPI_BYTE,
                           recv_neighbor,
-                          10,
+                          12,
                           m_mpi_comm,
                           &req);
                 m_reqs.push_back(req);
@@ -2565,7 +2685,7 @@ void Communicator::exchangeGhosts()
                           int(m_num_copy_ghosts[dir] * sizeof(int3)),
                           MPI_BYTE,
                           send_neighbor,
-                          11,
+                          13,
                           m_mpi_comm,
                           &req);
                 m_reqs.push_back(req);
@@ -2573,7 +2693,7 @@ void Communicator::exchangeGhosts()
                           int(m_num_recv_ghosts[dir] * sizeof(int3)),
                           MPI_BYTE,
                           recv_neighbor,
-                          11,
+                          13,
                           m_mpi_comm,
                           &req);
                 m_reqs.push_back(req);
@@ -2585,7 +2705,7 @@ void Communicator::exchangeGhosts()
                           int(m_num_copy_ghosts[dir] * sizeof(Scalar)),
                           MPI_BYTE,
                           send_neighbor,
-                          12,
+                          14,
                           m_mpi_comm,
                           &req);
                 m_reqs.push_back(req);
@@ -2593,7 +2713,7 @@ void Communicator::exchangeGhosts()
                           int(m_num_recv_ghosts[dir] * sizeof(Scalar)),
                           MPI_BYTE,
                           recv_neighbor,
-                          12,
+                          14,
                           m_mpi_comm,
                           &req);
                 m_reqs.push_back(req);
@@ -2985,12 +3105,40 @@ void Communicator::beginUpdateGhosts(uint64_t timestep)
                 }
             }
 
-        if (flags[comm_flag::dpe])
+        // if (flags[comm_flag::dpe])
+        //     {
+        //     ArrayHandle<Scalar3> h_dpe(m_pdata->getDPEs(),
+        //                                        access_location::host,
+        //                                        access_mode::read);
+        //     ArrayHandle<Scalar3> h_dpe_copybuf(m_dpe_copybuf,
+        //                                                access_location::host,
+        //                                                access_mode::overwrite);
+        //     ArrayHandle<unsigned int> h_copy_ghosts(m_copy_ghosts[dir],
+        //                                             access_location::host,
+        //                                             access_mode::read);
+        //     ArrayHandle<unsigned int> h_rtag(m_pdata->getRTags(),
+        //                                      access_location::host,
+        //                                      access_mode::read);
+
+        //     // copy dpes of ghost particles
+        //     for (unsigned int ghost_idx = 0; ghost_idx < m_num_copy_ghosts[dir]; ghost_idx++)
+        //         {
+        //         unsigned int idx = h_rtag.data[h_copy_ghosts.data[ghost_idx]];
+
+        //         assert(idx < m_pdata->getN() + m_pdata->getNGhosts());
+
+        //         // copy dpes into send buffer
+        //         h_dpe_copybuf.data[ghost_idx] = h_dpe.data[idx];
+        //         }
+        //     }
+
+
+        if (flags[comm_flag::density])
             {
-            ArrayHandle<Scalar3> h_dpe(m_pdata->getDPEs(),
+            ArrayHandle<Scalar> h_density(m_pdata->getDensites(),
                                                access_location::host,
                                                access_mode::read);
-            ArrayHandle<Scalar3> h_dpe_copybuf(m_dpe_copybuf,
+            ArrayHandle<Scalar> h_density_copybuf(m_density_copybuf,
                                                        access_location::host,
                                                        access_mode::overwrite);
             ArrayHandle<unsigned int> h_copy_ghosts(m_copy_ghosts[dir],
@@ -3000,15 +3148,69 @@ void Communicator::beginUpdateGhosts(uint64_t timestep)
                                              access_location::host,
                                              access_mode::read);
 
-            // copy dpes of ghost particles
+            // copy densitys of ghost particles
             for (unsigned int ghost_idx = 0; ghost_idx < m_num_copy_ghosts[dir]; ghost_idx++)
                 {
                 unsigned int idx = h_rtag.data[h_copy_ghosts.data[ghost_idx]];
 
                 assert(idx < m_pdata->getN() + m_pdata->getNGhosts());
 
-                // copy dpes into send buffer
-                h_dpe_copybuf.data[ghost_idx] = h_dpe.data[idx];
+                // copy densitys into send buffer
+                h_density_copybuf.data[ghost_idx] = h_density.data[idx];
+                }
+            }
+
+        if (flags[comm_flag::pressure])
+            {
+            ArrayHandle<Scalar> h_pressure(m_pdata->getPressures(),
+                                               access_location::host,
+                                               access_mode::read);
+            ArrayHandle<Scalar> h_pressure_copybuf(m_pressure_copybuf,
+                                                       access_location::host,
+                                                       access_mode::overwrite);
+            ArrayHandle<unsigned int> h_copy_ghosts(m_copy_ghosts[dir],
+                                                    access_location::host,
+                                                    access_mode::read);
+            ArrayHandle<unsigned int> h_rtag(m_pdata->getRTags(),
+                                             access_location::host,
+                                             access_mode::read);
+
+            // copy pressures of ghost particles
+            for (unsigned int ghost_idx = 0; ghost_idx < m_num_copy_ghosts[dir]; ghost_idx++)
+                {
+                unsigned int idx = h_rtag.data[h_copy_ghosts.data[ghost_idx]];
+
+                assert(idx < m_pdata->getN() + m_pdata->getNGhosts());
+
+                // copy pressures into send buffer
+                h_pressure_copybuf.data[ghost_idx] = h_pressure.data[idx];
+                }
+            }
+
+        if (flags[comm_flag::energy])
+            {
+            ArrayHandle<Scalar> h_energy(m_pdata->getEnergies(),
+                                               access_location::host,
+                                               access_mode::read);
+            ArrayHandle<Scalar> h_energy_copybuf(m_energy_copybuf,
+                                                       access_location::host,
+                                                       access_mode::overwrite);
+            ArrayHandle<unsigned int> h_copy_ghosts(m_copy_ghosts[dir],
+                                                    access_location::host,
+                                                    access_mode::read);
+            ArrayHandle<unsigned int> h_rtag(m_pdata->getRTags(),
+                                             access_location::host,
+                                             access_mode::read);
+
+            // copy energys of ghost particles
+            for (unsigned int ghost_idx = 0; ghost_idx < m_num_copy_ghosts[dir]; ghost_idx++)
+                {
+                unsigned int idx = h_rtag.data[h_copy_ghosts.data[ghost_idx]];
+
+                assert(idx < m_pdata->getN() + m_pdata->getNGhosts());
+
+                // copy energys into send buffer
+                h_energy_copybuf.data[ghost_idx] = h_energy.data[idx];
                 }
             }
 
@@ -3163,7 +3365,7 @@ void Communicator::beginUpdateGhosts(uint64_t timestep)
         num_tot_recv_ghosts += m_num_recv_ghosts[dir];
 
 
-        // only non-permanent fields (position, velocity, dpe, aux 1-4) need to be considered here
+        // only non-permanent fields (position, velocity, density, pressure, energy, aux 1-4) need to be considered here
         // charge, body, image and diameter are not updated between neighbor list builds
         if (flags[comm_flag::position])
             {
@@ -3225,31 +3427,125 @@ void Communicator::beginUpdateGhosts(uint64_t timestep)
             MPI_Waitall(2, &m_reqs.front(), &m_stats.front());
             }
 
-        if (flags[comm_flag::dpe])
+        // if (flags[comm_flag::dpe])
+        //     {
+        //     m_reqs.resize(2);
+        //     m_stats.resize(2);
+
+        //     ArrayHandle<Scalar3> h_dpe(m_pdata->getDPEs(),
+        //                                        access_location::host,
+        //                                        access_mode::readwrite);
+        //     ArrayHandle<Scalar3> h_dpe_copybuf(m_dpe_copybuf,
+        //                                                access_location::host,
+        //                                                access_mode::read);
+
+        //     // exchange particle data, write directly to the particle data arrays
+        //     MPI_Isend(h_dpe_copybuf.data,
+        //               (unsigned int)(m_num_copy_ghosts[dir] * sizeof(Scalar3)),
+        //               MPI_BYTE,
+        //               send_neighbor,
+        //               3,
+        //               m_mpi_comm,
+        //               &m_reqs[0]);
+        //     MPI_Irecv(h_dpe.data + start_idx,
+        //               (unsigned int)(m_num_recv_ghosts[dir] * sizeof(Scalar3)),
+        //               MPI_BYTE,
+        //               recv_neighbor,
+        //               3,
+        //               m_mpi_comm,
+        //               &m_reqs[1]);
+        //     MPI_Waitall(2, &m_reqs.front(), &m_stats.front());
+
+        //     }
+
+        if (flags[comm_flag::density])
             {
             m_reqs.resize(2);
             m_stats.resize(2);
 
-            ArrayHandle<Scalar3> h_dpe(m_pdata->getDPEs(),
+            ArrayHandle<Scalar> h_density(m_pdata->getDensites(),
                                                access_location::host,
                                                access_mode::readwrite);
-            ArrayHandle<Scalar3> h_dpe_copybuf(m_dpe_copybuf,
+            ArrayHandle<Scalar> h_density_copybuf(m_density_copybuf,
                                                        access_location::host,
                                                        access_mode::read);
 
             // exchange particle data, write directly to the particle data arrays
-            MPI_Isend(h_dpe_copybuf.data,
-                      (unsigned int)(m_num_copy_ghosts[dir] * sizeof(Scalar3)),
+            MPI_Isend(h_density_copybuf.data,
+                      (unsigned int)(m_num_copy_ghosts[dir] * sizeof(Scalar)),
                       MPI_BYTE,
                       send_neighbor,
                       3,
                       m_mpi_comm,
                       &m_reqs[0]);
-            MPI_Irecv(h_dpe.data + start_idx,
-                      (unsigned int)(m_num_recv_ghosts[dir] * sizeof(Scalar3)),
+            MPI_Irecv(h_density.data + start_idx,
+                      (unsigned int)(m_num_recv_ghosts[dir] * sizeof(Scalar)),
                       MPI_BYTE,
                       recv_neighbor,
                       3,
+                      m_mpi_comm,
+                      &m_reqs[1]);
+            MPI_Waitall(2, &m_reqs.front(), &m_stats.front());
+
+            }
+
+        if (flags[comm_flag::pressure])
+            {
+            m_reqs.resize(2);
+            m_stats.resize(2);
+
+            ArrayHandle<Scalar> h_pressure(m_pdata->getPressures(),
+                                               access_location::host,
+                                               access_mode::readwrite);
+            ArrayHandle<Scalar> h_pressure_copybuf(m_pressure_copybuf,
+                                                       access_location::host,
+                                                       access_mode::read);
+
+            // exchange particle data, write directly to the particle data arrays
+            MPI_Isend(h_pressure_copybuf.data,
+                      (unsigned int)(m_num_copy_ghosts[dir] * sizeof(Scalar)),
+                      MPI_BYTE,
+                      send_neighbor,
+                      4,
+                      m_mpi_comm,
+                      &m_reqs[0]);
+            MPI_Irecv(h_pressure.data + start_idx,
+                      (unsigned int)(m_num_recv_ghosts[dir] * sizeof(Scalar)),
+                      MPI_BYTE,
+                      recv_neighbor,
+                      4,
+                      m_mpi_comm,
+                      &m_reqs[1]);
+            MPI_Waitall(2, &m_reqs.front(), &m_stats.front());
+
+            }
+
+
+        if (flags[comm_flag::energy])
+            {
+            m_reqs.resize(2);
+            m_stats.resize(2);
+
+            ArrayHandle<Scalar> h_energy(m_pdata->getEnergies(),
+                                               access_location::host,
+                                               access_mode::readwrite);
+            ArrayHandle<Scalar> h_energy_copybuf(m_energy_copybuf,
+                                                       access_location::host,
+                                                       access_mode::read);
+
+            // exchange particle data, write directly to the particle data arrays
+            MPI_Isend(h_energy_copybuf.data,
+                      (unsigned int)(m_num_copy_ghosts[dir] * sizeof(Scalar)),
+                      MPI_BYTE,
+                      send_neighbor,
+                      5,
+                      m_mpi_comm,
+                      &m_reqs[0]);
+            MPI_Irecv(h_energy.data + start_idx,
+                      (unsigned int)(m_num_recv_ghosts[dir] * sizeof(Scalar)),
+                      MPI_BYTE,
+                      recv_neighbor,
+                      5,
                       m_mpi_comm,
                       &m_reqs[1]);
             MPI_Waitall(2, &m_reqs.front(), &m_stats.front());
@@ -3274,14 +3570,14 @@ void Communicator::beginUpdateGhosts(uint64_t timestep)
                       (unsigned int)(m_num_copy_ghosts[dir] * sizeof(Scalar3)),
                       MPI_BYTE,
                       send_neighbor,
-                      4,
+                      6,
                       m_mpi_comm,
                       &m_reqs[0]);
             MPI_Irecv(h_aux1.data + start_idx,
                       (unsigned int)(m_num_recv_ghosts[dir] * sizeof(Scalar3)),
                       MPI_BYTE,
                       recv_neighbor,
-                      4,
+                      6,
                       m_mpi_comm,
                       &m_reqs[1]);
             MPI_Waitall(2, &m_reqs.front(), &m_stats.front());
@@ -3305,14 +3601,14 @@ void Communicator::beginUpdateGhosts(uint64_t timestep)
                       (unsigned int)(m_num_copy_ghosts[dir] * sizeof(Scalar3)),
                       MPI_BYTE,
                       send_neighbor,
-                      5,
+                      7,
                       m_mpi_comm,
                       &m_reqs[0]);
             MPI_Irecv(h_aux2.data + start_idx,
                       (unsigned int)(m_num_recv_ghosts[dir] * sizeof(Scalar3)),
                       MPI_BYTE,
                       recv_neighbor,
-                      5,
+                      7,
                       m_mpi_comm,
                       &m_reqs[1]);
             MPI_Waitall(2, &m_reqs.front(), &m_stats.front());
@@ -3337,14 +3633,14 @@ void Communicator::beginUpdateGhosts(uint64_t timestep)
                       (unsigned int)(m_num_copy_ghosts[dir] * sizeof(Scalar3)),
                       MPI_BYTE,
                       send_neighbor,
-                      6,
+                      8,
                       m_mpi_comm,
                       &m_reqs[0]);
             MPI_Irecv(h_aux3.data + start_idx,
                       (unsigned int)(m_num_recv_ghosts[dir] * sizeof(Scalar3)),
                       MPI_BYTE,
                       recv_neighbor,
-                      6,
+                      8,
                       m_mpi_comm,
                       &m_reqs[1]);
             MPI_Waitall(2, &m_reqs.front(), &m_stats.front());
@@ -3368,14 +3664,14 @@ void Communicator::beginUpdateGhosts(uint64_t timestep)
                       (unsigned int)(m_num_copy_ghosts[dir] * sizeof(Scalar3)),
                       MPI_BYTE,
                       send_neighbor,
-                      7,
+                      9,
                       m_mpi_comm,
                       &m_reqs[0]);
             MPI_Irecv(h_aux4.data + start_idx,
                       (unsigned int)(m_num_recv_ghosts[dir] * sizeof(Scalar3)),
                       MPI_BYTE,
                       recv_neighbor,
-                      7,
+                      9,
                       m_mpi_comm,
                       &m_reqs[1]);
             MPI_Waitall(2, &m_reqs.front(), &m_stats.front());
