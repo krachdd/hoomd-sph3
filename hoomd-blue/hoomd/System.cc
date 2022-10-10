@@ -94,6 +94,11 @@ void System::run(uint64_t nsteps, bool write_at_start, bool adaptive_dt)
 
     resetStats();
 
+    if (adaptive_dt){
+        // get the inital timestep deltaT
+        dt_init = m_integrator->getDeltaT();
+    }
+
 #ifdef ENABLE_MPI
     if (m_sysdef->isDomainDecomposed())
         {
@@ -156,6 +161,44 @@ void System::run(uint64_t nsteps, bool write_at_start, bool adaptive_dt)
         // or together all of their requested PDataFlags to determine the flags to set for this time
         // step
         m_sysdef->getParticleData()->setFlags(determineFlags(m_cur_tstep + 1));
+
+
+        // if adaptive timestep is true
+        if (adaptive_dt){
+            // update timestep deltaT routine
+            // Set new timestep = initial timestep if condition isn't fullfilled
+            dt_adapt = dt_init;
+
+            // //std::string compute_string;
+            std::vector<double> provided_timestep_quantities;
+            map<string, std::shared_ptr<Compute>>::iterator compute;
+
+            // first compute SPH
+            compute = m_computes.begin();
+            provided_timestep_quantities = compute->second->getProvidedTimestepQuantities(m_cur_tstep);
+            dt_new = adaptiveTimeScheme(dt_init, provided_timestep_quantities);
+
+            if (!(isinf(dt_new))){ dt_adapt = dt_new;}
+            
+            int world_rank;
+            MPI_Comm_rank(MPI_COMM_WORLD, &world_rank);
+
+
+            #ifdef ENABLE_MPI
+            // Synchronize new timestep on all cores
+            if (m_comm) {
+                int size;
+                MPI_Comm_size(m_exec_conf->getMPICommunicator(), &size);
+                std::vector<double> tmp(size);
+                all_gather_v(dt_adapt, tmp, m_exec_conf->getMPICommunicator());
+                dt_adapt = *std::min_element(tmp.begin(), tmp.end());
+            }
+            #endif
+
+            m_integrator->setDeltaT(dt_adapt);
+        }
+
+
 
         // execute the integrator
 
