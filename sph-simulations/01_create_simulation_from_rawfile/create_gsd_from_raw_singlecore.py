@@ -70,9 +70,10 @@ positions = np.array((x.ravel(), y.ravel(), z.ravel())).T
 velocities = np.zeros((positions.shape[0], positions.shape[1]), dtype = np.float32)
 masses     = np.ones((positions.shape[0]), dtype = np.float32) * M
 slengths   = np.ones((positions.shape[0]), dtype = np.float32) * H
-dpes       = np.zeros((positions.shape[0], positions.shape[1]), dtype = np.float32)
+density    = np.ones((positions.shape[0]), dtype = np.float32) * RHO0
+# dpes       = np.zeros((positions.shape[0], positions.shape[1]), dtype = np.float32)
 # add densities
-for i in range(len(dpes)): dpes[i][0] = RHO0
+# for i in range(len(dpes)): dpes[i][0] = RHO0
 
 # create Snapshot 
 snapshot = hoomd.Snapshot(device.communicator)
@@ -84,7 +85,7 @@ snapshot.particles.types = ['F', 'S']
 snapshot.particles.velocity[:] = velocities
 snapshot.particles.mass[:] = masses
 snapshot.particles.slength[:] = slengths
-snapshot.particles.dpe[:] = dpes
+snapshot.particles.density[:] = density
 
 sim.create_state_from_snapshot(snapshot)
 

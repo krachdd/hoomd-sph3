@@ -171,12 +171,15 @@ class ParticleData(object):
     # _default_value['orientation'] = numpy.array([1, 0, 0, 0],
     #                                             dtype=numpy.float32)
     _default_value['velocity'] = numpy.array([0, 0, 0], dtype=numpy.float32)
-    _default_value['slength'] = numpy.float32(1.0);
-    _default_value['dpe'] = numpy.array([0,0,0], dtype=numpy.float32);
-    _default_value['auxiliary1'] = numpy.array([0,0,0], dtype=numpy.float32);
-    _default_value['auxiliary2'] = numpy.array([0,0,0], dtype=numpy.float32);
-    _default_value['auxiliary3'] = numpy.array([0,0,0], dtype=numpy.float32);
-    _default_value['auxiliary4'] = numpy.array([0,0,0], dtype=numpy.float32);
+    _default_value['slength'] = numpy.float32(1.0)
+    # _default_value['dpe'] = numpy.array([0,0,0], dtype=numpy.float32);
+    _default_value['density'] = numpy.float32(0.0)
+    _default_value['pressure'] = numpy.float32(0.0)
+    _default_value['energy'] = numpy.float32(0.0)
+    _default_value['auxiliary1'] = numpy.array([0,0,0], dtype=numpy.float32)
+    _default_value['auxiliary2'] = numpy.array([0,0,0], dtype=numpy.float32)
+    _default_value['auxiliary3'] = numpy.array([0,0,0], dtype=numpy.float32)
+    _default_value['auxiliary4'] = numpy.array([0,0,0], dtype=numpy.float32)
     # _default_value['angmom'] = numpy.array([0, 0, 0, 0], dtype=numpy.float32)
     _default_value['image'] = numpy.array([0, 0, 0], dtype=numpy.int32)
     _default_value['type_shapes'] = [{}]
@@ -194,7 +197,10 @@ class ParticleData(object):
         # self.moment_inertia = None
         self.velocity = None
         self.slength = None;
-        self.dpe = None;
+        # self.dpe = None;
+        self.density = None;
+        self.pressure = None;
+        self.energy = None;
         self.auxiliary1 = None;
         self.auxiliary2 = None;
         self.auxiliary3 = None;
@@ -260,9 +266,18 @@ class ParticleData(object):
         if self.slength is not None:
             self.slength = numpy.ascontiguousarray(self.slength, dtype=numpy.float32);
             self.slength = self.slength.reshape([self.N])
-        if self.dpe is not None:
-            self.dpe = numpy.ascontiguousarray(self.dpe, dtype=numpy.float32);
-            self.dpe = self.dpe.reshape([self.N, 3]);
+        if self.density is not None:
+            self.density = numpy.ascontiguousarray(self.density, dtype=numpy.float32);
+            self.density = self.density.reshape([self.N])
+        if self.pressure is not None:
+            self.pressure = numpy.ascontiguousarray(self.pressure, dtype=numpy.float32);
+            self.pressure = self.pressure.reshape([self.N])
+        if self.energy is not None:
+            self.energy = numpy.ascontiguousarray(self.energy, dtype=numpy.float32);
+            self.energy = self.energy.reshape([self.N])
+        # if self.dpe is not None:
+        #     self.dpe = numpy.ascontiguousarray(self.dpe, dtype=numpy.float32);
+        #     self.dpe = self.dpe.reshape([self.N, 3]);
         if self.auxiliary1 is not None:
             self.auxiliary1 = numpy.ascontiguousarray(self.auxiliary1, dtype=numpy.float32);
             self.auxiliary1 = self.auxiliary1.reshape([self.N, 3]);

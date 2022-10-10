@@ -94,7 +94,7 @@ def delete_solids(sim, device, kernel, dt, mu, DX, rho0):
     deleted = 0
     with sim.state.cpu_local_snapshot as data:
         for i in range(len(data.particles.position)):
-            if data.particles.typeid[i] == 1 and data.particles.dpe[i][2] == 1:
+            if data.particles.typeid[i] == 1 and data.particles.energy[i] == 1:
                 tags.append(data.particles.tag[i])
                 # print(f'Rank: {device.communicator.rank} -> Delete Particle {data.particles.tag[i]}')
                 deleted += 1

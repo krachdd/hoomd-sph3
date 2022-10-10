@@ -86,7 +86,8 @@ positions = np.array((x.ravel(), y.ravel(), z.ravel())).T
 velocities = np.zeros((positions.shape[0], positions.shape[1]), dtype = np.float32)
 masses     = np.ones((positions.shape[0]), dtype = np.float32) * M
 slengths   = np.ones((positions.shape[0]), dtype = np.float32) * H
-dpes       = np.zeros((positions.shape[0], positions.shape[1]), dtype = np.float32)
+density    = np.ones((positions.shape[0]), dtype = np.float32) * RHO0
+# dpes       = np.zeros((positions.shape[0], positions.shape[1]), dtype = np.float32)
 
 # print(slengths)
 
@@ -99,21 +100,18 @@ snapshot.particles.types = ['F', 'S']
 snapshot.particles.velocity[:] = velocities
 snapshot.particles.mass[:] = masses
 snapshot.particles.slength[:] = slengths
-snapshot.particles.dpe[:] = dpes
+snapshot.particles.density[:] = density
 
 x   = snapshot.particles.position[:]
-dpe = snapshot.particles.dpe[:]
 tid = snapshot.particles.typeid[:]
 
 for i in range(len(x)):
     xi,yi,zi  = x[i][0], x[i][1], x[i][2]
-    dpe[i][0] = RHO0
     tid[i]    = 0
     if ( np.sqrt((yi)**2 + (zi)**2) > 0.5*(LREF) ):
     # if ( yi < -0.4*LY or yi > 0.4*LY ):
         tid[i] = 1
 
-snapshot.particles.dpe[:]      = dpe
 snapshot.particles.typeid[:]   = tid
 
 sim.create_state_from_snapshot(snapshot)

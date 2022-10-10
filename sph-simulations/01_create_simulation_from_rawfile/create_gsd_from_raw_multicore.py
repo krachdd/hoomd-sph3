@@ -70,9 +70,9 @@ positions = np.array((x.ravel(), y.ravel(), z.ravel())).T
 velocities = np.zeros((positions.shape[0], positions.shape[1]), dtype = np.float32)
 masses     = np.ones((positions.shape[0]), dtype = np.float32) * M
 slengths   = np.ones((positions.shape[0]), dtype = np.float32) * H
-dpes       = np.zeros((positions.shape[0], positions.shape[1]), dtype = np.float32)
-# add densities
-for i in range(len(dpes)): dpes[i][0] = RHO0
+density    = np.ones((positions.shape[0]), dtype = np.float32) * RHO0
+# dpes       = np.zeros((positions.shape[0], positions.shape[1]), dtype = np.float32)
+
 
 print(positions)
 
