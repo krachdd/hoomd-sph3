@@ -156,7 +156,7 @@ class ParticleLocalAccessBase(_LocalAccess):
         'mass': 'getMasses',
         'acceleration': 'getAcceleration',
         # 'dpe': 'getDPEs',
-        'density': 'getDensites',
+        'density': 'getDensities',
         'pressure': 'getPressures',
         'energy': 'getEnergies',
         'auxiliary1': 'getAuxiliaries1',
