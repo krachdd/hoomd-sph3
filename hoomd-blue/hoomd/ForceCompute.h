@@ -102,9 +102,9 @@ class PYBIND11_EXPORT ForceCompute : public Compute
     */
     pybind11::object getForcesPython();
 
-    /** Get per particle dpe
+    /** Get per particle ratedpe
 
-        @returns a Numpy array with per particle dpe in increasing tag order.
+        @returns a Numpy array with per particle ratedpe in increasing tag order.
     */
     pybind11::object getRateDPEsPython();
 
@@ -126,7 +126,7 @@ class PYBIND11_EXPORT ForceCompute : public Compute
     //! Easy access to the force on a single particle
     Scalar3 getForce(unsigned int tag);
 
-    //! Easy access to the dpe on a single particle
+    //! Easy access to the ratedpe on a single particle
     Scalar3 getRateDPE(unsigned int tag);
 
     //! Easy access to the virial on a single particle

@@ -100,7 +100,9 @@ void VelocityVerlet::integrateStepOne(uint64_t timestep)
 
 
     ArrayHandle<Scalar4> h_vel(m_pdata->getVelocities(), access_location::host, access_mode::readwrite);
-    ArrayHandle<Scalar3> h_dpe(m_pdata->getDPEs(), access_location::host, access_mode::readwrite);
+    // ArrayHandle<Scalar3> h_dpe(m_pdata->getDPEs(), access_location::host, access_mode::readwrite);
+    ArrayHandle<Scalar> h_density(m_pdata->getDensities(), access_location::host, access_mode::readwrite);
+    ArrayHandle<Scalar> h_pressure(m_pdata->getPressures(), access_location::host, access_mode::readwrite);
     ArrayHandle<Scalar3> h_accel(m_pdata->getAccelerations(), access_location::host, access_mode::read);
     ArrayHandle<Scalar3> h_dpedt(m_pdata->getDPEdts(), access_location::host, access_mode::read);
     ArrayHandle<Scalar4> h_pos(m_pdata->getPositions(), access_location::host, access_mode::readwrite);
@@ -137,13 +139,10 @@ void VelocityVerlet::integrateStepOne(uint64_t timestep)
 
         // David 
         // dpe(t+deltaT/2) = dpe(t) + (1/2)*dpedt(t)*deltaT
-        h_dpe.data[j].x += Scalar(1.0/2.0)*h_dpedt.data[j].x*m_deltaT;
-        h_dpe.data[j].y += Scalar(1.0/2.0)*h_dpedt.data[j].y*m_deltaT;
+        h_density.data[j] += Scalar(1.0/2.0)*h_dpedt.data[j].x*m_deltaT;
+        h_pressure.data[j] += Scalar(1.0/2.0)*h_dpedt.data[j].y*m_deltaT;
         // DK: Energy change can be ignored
         // h_dpe.data[j].z += Scalar(1.0/2.0)*h_dpedt.data[j].z*m_deltaT;
-
-        // std::cout << "step 1 mass " << h_vel.data[j].w << std::endl;
-        // std::cout << "step 1 accelx " << h_accel.data[j].x << std::endl;
 
         // Original HOOMD Velocity Verlet Two Step NVE
         h_vel.data[j].x += Scalar(1.0 / 2.0) * h_accel.data[j].x * m_deltaT;
@@ -183,7 +182,8 @@ void VelocityVerlet::integrateStepTwo(uint64_t timestep)
     ArrayHandle<Scalar4> h_pos(m_pdata->getPositions(), access_location::host, access_mode::readwrite);
     ArrayHandle<Scalar4> h_vel(m_pdata->getVelocities(), access_location::host, access_mode::readwrite);
     ArrayHandle<Scalar3> h_accel(m_pdata->getAccelerations(), access_location::host, access_mode::readwrite);
-    ArrayHandle<Scalar3> h_dpe(m_pdata->getDPEs(), access_location::host, access_mode::readwrite);
+    ArrayHandle<Scalar>  h_density(m_pdata->getDensities(), access_location::host, access_mode::readwrite);
+    ArrayHandle<Scalar>  h_pressure(m_pdata->getPressures(), access_location::host, access_mode::readwrite);
     ArrayHandle<Scalar3> h_dpedt(m_pdata->getDPEdts(), access_location::host, access_mode::readwrite);
 
     ArrayHandle<Scalar4> h_net_force(net_force, access_location::host, access_mode::read);
@@ -222,9 +222,9 @@ void VelocityVerlet::integrateStepTwo(uint64_t timestep)
         // h_dpedt.data[j].z = h_net_ratedpe.data[j].z;
 
         // dpe(t+deltaT) = dpe(t+deltaT/2) + 1/2 * dpedt(t+deltaT)*deltaT
-        h_dpe.data[j].x += Scalar(1.0/2.0)*h_dpedt.data[j].x*m_deltaT;
-        h_dpe.data[j].y += Scalar(1.0/2.0)*h_dpedt.data[j].y*m_deltaT;
-        h_dpe.data[j].z += Scalar(1.0/2.0)*h_dpedt.data[j].z*m_deltaT;
+        h_density.data[j] += Scalar(1.0/2.0)*h_dpedt.data[j].x*m_deltaT;
+        h_pressure.data[j] += Scalar(1.0/2.0)*h_dpedt.data[j].y*m_deltaT;
+        // h_dpe.data[j].z += Scalar(1.0/2.0)*h_dpedt.data[j].z*m_deltaT;
 
         // r(t+deltaT) = r(t+deltaT/2) + v(t+deltaT/2)*deltaT/2
         h_pos.data[j].x += Scalar(1.0/2.0)*h_vel.data[j].x*m_deltaT;

@@ -127,7 +127,10 @@ void SFCPackTuner::applySortOrder()
                                access_location::host,
                                access_mode::readwrite);
 
-    ArrayHandle<Scalar3> h_dpe(m_pdata->getDPEs(), access_location::host, access_mode::readwrite);
+    // ArrayHandle<Scalar3> h_dpe(m_pdata->getDPEs(), access_location::host, access_mode::readwrite);
+    ArrayHandle<Scalar> h_density(m_pdata->getDensities(), access_location::host, access_mode::readwrite);
+    ArrayHandle<Scalar> h_pressure(m_pdata->getPressures(), access_location::host, access_mode::readwrite);
+    ArrayHandle<Scalar> h_energy(m_pdata->getEnergies(), access_location::host, access_mode::readwrite);
     ArrayHandle<Scalar3> h_aux1(m_pdata->getAuxiliaries1(), access_location::host, access_mode::readwrite);
     ArrayHandle<Scalar3> h_aux2(m_pdata->getAuxiliaries2(), access_location::host, access_mode::readwrite);
     ArrayHandle<Scalar3> h_aux3(m_pdata->getAuxiliaries3(), access_location::host, access_mode::readwrite);
@@ -181,11 +184,11 @@ void SFCPackTuner::applySortOrder()
     for (unsigned int i = 0; i < m_pdata->getN(); i++)
         h_accel.data[i] = scal3_tmp[i];
 
-    // sort densities, pressures and energies
-    for (unsigned int i = 0; i < m_pdata->getN(); i++)
-        scal3_tmp[i] = h_dpe.data[m_sort_order[i]];
-    for (unsigned int i = 0; i < m_pdata->getN(); i++)
-        h_dpe.data[i] = scal3_tmp[i];
+    // // sort densities, pressures and energies
+    // for (unsigned int i = 0; i < m_pdata->getN(); i++)
+    //     scal3_tmp[i] = h_dpe.data[m_sort_order[i]];
+    // for (unsigned int i = 0; i < m_pdata->getN(); i++)
+    //     h_dpe.data[i] = scal3_tmp[i];
 
     // sort auxiliary array 1
     for (unsigned int i = 0; i < m_pdata->getN(); i++)
@@ -223,6 +226,24 @@ void SFCPackTuner::applySortOrder()
         scal_tmp[i] = h_slength.data[m_sort_order[i]];
     for (unsigned int i = 0; i < m_pdata->getN(); i++)
         h_slength.data[i] = scal_tmp[i];
+
+    // sort densitiy
+    for (unsigned int i = 0; i < m_pdata->getN(); i++)
+        scal_tmp[i] = h_density.data[m_sort_order[i]];
+    for (unsigned int i = 0; i < m_pdata->getN(); i++)
+        h_density.data[i] = scal_tmp[i];
+
+    // sort pressure
+    for (unsigned int i = 0; i < m_pdata->getN(); i++)
+        scal_tmp[i] = h_pressure.data[m_sort_order[i]];
+    for (unsigned int i = 0; i < m_pdata->getN(); i++)
+        h_pressure.data[i] = scal_tmp[i];
+
+    // sort energy
+    for (unsigned int i = 0; i < m_pdata->getN(); i++)
+        scal_tmp[i] = h_energy.data[m_sort_order[i]];
+    for (unsigned int i = 0; i < m_pdata->getN(); i++)
+        h_energy.data[i] = scal_tmp[i];
 
     // Scalar* scal_tmp = new Scalar[m_pdata->getN()];
     // // sort charge

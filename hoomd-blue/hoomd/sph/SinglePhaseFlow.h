@@ -191,7 +191,9 @@ class PYBIND11_EXPORT SinglePhaseFlow : public SPHBaseClass<KT_, SET_>
             flags[comm_flag::net_force] = 0;
             flags[comm_flag::position] = 1; // Stores position and type
             flags[comm_flag::velocity] = 1; // Stores velocity and mass
-            flags[comm_flag::dpe] = 1; // Stores density and pressure
+            flags[comm_flag::density] = 1; // Stores density 
+            flags[comm_flag::pressure] = 1; // Stores pressure
+            flags[comm_flag::energy] = 0; // Stores density and pressure
             flags[comm_flag::auxiliary1] = 1; // Stores fictitious velocity
             flags[comm_flag::slength] = 1; // Stores smoothing length TODO is this needed
             // Add flags requested by base class
@@ -279,8 +281,8 @@ class PYBIND11_EXPORT SinglePhaseFlow : public SPHBaseClass<KT_, SET_>
         void compute_pressure(uint64_t timestep);
 
         /*! Helper function to compute fictitious solid particle properties (pressures and velocities)
-        * \pre Ghost particle number densities (i.e. dpe array) must be up-to-date
-        * \pre Solid normalization constant \sum_j w_ij must be computed and stored in dpe array
+        * \pre Ghost particle number densities (i.e. density array) must be up-to-date
+        * \pre Solid normalization constant \sum_j w_ij must be computed and stored in density array
         * \post Fictitious particle properties are computed and stored in aux1 array
         */
         void compute_noslip(uint64_t timestep);
@@ -298,9 +300,16 @@ class PYBIND11_EXPORT SinglePhaseFlow : public SPHBaseClass<KT_, SET_>
 
         /*! Helper function to set communication flags and update ghosts densities
         * \param timestep The time step
-        * \post Ghost particle dpe array is up-to-date
+        * \post Ghost particle density array is up-to-date
         */
-        void update_ghost_dpe(uint64_t timestep);
+        void update_ghost_density(uint64_t timestep);
+
+        /*! Helper function to set communication flags and update ghosts densities and pressures
+        * \param timestep The time step
+        * \post Ghost particle density and pressue array is up-to-date
+        */
+        void update_ghost_density_pressure(uint64_t timestep);
+
 
         /*! Helper function to set communication flags and update ghosts auxiliary array 1
         * \param timestep The time step

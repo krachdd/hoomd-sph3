@@ -89,7 +89,7 @@ void ComputeSPFBasicProperties::computeProperties()
 
     // access the particle data
     ArrayHandle<Scalar4> h_vel(m_pdata->getVelocities(), access_location::host, access_mode::read);
-    ArrayHandle<Scalar3> h_dpe(m_pdata->getDPEs(), access_location::host, access_mode::read);
+    ArrayHandle<Scalar> h_density(m_pdata->getDensities(), access_location::host, access_mode::read);
 
     // ArrayHandle<unsigned int> h_body(m_pdata->getBodies(),
     //                                  access_location::host,
@@ -120,7 +120,7 @@ void ComputeSPFBasicProperties::computeProperties()
         fluid_vel_y_sum += h_vel.data[j].y;
         fluid_vel_z_sum += h_vel.data[j].z;
         kinetic_energy  += abs(sqrt(pow(h_vel.data[j].x,2)+pow(h_vel.data[j].y,2)+pow(h_vel.data[j].z,2)));
-        sum_density     += h_dpe.data[j].x;
+        sum_density     += h_density.data[j];
     }
 
     ArrayHandle<Scalar> h_properties(m_properties, access_location::host, access_mode::overwrite);

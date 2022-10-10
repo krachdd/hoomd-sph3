@@ -240,7 +240,10 @@ void GSDReader::readParticles()
     //           N * 16,
     //           N);
     readChunk(&m_snapshot->particle_data.vel[0], m_frame, "particles/velocity", N * 12, N);
-    readChunk(&m_snapshot->particle_data.dpe[0], m_frame, "particles/dpe", N * 12, N);
+    // readChunk(&m_snapshot->particle_data.dpe[0], m_frame, "particles/dpe", N * 12, N);
+    readChunk(&m_snapshot->particle_data.density[0], m_frame, "particles/density", N * 4, N);
+    readChunk(&m_snapshot->particle_data.pressure[0], m_frame, "particles/pressure", N * 4, N);
+    readChunk(&m_snapshot->particle_data.energy[0], m_frame, "particles/energy", N * 4, N);
     readChunk(&m_snapshot->particle_data.aux1[0], m_frame, "particles/auxiliary1", N * 12, N);
     readChunk(&m_snapshot->particle_data.aux2[0], m_frame, "particles/auxiliary2", N * 12, N);
     readChunk(&m_snapshot->particle_data.aux3[0], m_frame, "particles/auxiliary3", N * 12, N);

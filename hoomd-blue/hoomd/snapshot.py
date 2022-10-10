@@ -370,7 +370,8 @@ class Snapshot:
                             # 'moment_inertia', 'orientation', 
                             'position',
                             'typeid', 'velocity',
-                            'slength', 'dpe', 'auxiliary1', 
+                            'slength', 'density', 'pressure',  
+                            'energy', 'auxiliary1', 
                             'auxiliary2', 'auxiliary3', 'auxiliary4', 
                             ))
 

@@ -2072,7 +2072,7 @@ void Communicator::exchangeGhosts()
             // ArrayHandle<Scalar3> h_dpe(m_pdata->getDPEs(),
             //                            access_location::host,
             //                            access_mode::read);
-            ArrayHandle<Scalar> h_density(m_pdata->getDensites(),
+            ArrayHandle<Scalar> h_density(m_pdata->getDensities(),
                                        access_location::host,
                                        access_mode::read);
             ArrayHandle<Scalar> h_pressure(m_pdata->getPressures(),
@@ -2329,10 +2329,10 @@ void Communicator::exchangeGhosts()
             // ArrayHandle<Scalar3> h_dpe(m_pdata->getDPEs(),
             //                            access_location::host,
             //                            access_mode::readwrite);
-            ArrayHandle<Scalar> h_density(m_pdata->getDensites(),
+            ArrayHandle<Scalar> h_density(m_pdata->getDensities(),
                                        access_location::host,
                                        access_mode::readwrite);
-            ArrayHandle<Scalar> h_pressurer(m_pdata->getPressures(),
+            ArrayHandle<Scalar> h_pressure(m_pdata->getPressures(),
                                        access_location::host,
                                        access_mode::readwrite);
             ArrayHandle<Scalar> h_energy(m_pdata->getEnergies(),
@@ -3135,7 +3135,7 @@ void Communicator::beginUpdateGhosts(uint64_t timestep)
 
         if (flags[comm_flag::density])
             {
-            ArrayHandle<Scalar> h_density(m_pdata->getDensites(),
+            ArrayHandle<Scalar> h_density(m_pdata->getDensities(),
                                                access_location::host,
                                                access_mode::read);
             ArrayHandle<Scalar> h_density_copybuf(m_density_copybuf,
@@ -3463,7 +3463,7 @@ void Communicator::beginUpdateGhosts(uint64_t timestep)
             m_reqs.resize(2);
             m_stats.resize(2);
 
-            ArrayHandle<Scalar> h_density(m_pdata->getDensites(),
+            ArrayHandle<Scalar> h_density(m_pdata->getDensities(),
                                                access_location::host,
                                                access_mode::readwrite);
             ArrayHandle<Scalar> h_density_copybuf(m_density_copybuf,
