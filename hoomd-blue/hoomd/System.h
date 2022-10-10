@@ -90,7 +90,7 @@ class PYBIND11_EXPORT System
         @param write_at_start Set to true to evaluate writers before the
             loop
     */
-    void run(uint64_t nsteps, bool write_at_start = false);
+    void run(uint64_t nsteps, bool write_at_start = false, bool adaptive_dt = false);
 
     //! Get the average TPS from the last run
     Scalar getLastTPS()
@@ -135,6 +135,12 @@ class PYBIND11_EXPORT System
         {
         return m_start_tstep;
         }
+
+    double getTimeStepSize()
+        {
+        return m_integrator->getDeltaT();
+        }
+
 
     // -------------- Misc methods
 

@@ -77,7 +77,7 @@ void System::setCommunicator(std::shared_ptr<Communicator> comm)
 
 // -------------- Methods for running the simulation
 
-void System::run(uint64_t nsteps, bool write_at_start)
+void System::run(uint64_t nsteps, bool write_at_start, bool adaptive_dt)
     {
     m_start_tstep = m_cur_tstep;
     m_end_tstep = m_cur_tstep + nsteps;
@@ -311,6 +311,7 @@ void export_System(pybind11::module& m)
         .def_property_readonly("walltime", &System::getCurrentWalltime)
         .def_property_readonly("final_timestep", &System::getEndStep)
         .def_property_readonly("initial_timestep", &System::getStartStep)
+        .def_property_readonly("timestep_size", &System::getTimeStepSize)
         .def_property_readonly("analyzers", &System::getAnalyzers)
         .def_property_readonly("updaters", &System::getUpdaters)
         .def_property_readonly("tuners", &System::getTuners)

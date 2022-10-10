@@ -357,6 +357,18 @@ class Simulation(metaclass=Loggable):
         else:
             return self._cpp_sys.initial_timestep
 
+    @log
+    def timestep_size(self):
+        """float: `run` started at this timestep.
+
+        `timestep_size` is the timestep_size with which the currently executing
+        `run` is running.
+        """
+        if self._state is None:
+            return 0.0
+        else:
+            return self._cpp_sys.timestep_size
+
     # @property
     # def always_compute_pressure(self):
     #     """bool: Always compute the virial and pressure (defaults to ``False``).
@@ -390,7 +402,7 @@ class Simulation(metaclass=Loggable):
     #         if value:
     #             self._state._cpp_sys_def.getParticleData().setPressureFlag()
 
-    def run(self, steps, write_at_start=False):
+    def run(self, steps, write_at_start=False, adaptive_dt = False):
         """Advance the simulation a number of steps.
 
         Args:
@@ -457,7 +469,7 @@ class Simulation(metaclass=Loggable):
             raise ValueError(f"steps must be in the range [0, "
                              f"{TIMESTEP_MAX-1}]")
 
-        self._cpp_sys.run(steps_int, write_at_start)
+        self._cpp_sys.run(steps_int, write_at_start, adaptive_dt)
 
 
 def _match_class_path(obj, *matches):
