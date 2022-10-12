@@ -368,14 +368,17 @@ class SinglePhaseFlow(SPHModel):
             self.activateArtificialViscosity(self.alpha, self.beta)
         else:
             self.deactivateArtificialViscosity()
+        
         if (self.densitydiffusion == True):
             self.activateDensityDiffusion(self.ddiff)
         else:
             self.deactivateDensityDiffusion()
+        
         if (self.shepardrenormanlization == True):
             self.activateShepardRenormalization(self.shepardfreq)
         else:
             self.deactivateShepardRenormalization()
+        
         if (self.compute_solid_forces == True):
             self.computeSolidForces()
 

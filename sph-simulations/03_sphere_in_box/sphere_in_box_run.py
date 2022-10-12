@@ -43,7 +43,7 @@ V       = DX*DX*DX                 # m^3
 
 RHO0 = 1000.0                      # kg / m^3
 M    = RHO0*V                      # kg
-DRHO = 0.05                        # %
+DRHO = 0.01                        # %
 MU   = 0.01                        # Pa s
 
 
@@ -86,8 +86,6 @@ if device.communicator.rank == 0:
     print(f'Dumpname: {dumpname}')
 
 
-DRHO = 0.05                        # %
-
 # get kernel properties
 H       = hoomd.sph.kernel.OptimalH[KERNEL]*DX       # m
 RCUT    = hoomd.sph.kernel.Kappa[KERNEL]*H           # m
@@ -127,7 +125,8 @@ model.damp = 1000
 model.artificialviscosity = True 
 model.alpha = 0.2
 model.beta = 0.0
-model.densitydiffusion = False
+model.densitydiffusion = True
+model.ddiff = 0.1
 model.shepardrenormanlization = False 
 
 
