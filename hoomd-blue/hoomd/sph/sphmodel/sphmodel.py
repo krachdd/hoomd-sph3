@@ -470,14 +470,14 @@ class SinglePhaseFlow(SPHModel):
         # self.cpp_force.setAcceleration(self.gx,self.gy,self.gz,self.damp)
         self._cpp_obj.setAcceleration(self.gx,self.gy,self.gz,self.damp)
 
-    def compute_dt(self,LREF,UREF,DRHO=0.01,COURANT=0.25):
+    def compute_dt(self, LREF, UREF, DX, DRHO=0.01, COURANT=0.25):
         # Input sanity
         if LREF == 0.0:
             raise ValueError('Reference length LREF may not be zero.')
         if DRHO == 0.0:
             raise ValueError('Maximum density variation DRHO may not be zero.')
-        # if max_sl == 0.0:
-        #     raise ValueError('Maximum Smooting length must not be zero.')
+        if DX <= 0.0:
+            raise ValueError('DX may not be zero or negative.')
 
         UREF = np.abs(UREF)
 
@@ -506,7 +506,8 @@ class SinglePhaseFlow(SPHModel):
         self.eos.set_speedofsound(C)
 
         # CFL condition
-        DT_1 = 0.25*H/C
+        # DT_1 = 0.25*H/C
+        DT_1 = (1./3.)*0.25*DX/C
         # Fourier condition
         DT_2 = (H*H*RHO0)/(8.0*MU)
         if GMAG > 0.0:

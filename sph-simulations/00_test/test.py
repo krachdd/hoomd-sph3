@@ -28,16 +28,16 @@ LY = LREF
 LZ = LREF
 
 # Parameters
-KERNEL  = 'CubicSpline'
+KERNEL  = 'WendlandC4'
 NL      = 20                       # INT
-FX      = 0.01                      # m/s^2
+FX      = 10.0                      # m/s^2
 
 DX      = LREF/NL                  # m
 V       = DX*DX*DX                 # m^3
 
 RHO0 = 1000.0                      # kg / m^3
 M    = RHO0*V                      # kg
-DRHO = 0.05                        # %
+DRHO = 0.01                        # %
 MU   = 0.01                        # Pa s
 
 UREF = FX*LREF*LREF*0.25/(MU/RHO0)
@@ -45,7 +45,7 @@ UREF = FX*LREF*LREF*0.25/(MU/RHO0)
 densitymethod = 'CONTINUITY'
 # densitymethod = 'SUMMATION'
 
-steps = 201
+steps = 100001
 
 # ------------------------------------------------------------------------------------
 
@@ -85,7 +85,7 @@ with sim.state.cpu_local_snapshot as snap:
     print(f'{N} particles on rank {device.communicator.rank}')
 
 # Kernel
-KERNEL  = 'CubicSpline'
+KERNEL  = 'WendlandC4'
 H       = hoomd.sph.kernel.OptimalH[KERNEL]*DX       # m
 RCUT    = hoomd.sph.kernel.Kappa[KERNEL]*H           # m
 Kernel = hoomd.sph.kernel.Kernels[KERNEL]()
@@ -112,7 +112,7 @@ NList = hoomd.nsearch.nlist.Cell(buffer = RCUT*0.05, rebuild_check_delay = 1, ka
 
 
 # # Equation of State
-EOS = hoomd.sph.eos.Linear()
+EOS = hoomd.sph.eos.Tait()
 EOS.set_params(RHO0,0.05)
 
 # Define groups/filters
@@ -138,7 +138,7 @@ model.densitymethod = densitymethod
 model.gx = FX
 model.damp = 1000
 # model.artificialviscosity = True
-model.artificialviscosity = False 
+model.artificialviscosity = True 
 model.alpha = 0.2
 model.beta = 0.0
 model.densitydiffusion = False
@@ -148,7 +148,7 @@ model.shepardrenormanlization = False
 with sim.state.cpu_local_snapshot as snapshot:
     model.max_sl = np.max(snapshot.particles.slength[:])
 
-dt = model.compute_dt(LREF,UREF,DRHO)
+dt = model.compute_dt(LREF, UREF, DX, DRHO)
 
 integrator = hoomd.sph.Integrator(dt=dt)
 
