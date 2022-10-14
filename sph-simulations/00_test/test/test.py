@@ -10,7 +10,6 @@ from hoomd import sph
 from hoomd.sph import _sph
 import numpy as np
 # import itertools
-import datetime as datet
 from datetime import datetime
 import export_gsd2vtu 
 # from mpi4py import MPI
@@ -53,7 +52,7 @@ LZ = LREF
 # Parameters
 KERNEL  = 'WendlandC4'
 NL      = 20                       # INT
-FX      = 50.0                      # m/s^2
+FX      = 10.0                      # m/s^2
 
 DX      = LREF/NL                  # m
 V       = DX*DX*DX                 # m^3
@@ -68,7 +67,7 @@ UREF = FX*LREF*LREF*0.25/(MU/RHO0)
 densitymethod = 'CONTINUITY'
 # densitymethod = 'SUMMATION'
 
-steps = 400001
+steps = 201
 
 # ------------------------------------------------------------------------------------
 
@@ -86,7 +85,7 @@ sim = hoomd.Simulation(device = device)
 # filename = "test_tube_343000.gsd" # NL = 60
 # filename = "test_tube_125000.gsd" # NL = 40
 filename = "test_tube_27000.gsd" # NL = 20
-dumpname = "run_bf{0}_{1}".format(FX ,filename)
+dumpname = "run_{0}".format(filename)
 
 sim.create_state_from_gsd(filename = filename)
 
@@ -195,7 +194,7 @@ if device.communicator.rank == 0:
 
 
 
-gsd_trigger = hoomd.trigger.Periodic(100)
+gsd_trigger = hoomd.trigger.Periodic(10)
 gsd_writer = hoomd.write.GSD(filename=dumpname,
                              trigger=gsd_trigger,
                              mode='wb',
@@ -204,12 +203,12 @@ gsd_writer = hoomd.write.GSD(filename=dumpname,
 sim.operations.writers.append(gsd_writer)
 
 # hoomd.write.GSD.write(filename = dumpname, state = sim.state, mode = 'wb')
-log_trigger = hoomd.trigger.Periodic(100)
+log_trigger = hoomd.trigger.Periodic(10)
 logger = hoomd.logging.Logger(categories=['scalar', 'string'])
 logger.add(sim, quantities=['timestep', 'tps', 'walltime', 'timestep_size'])
-# logger[('custom', 'ETA')] = (lambda: str(datet.timedelta(seconds=((sim.final_timestep - sim.timestep) / (1e-9 + sim.tps) ))), 'scalar')
-logger[('custom', 'RE')] = (lambda: RHO0 * spf_properties.abs_velocity * LREF / (MU * spf_properties.num_particles), 'scalar')
-
+logger[('custom', 'name')] = (lambda: 42, 'scalar')
+# status = Status(sim)
+# logger[('Status', 'etr')] = (status, 'etr', 'string')
 logger.add(spf_properties, quantities=['abs_velocity', 'num_particles', 'fluid_vel_x_sum', 'mean_density'])
 table = hoomd.write.Table(trigger=log_trigger, 
                           logger=logger, max_header_len = 10)

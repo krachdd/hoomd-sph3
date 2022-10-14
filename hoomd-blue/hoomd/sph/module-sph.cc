@@ -32,11 +32,6 @@ maintainer: dkrach, david.krach@mib.uni-stuttgart.de
 // #include "hoomd/filter/export_filters.h"
 
 #include <pybind11/pybind11.h>
-// #include <pybind11/stl_bind.h>
-
-// #include <fstream>
-// #include <iostream>
-// #include <sstream>
 
 // #ifdef ENABLE_TBB
 // #include <tbb/task_arena.h>

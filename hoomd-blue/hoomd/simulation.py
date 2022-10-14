@@ -15,6 +15,7 @@ TIMESTEP_MAX = 2**64 - 1
 SEED_MAX = 2**16 - 1
 
 
+
 class Simulation(metaclass=Loggable):
     """Define a simulation.
 

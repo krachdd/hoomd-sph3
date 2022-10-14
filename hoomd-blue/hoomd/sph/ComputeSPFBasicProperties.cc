@@ -106,7 +106,7 @@ void ComputeSPFBasicProperties::computeProperties()
     double fluid_vel_z_sum  = 0.0;
     double sum_density      = 0.0;
     // double fluid_prtl = 0;
-    double kinetic_energy = 0.0;
+    double abs_velocity = 0.0;
     // double adaptive_tstep = 0.0;
     
     for (unsigned int group_idx = 0; group_idx < group_size; group_idx++)
@@ -119,7 +119,7 @@ void ComputeSPFBasicProperties::computeProperties()
         fluid_vel_x_sum += h_vel.data[j].x;
         fluid_vel_y_sum += h_vel.data[j].y;
         fluid_vel_z_sum += h_vel.data[j].z;
-        kinetic_energy  += abs(sqrt(pow(h_vel.data[j].x,2)+pow(h_vel.data[j].y,2)+pow(h_vel.data[j].z,2)));
+        abs_velocity  += abs(sqrt(pow(h_vel.data[j].x,2)+pow(h_vel.data[j].y,2)+pow(h_vel.data[j].z,2)));
         sum_density     += h_density.data[j];
     }
 
@@ -129,7 +129,7 @@ void ComputeSPFBasicProperties::computeProperties()
     h_properties.data[singlephaseflow_logger_index::sum_fluid_velocity_z]  = Scalar(fluid_vel_z_sum);
     h_properties.data[singlephaseflow_logger_index::sum_fluid_density]    = Scalar(sum_density);
     // h_properties.data[singlephaseflow_logger_index::total_fluid_particles] = Scalar(fluid_prtl);
-    h_properties.data[singlephaseflow_logger_index::kinetic_energy]        = Scalar(kinetic_energy);
+    h_properties.data[singlephaseflow_logger_index::abs_velocity]        = Scalar(abs_velocity);
     // h_properties.data[singlephaseflow_logger_index::dt_adapt] = Scalar(adaptive_tstep);
 
 #ifdef ENABLE_MPI
@@ -165,7 +165,7 @@ void export_ComputeSPFMechanicalProperties(pybind11::module& m)
     pybind11::class_<ComputeSPFBasicProperties, Compute, std::shared_ptr<ComputeSPFBasicProperties>>(m, "ComputeSPFBasicProperties")
         .def(pybind11::init<std::shared_ptr<SystemDefinition>, std::shared_ptr<ParticleGroup>>())
         .def_property_readonly("num_particles", &ComputeSPFBasicProperties::getNumParticles)
-        .def_property_readonly("kinetic_energy", &ComputeSPFBasicProperties::getKineticEnergy)
+        .def_property_readonly("abs_velocity", &ComputeSPFBasicProperties::getAbsoluteVelocity)
         .def_property_readonly("fluid_vel_x_sum", &ComputeSPFBasicProperties::getSumFluidXVelocity)
         .def_property_readonly("fluid_vel_y_sum", &ComputeSPFBasicProperties::getSumFluidYVelocity)
         .def_property_readonly("fluid_vel_z_sum", &ComputeSPFBasicProperties::getSumFluidZVelocity)

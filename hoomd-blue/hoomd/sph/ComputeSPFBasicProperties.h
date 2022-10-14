@@ -60,7 +60,7 @@ class PYBIND11_EXPORT ComputeSPFBasicProperties : public Compute
     //! Returns the total kinetic energy last computed by compute()
     /*! \returns Instantaneous total kinetic energy of the system
      */
-    Scalar getKineticEnergy()
+    Scalar getAbsoluteVelocity()
         {
 #ifdef ENABLE_MPI
         if (!m_properties_reduced)
@@ -69,7 +69,7 @@ class PYBIND11_EXPORT ComputeSPFBasicProperties : public Compute
 
         // return only translational component if the flags are not valid
         ArrayHandle<Scalar> h_properties(m_properties, access_location::host, access_mode::read);
-        return h_properties.data[singlephaseflow_logger_index::kinetic_energy];
+        return h_properties.data[singlephaseflow_logger_index::abs_velocity];
         }
 
     //! Returns the sum of particle fluid velocity in xdir last computed by compute()

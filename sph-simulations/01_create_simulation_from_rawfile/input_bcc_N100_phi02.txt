@@ -1,7 +1,7 @@
 # Simulation inputs for create_gsd_from_raw_singlecore.py
 # See Readme.md for more
 SPHERE3D_bcc_N100_PHI0.200382_DIAMETER0.000920526561341_VSIZE1e-05.raw          # filename 
-CubicSpline                                                                     # kernel 
+WendlandC4                                                                     # kernel 
 1.0e-05                                                                         # voxelsize
 100                                         # number of voxels in xdirection
 100                                         # number of voxels in ydirection

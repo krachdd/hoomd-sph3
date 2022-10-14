@@ -61,12 +61,12 @@ M    = RHO0 * V
 porosity = np.float64(params['porosity'])
 # get simulation box sizes etc.
 NX, NY, NZ = np.int32(params['nx']), np.int32(params['ny']), np.int32(params['nz']) 
-
+LREF = NX * voxelsize
 # define model parameters
 densitymethod = 'CONTINUITY'
-steps = 20001
-FX    = 0.01
-DRHO = 0.05                        # %
+steps = 201
+FX    = np.float64(sys.argv[2])
+DRHO = 0.01                        # %
 
 # get kernel properties
 KERNEL  = params['kernel']
@@ -105,7 +105,7 @@ model.densitymethod = densitymethod
 model.gx = FX
 model.damp = 1000
 # model.artificialviscosity = True
-model.artificialviscosity = False 
+model.artificialviscosity = True 
 model.alpha = 0.2
 model.beta = 0.0
 model.densitydiffusion = False
@@ -140,7 +140,7 @@ reference_velocity = (Re * MU)/(RHO0 * reference_length)
 # reference_velocity = porosity * 
 # mydict['pestimate']*((mydict['lref']**2)/(8*options.mu))*options.rho0*options.fz
 
-dt = model.compute_dt(reference_length, reference_velocity, DRHO)
+dt = model.compute_dt(reference_length, reference_velocity, DX, DRHO)
 
 integrator = hoomd.sph.Integrator(dt=dt)
 
@@ -178,7 +178,9 @@ sim.operations.writers.append(gsd_writer)
 log_trigger = hoomd.trigger.Periodic(100)
 logger = hoomd.logging.Logger(categories=['scalar', 'string'])
 logger.add(sim, quantities=['timestep', 'tps', 'walltime'])
-logger.add(spf_properties, quantities=['kinetic_energy', 'num_particles', 'fluid_vel_x_sum', 'mean_density'])
+logger.add(spf_properties, quantities=['abs_velocity', 'num_particles', 'fluid_vel_x_sum', 'mean_density'])
+logger[('custom', 'RE')] = (lambda: RHO0 * spf_properties.abs_velocity * LREF / (MU * spf_properties.num_particles), 'scalar')
+logger[('custom', 'k_1[1e-9]')] = (lambda: MU / (RHO0 * FX) * (spf_properties.abs_velocity / spf_properties.num_particles) * porosity *1.0e9, 'scalar')
 table = hoomd.write.Table(trigger=log_trigger, 
                           logger=logger, max_header_len = 10)
 sim.operations.writers.append(table)
