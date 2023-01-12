@@ -188,7 +188,7 @@ class GSD(Writer):
         self._cpp_obj.setWriteAttribute('attribute' in dynamic_quantities)
         self._cpp_obj.setWriteProperty('property' in dynamic_quantities)
         self._cpp_obj.setWriteMomentum('momentum' in dynamic_quantities)
-        self._cpp_obj.setWriteTopology('topology' in dynamic_quantities)
+        # self._cpp_obj.setWriteTopology('topology' in dynamic_quantities)
         self._cpp_obj.log_writer = self.log
         super()._attach()
 
@@ -275,7 +275,9 @@ class _GSDLogWriter:
             of each logged quantity.
     """
     _per_categories = LoggerCategories.any([
-        'angle', 'bond', 'constraint', 'dihedral', 'improper', 'pair',
+        # 'angle', 
+        'bond', 'constraint', 
+        # 'dihedral', 'improper', 'pair',
         'particle'
     ])
     _convert_categories = LoggerCategories.any(['string', 'strings'])

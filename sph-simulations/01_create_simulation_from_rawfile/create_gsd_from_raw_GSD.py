@@ -15,9 +15,8 @@ import array
 import delete_solids_initial_timestep
 import read_input_fromtxt
 
-
-device = hoomd.device.CPU(notice_level=2)
-# device = hoomd.device.CPU(notice_level=10)
+# device = hoomd.device.CPU(notice_level=2)
+device = hoomd.device.CPU(notice_level=10)
 sim = hoomd.Simulation(device=device)
 
 # get stuff from input file
@@ -73,45 +72,31 @@ masses     = np.ones((positions.shape[0]), dtype = np.float32) * M
 slengths   = np.ones((positions.shape[0]), dtype = np.float32) * H
 density    = np.ones((positions.shape[0]), dtype = np.float32) * RHO0
 # dpes       = np.zeros((positions.shape[0], positions.shape[1]), dtype = np.float32)
-
-
-# print(positions)
-
-snapshot = hoomd.Snapshot(device.communicator)
-if snapshot.communicator.rank == 0:
-    snapshot.particles.N = N_particles
-    snapshot.configuration.box = [box_Lx, box_Ly, box_Lz] + [0, 0, 0]
-    snapshot.particles.position[:] = positions
-    snapshot.particles.typeid[:] = tids
-    snapshot.particles.types = ['F', 'S']
-    snapshot.particles.velocity[:] = velocities
-    snapshot.particles.mass[:] = masses
-    snapshot.particles.slength[:] = slengths
-    snapshot.particles.density[:] = density
-
-
-
-# # create Snapshot 
+# add densities
+# for i in range(len(dpes)): dpes[i][0] = RHO0
+if device.communicator.rank == 0:
+    print(tids.shape)
+    print(positions)
+# create Snapshot 
 # snapshot = hoomd.Snapshot(device.communicator)
-# snapshot.configuration.box = [box_Lx, box_Ly, box_Lz] + [0, 0, 0]
-# snapshot.particles.N = N_particles
+snapshot = gsd.hoomd.Snapshot()
+snapshot.configuration.box = [box_Lx, box_Ly, box_Lz] + [0, 0, 0]
+snapshot.particles.N = N_particles
 # snapshot.particles.position[:] = positions
 # snapshot.particles.typeid[:] = tids
-# snapshot.particles.types = ['F', 'S']
+snapshot.particles.types = ['F', 'S']
 # snapshot.particles.velocity[:] = velocities
 # snapshot.particles.mass[:] = masses
 # snapshot.particles.slength[:] = slengths
-# snapshot.particles.dpe[:] = dpes
+# snapshot.particles.density[:] = density
 
-sim.create_state_from_snapshot(snapshot)
+# sim.create_state_from_snapshot(snapshot)
 
-deletesolid_flag = params['delete_flag']
-if deletesolid_flag == 1:
-    print(f'Delete solid particles')
-    sim, ndel_particles = delete_solids_initial_timestep.delete_solids(sim, device, KERNEL, 0.000001, MU, DX, RHO0)
-    N_particles = N_particles - ndel_particles
+# deletesolid_flag = params['delete_flag']
+# if deletesolid_flag == 1:
+#     print(f'Delete solid particles')
+#     sim, ndel_particles = delete_solids_initial_timestep.delete_solids(sim, device, KERNEL, 0.000001, MU, DX, RHO0)
+#     N_particles = N_particles - ndel_particles
 
 # init_filename = rawfile.replace('.raw', '_init.gsd')
 # hoomd.write.GSD.write(state = sim.state, mode = 'wb', filename = init_filename)
-
-# print(f'Filename: {init_filename}, Number of particles: {N_particles}')

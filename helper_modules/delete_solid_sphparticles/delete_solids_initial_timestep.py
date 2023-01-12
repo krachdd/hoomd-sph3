@@ -100,7 +100,7 @@ def delete_solids(sim, device, kernel, dt, mu, DX, rho0):
                 deleted += 1
 
     for t in tags:
-        # print(f'Rank: {device.communicator.rank} --> Remove particle {t} of {deleted}')
+        print(f'Rank: {device.communicator.rank} --> Remove particle {t} of {deleted}')
         sim.state.removeParticle(t)
 
     # if device.communicator.rank == 0:

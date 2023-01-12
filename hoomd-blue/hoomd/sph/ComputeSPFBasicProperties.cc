@@ -119,7 +119,7 @@ void ComputeSPFBasicProperties::computeProperties()
         fluid_vel_x_sum += h_vel.data[j].x;
         fluid_vel_y_sum += h_vel.data[j].y;
         fluid_vel_z_sum += h_vel.data[j].z;
-        abs_velocity  += abs(sqrt(pow(h_vel.data[j].x,2)+pow(h_vel.data[j].y,2)+pow(h_vel.data[j].z,2)));
+        abs_velocity  += sqrt(h_vel.data[j].x * h_vel.data[j].x + h_vel.data[j].y * h_vel.data[j].y + h_vel.data[j].z * h_vel.data[j].z);
         sum_density     += h_density.data[j];
     }
 

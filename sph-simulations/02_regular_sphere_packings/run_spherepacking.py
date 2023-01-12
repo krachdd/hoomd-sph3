@@ -24,13 +24,15 @@ sim = hoomd.Simulation(device=device)
 infile = str(sys.argv[1])
 params = read_input_fromtxt.get_input_data_from_file(infile)
 
+FX    = np.float64(sys.argv[2])
+
 rawfilename = params['rawfilename']
 filename = rawfilename.replace('.raw', '_init.gsd')
 dt_string = datetime.now().strftime("%Y-%m-%d-%H-%M-%S")
 logname  = filename.replace('_init.gsd', '')
-logname  = f'{logname}_run_{dt_string}.log'
+logname  = f'{logname}_run_{FX}_{dt_string}.log'
 dumpname = filename.replace('_init.gsd', '')
-dumpname = f'{dumpname}_run.gsd'
+dumpname = f'{dumpname}_run_{FX}.gsd'
 
 sim.create_state_from_gsd(filename = filename)
 
@@ -64,8 +66,8 @@ NX, NY, NZ = np.int32(params['nx']), np.int32(params['ny']), np.int32(params['nz
 LREF = NX * voxelsize
 # define model parameters
 densitymethod = 'CONTINUITY'
-steps = 201
-FX    = np.float64(sys.argv[2])
+steps = 50001
+
 DRHO = 0.01                        # %
 
 # get kernel properties
@@ -79,8 +81,8 @@ Kappa  = Kernel.Kappa()
 NList = hoomd.nsearch.nlist.Cell(buffer = RCUT*0.05, rebuild_check_delay = 1, kappa = Kappa)
 
 # Equation of State
-EOS = hoomd.sph.eos.Linear()
-EOS.set_params(RHO0,0.05)
+EOS = hoomd.sph.eos.Tait()
+EOS.set_params(RHO0,0.1)
 
 # Define groups/filters
 filterFLUID  = hoomd.filter.Type(['F']) # is zero
@@ -103,7 +105,7 @@ if device.communicator.rank == 0:
 model.mu = MU
 model.densitymethod = densitymethod
 model.gx = FX
-model.damp = 1000
+model.damp = 5000
 # model.artificialviscosity = True
 model.artificialviscosity = True 
 model.alpha = 0.2
@@ -140,7 +142,7 @@ reference_velocity = (Re * MU)/(RHO0 * reference_length)
 # reference_velocity = porosity * 
 # mydict['pestimate']*((mydict['lref']**2)/(8*options.mu))*options.rho0*options.fz
 
-dt = model.compute_dt(reference_length, reference_velocity, DX, DRHO)
+dt = model.compute_dt(reference_length, FX, DX, DRHO)
 
 integrator = hoomd.sph.Integrator(dt=dt)
 
