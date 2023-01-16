@@ -16,8 +16,8 @@ import delete_solids_initial_timestep
 import read_input_fromtxt
 
 
-device = hoomd.device.CPU(notice_level=2)
-# device = hoomd.device.CPU(notice_level=10)
+# device = hoomd.device.CPU(notice_level=2)
+device = hoomd.device.CPU(notice_level=10)
 sim = hoomd.Simulation(device=device)
 
 # get stuff from input file
@@ -112,7 +112,9 @@ if deletesolid_flag == 1:
     sim, ndel_particles = delete_solids_initial_timestep.delete_solids(sim, device, KERNEL, 0.000001, MU, DX, RHO0)
     N_particles = N_particles - ndel_particles
 
-# init_filename = rawfile.replace('.raw', '_init.gsd')
-# hoomd.write.GSD.write(state = sim.state, mode = 'wb', filename = init_filename)
 
-# print(f'Filename: {init_filename}, Number of particles: {N_particles}')
+init_filename = rawfile.replace('.raw', '_init.gsd')
+
+hoomd.write.GSD.write(state = sim.state, mode = 'wb', filename = init_filename)
+
+print(f'Filename: {init_filename}, Number of particles: {N_particles}')
