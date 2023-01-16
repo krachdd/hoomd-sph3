@@ -100,3 +100,18 @@ super().__init__(arg1, ...)
 .gitignore
 ```
 files in all levels up to date
+
+
+## Urgent Issues
+
+- Fix Issue with deletion of solid particles dependent on the number of cores used
+```python
+deletesolid_flag = params['delete_flag']
+if deletesolid_flag == 1:
+    if device.communicator.rank == 0:
+        print(f'Delete solid particles')
+    sim, ndel_particles = delete_solids_initial_timestep.delete_solids(sim, device, KERNEL, 0.000001, MU, DX, RHO0)
+    N_particles = N_particles - ndel_particles
+```
+
+The code to check is in ```hoomd-sph3/helper_modules/delete_solid_sphparticles/ ```
