@@ -1103,7 +1103,7 @@ void SinglePhaseFlow<KT_, SET_>::forcecomputation(uint64_t timestep)
     const BoxDim& box = this->m_pdata->getGlobalBox();
 
     // Local variable to store things
-    Scalar temp0;
+    Scalar temp0 = 0;
 
     // maximum velocity variable for adaptive timestep
     double max_vel = 0.0;

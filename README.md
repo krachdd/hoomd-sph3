@@ -9,7 +9,7 @@ sudo apt install libcereal-dev
 
 ## Main Modifications
 ### Technical aspects
-- **pybind11** instead of old BOOST Verison
+- **pybind11** instead of old BOOST Verison (This makes life easy.)
 - can be build not only on NVIDIA cards
 - use Type-Parameter dictionaries for class metaparameter handling
 - version later than python 3.10
@@ -36,9 +36,9 @@ super().__init__(arg1, ...)
 - add particle number density method (C++ code already implemented)
 - define variables outside the particle loops (see e.g. TODO in compute_normalization_constant_solid on SinglePhaseFlow). Low hanging fruit with impact on performance. Reduce access times and - - number of requests.
 - rename Tait Eq. to Cole see Paper: Cole 1948 Underwater Explosions
-- get rid of not needed request on functoins. Low hanging fruit with impact on performance. Reduce access times and number of requests.
+- get rid of not needed request on functions. Low hanging fruit with impact on performance. Reduce access times and number of requests.
 - Literature Review on kernels: which on to use when.
-- plug compute_normalization_constant_solid into compute noslip
+- plug compute_normalization_constant_solid into compute noslip 
 - understand why 
 ```python 
 # in sphmodel.py 
@@ -50,9 +50,9 @@ def _attach(self):
 makes wierd errors?
 - standardized input files for parameter input. USE this and add lines if neccessary
 - write standardized tests at least for the essentials 
-- dpe particle data array to 3 seperate ones
+- dpe particle data array to 3 seperate ones DONE!
 - check if bcast_double function is working correctly
-- write metadata to textfile, therefore create an additional helper module
+- write metadata to textfile, therefore create an additional helper module (must be able to be grep-ed)
 - can we remove slength from the flags, to communicate in Singlephaseflow.h virtual CommFlags getRequestedCommFlags ? 
 - Write parallel IO Routines for Snapshot Reader and Writer
 - adjust logger quantities with flags, not with lists
@@ -88,8 +88,9 @@ with sim.state.cpu_local_snapshot as snap:
 - if non-constant Smoothing length is implemented one has also to take care of the rcut particle field! This does not happen automatically at the moment. 
 
 ## Requierments on added modules, integrators etc
+- First and foremost: Documentation!
 - Suspension Flow class and Non-Newtonian Flow class/module should inherit from Singlephaseflow template class 
-- - initialize inheritence in python subclasses with
+- initialize inheritence in python subclasses with
 ```python
 super().__init__(arg1, ...)
 ```
