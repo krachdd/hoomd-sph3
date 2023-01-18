@@ -116,3 +116,9 @@ if deletesolid_flag == 1:
 ```
 
 The code to check is in ```hoomd-sph3/helper_modules/delete_solid_sphparticles/ ```
+
+
+
+## Developer
+
+- [David Krach](https://www.mib.uni-stuttgart.de/institute/team/Krach/)
