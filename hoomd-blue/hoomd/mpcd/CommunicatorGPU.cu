@@ -15,17 +15,14 @@
 #pragma GCC diagnostic push
 #pragma GCC diagnostic ignored "-Wconversion"
 #include <thrust/device_ptr.h>
+#include <thrust/functional.h>
 #include <thrust/iterator/constant_iterator.h>
 #include <thrust/reduce.h>
 #include <thrust/sort.h>
 #include <thrust/transform.h>
 #pragma GCC diagnostic pop
 
-#if __CUDACC_VER_MAJOR__ >= 11
 #include <cub/device/device_reduce.cuh>
-#else
-#include "hoomd/extern/cub/cub/device/device_reduce.cuh"
-#endif
 
 namespace hoomd
     {
