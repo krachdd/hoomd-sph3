@@ -1378,7 +1378,7 @@ inline static hipError_t hipFuncSetCacheConfig(const void* func, hipFuncCache_t 
 
 inline static hipError_t hipBindTexture(size_t* offset, struct textureReference* tex, const void* devPtr,
                                         const hipChannelFormatDesc* desc, size_t size __dparm(UINT_MAX)){
-    return hipCUDAErrorTohipError(cudaBindTexture(offset, tex, devPtr, desc, size));
+//    return hipCUDAErrorTohipError(cudaBindTexture(offset, tex, devPtr, desc, size));
 }
 
 inline static hipChannelFormatDesc hipCreateChannelDesc(int x, int y, int z, int w,
@@ -1414,7 +1414,7 @@ inline static hipError_t hipGetTextureObjectResourceDesc(hipResourceDesc* pResDe
 
 inline static hipError_t hipGetTextureAlignmentOffset(size_t* offset, const struct textureReference* texref)
 {
-    return hipCUDAErrorTohipError(cudaGetTextureAlignmentOffset(offset,texref));
+//    return hipCUDAErrorTohipError(cudaGetTextureAlignmentOffset(offset,texref));
 }
 
 inline static hipError_t hipGetChannelDesc(hipChannelFormatDesc* desc, hipArray_const_t array)
@@ -1438,48 +1438,48 @@ inline static hipError_t hipOccupancyMaxPotentialBlockSize(int* minGridSize, int
     return hipCUDAErrorTohipError(cerror);
 }
 
-template <class T, int dim, enum cudaTextureReadMode readMode>
-inline static hipError_t hipBindTexture(size_t* offset, const struct texture<T, dim, readMode>& tex,
-                                        const void* devPtr, size_t size = UINT_MAX) {
-    return hipCUDAErrorTohipError(cudaBindTexture(offset, tex, devPtr, size));
-}
+// template <class T, int dim, enum cudaTextureReadMode readMode>
+// inline static hipError_t hipBindTexture(size_t* offset, const struct texture<T, dim, readMode>& tex,
+//                                         const void* devPtr, size_t size = UINT_MAX) {
+//    return hipCUDAErrorTohipError(cudaBindTexture(offset, tex, devPtr, size));
+// }
 
-template <class T, int dim, enum cudaTextureReadMode readMode>
-inline static hipError_t hipBindTexture(size_t* offset, struct texture<T, dim, readMode>& tex,
-                                        const void* devPtr, const hipChannelFormatDesc& desc,
-                                        size_t size = UINT_MAX) {
-    return hipCUDAErrorTohipError(cudaBindTexture(offset, tex, devPtr, desc, size));
-}
+// template <class T, int dim, enum cudaTextureReadMode readMode>
+// inline static hipError_t hipBindTexture(size_t* offset, struct texture<T, dim, readMode>& tex,
+//                                         const void* devPtr, const hipChannelFormatDesc& desc,
+//                                         size_t size = UINT_MAX) {
+//    return hipCUDAErrorTohipError(cudaBindTexture(offset, tex, devPtr, desc, size));
+// }
 
-template <class T, int dim, enum cudaTextureReadMode readMode>
-inline static hipError_t hipUnbindTexture(struct texture<T, dim, readMode>* tex) {
-    return hipCUDAErrorTohipError(cudaUnbindTexture(tex));
-}
+// template <class T, int dim, enum cudaTextureReadMode readMode>
+// inline static hipError_t hipUnbindTexture(struct texture<T, dim, readMode>* tex) {
+//    return hipCUDAErrorTohipError(cudaUnbindTexture(tex));
+// }
 
-template <class T, int dim, enum cudaTextureReadMode readMode>
-inline static hipError_t hipUnbindTexture(struct texture<T, dim, readMode> &tex) {
-    return hipCUDAErrorTohipError(cudaUnbindTexture(tex));
-}
+// template <class T, int dim, enum cudaTextureReadMode readMode>
+// inline static hipError_t hipUnbindTexture(struct texture<T, dim, readMode> &tex) {
+// return hipCUDAErrorTohipError(cudaUnbindTexture(tex));
+// }
 
-template <class T, int dim, enum cudaTextureReadMode readMode>
-inline static hipError_t hipBindTextureToArray(struct texture<T, dim, readMode>& tex,
-                                               hipArray_const_t array,
-                                               const hipChannelFormatDesc& desc) {
-    return hipCUDAErrorTohipError(cudaBindTextureToArray(tex, array, desc));
-}
+// template <class T, int dim, enum cudaTextureReadMode readMode>
+// inline static hipError_t hipBindTextureToArray(struct texture<T, dim, readMode>& tex,
+//                                                hipArray_const_t array,
+//                                                const hipChannelFormatDesc& desc) {
+// return hipCUDAErrorTohipError(cudaBindTextureToArray(tex, array, desc));
+// }
 
-template <class T, int dim, enum cudaTextureReadMode readMode>
-inline static hipError_t hipBindTextureToArray(struct texture<T, dim, readMode> *tex,
-                                               hipArray_const_t array,
-                                               const hipChannelFormatDesc* desc) {
-    return hipCUDAErrorTohipError(cudaBindTextureToArray(tex, array, desc));
-}
+// template <class T, int dim, enum cudaTextureReadMode readMode>
+// inline static hipError_t hipBindTextureToArray(struct texture<T, dim, readMode> *tex,
+//                                                hipArray_const_t array,
+//                                                const hipChannelFormatDesc* desc) {
+//    return hipCUDAErrorTohipError(cudaBindTextureToArray(tex, array, desc));
+// }
 
-template <class T, int dim, enum cudaTextureReadMode readMode>
-inline static hipError_t hipBindTextureToArray(struct texture<T, dim, readMode>& tex,
-                                               hipArray_const_t array) {
-    return hipCUDAErrorTohipError(cudaBindTextureToArray(tex, array));
-}
+// template <class T, int dim, enum cudaTextureReadMode readMode>
+// inline static hipError_t hipBindTextureToArray(struct texture<T, dim, readMode>& tex,
+//                                                hipArray_const_t array) {
+//    return hipCUDAErrorTohipError(cudaBindTextureToArray(tex, array));
+// }
 
 template <class T>
 inline static hipChannelFormatDesc hipCreateChannelDesc() {
