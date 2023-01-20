@@ -1,4 +1,4 @@
-option (ENABLE_MPI "Enable the compilation of the MPI communication code" off)
+option (ENABLE_MPI "Enable the compilation of the MPI communication code" on)
 
 ##################################
 ## Find MPI
