@@ -180,9 +180,9 @@ template<class Real> struct PYBIND11_EXPORT SnapshotParticleData
     void insert(unsigned int i, unsigned int n);
 
     //! Validate the snapshot
-    /*! \returns true if the number of elements is consistent
+    /*! Throws an exception when the snapshot contains invalid data.
      */
-    bool validate() const;
+    void validate() const;
 
 #ifdef ENABLE_MPI
     //! Broadcast the snapshot using MPI
@@ -1708,11 +1708,14 @@ class PYBIND11_EXPORT ParticleData
  *  Output: The buffer output type (either HOOMDHostBuffer or HOOMDDeviceBuffer)
  */
 template<class Output>
-class PYBIND11_EXPORT LocalParticleData : public LocalDataAccess<Output, ParticleData>
+class PYBIND11_EXPORT LocalParticleData : public GhostLocalDataAccess<Output, ParticleData>
     {
     public:
     LocalParticleData(ParticleData& data)
-        : LocalDataAccess<Output, ParticleData>(data), 
+        : GhostLocalDataAccess<Output, ParticleData>(data),
+                                                     data.getN(),
+                                                     data.getNGhosts(),
+                                                     data.getNGlobal()), 
           m_position_handle(), m_velocities_handle(), m_acceleration_handle(), 
           m_density_handle(), m_pressure_handle(), m_energy_handle(), 
           m_aux1_handle(), m_aux2_handle(), m_aux3_handle(), m_aux4_handle(), 
@@ -1725,7 +1728,7 @@ class PYBIND11_EXPORT LocalParticleData : public LocalDataAccess<Output, Particl
 
     Output getPosition(GhostDataFlag flag)
         {
-        return this->template getBuffer<Scalar4, Scalar>(m_position_handle,
+        return this->template getLocalBuffer<Scalar4, Scalar>(m_position_handle,
                                                          &ParticleData::getPositions,
                                                          flag,
                                                          true,
@@ -1734,7 +1737,7 @@ class PYBIND11_EXPORT LocalParticleData : public LocalDataAccess<Output, Particl
 
     Output getTypes(GhostDataFlag flag)
         {
-        return this->template getBuffer<Scalar4, int>(m_position_handle,
+        return this->template getLocalBuffer<Scalar4, int>(m_position_handle,
                                                       &ParticleData::getPositions,
                                                       flag,
                                                       true,
@@ -1744,7 +1747,7 @@ class PYBIND11_EXPORT LocalParticleData : public LocalDataAccess<Output, Particl
 
     Output getVelocities(GhostDataFlag flag)
         {
-        return this->template getBuffer<Scalar4, Scalar>(m_velocities_handle,
+        return this->template getLocalBuffer<Scalar4, Scalar>(m_velocities_handle,
                                                          &ParticleData::getVelocities,
                                                          flag,
                                                          true,
@@ -1753,7 +1756,7 @@ class PYBIND11_EXPORT LocalParticleData : public LocalDataAccess<Output, Particl
 
     Output getAcceleration(GhostDataFlag flag)
         {
-        return this->template getBuffer<Scalar3, Scalar>(m_acceleration_handle,
+        return this->template getLocalBuffer<Scalar3, Scalar>(m_acceleration_handle,
                                                          &ParticleData::getAccelerations,
                                                          flag,
                                                          true,
@@ -1762,7 +1765,7 @@ class PYBIND11_EXPORT LocalParticleData : public LocalDataAccess<Output, Particl
 
     // Output getDPEs(GhostDataFlag flag)
     //     {
-    //     return this->template getBuffer<Scalar3, Scalar>(m_dpe_handle,
+    //     return this->template getLocalBuffer<Scalar3, Scalar>(m_dpe_handle,
     //                                                      &ParticleData::getDPEs,
     //                                                      flag,
     //                                                      true,
@@ -1771,7 +1774,7 @@ class PYBIND11_EXPORT LocalParticleData : public LocalDataAccess<Output, Particl
 
     Output getDensities(GhostDataFlag flag)
         {
-        return this->template getBuffer<Scalar, Scalar>(m_density_handle,
+        return this->template getLocalBuffer<Scalar, Scalar>(m_density_handle,
                                                          &ParticleData::getDensities,
                                                          flag,
                                                          true);
@@ -1779,7 +1782,7 @@ class PYBIND11_EXPORT LocalParticleData : public LocalDataAccess<Output, Particl
 
     Output getPressures(GhostDataFlag flag)
         {
-        return this->template getBuffer<Scalar, Scalar>(m_pressure_handle,
+        return this->template getLocalBuffer<Scalar, Scalar>(m_pressure_handle,
                                                          &ParticleData::getPressures,
                                                          flag,
                                                          true);
@@ -1787,7 +1790,7 @@ class PYBIND11_EXPORT LocalParticleData : public LocalDataAccess<Output, Particl
 
     Output getEnergies(GhostDataFlag flag)
         {
-        return this->template getBuffer<Scalar, Scalar>(m_energy_handle,
+        return this->template getLocalBuffer<Scalar, Scalar>(m_energy_handle,
                                                          &ParticleData::getEnergies,
                                                          flag,
                                                          true);
@@ -1796,7 +1799,7 @@ class PYBIND11_EXPORT LocalParticleData : public LocalDataAccess<Output, Particl
 
     Output getAuxiliaries1(GhostDataFlag flag)
         {
-        return this->template getBuffer<Scalar3, Scalar>(m_aux1_handle,
+        return this->template getLocalBuffer<Scalar3, Scalar>(m_aux1_handle,
                                                          &ParticleData::getAuxiliaries1,
                                                          flag,
                                                          true,
@@ -1805,7 +1808,7 @@ class PYBIND11_EXPORT LocalParticleData : public LocalDataAccess<Output, Particl
 
     Output getAuxiliaries2(GhostDataFlag flag)
         {
-        return this->template getBuffer<Scalar3, Scalar>(m_aux2_handle,
+        return this->template getLocalBuffer<Scalar3, Scalar>(m_aux2_handle,
                                                          &ParticleData::getAuxiliaries2,
                                                          flag,
                                                          true,
@@ -1814,7 +1817,7 @@ class PYBIND11_EXPORT LocalParticleData : public LocalDataAccess<Output, Particl
 
     Output getAuxiliaries3(GhostDataFlag flag)
         {
-        return this->template getBuffer<Scalar3, Scalar>(m_aux3_handle,
+        return this->template getLocalBuffer<Scalar3, Scalar>(m_aux3_handle,
                                                          &ParticleData::getAuxiliaries3,
                                                          flag,
                                                          true,
@@ -1822,7 +1825,7 @@ class PYBIND11_EXPORT LocalParticleData : public LocalDataAccess<Output, Particl
         }
     Output getAuxiliaries4(GhostDataFlag flag)
         {
-        return this->template getBuffer<Scalar3, Scalar>(m_aux4_handle,
+        return this->template getLocalBuffer<Scalar3, Scalar>(m_aux4_handle,
                                                          &ParticleData::getAuxiliaries4,
                                                          flag,
                                                          true,
@@ -1832,7 +1835,7 @@ class PYBIND11_EXPORT LocalParticleData : public LocalDataAccess<Output, Particl
 
     Output getDPEdts(GhostDataFlag flag)
         {
-        return this->template getBuffer<Scalar3, Scalar>(m_dpedt_handle,
+        return this->template getLocalBuffer<Scalar3, Scalar>(m_dpedt_handle,
                                                          &ParticleData::getDPEdts,
                                                          flag,
                                                          true,
@@ -1841,7 +1844,7 @@ class PYBIND11_EXPORT LocalParticleData : public LocalDataAccess<Output, Particl
 
     Output getMasses(GhostDataFlag flag)
         {
-        return this->template getBuffer<Scalar4, Scalar>(m_velocities_handle,
+        return this->template getLocalBuffer<Scalar4, Scalar>(m_velocities_handle,
                                                          &ParticleData::getVelocities,
                                                          flag,
                                                          true,
@@ -1851,7 +1854,7 @@ class PYBIND11_EXPORT LocalParticleData : public LocalDataAccess<Output, Particl
 
     // Output getOrientation(GhostDataFlag flag)
     //     {
-    //     return this->template getBuffer<Scalar4, Scalar>(m_orientation_handle,
+    //     return this->template getLocalBuffer<Scalar4, Scalar>(m_orientation_handle,
     //                                                      &ParticleData::getOrientationArray,
     //                                                      flag,
     //                                                      true,
@@ -1860,7 +1863,7 @@ class PYBIND11_EXPORT LocalParticleData : public LocalDataAccess<Output, Particl
     // 
     // Output getAngularMomentum(GhostDataFlag flag)
     //     {
-    //     return this->template getBuffer<Scalar4, Scalar>(m_angular_momentum_handle,
+    //     return this->template getLocalBuffer<Scalar4, Scalar>(m_angular_momentum_handle,
     //                                                      &ParticleData::getAngularMomentumArray,
     //                                                      flag,
     //                                                      true,
@@ -1869,7 +1872,7 @@ class PYBIND11_EXPORT LocalParticleData : public LocalDataAccess<Output, Particl
 
     // Output getMomentsOfInertia(GhostDataFlag flag)
     //     {
-    //     return this->template getBuffer<Scalar3, Scalar>(m_inertia_handle,
+    //     return this->template getLocalBuffer<Scalar3, Scalar>(m_inertia_handle,
     //                                                      &ParticleData::getMomentsOfInertiaArray,
     //                                                      flag,
     //                                                      true,
@@ -1878,7 +1881,7 @@ class PYBIND11_EXPORT LocalParticleData : public LocalDataAccess<Output, Particl
 
     // Output getCharge(GhostDataFlag flag)
     //     {
-    //     return this->template getBuffer<Scalar, Scalar>(m_charge_handle,
+    //     return this->template getLocalBuffer<Scalar, Scalar>(m_charge_handle,
     //                                                     &ParticleData::getCharges,
     //                                                     flag,
     //                                                     true);
@@ -1886,7 +1889,7 @@ class PYBIND11_EXPORT LocalParticleData : public LocalDataAccess<Output, Particl
 
     // Output getDiameter(GhostDataFlag flag)
     //     {
-    //     return this->template getBuffer<Scalar, Scalar>(m_diameter_handle,
+    //     return this->template getLocalBuffer<Scalar, Scalar>(m_diameter_handle,
     //                                                     &ParticleData::getDiameters,
     //                                                     flag,
     //                                                     true);
@@ -1895,7 +1898,7 @@ class PYBIND11_EXPORT LocalParticleData : public LocalDataAccess<Output, Particl
 
     Output getImages(GhostDataFlag flag)
         {
-        return this->template getBuffer<int3, int>(m_image_handle,
+        return this->template getLocalBuffer<int3, int>(m_image_handle,
                                                    &ParticleData::getImages,
                                                    flag,
                                                    true,
@@ -1904,7 +1907,7 @@ class PYBIND11_EXPORT LocalParticleData : public LocalDataAccess<Output, Particl
 
     Output getTags(GhostDataFlag flag)
         {
-        return this->template getBuffer<unsigned int, unsigned int>(m_tag_handle,
+        return this->template getLocalBuffer<unsigned int, unsigned int>(m_tag_handle,
                                                                     &ParticleData::getTags,
                                                                     flag,
                                                                     true);
@@ -1912,7 +1915,7 @@ class PYBIND11_EXPORT LocalParticleData : public LocalDataAccess<Output, Particl
 
     Output getSlength(GhostDataFlag flag)
         {
-        return this->template getBuffer<Scalar, Scalar>(m_slength_handle,
+        return this->template getLocalBuffer<Scalar, Scalar>(m_slength_handle,
                                                                     &ParticleData::getSlengths,
                                                                     flag,
                                                                     true);
@@ -1920,12 +1923,14 @@ class PYBIND11_EXPORT LocalParticleData : public LocalDataAccess<Output, Particl
 
     Output getRTags()
         {
-        return this->template getGlobalBuffer<unsigned int>(m_rtag_handle, &ParticleData::getRTags);
+        return this->template getGlobalBuffer<unsigned int>(m_rtag_handle,
+                                                            &ParticleData::getRTags,
+                                                            false);
         }
 
     Output getBodies(GhostDataFlag flag)
         {
-        return this->template getBuffer<unsigned int, unsigned int>(m_rigid_body_ids_handle,
+        return this->template getLocalBuffer<unsigned int, unsigned int>(m_rigid_body_ids_handle,
                                                                     &ParticleData::getBodies,
                                                                     flag,
                                                                     true);
@@ -1933,7 +1938,7 @@ class PYBIND11_EXPORT LocalParticleData : public LocalDataAccess<Output, Particl
 
     Output getNetForce(GhostDataFlag flag)
         {
-        return this->template getBuffer<Scalar4, Scalar>(m_net_force_handle,
+        return this->template getLocalBuffer<Scalar4, Scalar>(m_net_force_handle,
                                                          &ParticleData::getNetForce,
                                                          flag,
                                                          true,
@@ -1942,7 +1947,7 @@ class PYBIND11_EXPORT LocalParticleData : public LocalDataAccess<Output, Particl
 
     Output getNetRateDPE(GhostDataFlag flag)
         {
-        return this->template getBuffer<Scalar4, Scalar>(m_net_ratedpe_handle,
+        return this->template getLocalBuffer<Scalar4, Scalar>(m_net_ratedpe_handle,
                                                          &ParticleData::getNetRateDPE,
                                                          flag,
                                                          true,
@@ -1951,7 +1956,7 @@ class PYBIND11_EXPORT LocalParticleData : public LocalDataAccess<Output, Particl
 
     // Output getNetTorque(GhostDataFlag flag)
     //     {
-    //     return this->template getBuffer<Scalar4, Scalar>(m_net_torque_handle,
+    //     return this->template getLocalBuffer<Scalar4, Scalar>(m_net_torque_handle,
     //                                                      &ParticleData::getNetTorqueArray,
     //                                                      flag,
     //                                                      true,
@@ -1960,19 +1965,19 @@ class PYBIND11_EXPORT LocalParticleData : public LocalDataAccess<Output, Particl
 
     // Output getNetVirial(GhostDataFlag flag)
     //     {
-    //     return this->template getBuffer<Scalar, Scalar>(
+    //     return this->template getLocalBuffer<Scalar, Scalar>(
     //         m_net_virial_handle,
     //         &ParticleData::getNetVirial,
     //         flag,
     //         true,
     //         6,
     //         0,
-    //         std::vector<ssize_t>({6 * sizeof(Scalar), sizeof(Scalar)}));
+    //         std::vector<size_t>({6 * sizeof(Scalar), sizeof(Scalar)}));
     //     }
 
     Output getNetEnergy(GhostDataFlag flag)
         {
-        return this->template getBuffer<Scalar4, Scalar>(m_net_force_handle,
+        return this->template getLocalBuffer<Scalar4, Scalar>(m_net_force_handle,
                                                          &ParticleData::getNetForce,
                                                          flag,
                                                          true,

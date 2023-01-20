@@ -1217,14 +1217,20 @@ void ParticleData::initializeFromSnapshot(const SnapshotParticleData<Real>& snap
                                           bool ignore_bodies)
     {
     m_exec_conf->msg->notice(4) << "ParticleData: initializing from snapshot" << std::endl;
+    if (snapshot.type_mapping.size() >= 40)
+        {
+        m_exec_conf->msg->warning() << "Systems with many particle types perform poorly or result "
+                                       "in shared memory errors on the GPU."
+                                    << std::endl;
+        }
 
     // remove all ghost particles
     removeAllGhostParticles();
 
     // check that all fields in the snapshot have correct length
-    if (m_exec_conf->getRank() == 0 && !snapshot.validate())
+    if (m_exec_conf->getRank() == 0)
         {
-        throw std::runtime_error("Invalid particle data in snapshot.");
+        snapshot.validate();
         }
 
     // clear set of active tags
@@ -4746,9 +4752,18 @@ template<class Real> bool SnapshotParticleData<Real>::validate() const
         || pressure.size() != size || energy.size() != size
         || image.size() != size || body.size() != size || slength.size() != size
         || dpedt.size() != size )
-        return false;
+        {
+        throw std::runtime_error("All array sizes must match.");
+        }
 
-    return true;
+    // Check that the user provided unique type names.
+    std::vector<std::string> types_copy = type_mapping;
+    std::sort(types_copy.begin(), types_copy.end());
+    auto last = std::unique(types_copy.begin(), types_copy.end());
+    if (static_cast<size_t>(last - types_copy.begin()) != type_mapping.size())
+        {
+        throw std::runtime_error("Type names must be unique.");
+        }
     }
 
 #ifdef ENABLE_MPI
