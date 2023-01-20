@@ -81,7 +81,7 @@ inline R123_CUDA_DEVICE value_type assemble_from_u32(uint32_t *p32){
 
 /** @endcond */
 
-#ifdef __CUDA_ARCH__
+#if defined(__CUDA_ARCH__) || defined(__HIPCC__)
 /* CUDA can't handle std::reverse_iterator.  We *could* implement it
    ourselves, but let's not bother until somebody really feels a need
    to reverse-iterate through an r123array */
@@ -317,7 +317,7 @@ struct r123array##_N##x##W{                         \
 CXXOVERLOADS(_N, W, T)
 
 
-#if defined(__CUDACC__) && !defined(__CUDACC_RTC__)
+#if defined(__HIPCC__) && !defined(__CUDACC_RTC__)
 /* Disable complaints from CUDA8 and C++ */
 #pragma nv_diag_suppress = code_is_unreachable
 #endif

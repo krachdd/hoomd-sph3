@@ -32,11 +32,11 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #ifndef __r123_nvcc_features_dot_h__
 #define __r123_nvcc_features_dot_h__
 
-#if !defined(CUDART_VERSION)
+#if !defined(CUDART_VERSION) && !defined(HIP_VERSION_MAJOR)
 #error "why are we in nvccfeatures.h if CUDART_VERSION is not defined"
 #endif
 
-#if CUDART_VERSION < 4010
+#if CUDART_VERSION < 4010 &&!defined(HIP_VERSION_MAJOR)
 #error "CUDA versions earlier than 4.1 produce incorrect results for some templated functions in namespaces.  Random123 isunsupported.  See comments in nvccfeatures.h"
 // This test was added in Random123-1.08 (August, 2013) because we
 // discovered that Ftype(maxTvalue<T>()) with Ftype=double and
@@ -57,7 +57,7 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 //#ifdef  __CUDA_ARCH__ allows Philox32 and Philox64 to be compiled
 //for both device and host functions in CUDA by setting compiler flags
 //for the device function
-#ifdef  __CUDA_ARCH__
+#if defined(__CUDA_ARCH__) || defined(__HIPCC__)
 #ifndef R123_CUDA_DEVICE
 #define R123_CUDA_DEVICE __device__
 #endif
@@ -130,6 +130,9 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "gccfeatures.h"
 #elif defined(_MSC_FULL_VER)
 #include "msvcfeatures.h"
+#else
+// Unknown host compiler, try GCC.
+#include "gccfeatures.h"
 #endif
 
 #endif
