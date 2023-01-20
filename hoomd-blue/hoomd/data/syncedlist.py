@@ -4,7 +4,6 @@
 """Synced list utility classes."""
 
 from collections.abc import MutableSequence
-import inspect
 from copy import copy
 
 from hoomd.data.typeconverter import _BaseConverter, TypeConverter
@@ -27,16 +26,6 @@ class _PartialGetAttr:
 def identity(obj):
     """Returns obj."""
     return obj
-
-
-class _SimulationPlaceHolder:
-    """Used to ensure objects are not added to two locations at once."""
-
-    def __init__(self, obj):
-        self._id = id(obj)
-
-    def __eq__(self, other):
-        return isinstance(other, type(self)) and self._id == other._id
 
 
 class SyncedList(MutableSequence):
@@ -91,7 +80,6 @@ class SyncedList(MutableSequence):
 
         self._to_synced_list_conversion = to_synced_list
         self._synced = False
-        self._simulation = _SimulationPlaceHolder(self)
         self._list = []
         if iterable is not None:
             for it in iterable:
@@ -196,9 +184,6 @@ class SyncedList(MutableSequence):
         """
         if not self._attach_members:
             return
-        if raise_if_added and value._added:
-            raise RuntimeError(f"Object {value} cannot be added to two lists.")
-        value._add(self._simulation)
         if self._synced:
             value._attach(self._simulation)
             return
@@ -213,18 +198,11 @@ class SyncedList(MutableSequence):
         Args:
             value (``any``): The member of the synced list to dissociate from
                 its current simulation.
-            remove (bool, optional): Whether to add back to the `SyncedList`'s
-                current simulation or id. This defaults to ``True`` which is
-                desired when the object is removed completely from the list.
         """
         if not self._attach_members:
             return
         if self._synced:
             value._detach()
-        if remove and value._added:
-            value._remove()
-        else:
-            value._add(self._simulation)
 
     def _validate_or_error(self, value):
         """Complete error checking and processing of value."""
