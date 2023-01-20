@@ -150,9 +150,6 @@ class PYBIND11_EXPORT System
         return m_sysdef;
         }
 
-    //! Set autotuner parameters
-    void setAutotunerParams(bool enable, unsigned int period);
-
     std::vector<std::shared_ptr<Analyzer>>& getAnalyzers()
         {
         return m_analyzers;
