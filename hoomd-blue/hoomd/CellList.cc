@@ -133,9 +133,15 @@ uint3 CellList::computeDimensions()
 
 void CellList::compute(uint64_t timestep)
     {
-    m_exec_conf->msg->notice(10) << "Cell list compute" << endl;
     Compute::compute(timestep);
     bool force = false;
+
+    m_exec_conf->msg->notice(10) << "Cell list compute" << endl;
+
+    if (m_nominal_width == 0)
+        {
+        throw std::runtime_error("Cell: cell width must be non-zero");
+        }
 
     if (m_params_changed)
         {
