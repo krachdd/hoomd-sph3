@@ -9,7 +9,7 @@ import hoomd
 import hoomd.sph
 from hoomd import _hoomd
 from hoomd.sph import _sph
-from hoomd.operation import _HOOMDBaseObject
+from hoomd.operation import Compute
 from hoomd.logging import log
 from hoomd.data.typeparam import TypeParameter
 from hoomd.data.typeconverter import OnlyTypes
@@ -19,7 +19,7 @@ from hoomd.filter import ParticleFilter
 import numpy
 
 
-class Force(_HOOMDBaseObject):
+class Force(Compute):
     r"""Defines a force for molecular dynamics simulations.
 
     `Force` is the base class for all molecular dynamics forces and provides
@@ -214,7 +214,9 @@ class Force(_HOOMDBaseObject):
             raise RuntimeError(
                 "Cannot enter gpu_local_force_arrays context manager inside "
                 "another local_force_arrays context manager")
-        return hoomd.sph.data.ForceLocalAccessGPU(self)
+        if not self._attached:
+            raise hoomd.error.DataAccessError("gpu_local_force_arrays")
+        return hoomd.sph.data.ForceLocalAccessGPU(self, self._simulation.state)
 
 
 class Custom(Force):
@@ -293,11 +295,10 @@ class Custom(Force):
 
         self._state = None  # to be set on attaching
 
-    def _attach(self):
+    def _attach_hook(self):
         self._state = self._simulation.state
         self._cpp_obj = _sph.CustomForceCompute(self._state._cpp_sys_def,
                                                self.set_forces) # , self._aniso)
-        super()._attach()
 
     @abstractmethod
     def set_forces(self, timestep):

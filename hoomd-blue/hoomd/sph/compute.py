@@ -47,14 +47,14 @@ class SinglePhaseFlowBasicProperties(Compute):
         super().__init__()
         self._filter = filter
 
-    def _attach(self):
+    def _attach_hook(self):
         if isinstance(self._simulation.device, hoomd.device.CPU):
             spfbasic_cls = _sph.ComputeSPFBasicProperties
         else:
             spfbasic_cls = _sph.ComputeSPFBasicPropertiesGPU
         group = self._simulation.state._get_group(self._filter)
         self._cpp_obj = spfbasic_cls(self._simulation.state._cpp_sys_def, group)
-        super()._attach()
+        # super()._attach()
 
     @log(requires_run=True)
     def abs_velocity(self):

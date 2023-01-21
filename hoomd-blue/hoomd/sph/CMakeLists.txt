@@ -79,7 +79,8 @@ list (APPEND _${COMPONENT_NAME}_sources
 endif (ENABLE_HIP)
 
 if (ENABLE_HIP)
-set(_cuda_sources ${_${COMPONENT_NAME}_cu_sources})
+set(_cuda_sources ${_md_cu_sources} ${DFFT_CU_SOURCES})
+set_source_files_properties(${_md_cu_sources} PROPERTIES LANGUAGE ${HOOMD_DEVICE_LANGUAGE})
 endif (ENABLE_HIP)
 
 pybind11_add_module(_${COMPONENT_NAME} SHARED ${_${COMPONENT_NAME}_sources} ${_cuda_sources} NO_EXTRAS)

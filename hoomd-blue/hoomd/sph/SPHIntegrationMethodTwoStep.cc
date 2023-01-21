@@ -141,7 +141,7 @@ namespace detail
     {
 void export_SPHIntegrationMethodTwoStep(pybind11::module& m)
     {
-    pybind11::class_<SPHIntegrationMethodTwoStep, std::shared_ptr<SPHIntegrationMethodTwoStep>>(
+    pybind11::class_<SPHIntegrationMethodTwoStep, Autotuned, std::shared_ptr<SPHIntegrationMethodTwoStep>>(
         m,
         "SPHIntegrationMethodTwoStep")
         .def(pybind11::init<std::shared_ptr<SystemDefinition>, std::shared_ptr<ParticleGroup>>())

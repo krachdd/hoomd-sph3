@@ -1,7 +1,7 @@
 /* ---------------------------------------------------------
 maintainer: dkrach, david.krach@mib.uni-stuttgart.de
 ----------------------------------------------------------*/
-
+#include "hoomd/Autotuned.h"
 #include "hoomd/ParticleGroup.h"
 #include "hoomd/SystemDefinition.h"
 
@@ -96,7 +96,7 @@ namespace sph
     -# each integration method only applies these operations to the particles contained within its
    group (exceptions are allowed when box rescaling is needed) \ingroup updaters
 */
-class PYBIND11_EXPORT SPHIntegrationMethodTwoStep
+class PYBIND11_EXPORT SPHIntegrationMethodTwoStep : public Autotuned
     {
     public:
     //! Constructs the integration method and associates it with the system
@@ -118,14 +118,6 @@ class PYBIND11_EXPORT SPHIntegrationMethodTwoStep
     /*! \param timestep Current time step
      */
     // virtual void includeRATTLEForce(uint64_t timestep) { }
-
-    //! Set autotuner parameters
-    /*! \param enable Enable/disable autotuning
-        \param period period (approximate) in time steps when returning occurs
-
-        Derived classes should override this to set the parameters of their autotuners.
-    */
-    virtual void setAutotunerParams(bool enable, unsigned int period) { }
 
     //! Change the timestep
     virtual void setDeltaT(Scalar deltaT);
