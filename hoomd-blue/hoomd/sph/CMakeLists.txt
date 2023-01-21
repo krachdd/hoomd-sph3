@@ -21,6 +21,7 @@ set(_${COMPONENT_NAME}_sources
     SmoothingKernel.cc
     CustomForceCompute.cc
     ComputeSPFBasicProperties.cc
+    HalfStepHook.cc
     )
 
 set(_${COMPONENT_NAME}_headers
@@ -114,6 +115,7 @@ set(files
     eos.py
     constrain.py
     compute.py
+    half_step_hook.py
     )
 
 install(FILES ${files}

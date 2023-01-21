@@ -23,7 +23,18 @@ sudo apt install libcereal-dev
 - differnet time integration methods (Velocity Verlet, Basic Velocity Verlet, Leap Frog)
 
 ### TODOs
-- suggestion: suspensions based on already existing rigid body implementation of HOOMD-Blue
+- suggestion: suspensions based on already existing rigid body implementation of HOOMD-Blue 
+```
+Rigid bodies are defined by a single central particle and a number of
+    constituent particles. All of these are particles in the simulation state
+    and can interact with other particles via forces. The mass and moment of
+    inertia of the central particle set the full mass and moment of inertia of
+    the rigid body (constituent particle mass is ignored).
+
+    The central particle is at the center of mass of the rigid body and the
+    particle's orientation quaternion defines the rotation from the body space
+    into the simulation box. 
+```
 - DENSITYSUMMATION Method benchmarken (this is important) not correct in old SPH, can be seen if mean density is checked
 - test limit implementation in Velocity-Verlet (easier in **HOOMD-Blue v3.5.0**)
 - timer for different parts of program flow
