@@ -115,7 +115,7 @@ class NeighborList(Compute):
 
     def __init__(self, buffer, exclusions, rebuild_check_delay, check_dist,
                  # mesh
-                 kappa, , default_r_cut):
+                 kappa, default_r_cut):
 
         validate_exclusions = OnlyFrom([
             'bond', 

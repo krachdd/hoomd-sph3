@@ -301,7 +301,7 @@ class Integrator(_DynamicIntegrator):
             ParameterDict(
                 dt=float(dt),
                 # integrate_rotational_dof=bool(integrate_rotational_dof),
-                half_step_hook=OnlyTypes(hoomd.md.HalfStepHook,
+                half_step_hook=OnlyTypes(hoomd.sph.HalfStepHook,
                                          allow_none=True)))
 
         self.half_step_hook = half_step_hook

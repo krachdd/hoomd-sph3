@@ -23,7 +23,7 @@ from hoomd.sph import _sph
 from hoomd.data.parameterdicts import ParameterDict, TypeParameterDict
 from hoomd.data.typeparam import TypeParameter
 from hoomd.data.typeconverter import OnlyIf, to_type_converter
-from hoomd.md.force import Force
+from hoomd.sph.force import Force
 import hoomd
 # from hoomd.operation import _HOOMDBaseObject
 
