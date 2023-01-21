@@ -5,7 +5,7 @@
 
 from hoomd.sph import _sph
 import hoomd
-from hoomd.operation import _HOOMDBaseObject
+from hoomd.operation import AutotunedObject
 from hoomd.data.parameterdicts import ParameterDict, TypeParameterDict
 from hoomd.data.typeparam import TypeParameter
 from hoomd.data.typeconverter import OnlyTypes, OnlyIf, to_type_converter
@@ -14,7 +14,7 @@ from hoomd.variant import Variant
 from collections.abc import Sequence
 
 
-class Method(_HOOMDBaseObject):
+class Method(AutotunedObject):
     """Base class integration method.
 
     Provides common methods for all subclasses.
@@ -23,13 +23,11 @@ class Method(_HOOMDBaseObject):
         Users should use the subclasses and not instantiate `Method` directly.
     """
 
-    def _attach(self):
+    def _attach_hook(self):
         self._simulation.state.update_group_dof()
-        super()._attach()
 
-    def _detach(self):
+    def _detach_hook(self):
         self._simulation.state.update_group_dof()
-        super()._detach()
 
 
 # class NVT(Method):
@@ -693,7 +691,7 @@ class VelocityVerlet(Method):
         else:
             raise ValueError("Using undefined DensityMethod.")
 
-    def _attach(self):
+    def _attach_hook(self):
         sim = self._simulation
         # initialize the reflected c++ class
         if isinstance(sim.device, hoomd.device.CPU):
@@ -714,6 +712,8 @@ class VelocityVerlet(Method):
 
         self.setdensitymethod(self.str_densitymethod)
 
+        # Attach param_dict and typeparam_dict
+        super()._attach_hook()
 
     # @property
     def densitymethod(self):
@@ -727,8 +727,7 @@ class VelocityVerlet(Method):
             raise ValueError("Undefined DensityMethod.")
         self._cpp_obj.setDensityMethod(self.DENSITYMETHODS[method])
 
-        # Attach param_dict and typeparam_dict
-        super()._attach()
+        
 
 
 

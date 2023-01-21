@@ -76,9 +76,9 @@ class SPHModel(force.Force):
 
 
 
-    def _add(self, simulation):
-        super()._add(simulation)
-        self._add_nlist()
+    # def _add(self, simulation):
+    #     super()._add(simulation)
+    #     self._add_nlist()
 
     def _add_nlist(self):
         nlist = self.nlist
@@ -105,7 +105,7 @@ class SPHModel(force.Force):
         # neighbor list when not attached we handle correctly.
         self._add_dependency(self.nlist)
 
-    def _attach(self):
+    def _attach_hook(self):
         # check that some Particles are defined
         if self._simulation.state._cpp_sys_def.getParticleData().getNGlobal() == 0:
             self._simulation.device._cpp_msg.warning("No particles are defined.\n")
@@ -129,7 +129,7 @@ class SPHModel(force.Force):
         base_cls = getattr(_sph, self._cpp_baseclass_name)
         self._cpp_base_obj = base_cls(self._simulation.state._cpp_sys_def, self.kernel.cpp_smoothingkernel,
                                  self.eos.cpp_stateequation, self.nlist._cpp_obj)
-        super()._attach()
+        super()._attach_hook()
 
 
     def _setattr_param(self, attr, value):
@@ -143,11 +143,11 @@ class SPHModel(force.Force):
             return
         if self._attached:
             raise RuntimeError("nlist cannot be set after scheduling.")
-        old_nlist = self.nlist
+        # old_nlist = self.nlist
         self._param_dict._dict["nlist"] = new_nlist
-        if self._added:
-            self._add_nlist()
-            old_nlist._remove_dependent(self)
+        # if self._added:
+        #     self._add_nlist()
+        #     old_nlist._remove_dependent(self)
 
     def get_rcut(self):
 
@@ -166,7 +166,8 @@ class SPHModel(force.Force):
 
         return r_cut_dict;
 
-
+    def _detach_hook(self):
+        self.nlist._detach()
 
 
 
