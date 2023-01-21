@@ -1709,13 +1709,20 @@ void ParticleData::initializeFromDistrSnapshot(const SnapshotParticleData<Real>&
     {
     m_exec_conf->msg->notice(4) << "ParticleData: initializing from distributed snapshot" << std::endl;
 
+    if (snapshot.type_mapping.size() >= 40)
+        {
+        m_exec_conf->msg->warning() << "Systems with many particle types perform poorly or result "
+                                       "in shared memory errors on the GPU."
+                                    << std::endl;
+        }
+
     // remove all ghost particles
     removeAllGhostParticles();
 
     // check that all fields in the snapshot have correct length
-    if (m_exec_conf->getRank() == 0 && !snapshot.validate())
+    if (m_exec_conf->getRank() == 0)
         {
-        throw std::runtime_error("Invalid particle data in snapshot.");
+        snapshot.validate();
         }
 
     // clear set of active tags
@@ -4744,7 +4751,7 @@ template<class Real> void SnapshotParticleData<Real>::insert(unsigned int i, uns
     is_accel_set = false;
     }
 
-template<class Real> bool SnapshotParticleData<Real>::validate() const
+template<class Real> void SnapshotParticleData<Real>::validate() const
     {
     // Check if all other fields are of equal length==size
     if (pos.size() != size || vel.size() != size || accel.size() != size || type.size() != size

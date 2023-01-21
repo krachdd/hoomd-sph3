@@ -1712,7 +1712,7 @@ class PYBIND11_EXPORT LocalParticleData : public GhostLocalDataAccess<Output, Pa
     {
     public:
     LocalParticleData(ParticleData& data)
-        : GhostLocalDataAccess<Output, ParticleData>(data),
+        : GhostLocalDataAccess<Output, ParticleData>(data,
                                                      data.getN(),
                                                      data.getNGhosts(),
                                                      data.getNGlobal()), 

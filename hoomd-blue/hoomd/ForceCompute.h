@@ -267,13 +267,13 @@ class PYBIND11_EXPORT LocalForceComputeData : public GhostLocalDataAccess<Output
     {
     public:
     LocalForceComputeData(ForceCompute& data, ParticleData& pdata)
-        : LocalDataAccess<Output, ForceCompute>(data),
-                                                     pdata.getN(),
-                                                     pdata.getNGhosts(),
-                                                     pdata.getNGlobal()),
-	m_force_handle(),  m_ratedpe_handle(),
+        : GhostLocalDataAccess<Output, ForceCompute>(data,
+                                                 pdata.getN(),
+                                                 pdata.getNGhosts(),
+                                                 pdata.getNGlobal()),
+        m_force_handle(),  m_ratedpe_handle(),
         // m_torque_handle(), m_virial_handle(), m_virial_pitch(data.getVirialArray().getPitch()),
-          m_buffers_writeable(data.getLocalBuffersWriteable())
+        m_buffers_writeable(data.getLocalBuffersWriteable())
         {
         }
 
