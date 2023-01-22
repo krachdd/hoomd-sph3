@@ -178,7 +178,9 @@ class Force(Compute):
             raise RuntimeError("Cannot enter cpu_local_force_arrays context "
                                "manager inside another local_force_arrays "
                                "context manager")
-        return hoomd.sph.data.ForceLocalAccess(self)
+        if not self._attached:
+            raise hoomd.error.DataAccessError("cpu_local_force_arrays")
+        return hoomd.sph.data.ForceLocalAccess(self, self._simulation.state)
 
     @property
     def gpu_local_force_arrays(self):

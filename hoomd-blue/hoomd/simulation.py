@@ -15,7 +15,6 @@ TIMESTEP_MAX = 2**64 - 1
 SEED_MAX = 2**16 - 1
 
 
-
 class Simulation(metaclass=Loggable):
     """Define a simulation.
 
@@ -405,6 +404,7 @@ class Simulation(metaclass=Loggable):
     #         if value:
     #             self._state._cpp_sys_def.getParticleData().setPressureFlag()
 
+    
     def run(self, steps, write_at_start=False, adaptive_dt = False):
         """Advance the simulation a number of steps.
 
@@ -472,7 +472,7 @@ class Simulation(metaclass=Loggable):
             raise ValueError(f"steps must be in the range [0, "
                              f"{TIMESTEP_MAX-1}]")
 
-        self._cpp_sys.run(steps_int, write_at_start, adaptive_dt)
+        self._cpp_sys.run(steps_int, write_at_start) #, adaptive_dt)
 
 
 def _match_class_path(obj, *matches):
