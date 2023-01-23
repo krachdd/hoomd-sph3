@@ -22,6 +22,7 @@ set(_${COMPONENT_NAME}_sources
     CustomForceCompute.cc
     ComputeSPFBasicProperties.cc
     HalfStepHook.cc
+    ConstantForceCompute.cc
     )
 
 set(_${COMPONENT_NAME}_headers
@@ -54,6 +55,7 @@ set(_${COMPONENT_NAME}_headers
     ComputeSPFBasicProperties.h
     ComputeMechanicalProp.h
     EvaluationMethodDefinition.h
+    ConstantForceCompute.h
     )
 
 set(_${COMPONENT_NAME}_cu_sources
