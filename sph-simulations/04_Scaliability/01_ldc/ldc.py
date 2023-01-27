@@ -67,7 +67,7 @@ rcut    = hoomd.sph.kernel.Kappa[kernel]*slength     # m
 
 # define model parameters
 densitymethod = 'CONTINUITY'
-steps = 1001
+steps = 101
 
 drho = 0.01                        # %
 

@@ -22,6 +22,11 @@ class SPHModel(force.Force):
 
     """
 
+    # Module where the C++ class is defined. Reassign this when developing an
+    # external plugin.
+    _ext_module = _sph
+    _ext_module_nlist = _nsearch
+
     def __init__(self, kernel, eos, nlist):
         super().__init__()
 
@@ -40,7 +45,7 @@ class SPHModel(force.Force):
         self.kernel     = kernel
         # print(kernel)
         self.eos        = eos
-        self.nlist      = nlist
+        # self.nlist      = nlist
         # self.accel_set  = False
         # self.params_set = False
         # self.gx         = 0.0
@@ -73,64 +78,91 @@ class SPHModel(force.Force):
         self.nlist = nlist
 
 
-
-
-
     # def _add(self, simulation):
     #     super()._add(simulation)
     #     self._add_nlist()
 
-    def _add_nlist(self):
-        nlist = self.nlist
-        deepcopy = False
-        if not isinstance(self._simulation, hoomd.Simulation):
-            if nlist._added:
-                deepcopy = True
-            else:
-                return
-        # We need to check if the force is added since if it is not then this is
-        # being called by a SyncedList object and a disagreement between the
-        # simulation and nlist._simulation is an error. If the force is added
-        # then the nlist is compatible. We cannot just check the nlist's _added
-        # property because _add is also called when the SyncedList is synced.
-        if deepcopy or nlist._added and nlist._simulation != self._simulation:
-            warnings.warn(
-                f"{self} object is creating a new equivalent neighbor list."
-                f" This is happending since the force is moving to a new "
-                f"simulation. Set a new nlist to suppress this warning.",
-                RuntimeWarning)
-            self.nlist = copy.deepcopy(nlist)
-        self.nlist._add(self._simulation)
-        # This is ideopotent, but we need to ensure that if we change
-        # neighbor list when not attached we handle correctly.
-        self._add_dependency(self.nlist)
+    # def _add_nlist(self):
+    #     nlist = self.nlist
+    #     deepcopy = False
+    #     if not isinstance(self._simulation, hoomd.Simulation):
+    #         if nlist._added:
+    #             deepcopy = True
+    #         else:
+    #             return
+    #     # We need to check if the force is added since if it is not then this is
+    #     # being called by a SyncedList object and a disagreement between the
+    #     # simulation and nlist._simulation is an error. If the force is added
+    #     # then the nlist is compatible. We cannot just check the nlist's _added
+    #     # property because _add is also called when the SyncedList is synced.
+    #     if deepcopy or nlist._added and nlist._simulation != self._simulation:
+    #         warnings.warn(
+    #             f"{self} object is creating a new equivalent neighbor list."
+    #             f" This is happending since the force is moving to a new "
+    #             f"simulation. Set a new nlist to suppress this warning.",
+    #             RuntimeWarning)
+    #         self.nlist = copy.deepcopy(nlist)
+    #     self.nlist._add(self._simulation)
+    #     # This is ideopotent, but we need to ensure that if we change
+    #     # neighbor list when not attached we handle correctly.
+    #     self._add_dependency(self.nlist)
+
+    # def _attach_hook(self):
+    #     # check that some Particles are defined
+    #     if self._simulation.state._cpp_sys_def.getParticleData().getNGlobal() == 0:
+    #         self._simulation.device._cpp_msg.warning("No particles are defined.\n")
+        
+    #     # This should never happen, but leaving it in case the logic for adding
+    #     # missed some edge case.
+    #     if self.nlist._attached and self._simulation != self.nlist._simulation:
+    #         raise RuntimeError("{} object's neighbor list is used in a "
+    #                            "different simulation.".format(type(self)))
+    #     self.nlist._attach()
+    #     if isinstance(self._simulation.device, hoomd.device.CPU):
+    #         self.nlist._cpp_obj.setStorageMode(_nsearch.NeighborList.storageMode.full)
+    #         # self.nlist._cpp_obj.setStorageMode(_nsearch.NeighborList.storageMode.half)
+    #     else:
+    #         self.nlist._cpp_obj.setStorageMode(_nsearch.NeighborList.storageMode.full)
+    #     # self._cpp_obj = cls(self._simulation.state._cpp_sys_def,
+    #     #                      self.nlist._cpp_obj)
+
+    #     self._cpp_baseclass_name = 'SPHBaseClass' + '_' + Kernel[self.kernel.name] + '_' + EOS[self.eos.name]
+    #     base_cls = getattr(_sph, self._cpp_baseclass_name)
+    #     self._cpp_base_obj = base_cls(self._simulation.state._cpp_sys_def, self.kernel.cpp_smoothingkernel,
+    #                              self.eos.cpp_stateequation, self.nlist._cpp_obj)
+    #     super()._attach_hook()
 
     def _attach_hook(self):
         # check that some Particles are defined
         if self._simulation.state._cpp_sys_def.getParticleData().getNGlobal() == 0:
             self._simulation.device._cpp_msg.warning("No particles are defined.\n")
-        
-        # This should never happen, but leaving it in case the logic for adding
-        # missed some edge case.
-        if self._simulation != self.nlist._simulation:
-            raise RuntimeError("{} object's neighbor list is used in a "
-                               "different simulation.".format(type(self)))
-        self.nlist._attach()
+
+        if self.nlist._attached and self._simulation != self.nlist._simulation:
+            warnings.warn(
+                f"{self} object is creating a new equivalent neighbor list."
+                f" This is happending since the force is moving to a new "
+                f"simulation. Set a new nlist to suppress this warning.",
+                RuntimeWarning)
+            self.nlist = copy.deepcopy(self.nlist)
+        self.nlist._attach(self._simulation)
         if isinstance(self._simulation.device, hoomd.device.CPU):
+            # cls = getattr(self._ext_module_nlist, self._cpp_class_name)
             self.nlist._cpp_obj.setStorageMode(_nsearch.NeighborList.storageMode.full)
-            # self.nlist._cpp_obj.setStorageMode(_nsearch.NeighborList.storageMode.half)
         else:
-            self.nlist._cpp_obj.setStorageMode(
-                _nsearch.NeighborList.storageMode.full)
+            # cls = getattr(self._ext_module_nlist, self._cpp_class_name + "GPU")
+            self.nlist._cpp_obj.setStorageMode(_nsearch.NeighborList.storageMode.full)
         # self._cpp_obj = cls(self._simulation.state._cpp_sys_def,
-        #                      self.nlist._cpp_obj)
+        #                     self.nlist._cpp_obj)
 
         self._cpp_baseclass_name = 'SPHBaseClass' + '_' + Kernel[self.kernel.name] + '_' + EOS[self.eos.name]
         base_cls = getattr(_sph, self._cpp_baseclass_name)
         self._cpp_base_obj = base_cls(self._simulation.state._cpp_sys_def, self.kernel.cpp_smoothingkernel,
                                  self.eos.cpp_stateequation, self.nlist._cpp_obj)
-        super()._attach_hook()
 
+
+
+    # def _detach_hook(self):
+    #     self.nlist._detach()
 
     def _setattr_param(self, attr, value):
         if attr == "nlist":
@@ -166,8 +198,7 @@ class SPHModel(force.Force):
 
         return r_cut_dict;
 
-    def _detach_hook(self):
-        self.nlist._detach()
+
 
 
 
@@ -263,10 +294,10 @@ class SinglePhaseFlow(SPHModel):
         # else:
         #     self.maxh = pdata.getMaxSmoothingLength()
 
-    def _add(self, simulation):
-        super()._add(simulation)
+    # def _add(self, simulation):
+    #     super()._add(simulation)
 
-    def _attach(self):
+    def _attach_hook(self):
         if isinstance(self._simulation.device, hoomd.device.CPU):
             spf_cls = getattr(_sph, self._cpp_SPFclass_name)
         else:
@@ -278,20 +309,21 @@ class SinglePhaseFlow(SPHModel):
         
         # This should never happen, but leaving it in case the logic for adding
         # missed some edge case.
-        if self._simulation != self.nlist._simulation:
-            raise RuntimeError("{} object's neighbor list is used in a "
-                               "different simulation.".format(type(self)))
-        self.nlist._attach()
+        if self.nlist._attached and self._simulation != self.nlist._simulation:
+            warnings.warn(
+                f"{self} object is creating a new equivalent neighbor list."
+                f" This is happending since the force is moving to a new "
+                f"simulation. Set a new nlist to suppress this warning.",
+                RuntimeWarning)
+            self.nlist = copy.deepcopy(self.nlist)
+        self.nlist._attach(self._simulation)
         if isinstance(self._simulation.device, hoomd.device.CPU):
-            # self.nlist._cpp_obj.setStorageMode(
-            #     _nsearch.NeighborList.storageMode.half)
-            self.nlist._cpp_obj.setStorageMode(
-                _nsearch.NeighborList.storageMode.full)
+            # self.nlist._cpp_obj.setStorageMode(_nsearch.NeighborList.storageMode.half)
+            self.nlist._cpp_obj.setStorageMode(_nsearch.NeighborList.storageMode.full)
         # TODO: understand why _nsearch.NeighborList.storageMode.half makes wierd errors!
 
         else:
-            self.nlist._cpp_obj.setStorageMode(
-                _nsearch.NeighborList.storageMode.full)
+            self.nlist._cpp_obj.setStorageMode(_nsearch.NeighborList.storageMode.full)
 
         cpp_sys_def = self._simulation.state._cpp_sys_def
         cpp_fluidgroup  = self._simulation.state._get_group(self.fluidgroup_filter)
@@ -388,7 +420,10 @@ class SinglePhaseFlow(SPHModel):
         self.setBodyAcceleration(self.gx, self.gy, self.gz, self.damp)
 
         # Attach param_dict and typeparam_dict
-        super()._attach()
+        super()._attach_hook()
+
+    def _detach_hook(self):
+        self.nlist._detach()
 
     def set_params(self,mu):
         # self.mu   = mu.item()   if isinstance(mu, np.generic)   else mu

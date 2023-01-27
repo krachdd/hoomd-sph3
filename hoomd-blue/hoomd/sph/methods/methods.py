@@ -676,8 +676,7 @@ class VelocityVerlet(Method):
     def __init__(self, filter, densitymethod):
         # store metadata
         param_dict = ParameterDict(filter=ParticleFilter,)
-        param_dict.update(dict(filter=filter, zero_force=False, 
-            densitymethod=densitymethod))
+        param_dict.update(dict(filter=filter, densitymethod=densitymethod))
 
         # set defaults
         self._param_dict.update(param_dict)
@@ -756,8 +755,7 @@ class VelocityVerletBasic(Method):
     def __init__(self, filter, densitymethod):
         # store metadata
         param_dict = ParameterDict(filter=ParticleFilter,)
-        param_dict.update(dict(filter=filter, zero_force=False, 
-            densitymethod=densitymethod))
+        param_dict.update(dict(filter=filter, densitymethod=densitymethod))
 
         # set defaults
         self._param_dict.update(param_dict)
@@ -771,7 +769,7 @@ class VelocityVerletBasic(Method):
         else:
             raise ValueError("Using undefined DensityMethod.")
 
-    def _attach(self):
+    def _attach_hook(self):
         sim = self._simulation
         # initialize the reflected c++ class
         if isinstance(sim.device, hoomd.device.CPU):
@@ -792,6 +790,8 @@ class VelocityVerletBasic(Method):
 
         self.setdensitymethod(self.str_densitymethod)
 
+        # Attach param_dict and typeparam_dict
+        super()._attach_hook()
 
     # @property
     def densitymethod(self):
@@ -805,8 +805,7 @@ class VelocityVerletBasic(Method):
             raise ValueError("Undefined DensityMethod.")
         self._cpp_obj.setDensityMethod(self.DENSITYMETHODS[method])
 
-        # Attach param_dict and typeparam_dict
-        super()._attach()
+        
 
 
 # class Langevin(Method):
