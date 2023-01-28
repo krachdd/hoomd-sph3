@@ -16,38 +16,16 @@ import read_input_fromtxt
 
 # ------------------------------------------------------------
 
-
-
-
 device = hoomd.device.CPU(notice_level=2)
 # device = hoomd.device.CPU(notice_level=10)
 sim = hoomd.Simulation(device=device)
 
+# get stuff from input file
+infile = str(sys.argv[1])
+params = read_input_fromtxt.get_input_data_from_file(infile)
 
-
-# System sizes
-LREF = 0.01                    # m
-radius = 0.35 * LREF
-
-LX = LREF
-LY = LREF
-LZ = LREF
-
-# Parameters
-KERNEL  = 'CubicSpline'
-NL      = 80                       # INT
-FX      = 0.1                      # m/s^2
-
-DX      = LREF/NL                  # m
-V       = DX*DX*DX                 # m^3
-
-RHO0 = 1000.0                      # kg / m^3
-M    = RHO0*V                      # kg
-DRHO = 0.01                        # %
-MU   = 0.01                        # Pa s
-
-
-filename = 'Sphere_in_box_448467_init.gsd'
+rawfilename = params['rawfilename']
+filename = rawfilename.replace('.raw', '_init.gsd')
 dt_string = datetime.now().strftime("%Y-%m-%d-%H-%M-%S")
 logname  = filename.replace('_init.gsd', '')
 logname  = f'{logname}_run_{dt_string}.log'
@@ -72,21 +50,26 @@ with sim.state.cpu_local_snapshot as snap:
     N = len(snap.particles.position)
     print(f'{N} particles on rank {device.communicator.rank}')
 
-
-voxelsize = DX
+# Define necessary parameters
+# Fluid and particle properties
+voxelsize  = np.float64(params['vsize'])
+DX   = voxelsize
+V    = DX * DX * DX
+RHO0 = np.float64(params['fdensity'])
+MU   = np.float64(params['fviscosity'])
+M    = RHO0 * V
+porosity = np.float64(params['porosity'])
+# get simulation box sizes etc.
+NX, NY, NZ = np.int32(params['nx']), np.int32(params['ny']), np.int32(params['nz']) 
+LREF = NX * voxelsize
 # define model parameters
 densitymethod = 'CONTINUITY'
-steps = 20001
-FX    = np.float64(sys.argv[1])
-if device.communicator.rank == 0:
-    print(f'Body Force: {FX}')
-
-dumpname = f'bf_{FX}_{dumpname}'
-if device.communicator.rank == 0:
-    print(f'Dumpname: {dumpname}')
-
+steps = 1001
+FX    = np.float64(sys.argv[2])
+DRHO = 0.01                        # %
 
 # get kernel properties
+KERNEL  = params['kernel']
 H       = hoomd.sph.kernel.OptimalH[KERNEL]*DX       # m
 RCUT    = hoomd.sph.kernel.Kappa[KERNEL]*H           # m
 Kernel = hoomd.sph.kernel.Kernels[KERNEL]()
@@ -126,7 +109,6 @@ model.artificialviscosity = True
 model.alpha = 0.2
 model.beta = 0.0
 model.densitydiffusion = False
-# model.ddiff = 0.1
 model.shepardrenormanlization = False 
 
 
@@ -148,8 +130,17 @@ if snapshot.communicator.rank == 0:
 maximum_smoothing_length = device.communicator.bcast_double(maximum_smoothing_length)
 model.max_sl = maximum_smoothing_length
 
-UREF = FX*LREF*LREF*0.25/(MU/RHO0)
-dt = model.compute_dt(LREF, UREF, DRHO)
+
+reference_length = NX * DX
+# reference_length = NX * DX
+# Compute reference_velocity via Reynolds number definition
+Re = 0.01
+reference_velocity = (Re * MU)/(RHO0 * reference_length)
+# Compute reference_velocity via permeability
+# reference_velocity = porosity * 
+# mydict['pestimate']*((mydict['lref']**2)/(8*options.mu))*options.rho0*options.fz
+
+dt = model.compute_dt(reference_length, reference_velocity, DX, DRHO)
 
 integrator = hoomd.sph.Integrator(dt=dt)
 
@@ -166,9 +157,9 @@ sim.operations.computes.append(spf_properties)
 
 if device.communicator.rank == 0:
     print(f'Computed Time step: {dt}')
-    print("Integrator Forces: {0}".format(integrator.forces[:]))
-    print("Integrator Methods: {0}".format(integrator.methods[:]))
-    print("Simulation Computes: {0}".format(sim.operations.computes[:]))
+    print(f'Integrator Forces: {integrator.forces[:]}')
+    print(f'Integrator Methods: {integrator.methods[:]}')
+    print(f'Simulation Computes: {sim.operations.computes[:]}')
 
 
 
@@ -187,15 +178,11 @@ sim.operations.writers.append(gsd_writer)
 log_trigger = hoomd.trigger.Periodic(100)
 logger = hoomd.logging.Logger(categories=['scalar', 'string'])
 logger.add(sim, quantities=['timestep', 'tps', 'walltime'])
-logger.add(spf_properties, quantities=['kinetic_energy', 'num_particles', 'fluid_vel_x_sum', 'mean_density'])
+logger.add(spf_properties, quantities=['abs_velocity', 'num_particles', 'fluid_vel_x_sum', 'mean_density'])
+logger[('custom', 'RE')] = (lambda: RHO0 * spf_properties.abs_velocity * LREF / (MU * spf_properties.num_particles), 'scalar')
+logger[('custom', 'k_1[1e-9]')] = (lambda: MU / (RHO0 * FX) * (spf_properties.abs_velocity / spf_properties.num_particles) * porosity *1.0e9, 'scalar')
 table = hoomd.write.Table(trigger=log_trigger, 
                           logger=logger, max_header_len = 10)
-
-# file = open('log.txt', mode='x', newline='\n')
-# table_file = hoomd.write.Table(output=file,
-#                                trigger=hoomd.trigger.Periodic(period=5000),
-#                                logger=logger)
-# sim.operations.writers.append(table_file)
 sim.operations.writers.append(table)
 
 file = open(logname, mode='w+', newline='\n')
@@ -206,12 +193,8 @@ sim.operations.writers.append(table_file)
 
 sim.operations.integrator = integrator
 
-# print(model.loggables)
-# print(sim.loggables)
-# print(spf_properties.loggables)
-
 if device.communicator.rank == 0:
-    print("Starting Run at {0}".format(datetime.now().strftime("%d/%m/%Y %H:%M:%S")))
+    print(f'Starting Run at {dt_string}')
 
 sim.run(steps, write_at_start=True)
 

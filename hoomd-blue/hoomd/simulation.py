@@ -472,7 +472,7 @@ class Simulation(metaclass=Loggable):
             raise ValueError(f"steps must be in the range [0, "
                              f"{TIMESTEP_MAX-1}]")
 
-        self._cpp_sys.run(steps_int, write_at_start) #, adaptive_dt)
+        self._cpp_sys.run(steps_int, write_at_start, adaptive_dt)
 
 
 def _match_class_path(obj, *matches):
