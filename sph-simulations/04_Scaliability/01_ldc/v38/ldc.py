@@ -18,8 +18,8 @@ import read_input_fromtxt
 
 
 
-device = hoomd.device.CPU(notice_level=2)
-# device = hoomd.device.CPU(notice_level=10)
+# device = hoomd.device.CPU(notice_level=2)
+device = hoomd.device.CPU(notice_level=10)
 sim = hoomd.Simulation(device=device)
 
 filename = 'liddrivencavity_408_408_11_vs_0.003_init.gsd'
@@ -145,7 +145,7 @@ if device.communicator.rank == 0:
     print(f'Integrator Methods: {integrator.methods[:]}')
     print(f'Simulation Computes: {sim.operations.computes[:]}')
 
-gsd_trigger = hoomd.trigger.Periodic(10)
+gsd_trigger = hoomd.trigger.Periodic(100)
 gsd_writer = hoomd.write.GSD(filename=dumpname,
                              trigger=gsd_trigger,
                              mode='wb',
@@ -177,6 +177,3 @@ if device.communicator.rank == 0:
     print(f'Starting Run at {dt_string}')
 
 sim.run(steps, write_at_start=True)
-
-if device.communicator.rank == 0:
-    export_gsd2vtu.export_spf(dumpname)
