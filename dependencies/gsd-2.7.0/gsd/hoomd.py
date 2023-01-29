@@ -163,34 +163,56 @@ class ParticleData(object):
     _default_value['types'] = ['A']
     _default_value['typeid'] = numpy.uint32(0)
     _default_value['mass'] = numpy.float32(1.0)
-    _default_value['charge'] = numpy.float32(0)
-    _default_value['diameter'] = numpy.float32(1.0)
+    # _default_value['charge'] = numpy.float32(0)
+    # _default_value['diameter'] = numpy.float32(1.0)
     _default_value['body'] = numpy.int32(-1)
-    _default_value['moment_inertia'] = numpy.array([0, 0, 0],
-                                                   dtype=numpy.float32)
+    # _default_value['moment_inertia'] = numpy.array([0, 0, 0],dtype=numpy.float32)
     _default_value['position'] = numpy.array([0, 0, 0], dtype=numpy.float32)
-    _default_value['orientation'] = numpy.array([1, 0, 0, 0],
-                                                dtype=numpy.float32)
+    # _default_value['orientation'] = numpy.array([1, 0, 0, 0],
+    #                                             dtype=numpy.float32)
     _default_value['velocity'] = numpy.array([0, 0, 0], dtype=numpy.float32)
-    _default_value['angmom'] = numpy.array([0, 0, 0, 0], dtype=numpy.float32)
+    _default_value['slength'] = numpy.float32(1.0)
+    # _default_value['dpe'] = numpy.array([0,0,0], dtype=numpy.float32);
+    _default_value['density'] = numpy.float32(0.0)
+    _default_value['pressure'] = numpy.float32(0.0)
+    _default_value['energy'] = numpy.float32(0.0)
+    _default_value['auxiliary1'] = numpy.array([0,0,0], dtype=numpy.float32)
+    _default_value['auxiliary2'] = numpy.array([0,0,0], dtype=numpy.float32)
+    _default_value['auxiliary3'] = numpy.array([0,0,0], dtype=numpy.float32)
+    _default_value['auxiliary4'] = numpy.array([0,0,0], dtype=numpy.float32)
+    # _default_value['angmom'] = numpy.array([0, 0, 0, 0], dtype=numpy.float32)
     _default_value['image'] = numpy.array([0, 0, 0], dtype=numpy.int32)
     _default_value['type_shapes'] = [{}]
 
     def __init__(self):
         self.N = 0
         self.position = None
-        self.orientation = None
+        # self.orientation = None
         self.types = None
         self.typeid = None
         self.mass = None
-        self.charge = None
-        self.diameter = None
+        # self.charge = None
+        # self.diameter = None
         self.body = None
-        self.moment_inertia = None
+        # self.moment_inertia = None
         self.velocity = None
-        self.angmom = None
+        self.slength = None;
+        # self.dpe = None;
+        self.density = None;
+        self.pressure = None;
+        self.energy = None;
+        self.auxiliary1 = None;
+        self.auxiliary2 = None;
+        self.auxiliary3 = None;
+        self.auxiliary4 = None;
+        # self.angmom = None
         self.image = None
         self.type_shapes = None
+
+
+
+
+
 
     def validate(self):
         """Validate all attributes.
@@ -210,10 +232,10 @@ class ParticleData(object):
             self.position = numpy.ascontiguousarray(self.position,
                                                     dtype=numpy.float32)
             self.position = self.position.reshape([self.N, 3])
-        if self.orientation is not None:
-            self.orientation = numpy.ascontiguousarray(self.orientation,
-                                                       dtype=numpy.float32)
-            self.orientation = self.orientation.reshape([self.N, 4])
+        # if self.orientation is not None:
+        #     self.orientation = numpy.ascontiguousarray(self.orientation,
+        #                                                dtype=numpy.float32)
+        #     self.orientation = self.orientation.reshape([self.N, 4])
         if self.typeid is not None:
             self.typeid = numpy.ascontiguousarray(self.typeid,
                                                   dtype=numpy.uint32)
@@ -221,29 +243,58 @@ class ParticleData(object):
         if self.mass is not None:
             self.mass = numpy.ascontiguousarray(self.mass, dtype=numpy.float32)
             self.mass = self.mass.reshape([self.N])
-        if self.charge is not None:
-            self.charge = numpy.ascontiguousarray(self.charge,
-                                                  dtype=numpy.float32)
-            self.charge = self.charge.reshape([self.N])
-        if self.diameter is not None:
-            self.diameter = numpy.ascontiguousarray(self.diameter,
-                                                    dtype=numpy.float32)
-            self.diameter = self.diameter.reshape([self.N])
+        # if self.charge is not None:
+        #     self.charge = numpy.ascontiguousarray(self.charge,
+        #                                           dtype=numpy.float32)
+        #     self.charge = self.charge.reshape([self.N])
+        # if self.diameter is not None:
+        #     self.diameter = numpy.ascontiguousarray(self.diameter,
+        #                                             dtype=numpy.float32)
+        #     self.diameter = self.diameter.reshape([self.N])
         if self.body is not None:
             self.body = numpy.ascontiguousarray(self.body, dtype=numpy.int32)
             self.body = self.body.reshape([self.N])
-        if self.moment_inertia is not None:
-            self.moment_inertia = numpy.ascontiguousarray(self.moment_inertia,
-                                                          dtype=numpy.float32)
-            self.moment_inertia = self.moment_inertia.reshape([self.N, 3])
+        # if self.moment_inertia is not None:
+        #     self.moment_inertia = numpy.ascontiguousarray(self.moment_inertia,
+        #                                                   dtype=numpy.float32)
+        #     self.moment_inertia = self.moment_inertia.reshape([self.N, 3])
         if self.velocity is not None:
             self.velocity = numpy.ascontiguousarray(self.velocity,
                                                     dtype=numpy.float32)
             self.velocity = self.velocity.reshape([self.N, 3])
-        if self.angmom is not None:
-            self.angmom = numpy.ascontiguousarray(self.angmom,
-                                                  dtype=numpy.float32)
-            self.angmom = self.angmom.reshape([self.N, 4])
+        
+        if self.slength is not None:
+            self.slength = numpy.ascontiguousarray(self.slength, dtype=numpy.float32);
+            self.slength = self.slength.reshape([self.N])
+        if self.density is not None:
+            self.density = numpy.ascontiguousarray(self.density, dtype=numpy.float32);
+            self.density = self.density.reshape([self.N])
+        if self.pressure is not None:
+            self.pressure = numpy.ascontiguousarray(self.pressure, dtype=numpy.float32);
+            self.pressure = self.pressure.reshape([self.N])
+        if self.energy is not None:
+            self.energy = numpy.ascontiguousarray(self.energy, dtype=numpy.float32);
+            self.energy = self.energy.reshape([self.N])
+        # if self.dpe is not None:
+        #     self.dpe = numpy.ascontiguousarray(self.dpe, dtype=numpy.float32);
+        #     self.dpe = self.dpe.reshape([self.N, 3]);
+        if self.auxiliary1 is not None:
+            self.auxiliary1 = numpy.ascontiguousarray(self.auxiliary1, dtype=numpy.float32);
+            self.auxiliary1 = self.auxiliary1.reshape([self.N, 3]);
+        if self.auxiliary2 is not None:
+            self.auxiliary2 = numpy.ascontiguousarray(self.auxiliary2, dtype=numpy.float32);
+            self.auxiliary2 = self.auxiliary2.reshape([self.N, 3]);
+        if self.auxiliary3 is not None:
+            self.auxiliary3 = numpy.ascontiguousarray(self.auxiliary3, dtype=numpy.float32);
+            self.auxiliary3 = self.auxiliary3.reshape([self.N, 3]);
+        if self.auxiliary4 is not None:
+            self.auxiliary4 = numpy.ascontiguousarray(self.auxiliary4, dtype=numpy.float32);
+            self.auxiliary4 = self.auxiliary4.reshape([self.N, 3]);
+
+        # if self.angmom is not None:
+        #     self.angmom = numpy.ascontiguousarray(self.angmom,
+        #                                           dtype=numpy.float32)
+        #     self.angmom = self.angmom.reshape([self.N, 4])
         if self.image is not None:
             self.image = numpy.ascontiguousarray(self.image, dtype=numpy.int32)
             self.image = self.image.reshape([self.N, 3])
@@ -434,35 +485,35 @@ class Snapshot(object):
         self.configuration = ConfigurationData()
         self.particles = ParticleData()
         self.bonds = BondData(2)
-        self.angles = BondData(3)
-        self.dihedrals = BondData(4)
-        self.impropers = BondData(4)
+        # self.angles = BondData(3)
+        # self.dihedrals = BondData(4)
+        # self.impropers = BondData(4)
         self.constraints = ConstraintData()
         self.pairs = BondData(2)
         self.state = {}
         self.log = {}
 
-        self._valid_state = [
-            'hpmc/integrate/d',
-            'hpmc/integrate/a',
-            'hpmc/sphere/radius',
-            'hpmc/sphere/orientable',
-            'hpmc/ellipsoid/a',
-            'hpmc/ellipsoid/b',
-            'hpmc/ellipsoid/c',
-            'hpmc/convex_polyhedron/N',
-            'hpmc/convex_polyhedron/vertices',
-            'hpmc/convex_spheropolyhedron/N',
-            'hpmc/convex_spheropolyhedron/vertices',
-            'hpmc/convex_spheropolyhedron/sweep_radius',
-            'hpmc/convex_polygon/N',
-            'hpmc/convex_polygon/vertices',
-            'hpmc/convex_spheropolygon/N',
-            'hpmc/convex_spheropolygon/vertices',
-            'hpmc/convex_spheropolygon/sweep_radius',
-            'hpmc/simple_polygon/N',
-            'hpmc/simple_polygon/vertices',
-        ]
+        # self._valid_state = [
+        #     'hpmc/integrate/d',
+        #     'hpmc/integrate/a',
+        #     'hpmc/sphere/radius',
+        #     'hpmc/sphere/orientable',
+        #     'hpmc/ellipsoid/a',
+        #     'hpmc/ellipsoid/b',
+        #     'hpmc/ellipsoid/c',
+        #     'hpmc/convex_polyhedron/N',
+        #     'hpmc/convex_polyhedron/vertices',
+        #     'hpmc/convex_spheropolyhedron/N',
+        #     'hpmc/convex_spheropolyhedron/vertices',
+        #     'hpmc/convex_spheropolyhedron/sweep_radius',
+        #     'hpmc/convex_polygon/N',
+        #     'hpmc/convex_polygon/vertices',
+        #     'hpmc/convex_spheropolygon/N',
+        #     'hpmc/convex_spheropolygon/vertices',
+        #     'hpmc/convex_spheropolygon/sweep_radius',
+        #     'hpmc/simple_polygon/N',
+        #     'hpmc/simple_polygon/vertices',
+        # ]
 
     def validate(self):
         """Validate all contained snapshot data."""
@@ -471,162 +522,162 @@ class Snapshot(object):
         self.configuration.validate()
         self.particles.validate()
         self.bonds.validate()
-        self.angles.validate()
-        self.dihedrals.validate()
-        self.impropers.validate()
+        # self.angles.validate()
+        # self.dihedrals.validate()
+        # self.impropers.validate()
         self.constraints.validate()
         self.pairs.validate()
 
-        # validate HPMC state
-        if self.particles.types is not None:
-            NT = len(self.particles.types)
-        else:
-            NT = 1
+        # # validate HPMC state
+        # if self.particles.types is not None:
+        #     NT = len(self.particles.types)
+        # else:
+        #     NT = 1
 
-        if 'hpmc/integrate/d' in self.state:
-            self.state['hpmc/integrate/d'] = \
-                numpy.ascontiguousarray(self.state['hpmc/integrate/d'],
-                                        dtype=numpy.float64)
-            self.state['hpmc/integrate/d'] = \
-                self.state['hpmc/integrate/d'].reshape([1])
+        # if 'hpmc/integrate/d' in self.state:
+        #     self.state['hpmc/integrate/d'] = \
+        #         numpy.ascontiguousarray(self.state['hpmc/integrate/d'],
+        #                                 dtype=numpy.float64)
+        #     self.state['hpmc/integrate/d'] = \
+        #         self.state['hpmc/integrate/d'].reshape([1])
 
-        if 'hpmc/integrate/a' in self.state:
-            self.state['hpmc/integrate/a'] = \
-                numpy.ascontiguousarray(self.state['hpmc/integrate/a'],
-                                        dtype=numpy.float64)
-            self.state['hpmc/integrate/a'] = \
-                self.state['hpmc/integrate/a'].reshape([1])
+        # if 'hpmc/integrate/a' in self.state:
+        #     self.state['hpmc/integrate/a'] = \
+        #         numpy.ascontiguousarray(self.state['hpmc/integrate/a'],
+        #                                 dtype=numpy.float64)
+        #     self.state['hpmc/integrate/a'] = \
+        #         self.state['hpmc/integrate/a'].reshape([1])
 
-        if 'hpmc/sphere/radius' in self.state:
-            self.state['hpmc/sphere/radius'] = \
-                numpy.ascontiguousarray(self.state['hpmc/sphere/radius'],
-                                        dtype=numpy.float32)
-            self.state['hpmc/sphere/radius'] = \
-                self.state['hpmc/sphere/radius'].reshape([NT])
+        # if 'hpmc/sphere/radius' in self.state:
+        #     self.state['hpmc/sphere/radius'] = \
+        #         numpy.ascontiguousarray(self.state['hpmc/sphere/radius'],
+        #                                 dtype=numpy.float32)
+        #     self.state['hpmc/sphere/radius'] = \
+        #         self.state['hpmc/sphere/radius'].reshape([NT])
 
-        if 'hpmc/sphere/orientable' in self.state:
-            self.state['hpmc/sphere/orientable'] = \
-                numpy.ascontiguousarray(self.state['hpmc/sphere/orientable'],
-                                        dtype=numpy.uint8)
-            self.state['hpmc/sphere/orientable'] = \
-                self.state['hpmc/sphere/orientable'].reshape([NT])
+        # if 'hpmc/sphere/orientable' in self.state:
+        #     self.state['hpmc/sphere/orientable'] = \
+        #         numpy.ascontiguousarray(self.state['hpmc/sphere/orientable'],
+        #                                 dtype=numpy.uint8)
+        #     self.state['hpmc/sphere/orientable'] = \
+        #         self.state['hpmc/sphere/orientable'].reshape([NT])
 
-        if 'hpmc/ellipsoid/a' in self.state:
-            self.state['hpmc/ellipsoid/a'] = \
-                numpy.ascontiguousarray(self.state['hpmc/ellipsoid/a'],
-                                        dtype=numpy.float32)
-            self.state['hpmc/ellipsoid/a'] = \
-                self.state['hpmc/ellipsoid/a'].reshape([NT])
-            self.state['hpmc/ellipsoid/b'] = \
-                numpy.ascontiguousarray(self.state['hpmc/ellipsoid/b'],
-                                        dtype=numpy.float32)
-            self.state['hpmc/ellipsoid/b'] = \
-                self.state['hpmc/ellipsoid/b'].reshape([NT])
-            self.state['hpmc/ellipsoid/c'] = \
-                numpy.ascontiguousarray(self.state['hpmc/ellipsoid/c'],
-                                        dtype=numpy.float32)
-            self.state['hpmc/ellipsoid/c'] = \
-                self.state['hpmc/ellipsoid/c'].reshape([NT])
+        # if 'hpmc/ellipsoid/a' in self.state:
+        #     self.state['hpmc/ellipsoid/a'] = \
+        #         numpy.ascontiguousarray(self.state['hpmc/ellipsoid/a'],
+        #                                 dtype=numpy.float32)
+        #     self.state['hpmc/ellipsoid/a'] = \
+        #         self.state['hpmc/ellipsoid/a'].reshape([NT])
+        #     self.state['hpmc/ellipsoid/b'] = \
+        #         numpy.ascontiguousarray(self.state['hpmc/ellipsoid/b'],
+        #                                 dtype=numpy.float32)
+        #     self.state['hpmc/ellipsoid/b'] = \
+        #         self.state['hpmc/ellipsoid/b'].reshape([NT])
+        #     self.state['hpmc/ellipsoid/c'] = \
+        #         numpy.ascontiguousarray(self.state['hpmc/ellipsoid/c'],
+        #                                 dtype=numpy.float32)
+        #     self.state['hpmc/ellipsoid/c'] = \
+        #         self.state['hpmc/ellipsoid/c'].reshape([NT])
 
-        if 'hpmc/convex_polyhedron/N' in self.state:
-            self.state['hpmc/convex_polyhedron/N'] = \
-                numpy.ascontiguousarray(self.state['hpmc/convex_polyhedron/N'],
-                                        dtype=numpy.uint32)
-            self.state['hpmc/convex_polyhedron/N'] = \
-                self.state['hpmc/convex_polyhedron/N'].reshape([NT])
-            sumN = numpy.sum(self.state['hpmc/convex_polyhedron/N'])
+        # if 'hpmc/convex_polyhedron/N' in self.state:
+        #     self.state['hpmc/convex_polyhedron/N'] = \
+        #         numpy.ascontiguousarray(self.state['hpmc/convex_polyhedron/N'],
+        #                                 dtype=numpy.uint32)
+        #     self.state['hpmc/convex_polyhedron/N'] = \
+        #         self.state['hpmc/convex_polyhedron/N'].reshape([NT])
+        #     sumN = numpy.sum(self.state['hpmc/convex_polyhedron/N'])
 
-            self.state['hpmc/convex_polyhedron/vertices'] = \
-                numpy.ascontiguousarray(
-                    self.state['hpmc/convex_polyhedron/vertices'],
-                    dtype=numpy.float32)
-            self.state['hpmc/convex_polyhedron/vertices'] = \
-                self.state['hpmc/convex_polyhedron/vertices'].reshape([sumN, 3])
+        #     self.state['hpmc/convex_polyhedron/vertices'] = \
+        #         numpy.ascontiguousarray(
+        #             self.state['hpmc/convex_polyhedron/vertices'],
+        #             dtype=numpy.float32)
+        #     self.state['hpmc/convex_polyhedron/vertices'] = \
+        #         self.state['hpmc/convex_polyhedron/vertices'].reshape([sumN, 3])
 
-        if 'hpmc/convex_spheropolyhedron/N' in self.state:
-            self.state['hpmc/convex_spheropolyhedron/N'] = \
-                numpy.ascontiguousarray(
-                    self.state['hpmc/convex_spheropolyhedron/N'],
-                    dtype=numpy.uint32)
-            self.state['hpmc/convex_spheropolyhedron/N'] = \
-                self.state['hpmc/convex_spheropolyhedron/N'].reshape([NT])
-            sumN = numpy.sum(self.state['hpmc/convex_spheropolyhedron/N'])
+        # if 'hpmc/convex_spheropolyhedron/N' in self.state:
+        #     self.state['hpmc/convex_spheropolyhedron/N'] = \
+        #         numpy.ascontiguousarray(
+        #             self.state['hpmc/convex_spheropolyhedron/N'],
+        #             dtype=numpy.uint32)
+        #     self.state['hpmc/convex_spheropolyhedron/N'] = \
+        #         self.state['hpmc/convex_spheropolyhedron/N'].reshape([NT])
+        #     sumN = numpy.sum(self.state['hpmc/convex_spheropolyhedron/N'])
 
-            self.state['hpmc/convex_spheropolyhedron/sweep_radius'] = \
-                numpy.ascontiguousarray(
-                    self.state['hpmc/convex_spheropolyhedron/sweep_radius'],
-                    dtype=numpy.float32)
-            self.state['hpmc/convex_spheropolyhedron/sweep_radius'] = \
-                self.state[
-                    'hpmc/convex_spheropolyhedron/sweep_radius'].reshape([NT])
+        #     self.state['hpmc/convex_spheropolyhedron/sweep_radius'] = \
+        #         numpy.ascontiguousarray(
+        #             self.state['hpmc/convex_spheropolyhedron/sweep_radius'],
+        #             dtype=numpy.float32)
+        #     self.state['hpmc/convex_spheropolyhedron/sweep_radius'] = \
+        #         self.state[
+        #             'hpmc/convex_spheropolyhedron/sweep_radius'].reshape([NT])
 
-            self.state['hpmc/convex_spheropolyhedron/vertices'] = \
-                numpy.ascontiguousarray(
-                    self.state['hpmc/convex_spheropolyhedron/vertices'],
-                    dtype=numpy.float32)
-            self.state['hpmc/convex_spheropolyhedron/vertices'] = \
-                self.state[
-                    'hpmc/convex_spheropolyhedron/vertices'].reshape([sumN, 3])
+        #     self.state['hpmc/convex_spheropolyhedron/vertices'] = \
+        #         numpy.ascontiguousarray(
+        #             self.state['hpmc/convex_spheropolyhedron/vertices'],
+        #             dtype=numpy.float32)
+        #     self.state['hpmc/convex_spheropolyhedron/vertices'] = \
+        #         self.state[
+        #             'hpmc/convex_spheropolyhedron/vertices'].reshape([sumN, 3])
 
-        if 'hpmc/convex_polygon/N' in self.state:
-            self.state['hpmc/convex_polygon/N'] = \
-                numpy.ascontiguousarray(self.state['hpmc/convex_polygon/N'],
-                                        dtype=numpy.uint32)
-            self.state['hpmc/convex_polygon/N'] = \
-                self.state['hpmc/convex_polygon/N'].reshape([NT])
-            sumN = numpy.sum(self.state['hpmc/convex_polygon/N'])
+        # if 'hpmc/convex_polygon/N' in self.state:
+        #     self.state['hpmc/convex_polygon/N'] = \
+        #         numpy.ascontiguousarray(self.state['hpmc/convex_polygon/N'],
+        #                                 dtype=numpy.uint32)
+        #     self.state['hpmc/convex_polygon/N'] = \
+        #         self.state['hpmc/convex_polygon/N'].reshape([NT])
+        #     sumN = numpy.sum(self.state['hpmc/convex_polygon/N'])
 
-            self.state['hpmc/convex_polygon/vertices'] = \
-                numpy.ascontiguousarray(
-                    self.state['hpmc/convex_polygon/vertices'],
-                    dtype=numpy.float32)
-            self.state['hpmc/convex_polygon/vertices'] = \
-                self.state['hpmc/convex_polygon/vertices'].reshape([sumN, 2])
+        #     self.state['hpmc/convex_polygon/vertices'] = \
+        #         numpy.ascontiguousarray(
+        #             self.state['hpmc/convex_polygon/vertices'],
+        #             dtype=numpy.float32)
+        #     self.state['hpmc/convex_polygon/vertices'] = \
+        #         self.state['hpmc/convex_polygon/vertices'].reshape([sumN, 2])
 
-        if 'hpmc/convex_spheropolygon/N' in self.state:
-            self.state['hpmc/convex_spheropolygon/N'] = \
-                numpy.ascontiguousarray(
-                    self.state['hpmc/convex_spheropolygon/N'],
-                    dtype=numpy.uint32)
-            self.state['hpmc/convex_spheropolygon/N'] = \
-                self.state['hpmc/convex_spheropolygon/N'].reshape([NT])
-            sumN = numpy.sum(self.state['hpmc/convex_spheropolygon/N'])
+        # if 'hpmc/convex_spheropolygon/N' in self.state:
+        #     self.state['hpmc/convex_spheropolygon/N'] = \
+        #         numpy.ascontiguousarray(
+        #             self.state['hpmc/convex_spheropolygon/N'],
+        #             dtype=numpy.uint32)
+        #     self.state['hpmc/convex_spheropolygon/N'] = \
+        #         self.state['hpmc/convex_spheropolygon/N'].reshape([NT])
+        #     sumN = numpy.sum(self.state['hpmc/convex_spheropolygon/N'])
 
-            self.state['hpmc/convex_spheropolygon/sweep_radius'] = \
-                numpy.ascontiguousarray(
-                    self.state['hpmc/convex_spheropolygon/sweep_radius'],
-                    dtype=numpy.float32)
-            self.state['hpmc/convex_spheropolygon/sweep_radius'] = \
-                self.state[
-                    'hpmc/convex_spheropolygon/sweep_radius'].reshape([NT])
+        #     self.state['hpmc/convex_spheropolygon/sweep_radius'] = \
+        #         numpy.ascontiguousarray(
+        #             self.state['hpmc/convex_spheropolygon/sweep_radius'],
+        #             dtype=numpy.float32)
+        #     self.state['hpmc/convex_spheropolygon/sweep_radius'] = \
+        #         self.state[
+        #             'hpmc/convex_spheropolygon/sweep_radius'].reshape([NT])
 
-            self.state['hpmc/convex_spheropolygon/vertices'] = \
-                numpy.ascontiguousarray(
-                    self.state['hpmc/convex_spheropolygon/vertices'],
-                    dtype=numpy.float32)
-            self.state['hpmc/convex_spheropolygon/vertices'] = \
-                self.state[
-                    'hpmc/convex_spheropolygon/vertices'].reshape([sumN, 2])
+        #     self.state['hpmc/convex_spheropolygon/vertices'] = \
+        #         numpy.ascontiguousarray(
+        #             self.state['hpmc/convex_spheropolygon/vertices'],
+        #             dtype=numpy.float32)
+        #     self.state['hpmc/convex_spheropolygon/vertices'] = \
+        #         self.state[
+        #             'hpmc/convex_spheropolygon/vertices'].reshape([sumN, 2])
 
-        if 'hpmc/simple_polygon/N' in self.state:
-            self.state['hpmc/simple_polygon/N'] = \
-                numpy.ascontiguousarray(self.state['hpmc/simple_polygon/N'],
-                                        dtype=numpy.uint32)
-            self.state['hpmc/simple_polygon/N'] = \
-                self.state['hpmc/simple_polygon/N'].reshape([NT])
-            sumN = numpy.sum(self.state['hpmc/simple_polygon/N'])
+        # if 'hpmc/simple_polygon/N' in self.state:
+        #     self.state['hpmc/simple_polygon/N'] = \
+        #         numpy.ascontiguousarray(self.state['hpmc/simple_polygon/N'],
+        #                                 dtype=numpy.uint32)
+        #     self.state['hpmc/simple_polygon/N'] = \
+        #         self.state['hpmc/simple_polygon/N'].reshape([NT])
+        #     sumN = numpy.sum(self.state['hpmc/simple_polygon/N'])
 
-            self.state['hpmc/simple_polygon/vertices'] = \
-                numpy.ascontiguousarray(
-                    self.state['hpmc/simple_polygon/vertices'],
-                    dtype=numpy.float32)
-            self.state['hpmc/simple_polygon/vertices'] = \
-                self.state[
-                    'hpmc/simple_polygon/vertices'].reshape([sumN, 2])
+        #     self.state['hpmc/simple_polygon/vertices'] = \
+        #         numpy.ascontiguousarray(
+        #             self.state['hpmc/simple_polygon/vertices'],
+        #             dtype=numpy.float32)
+        #     self.state['hpmc/simple_polygon/vertices'] = \
+        #         self.state[
+        #             'hpmc/simple_polygon/vertices'].reshape([sumN, 2])
 
-        for k in self.state:
-            if k not in self._valid_state:
-                raise RuntimeError('Not a valid state: ' + k)
+        # for k in self.state:
+        #     if k not in self._valid_state:
+        #         raise RuntimeError('Not a valid state: ' + k)
 
 
 class _HOOMDTrajectoryIterable(object):
@@ -740,9 +791,9 @@ class HOOMDTrajectory(object):
                 'configuration',
                 'particles',
                 'bonds',
-                'angles',
-                'dihedrals',
-                'impropers',
+                # 'angles',
+                # 'dihedrals',
+                # 'impropers',
                 'constraints',
                 'pairs',
         ]:
@@ -769,9 +820,9 @@ class HOOMDTrajectory(object):
 
                     self.file.write_chunk(path + '/' + name, data)
 
-        # write state data
-        for state, data in snapshot.state.items():
-            self.file.write_chunk('state/' + state, data)
+        # # write state data
+        # for state, data in snapshot.state.items():
+        #     self.file.write_chunk('state/' + state, data)
 
         # write log data
         for log, data in snapshot.log.items():
@@ -902,9 +953,9 @@ class HOOMDTrajectory(object):
         for path in [
                 'particles',
                 'bonds',
-                'angles',
-                'dihedrals',
-                'impropers',
+                # 'angles',
+                # 'dihedrals',
+                # 'impropers',
                 'constraints',
                 'pairs',
         ]:
@@ -978,11 +1029,11 @@ class HOOMDTrajectory(object):
 
                     container.__dict__[name].flags.writeable = False
 
-        # read state data
-        for state in snap._valid_state:
-            if self.file.chunk_exists(frame=idx, name='state/' + state):
-                snap.state[state] = self.file.read_chunk(frame=idx,
-                                                         name='state/' + state)
+        # # read state data
+        # for state in snap._valid_state:
+        #     if self.file.chunk_exists(frame=idx, name='state/' + state):
+        #         snap.state[state] = self.file.read_chunk(frame=idx,
+        #                                                  name='state/' + state)
 
         # read log data
         logged_data_names = self.file.find_matching_chunk_names('log/')
