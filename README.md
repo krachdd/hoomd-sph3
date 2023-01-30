@@ -15,11 +15,11 @@ sudo apt install libcereal-dev
 - **pybind11** instead of old BOOST Verison (This makes life easy.)
 - can be build not only on NVIDIA cards
 - use Type-Parameter dictionaries for class metaparameter handling
-- version later than python 3.10
+- version later than python 3.10, or 3.9
 - better internal separation of model, logger, and integrator
 - access to particle fields direct in python interface easily possible
 - generally more modularized (in all aspects of the model)
-- **HOOMD-Blue v3.3.0** instead of **HOOMD-Blue v1.8.2/v2.2.0**. Try to keep that up to date in the future
+- **HOOMD-Blue v3.8.1** instead of **HOOMD-Blue v1.8.2/v2.2.0**. Try to keep that up to date in the future
 
 ### Organizational apsects
 - differnt Loggers, physical models, integrators can be applied added additivly (use filters instead of groups)
@@ -63,8 +63,7 @@ def _attach(self):
 ``` 
 makes wierd errors?
 - standardized input files for parameter input. USE this and add lines if neccessary
-- write standardized tests at least for the essentials 
-- dpe particle data array to 3 seperate ones DONE!
+- write standardized tests at least for the essentials
 - check if bcast_double function is working correctly
 - write metadata to textfile, therefore create an additional helper module (must be able to be grep-ed)
 - can we remove slength from the flags, to communicate in Singlephaseflow.h virtual CommFlags getRequestedCommFlags ? 
