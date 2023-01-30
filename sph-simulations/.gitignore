@@ -1,2 +1,9 @@
 # all input files
 *.txt
+
+# all result files
+*.gsd
+*.vtu
+*.raw
+*.log
+

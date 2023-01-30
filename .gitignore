@@ -4,12 +4,6 @@ helper_modules/delete_solid_sphparticles/__pycache__/
 helper_modules/read_input_from_txt/__pycache__/
 helper_modules/get_properties_raw/__pycache__/
 
-# all result files
-*.gsd
-*.vtu
-*.raw
-*.log
-
 # Prerequisites
 *.d
 
