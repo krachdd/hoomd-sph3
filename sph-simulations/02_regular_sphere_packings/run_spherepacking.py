@@ -182,7 +182,7 @@ logger = hoomd.logging.Logger(categories=['scalar', 'string'])
 logger.add(sim, quantities=['timestep', 'tps', 'walltime'])
 logger.add(spf_properties, quantities=['abs_velocity', 'num_particles', 'fluid_vel_x_sum', 'mean_density'])
 logger[('custom', 'RE')] = (lambda: RHO0 * spf_properties.abs_velocity * LREF / (MU), 'scalar')
-logger[('custom', 'k_1[1e-9]')] = (lambda: (MU / (RHO0 * FX)) * (spf_properties.fluid_vel_x_sum) * porosity *1.0e9, 'scalar')
+logger[('custom', 'k_1[1e-9]')] = (lambda: (MU / (RHO0 * FX)) * (spf_properties) * porosity *1.0e9, 'scalar')
 table = hoomd.write.Table(trigger=log_trigger, 
                           logger=logger, max_header_len = 10)
 sim.operations.writers.append(table)
