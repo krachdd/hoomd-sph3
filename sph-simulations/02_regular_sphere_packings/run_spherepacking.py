@@ -166,7 +166,7 @@ if device.communicator.rank == 0:
 
 
 
-gsd_trigger = hoomd.trigger.Periodic(100)
+gsd_trigger = hoomd.trigger.Periodic(500)
 gsd_writer = hoomd.write.GSD(filename=dumpname,
                              trigger=gsd_trigger,
                              mode='wb',
