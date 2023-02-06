@@ -25,6 +25,7 @@ sim = hoomd.Simulation(device=device)
 
 
 
+
 # System sizes
 LREF = 0.01                    # m
 radius = 0.35 * LREF
@@ -34,9 +35,9 @@ LY = LREF
 LZ = LREF
 
 # Parameters
-KERNEL  = 'CubicSpline'
-NL      = 80                       # INT
-FX      = 0.1                      # m/s^2
+KERNEL  = 'WendlandC4'
+NL      = 100                       # INT
+# FX      = 0.1                      # m/s^2
 
 DX      = LREF/NL                  # m
 V       = DX*DX*DX                 # m^3
@@ -47,12 +48,15 @@ DRHO = 0.01                        # %
 MU   = 0.01                        # Pa s
 
 
-filename = 'Sphere_in_box_448467_init.gsd'
+filename = 'Sphere_in_box_866085_init.gsd'
+
+FX    = np.float64(sys.argv[1])
+
 dt_string = datetime.now().strftime("%Y-%m-%d-%H-%M-%S")
 logname  = filename.replace('_init.gsd', '')
-logname  = f'{logname}_run_{dt_string}.log'
+logname  = f'{logname}_run_{FX}_{dt_string}.log'
 dumpname = filename.replace('_init.gsd', '')
-dumpname = f'{dumpname}_run.gsd'
+dumpname = f'{dumpname}_run_{FX}.gsd'
 
 sim.create_state_from_gsd(filename = filename)
 
@@ -76,7 +80,7 @@ with sim.state.cpu_local_snapshot as snap:
 voxelsize = DX
 # define model parameters
 densitymethod = 'CONTINUITY'
-steps = 20001
+steps = 100001
 FX    = np.float64(sys.argv[1])
 if device.communicator.rank == 0:
     print(f'Body Force: {FX}')
@@ -120,7 +124,7 @@ if device.communicator.rank == 0:
 model.mu = MU
 model.densitymethod = densitymethod
 model.gx = FX
-model.damp = 1000
+model.damp = 5000
 # model.artificialviscosity = True
 model.artificialviscosity = True 
 model.alpha = 0.2
@@ -128,6 +132,7 @@ model.beta = 0.0
 model.densitydiffusion = False
 # model.ddiff = 0.1
 model.shepardrenormanlization = False 
+model.densitydiffusion = False
 
 
 
@@ -149,7 +154,7 @@ maximum_smoothing_length = device.communicator.bcast_double(maximum_smoothing_le
 model.max_sl = maximum_smoothing_length
 
 UREF = FX*LREF*LREF*0.25/(MU/RHO0)
-dt = model.compute_dt(LREF, UREF, DRHO)
+dt = model.compute_dt(LREF, UREF, DX, DRHO)
 
 integrator = hoomd.sph.Integrator(dt=dt)
 
@@ -173,7 +178,7 @@ if device.communicator.rank == 0:
 
 
 
-gsd_trigger = hoomd.trigger.Periodic(100)
+gsd_trigger = hoomd.trigger.Periodic(500)
 gsd_writer = hoomd.write.GSD(filename=dumpname,
                              trigger=gsd_trigger,
                              mode='wb',
@@ -187,7 +192,9 @@ sim.operations.writers.append(gsd_writer)
 log_trigger = hoomd.trigger.Periodic(100)
 logger = hoomd.logging.Logger(categories=['scalar', 'string'])
 logger.add(sim, quantities=['timestep', 'tps', 'walltime'])
-logger.add(spf_properties, quantities=['kinetic_energy', 'num_particles', 'fluid_vel_x_sum', 'mean_density'])
+logger.add(spf_properties, quantities=['abs_velocity', 'num_particles', 'fluid_vel_x_sum', 'mean_density'])
+logger[('custom', 'RE')] = (lambda: RHO0 * spf_properties.abs_velocity * LREF / (MU), 'scalar')
+# logger[('custom', 'k_1[1e-9]')] = (lambda: (MU / (RHO0 * FX)) * (spf_properties.abs_velocity) * porosity *1.0e9, 'scalar')
 table = hoomd.write.Table(trigger=log_trigger, 
                           logger=logger, max_header_len = 10)
 
@@ -215,5 +222,5 @@ if device.communicator.rank == 0:
 
 sim.run(steps, write_at_start=True)
 
-if device.communicator.rank == 0:
-    export_gsd2vtu.export_spf(dumpname)
+# if device.communicator.rank == 0:
+#     export_gsd2vtu.export_spf(dumpname)

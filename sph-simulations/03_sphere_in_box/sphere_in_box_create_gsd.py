@@ -29,7 +29,7 @@ LZ = LREF
 
 # Parameters
 KERNEL  = 'CubicSpline'
-NL      = 80                       # INT
+NL      = 100                       # INT
 FX      = 0.1                      # m/s^2
 
 DX      = LREF/NL                  # m
@@ -38,7 +38,7 @@ V       = DX*DX*DX                 # m^3
 RHO0 = 1000.0                      # kg / m^3
 M    = RHO0*V                      # kg
 DRHO = 0.05                        # %
-MU   = 0.01                        # Pa s
+MU   = 0.001                       # Pa s
 
 H       = hoomd.sph.kernel.OptimalH[KERNEL]*DX       # m
 RCUT    = hoomd.sph.kernel.Kappa[KERNEL]*H           # m
@@ -107,3 +107,6 @@ N_particles = N_particles - ndel_particles
 hoomd.write.GSD.write(state = sim.state, mode = 'wb', filename = "Sphere_in_box_{0}_init.gsd".format(N_particles))
 
 print(f'Filename: Sphere_in_box_{N_particles}_init.gsd, Number of particles: {N_particles}')
+
+# if device.communicator.rank == 0:
+#     export_gsd2vtu.export_spf("Sphere_in_box_{0}_init.gsd".format(N_particles))
