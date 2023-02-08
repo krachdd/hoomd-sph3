@@ -102,7 +102,7 @@ def delete_solids(sim, device, kernel, dt, mu, DX, rho0):
     print(f'Rank: {device.communicator.rank} --> Before removeParticle')
 
     for t in tags:
-        print(f'Rank: {device.communicator.rank} --> Remove particle {t} of {deleted}')
+        # print(f'Rank: {device.communicator.rank} --> Remove particle {t} of {deleted}')
         sim.state.removeParticle(t)
     
     print(f'Rank: {device.communicator.rank} --> Before  Barrier')
