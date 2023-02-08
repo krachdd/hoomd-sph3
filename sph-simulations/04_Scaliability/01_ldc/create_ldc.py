@@ -12,9 +12,12 @@ import numpy as np
 import math
 # import itertools
 from datetime import datetime
-import export_gsd2vtu 
-import read_input_fromtxt
-import delete_solids_initial_timestep
+
+# import export_gsd2vtu 
+# import read_input_fromtxt
+# import delete_solids_initial_timestep
+
+import gsd.hoomd
 # ------------------------------------------------------------
 
 
@@ -74,7 +77,7 @@ masses     = np.ones((positions.shape[0]), dtype = np.float32) * mass
 slengths   = np.ones((positions.shape[0]), dtype = np.float32) * slength
 densities  = np.ones((positions.shape[0]), dtype = np.float32) * rho0
 
-# create Snapshot 
+# # create Snapshot 
 snapshot = hoomd.Snapshot(device.communicator)
 snapshot.configuration.box     = [box_lx, box_ly, box_lz] + [0, 0, 0]
 snapshot.particles.N           = n_particles
