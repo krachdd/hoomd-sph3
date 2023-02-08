@@ -17,8 +17,12 @@ Attributes:
                        not the file layer version it reads/writes.
 """
 
-import sys
+import sys, os
 from .version import __version__  # noqa: F401
+
+
+
+print(f'{os.path.basename(__file__)}: init')
 
 if sys.version_info < (3, 5) or sys.version_info >= (4, 0):
     raise RuntimeError("Python ~= 3.5 is required")

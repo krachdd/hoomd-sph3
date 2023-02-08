@@ -22,6 +22,7 @@ from collections import OrderedDict
 import logging
 import json
 import warnings
+import os
 
 try:
     from gsd import fl
@@ -52,7 +53,7 @@ class ConfigurationData(object):
 
 
     """
-
+    print(f'{os.path.basename(__file__)}: Class ConfigurationData')
     _default_value = OrderedDict()
     _default_value['step'] = numpy.uint64(0)
     _default_value['dimensions'] = numpy.uint8(3)
@@ -158,6 +159,7 @@ class ParticleData(object):
             visualizing particle types (:chunk:`particles/type_shapes`).
     """
 
+    print(f'{os.path.basename(__file__)}: Class ParticleData')
     _default_value = OrderedDict()
     _default_value['N'] = numpy.uint32(0)
     _default_value['types'] = ['A']
@@ -355,7 +357,7 @@ class BondData(object):
           :chunk:`angles/group`, :chunk:`dihedrals/group`,
           :chunk:`impropers/group`, :chunk:`pairs/group`).
     """
-
+    print(f'{os.path.basename(__file__)}: Class BondData')
     def __init__(self, M):
         self.M = M
         self.N = 0
@@ -419,7 +421,7 @@ class ConstraintData(object):
             Tags of the particles in the constraint
             (:chunk:`constraints/group`).
     """
-
+    print(f'{os.path.basename(__file__)}: Class ConstraintData')
     def __init__(self):
         self.M = 2
         self.N = 0
@@ -480,7 +482,7 @@ class Snapshot(object):
         log (dict): Logged data (values must be `numpy.ndarray` or
             `array_like`)
     """
-
+    print(f'{os.path.basename(__file__)}: Class Snapshot')
     def __init__(self):
         self.configuration = ConfigurationData()
         self.particles = ParticleData()
@@ -733,6 +735,8 @@ class HOOMDTrajectory(object):
     Open hoomd GSD files with `open`.
     """
 
+    print(f'{os.path.basename(__file__)}: Class HOOMDTrajectory')
+
     def __init__(self, file):
         if file.mode == 'ab':
             raise ValueError('Append mode not yet supported')
@@ -757,6 +761,7 @@ class HOOMDTrajectory(object):
 
     @property
     def file(self):
+        print(f'{os.path.basename(__file__)}: Function file')
         """:class:`gsd.fl.GSDFile`: The file handle."""
         return self._file
 
@@ -777,6 +782,7 @@ class HOOMDTrajectory(object):
         frame. If it is the same, do not write it out as it can be instantiated
         either from the value at the initial frame or the default value.
         """
+        print(f'{os.path.basename(__file__)}: Function append')
         logger.debug('Appending snapshot to hoomd trajectory: '
                      + str(self.file))
 
@@ -832,11 +838,13 @@ class HOOMDTrajectory(object):
 
     def truncate(self):
         """Remove all frames from the file."""
+        print(f'{os.path.basename(__file__)}: Function truncate')
         self.file.truncate()
         self._initial_frame = None
 
     def close(self):
         """Close the file."""
+        print(f'{os.path.basename(__file__)}: Function close')
         self.file.close()
         del self._initial_frame
 
@@ -882,6 +890,7 @@ class HOOMDTrajectory(object):
                 instances. This could be another HOOMDTrajectory, a generator
                 that modifies snapshots, or a list of snapshots.
         """
+        print(f'{os.path.basename(__file__)}: Function extend')
         for item in iterable:
             self.append(item)
 
@@ -901,6 +910,9 @@ class HOOMDTrajectory(object):
 
         .. deprecated:: v2.5
         """
+
+        print(f'{os.path.basename(__file__)}: Function read_frame')
+
         warnings.warn("Deprecated, trajectory[idx]", DeprecationWarning)
         return self._read_frame(idx)
 
@@ -1131,6 +1143,7 @@ def open(name, mode='rb'):
     |                  | existing files.                             |
     +------------------+---------------------------------------------+
     """
+    print(f'{os.path.basename(__file__)}: Function open')
     if fl is None:
         raise RuntimeError("file layer module is not available")
     if gsd is None:
