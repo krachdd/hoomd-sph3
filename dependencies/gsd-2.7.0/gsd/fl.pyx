@@ -232,7 +232,7 @@ def open(name, mode, application=None, schema=None, schema_version=None):
             data
             f.close()
     """
-    
+
     return GSDFile(str(name), mode, application, schema, schema_version)
 
 
