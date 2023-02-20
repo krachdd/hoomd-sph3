@@ -11,8 +11,8 @@ from hoomd.sph import _sph
 import numpy as np
 # import itertools
 from datetime import datetime
-import export_gsd2vtu 
-import read_input_fromtxt
+# import export_gsd2vtu 
+# import read_input_fromtxt
 
 # ------------------------------------------------------------
 
@@ -145,7 +145,7 @@ if device.communicator.rank == 0:
     print(f'Integrator Methods: {integrator.methods[:]}')
     print(f'Simulation Computes: {sim.operations.computes[:]}')
 
-gsd_trigger = hoomd.trigger.Periodic(10)
+gsd_trigger = hoomd.trigger.Periodic(1)
 gsd_writer = hoomd.write.GSD(filename=dumpname,
                              trigger=gsd_trigger,
                              mode='wb',
@@ -178,5 +178,5 @@ if device.communicator.rank == 0:
 
 sim.run(steps, write_at_start=True)
 
-if device.communicator.rank == 0:
-    export_gsd2vtu.export_spf(dumpname)
+# if device.communicator.rank == 0:
+#     export_gsd2vtu.export_spf(dumpname)

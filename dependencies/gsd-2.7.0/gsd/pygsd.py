@@ -103,6 +103,7 @@ class GSDFile(object):
     """
 
     def __init__(self, file):
+        
         self.__file = file
 
         logger.info('opening file: ' + str(file))

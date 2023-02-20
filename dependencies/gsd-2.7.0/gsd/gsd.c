@@ -256,6 +256,7 @@ inline static int gsd_name_id_map_allocate(struct gsd_name_id_map* map, size_t s
 */
 inline static int gsd_name_id_map_free(struct gsd_name_id_map* map)
     {
+
     if (map == NULL || map->v == NULL || map->size == 0)
         {
         return GSD_ERROR_INVALID_ARGUMENT;
@@ -295,6 +296,7 @@ inline static int gsd_name_id_map_free(struct gsd_name_id_map* map)
 */
 inline static unsigned long gsd_hash_str(const unsigned char* str)
     {
+
     unsigned long hash = 5381; // NOLINT
     int c;
 
@@ -376,6 +378,7 @@ inline static int gsd_name_id_map_insert(struct gsd_name_id_map* map, const char
 */
 inline static uint16_t gsd_name_id_map_find(struct gsd_name_id_map* map, const char* str)
     {
+
     if (map == NULL || map->v == NULL || map->size == 0)
         {
         return UINT16_MAX;
@@ -416,6 +419,7 @@ inline static uint16_t gsd_name_id_map_find(struct gsd_name_id_map* map, const c
 */
 inline static int gsd_is_entry_valid(struct gsd_handle* handle, size_t idx)
     {
+
     const struct gsd_index_entry entry = handle->file_index.data[idx];
 
     // check for valid type
@@ -462,6 +466,7 @@ inline static int gsd_is_entry_valid(struct gsd_handle* handle, size_t idx)
 */
 inline static int gsd_byte_buffer_allocate(struct gsd_byte_buffer* buf, size_t reserve)
     {
+
     if (buf == NULL || buf->data || reserve == 0 || buf->reserved != 0 || buf->size != 0)
         {
         return GSD_ERROR_INVALID_ARGUMENT;
@@ -490,6 +495,7 @@ inline static int gsd_byte_buffer_allocate(struct gsd_byte_buffer* buf, size_t r
 */
 inline static int gsd_byte_buffer_append(struct gsd_byte_buffer* buf, const char* data, size_t size)
     {
+
     if (buf == NULL || buf->data == NULL || size == 0 || buf->reserved == 0)
         {
         return GSD_ERROR_INVALID_ARGUMENT;
@@ -534,6 +540,7 @@ inline static int gsd_byte_buffer_append(struct gsd_byte_buffer* buf, const char
 */
 inline static int gsd_byte_buffer_free(struct gsd_byte_buffer* buf)
     {
+
     if (buf == NULL || buf->data == NULL)
         {
         return GSD_ERROR_INVALID_ARGUMENT;
@@ -557,6 +564,7 @@ inline static int gsd_byte_buffer_free(struct gsd_byte_buffer* buf)
 */
 inline static int gsd_index_buffer_allocate(struct gsd_index_buffer* buf, size_t reserve)
     {
+
     if (buf == NULL || buf->mapped_data || buf->data || reserve == 0 || buf->reserved != 0
         || buf->size != 0)
         {
@@ -592,6 +600,7 @@ inline static int gsd_index_buffer_allocate(struct gsd_index_buffer* buf, size_t
 */
 inline static int gsd_index_buffer_map(struct gsd_index_buffer* buf, struct gsd_handle* handle)
     {
+
     if (buf == NULL || buf->mapped_data || buf->data || buf->reserved != 0 || buf->size != 0)
         {
         return GSD_ERROR_INVALID_ARGUMENT;
@@ -705,6 +714,7 @@ inline static int gsd_index_buffer_map(struct gsd_index_buffer* buf, struct gsd_
 */
 inline static int gsd_index_buffer_free(struct gsd_index_buffer* buf)
     {
+
     if (buf == NULL || buf->data == NULL)
         {
         return GSD_ERROR_INVALID_ARGUMENT;
@@ -743,6 +753,7 @@ inline static int gsd_index_buffer_free(struct gsd_index_buffer* buf)
 */
 inline static int gsd_index_buffer_add(struct gsd_index_buffer* buf, struct gsd_index_entry** entry)
     {
+
     if (buf == NULL || buf->mapped_data || entry == NULL || buf->reserved == 0)
         {
         return GSD_ERROR_INVALID_ARGUMENT;
@@ -774,6 +785,7 @@ inline static int gsd_index_buffer_add(struct gsd_index_buffer* buf, struct gsd_
 inline static int gsd_cmp_index_entry(const struct gsd_index_entry* a,
                                       const struct gsd_index_entry* b)
     {
+
     int result = 0;
 
     if (a->frame < b->frame)
@@ -898,6 +910,7 @@ inline static void gsd_heapify(struct gsd_index_buffer* buf)
 */
 inline static int gsd_index_buffer_sort(struct gsd_index_buffer* buf)
     {
+
     if (buf == NULL || buf->mapped_data || buf->reserved == 0)
         {
         return GSD_ERROR_INVALID_ARGUMENT;
@@ -932,6 +945,7 @@ inline static int gsd_index_buffer_sort(struct gsd_index_buffer* buf)
 */
 inline static int gsd_expand_file_index(struct gsd_handle* handle, size_t size_required)
     {
+
     if (handle->open_flags == GSD_OPEN_READONLY)
         {
         return GSD_ERROR_FILE_MUST_BE_WRITABLE;
@@ -1080,6 +1094,7 @@ inline static int gsd_expand_file_index(struct gsd_handle* handle, size_t size_r
 */
 inline static int gsd_flush_write_buffer(struct gsd_handle* handle)
     {
+
     if (handle == NULL)
         {
         return GSD_ERROR_INVALID_ARGUMENT;
@@ -1147,6 +1162,7 @@ inline static int gsd_flush_write_buffer(struct gsd_handle* handle)
 */
 inline static int gsd_flush_name_buffer(struct gsd_handle* handle)
     {
+
     if (handle == NULL)
         {
         return GSD_ERROR_INVALID_ARGUMENT;
@@ -1263,6 +1279,7 @@ inline static int gsd_flush_name_buffer(struct gsd_handle* handle)
 */
 inline static int gsd_append_name(uint16_t* id, struct gsd_handle* handle, const char* name)
     {
+
     if (handle->open_flags == GSD_OPEN_READONLY)
         {
         return GSD_ERROR_FILE_MUST_BE_WRITABLE;
@@ -1317,6 +1334,7 @@ inline static int gsd_append_name(uint16_t* id, struct gsd_handle* handle, const
 */
 inline static int gsd_open_file(const char* pathname, int flags, int mode)
     {
+
 #ifndef _WIN32
     return open(pathname, flags, mode);
 #else
@@ -1348,6 +1366,7 @@ inline static int gsd_open_file(const char* pathname, int flags, int mode)
 inline static int
 gsd_initialize_file(int fd, const char* application, const char* schema, uint32_t schema_version)
     {
+
     // check if the file was created
     if (fd == -1)
         {
@@ -1427,6 +1446,7 @@ gsd_initialize_file(int fd, const char* application, const char* schema, uint32_
 */
 inline static int gsd_initialize_handle(struct gsd_handle* handle)
     {
+
     // check if the file was created
     if (handle->fd == -1)
         {
@@ -1597,6 +1617,7 @@ int gsd_create(const char* fname,
                const char* schema,
                uint32_t schema_version)
     {
+
     int extra_flags = 0;
 #ifdef _WIN32
     extra_flags = _O_BINARY;
@@ -1619,6 +1640,7 @@ int gsd_create_and_open(struct gsd_handle* handle,
                         const enum gsd_open_flag flags,
                         int exclusive_create)
     {
+
     // zero the handle
     gsd_util_zero_memory(handle, sizeof(struct gsd_handle));
 
@@ -1668,6 +1690,7 @@ int gsd_create_and_open(struct gsd_handle* handle,
 
 int gsd_open(struct gsd_handle* handle, const char* fname, const enum gsd_open_flag flags)
     {
+
     // zero the handle
     gsd_util_zero_memory(handle, sizeof(struct gsd_handle));
 
@@ -1703,6 +1726,8 @@ int gsd_open(struct gsd_handle* handle, const char* fname, const enum gsd_open_f
 
 int gsd_truncate(struct gsd_handle* handle)
     {
+
+
     if (handle == NULL)
         {
         return GSD_ERROR_INVALID_ARGUMENT;
@@ -1789,6 +1814,7 @@ int gsd_truncate(struct gsd_handle* handle)
 
 int gsd_close(struct gsd_handle* handle)
     {
+
     if (handle == NULL)
         {
         return GSD_ERROR_INVALID_ARGUMENT;
@@ -1868,6 +1894,7 @@ int gsd_close(struct gsd_handle* handle)
 
 int gsd_end_frame(struct gsd_handle* handle)
     {
+
     if (handle == NULL)
         {
         return GSD_ERROR_INVALID_ARGUMENT;
@@ -1948,6 +1975,7 @@ int gsd_write_chunk(struct gsd_handle* handle,
                     uint8_t flags,
                     const void* data)
     {
+
     // validate input
     if (N > 0 && data == NULL)
         {
@@ -2055,6 +2083,7 @@ int gsd_write_chunk(struct gsd_handle* handle,
 
 uint64_t gsd_get_nframes(struct gsd_handle* handle)
     {
+
     if (handle == NULL)
         {
         return 0;
@@ -2065,6 +2094,7 @@ uint64_t gsd_get_nframes(struct gsd_handle* handle)
 const struct gsd_index_entry*
 gsd_find_chunk(struct gsd_handle* handle, uint64_t frame, const char* name)
     {
+
     if (handle == NULL)
         {
         return NULL;
@@ -2155,6 +2185,7 @@ gsd_find_chunk(struct gsd_handle* handle, uint64_t frame, const char* name)
 
 int gsd_read_chunk(struct gsd_handle* handle, void* data, const struct gsd_index_entry* chunk)
     {
+
     if (handle == NULL)
         {
         return GSD_ERROR_INVALID_ARGUMENT;
@@ -2246,6 +2277,7 @@ size_t gsd_sizeof_type(enum gsd_type type)
 const char*
 gsd_find_matching_chunk_name(struct gsd_handle* handle, const char* match, const char* prev)
     {
+
     if (handle == NULL)
         {
         return NULL;
@@ -2318,6 +2350,7 @@ gsd_find_matching_chunk_name(struct gsd_handle* handle, const char* match, const
 
 int gsd_upgrade(struct gsd_handle* handle)
     {
+
     if (handle == NULL)
         {
         return GSD_ERROR_INVALID_ARGUMENT;

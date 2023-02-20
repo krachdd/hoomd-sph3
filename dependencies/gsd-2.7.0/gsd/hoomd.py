@@ -22,6 +22,7 @@ from collections import OrderedDict
 import logging
 import json
 import warnings
+import os
 
 try:
     from gsd import fl
@@ -52,7 +53,6 @@ class ConfigurationData(object):
 
 
     """
-
     _default_value = OrderedDict()
     _default_value['step'] = numpy.uint64(0)
     _default_value['dimensions'] = numpy.uint8(3)
@@ -355,7 +355,6 @@ class BondData(object):
           :chunk:`angles/group`, :chunk:`dihedrals/group`,
           :chunk:`impropers/group`, :chunk:`pairs/group`).
     """
-
     def __init__(self, M):
         self.M = M
         self.N = 0
@@ -419,7 +418,6 @@ class ConstraintData(object):
             Tags of the particles in the constraint
             (:chunk:`constraints/group`).
     """
-
     def __init__(self):
         self.M = 2
         self.N = 0
@@ -480,7 +478,6 @@ class Snapshot(object):
         log (dict): Logged data (values must be `numpy.ndarray` or
             `array_like`)
     """
-
     def __init__(self):
         self.configuration = ConfigurationData()
         self.particles = ParticleData()
@@ -733,6 +730,7 @@ class HOOMDTrajectory(object):
     Open hoomd GSD files with `open`.
     """
 
+
     def __init__(self, file):
         if file.mode == 'ab':
             raise ValueError('Append mode not yet supported')
@@ -901,6 +899,8 @@ class HOOMDTrajectory(object):
 
         .. deprecated:: v2.5
         """
+
+
         warnings.warn("Deprecated, trajectory[idx]", DeprecationWarning)
         return self._read_frame(idx)
 

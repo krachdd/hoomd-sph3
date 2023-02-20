@@ -10,11 +10,14 @@ from hoomd import sph
 from hoomd.sph import _sph
 import numpy as np
 import math
-# import itertools
+import itertools
 from datetime import datetime
-import export_gsd2vtu 
-import read_input_fromtxt
-import delete_solids_initial_timestep
+
+# import export_gsd2vtu 
+# import read_input_fromtxt
+# import delete_solids_initial_timestep
+
+import gsd.hoomd
 # ------------------------------------------------------------
 
 
@@ -68,23 +71,22 @@ x, y, z = np.meshgrid(*(np.linspace(-box_lx / 2, box_lx / 2, nx, endpoint=True),
 
 positions = np.array((x.ravel(), y.ravel(), z.ravel())).T
 
-
 velocities = np.zeros((positions.shape[0], positions.shape[1]), dtype = np.float32)
 masses     = np.ones((positions.shape[0]), dtype = np.float32) * mass
 slengths   = np.ones((positions.shape[0]), dtype = np.float32) * slength
 densities  = np.ones((positions.shape[0]), dtype = np.float32) * rho0
 
-# create Snapshot 
-snapshot = hoomd.Snapshot(device.communicator)
+# # # create Snapshot 
+snapshot = gsd.hoomd.Snapshot()
 snapshot.configuration.box     = [box_lx, box_ly, box_lz] + [0, 0, 0]
 snapshot.particles.N           = n_particles
-snapshot.particles.position[:] = positions
-snapshot.particles.typeid[:]   = [0] * n_particles
+snapshot.particles.position    = positions
+snapshot.particles.typeid      = [0] * n_particles
 snapshot.particles.types       = ['F', 'S']
-snapshot.particles.velocity[:] = velocities
-snapshot.particles.mass[:]     = masses
-snapshot.particles.slength[:]  = slengths
-snapshot.particles.density[:]  = densities
+snapshot.particles.velocity    = velocities
+snapshot.particles.mass        = masses
+snapshot.particles.slength     = slengths
+snapshot.particles.density     = densities
 
 
 x    = snapshot.particles.position[:]
@@ -105,7 +107,10 @@ snapshot.particles.velocity[:]   = vels
 sim.create_state_from_snapshot(snapshot)
 
 init_filename = f'liddrivencavity_{nx}_{ny}_{nz}_vs_{voxelsize}_init.gsd'
-hoomd.write.GSD.write(state = sim.state, mode = 'wb', filename = init_filename)
+# hoomd.write.GSD.write(state = sim.state, mode = 'wb', filename = init_filename)
+
+with gsd.hoomd.open(name = init_filename, mode = 'wb') as f:
+    f.append(snapshot)
 
 # if device.communicator.rank == 0:
 #     export_gsd2vtu.export_spf(init_filename)

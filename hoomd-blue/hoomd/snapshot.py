@@ -375,15 +375,15 @@ class Snapshot:
                             'auxiliary2', 'auxiliary3', 'auxiliary4', 
                             ))
 
-            for section in (
-                # 'angles', 
-                'bonds', 
-                # 'dihedrals', 'impropers',
-                            'pairs'
-                            ):
-                set_properties(getattr(snap,
-                                       section), getattr(gsd_snap, section),
-                               ('N', 'types'), ('group', 'typeid'))
+            # for section in (
+            #     # 'angles', 
+            #     'bonds'
+            #     # 'dihedrals', 'impropers',
+            #                 # 'pairs'
+            #                 ):
+            #     set_properties(getattr(snap,
+            #                            section), getattr(gsd_snap, section),
+            #                    ('N', 'types'), ('group', 'typeid'))
 
             set_properties(snap.constraints, gsd_snap.constraints, ('N',),
                            ('group', 'value'))
