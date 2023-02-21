@@ -19,13 +19,19 @@ import delete_solids_initial_timestep
 import gsd.hoomd
 # ------------------------------------------------------------
 
-filenames = ['poiseuille_flow_20_28_28_vs_0.005_init.gsd',
-             'poiseuille_flow_30_38_38_vs_0.0033333333333333335_init.gsd', 
+filenames = [
+             # 'poiseuille_flow_20_28_28_vs_0.005_init.gsd',
+             # 'poiseuille_flow_30_38_38_vs_0.0033333333333333335_init.gsd', 
              'poiseuille_flow_50_58_58_vs_0.002_init.gsd',
              'poiseuille_flow_100_108_108_vs_0.001_init.gsd'
             ]
 
-resolutions = [20, 30, 50, 100]
+resolutions = [
+                # 20, 
+                # 30, 
+                50, 
+                100
+              ]
 
 for i in range(len(resolutions)):
 
