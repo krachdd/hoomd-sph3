@@ -31,7 +31,7 @@ for i in range(len(resolutions)):
     num_length          = resolutions[i]
     lref                = 0.1               # [m]
     # radius              = 0.5 * lref
-    voxelsize           = lref/num_length
+    voxelsize           = lref/float(num_length)
     dx                  = voxelsize
     specific_volume     = dx * dx * dx
     rho0                = 1000.0
@@ -107,5 +107,5 @@ for i in range(len(resolutions)):
     with gsd.hoomd.open(name = init_filename, mode = 'wb') as f:
         f.append(snapshot)
 
-    if device.communicator.rank == 0:
-        export_gsd2vtu.export_spf(init_filename)
+    # if device.communicator.rank == 0:
+    #     export_gsd2vtu.export_spf(init_filename)

@@ -1641,7 +1641,6 @@ int gsd_create_and_open(struct gsd_handle* handle,
 
 int gsd_open(struct gsd_handle* handle, const char* fname, const enum gsd_open_flag flags)
 {
-    printf("extern: gsd.c: gsd_open\n");
     // zero the handle
     gsd_util_zero_memory(handle, sizeof(struct gsd_handle));
 
