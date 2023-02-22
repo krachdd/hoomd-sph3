@@ -93,7 +93,8 @@ for i in range(len(resolutions)):
         # solid walls 
         if ( yi < -0.5 * lref or yi > 0.5 * lref):
             tid[i] = 1
-
+        if (yi > 0.5 * lref):
+            vels[i][0] = 0.1
 
     snapshot.particles.typeid[:]     = tid
     snapshot.particles.velocity[:]   = vels
@@ -106,5 +107,5 @@ for i in range(len(resolutions)):
     with gsd.hoomd.open(name = init_filename, mode = 'wb') as f:
         f.append(snapshot)
 
-    # if device.communicator.rank == 0:
-    #     export_gsd2vtu.export_spf(init_filename)
+    if device.communicator.rank == 0:
+        export_gsd2vtu.export_spf(init_filename)
