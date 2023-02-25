@@ -36,7 +36,7 @@ specific_volume     = dx * dx * dx
 rho0                = 1000.0
 mass                = rho0 * specific_volume
 fx                  = 0.1                # [m/s]
-mu                  = 0.01               # [Pa s]
+viscosity           = 0.01               # [Pa s]
 
 # get kernel properties
 kernel  = 'WendlandC4'

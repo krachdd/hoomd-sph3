@@ -66,7 +66,7 @@ specific_volume     = dx * dx * dx
 rho0                = 1000.0
 mass                = rho0 * specific_volume
 fx                  = 0.1                # [m/s]
-mu                  = 0.01               # [Pa s]
+viscosity           = 0.01               # [Pa s]
 
 refvel = fx * lref * lref * 0.25 / (mu/rho0)
 
@@ -109,7 +109,7 @@ model = hoomd.sph.sphmodel.SinglePhaseFlow(kernel = kernel_obj,
 if device.communicator.rank == 0:
     print("SetModelParameter on all ranks")
 
-model.mu = mu
+model.mu = viscosity
 model.densitymethod = densitymethod
 model.gx = fx
 model.damp = 1000
