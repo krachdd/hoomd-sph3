@@ -1,0 +1,1 @@
+rm -rf channel_flow_*
