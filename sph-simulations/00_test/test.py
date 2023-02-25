@@ -53,7 +53,7 @@ LZ = LREF
 # Parameters
 KERNEL  = 'WendlandC4'
 NL      = 20                       # INT
-FX      = 50.0                      # m/s^2
+FX      = 0.1                      # m/s^2
 
 DX      = LREF/NL                  # m
 V       = DX*DX*DX                 # m^3
@@ -90,7 +90,7 @@ dumpname = "run_bf{0}_{1}".format(FX ,filename)
 
 sim.create_state_from_gsd(filename = filename)
 
-
+    
 
 # Print the domain decomposition.
 domain_decomposition = sim.state.domain_decomposition

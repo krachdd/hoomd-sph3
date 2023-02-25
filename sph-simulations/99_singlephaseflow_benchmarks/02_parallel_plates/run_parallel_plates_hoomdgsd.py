@@ -20,17 +20,17 @@ import gsd.hoomd
 # ------------------------------------------------------------
 
 filenames = [
-             'parallel_plates_20_28_17_vs_0.05_init.gsd',
-             'parallel_plates_30_38_17_vs_0.03333333333333333_init.gsd' #,
-             # 'parallel_plates_50_58_17_vs_0.002_init.gsd',
-             # 'parallel_plates_100_108_17_vs_0.001_init.gsd'
+             'parallel_plates_30_38_17_vs_0.0033333333333333335_init.gsd',
+             'parallel_plates_100_108_17_vs_0.001_init.gsd',
+             'parallel_plates_50_58_17_vs_0.002_init.gsd',
+             'parallel_plates_20_28_17_vs_0.005_init.gsd'
             ]
 
 resolutions = [
                 20, 
-                30 #, 
-                # 50, 
-                # 100
+                30, 
+                50, 
+                100
               ]
 
 for i in range(len(resolutions)):
@@ -67,19 +67,16 @@ for i in range(len(resolutions)):
 
     # Fluid and particle properties
     num_length          = resolutions[i]
-    lref                = 1.0               # [m]
-    # radius              = 0.5 * lref
+    lref                = 0.1               # [m]
+    radius              = 0.5 * lref
     voxelsize           = lref/num_length
     dx                  = voxelsize
     specific_volume     = dx * dx * dx
-    rho0                = 1.0
+    rho0                = 1000.0
     mass                = rho0 * specific_volume
-    # refvel              = 10
-    # Re                  = 1
-    # viscosity           = rho0 * lref * refvel/Re
-    viscosity           = 1.e-03            # [Pa s]
-    fx                  = 0.1
-    refvel              = (fx * rho0 * lref**2)/(8 * viscosity) 
+    refvel              = 10
+    Re                  = 1
+    viscosity           = rho0 * lref * refvel/Re
 
 
     # get kernel properties
@@ -89,7 +86,7 @@ for i in range(len(resolutions)):
 
     # define model parameters
     densitymethod = 'CONTINUITY'
-    steps = 100001
+    steps = 10001
 
     drho = 0.01                        # %
 
@@ -123,8 +120,8 @@ for i in range(len(resolutions)):
 
     model.mu = viscosity
     model.densitymethod = densitymethod
-    model.gx = fx
-    model.damp = 2000
+    model.gx = 0.1
+    model.damp = 5000
     # model.artificialviscosity = True
     model.artificialviscosity = True 
     model.alpha = 0.2

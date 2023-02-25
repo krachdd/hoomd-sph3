@@ -66,7 +66,7 @@ NX, NY, NZ = np.int32(params['nx']), np.int32(params['ny']), np.int32(params['nz
 LREF = NX * voxelsize
 # define model parameters
 densitymethod = 'CONTINUITY'
-steps = 50001
+steps = 10001
 
 DRHO = 0.01                        # %
 
@@ -166,7 +166,7 @@ if device.communicator.rank == 0:
 
 
 
-gsd_trigger = hoomd.trigger.Periodic(500)
+gsd_trigger = hoomd.trigger.Periodic(100)
 gsd_writer = hoomd.write.GSD(filename=dumpname,
                              trigger=gsd_trigger,
                              mode='wb',
@@ -182,7 +182,7 @@ logger = hoomd.logging.Logger(categories=['scalar', 'string'])
 logger.add(sim, quantities=['timestep', 'tps', 'walltime'])
 logger.add(spf_properties, quantities=['abs_velocity', 'num_particles', 'fluid_vel_x_sum', 'mean_density'])
 logger[('custom', 'RE')] = (lambda: RHO0 * spf_properties.abs_velocity * LREF / (MU), 'scalar')
-logger[('custom', 'k_1[1e-9]')] = (lambda: (MU / (RHO0 * FX)) * (spf_properties) * porosity *1.0e9, 'scalar')
+logger[('custom', 'k_1[1e-9]')] = (lambda: (MU / (RHO0 * FX)) * (spf_properties.abs_velocity) * porosity *1.0e9, 'scalar')
 table = hoomd.write.Table(trigger=log_trigger, 
                           logger=logger, max_header_len = 10)
 sim.operations.writers.append(table)

@@ -20,10 +20,10 @@ import gsd.hoomd
 # ------------------------------------------------------------
 
 filenames = [
-             'couette_flow_100_108_17_vs_0.001_init.gsd', 
-             'couette_flow_30_38_17_vs_0.0033333333333333335_init.gsd', 
              'couette_flow_20_28_17_vs_0.005_init.gsd', 
+             'couette_flow_30_38_17_vs_0.0033333333333333335_init.gsd', 
              'couette_flow_50_58_17_vs_0.002_init.gsd'
+             'couette_flow_100_108_17_vs_0.001_init.gsd', 
             ]
 
 resolutions = [

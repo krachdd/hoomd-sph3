@@ -31,7 +31,7 @@ def export_basic(GSDfilename):
     export basic fields
 
     """
-    print(f'Export {GSDfilename} to .vtu')
+    print(f'{os.path.basename(__file__)}: Export {GSDfilename} to .vtu')
 
     t = import_trajectory(GSDfilename = GSDfilename)
 
@@ -84,7 +84,7 @@ def export_spf(GSDfilename):
     export basic fields plus aux1 where fictious velocity is stored
 
     """
-    print(f'Export {GSDfilename} to .vtu')
+    print(f'{os.path.basename(__file__)}: Export {GSDfilename} to .vtu')
 
     t = import_trajectory(GSDfilename = GSDfilename)
 
@@ -135,7 +135,7 @@ def export_all(GSDfilename):
     export all fields
 
     """
-    print(f'Export {GSDfilename} to .vtu')
+    print(f'{os.path.basename(__file__)}: Export {GSDfilename} to .vtu')
 
     t = import_trajectory(GSDfilename = GSDfilename)
 
