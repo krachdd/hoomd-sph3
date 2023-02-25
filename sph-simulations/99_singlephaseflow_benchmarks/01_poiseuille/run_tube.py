@@ -26,10 +26,10 @@ device = hoomd.device.CPU(notice_level=2)
 # device = hoomd.device.CPU(notice_level=10)
 sim = hoomd.Simulation(device=device)
 
-# filename = filenames[i]
 filename = str(sys.argv[2])
 
-print(f'{os.path.basename(__file__)}: input file: {filename} ')
+if device.communicator.rank == 0:
+    print(f'{os.path.basename(__file__)}: input file: {filename} ')
 
 dt_string = datetime.now().strftime("%Y-%m-%d-%H-%M-%S")
 logname  = filename.replace('_init.gsd', '')
@@ -68,7 +68,7 @@ mass                = rho0 * specific_volume
 fx                  = 0.1                # [m/s]
 viscosity           = 0.01               # [Pa s]
 
-refvel = fx * lref * lref * 0.25 / (mu/rho0)
+refvel = fx * lref * lref * 0.25 / (viscosity/rho0)
 
 # get kernel properties
 kernel  = 'WendlandC4'

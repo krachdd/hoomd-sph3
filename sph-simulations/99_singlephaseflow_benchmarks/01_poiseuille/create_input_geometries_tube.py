@@ -15,7 +15,7 @@ from datetime import datetime
 import export_gsd2vtu 
 import read_input_fromtxt
 import delete_solids_initial_timestep
-import sys
+import sys, os
 
 import gsd.hoomd
 # ------------------------------------------------------------

@@ -1,0 +1,1 @@
+rm -rf couette_flow_*
