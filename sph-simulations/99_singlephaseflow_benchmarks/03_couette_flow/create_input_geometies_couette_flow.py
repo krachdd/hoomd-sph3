@@ -34,6 +34,8 @@ rho0                = 1000.0
 mass                = rho0 * specific_volume
 fx                  = 0.1                # [m/s]
 viscosity           = 0.01               # [Pa s]
+lidvel              = 0.01
+
 
 
 
@@ -90,7 +92,7 @@ for i in range(len(x)):
     if ( yi < -0.5 * lref or yi > 0.5 * lref):
         tid[i] = 1
     if (yi > 0.5 * lref):
-        vels[i][0] = 0.1
+        vels[i][0] = lidvel
 
 snapshot.particles.typeid[:]     = tid
 snapshot.particles.velocity[:]   = vels
