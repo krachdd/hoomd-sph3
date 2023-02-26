@@ -3,6 +3,7 @@
 
 import hoomd
 import pytest
+import math
 import numpy as np
 from hoomd.error import DataAccessError
 from hoomd.logging import LoggerCategories
@@ -93,3 +94,26 @@ def test_logging():
             'category': LoggerCategories.scalar,
             'default': True
         }})
+
+def test_2d_free_volume(simulation_factory):
+    snapshot = hoomd.Snapshot()
+    if snapshot.communicator.rank == 0:
+        snapshot.configuration.box = (100, 100, 0, 0, 0, 0)
+        snapshot.particles.N = 1
+        snapshot.particles.types = ['A']
+
+    sim = simulation_factory(snapshot)
+
+    mc = hoomd.hpmc.integrate.Sphere()
+    mc.shape['A'] = dict(diameter=1)
+
+    free_volume = hoomd.hpmc.compute.FreeVolume(test_particle_type='A',
+                                                num_samples=100000)
+
+    sim.operations.integrator = mc
+    sim.operations.computes.append(free_volume)
+
+    sim.run(0)
+    f = free_volume.free_volume
+    if snapshot.communicator.rank == 0:
+        assert f == pytest.approx(expected=100 * 100 - math.pi, rel=1e-3)
