@@ -543,7 +543,7 @@ class SinglePhaseFlow(SPHModel):
 
         # CFL condition
         # DT_1 = 0.25*H/C
-        DT_1 = (1./3.)*0.25*DX/C
+        DT_1 = 0.25*DX/C
         # Fourier condition
         DT_2 = (H*H*RHO0)/(8.0*MU)
         if GMAG > 0.0:

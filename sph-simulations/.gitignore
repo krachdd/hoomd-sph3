@@ -7,4 +7,4 @@
 *.raw
 *.log
 
-99_singlephaseflow_benchmarks/.ipynb_checkpoints/
+99_singlephaseflow_benchmarks/.ipynb_checkpoints/*
