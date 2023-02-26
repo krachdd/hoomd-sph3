@@ -172,7 +172,7 @@ class GSD(Writer):
                           dynamic=[dynamic_validation],
                           _defaults=dict(filter=filter, dynamic=dynamic)))
 
-                if all((logger is not None, log is not None)):
+        if all((logger is not None, log is not None)):
             warnings.warn(
                 f"log and logger keyword arguments passed to {self}."
                 f" Keyword argument \"log\" is deprecated since v3.9.0."
