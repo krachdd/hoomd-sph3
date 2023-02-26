@@ -170,7 +170,7 @@ void SPHIntegratorTwoStep::setDeltaT(Scalar deltaT)
     removed DOF proportionately so that the results given by one ComputeThermo on the all group are
     consitent with the average of many ComputeThermo's on disjoint subset groups.
 */
-Scalar IntegratorTwoStep::getTranslationalDOF(std::shared_ptr<ParticleGroup> group)
+Scalar SPHIntegratorTwoStep::getTranslationalDOF(std::shared_ptr<ParticleGroup> group)
     {
     Scalar periodic_dof_removed = 0;
 
@@ -180,14 +180,13 @@ Scalar IntegratorTwoStep::getTranslationalDOF(std::shared_ptr<ParticleGroup> gro
     // When using rigid bodies, adjust the number of particles to the number of rigid centers and
     // free particles. The constituent particles are in the system, but not part of the equations
     // of motion.
-    if (m_rigid_bodies)
-        {
-        m_rigid_bodies->validateRigidBodies();
-        N_particles
-            = m_rigid_bodies->getNMoleculesGlobal() + m_rigid_bodies->getNFreeParticlesGlobal();
-        N_filter = group->getNCentralAndFreeGlobal();
-        }
-
+    // if (m_rigid_bodies)
+    //     {
+    //     m_rigid_bodies->validateRigidBodies();
+    //     N_particles
+    //         = m_rigid_bodies->getNMoleculesGlobal() + m_rigid_bodies->getNFreeParticlesGlobal();
+    //     N_filter = group->getNCentralAndFreeGlobal();
+    //     }
     // proportionately remove n_dimensions DOF when there is only one momentum conserving
     // integration method
     if (m_methods.size() == 1 && m_methods[0]->isMomentumConserving()
