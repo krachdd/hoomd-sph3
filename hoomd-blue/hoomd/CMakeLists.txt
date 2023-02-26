@@ -134,6 +134,8 @@ set(_hoomd_headers
     BondedGroupData.h
     BoxDim.h
     BoxResizeUpdater.h
+    BoxResizeUpdaterGPU.cuh
+    BoxResizeUpdaterGPU.h
     UpdaterRemoveDrift.h
     CachedAllocator.h
     CellListGPU.cuh
@@ -206,7 +208,8 @@ set(_hoomd_headers
     )
 
 if (ENABLE_HIP)
-list(APPEND _hoomd_sources CellListGPU.cc
+list(APPEND _hoomd_sources BoxResizeUpdaterGPU.cc
+                           CellListGPU.cc
                            CommunicatorGPU.cc
                            LoadBalancerGPU.cc
                            SFCPackTunerGPU.cc
@@ -214,6 +217,7 @@ list(APPEND _hoomd_sources CellListGPU.cc
 endif()
 
 set(_hoomd_cu_sources BondedGroupData.cu
+                      BoxResizeUpdaterGPU.cu
                       CellListGPU.cu
                       CommunicatorGPU.cu
                       Integrator.cu

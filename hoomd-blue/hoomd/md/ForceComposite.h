@@ -1,4 +1,4 @@
-// Copyright (c) 2009-2022 The Regents of the University of Michigan.
+// Copyright (c) 2009-2023 The Regents of the University of Michigan.
 // Part of HOOMD-blue, released under the BSD 3-Clause License.
 
 #include "MolecularForceCompute.h"
@@ -218,9 +218,18 @@ class PYBIND11_EXPORT ForceComposite : public MolecularForceCompute
         return std::move(v);
         }
 
+    /// Get the number of free particles (global)
+    unsigned int getNFreeParticlesGlobal()
+        {
+        return m_n_free_particles_global;
+        }
+
     protected:
     bool m_bodies_changed;          //!< True if constituent particles have changed
     bool m_particles_added_removed; //!< True if particles have been added or removed
+
+    /// The number of free particles in the simulation box.
+    unsigned int m_n_free_particles_global;
 
     GlobalArray<unsigned int> m_body_types;  //!< Constituent particle types per type id (2D)
     GlobalArray<Scalar3> m_body_pos;         //!< Constituent particle offsets per type id (2D)
