@@ -70,7 +70,7 @@ slengths   = np.ones((positions.shape[0]), dtype = np.float32) * slength
 densities  = np.ones((positions.shape[0]), dtype = np.float32) * rho0
 
 # create Snapshot 
-snapshot = gsd.hoomd.Snapshot()
+snapshot = gsd.hoomd.Frame()
 snapshot.configuration.box     = [box_lx, box_ly, box_lz] + [0, 0, 0]
 snapshot.particles.N           = n_particles
 snapshot.particles.position    = positions
