@@ -3,6 +3,10 @@ SPH Implementation in
 - HOOMD-Blue 3.3.0 (as of 01.08.2022)
 - HOOMD-Blue 3.8.0 (as of 28.01.2023)
 - HOOMD-Blue 3.8.1 (as of 29.01.2023)
+- HOOMD-Blue 3.9.0 (as of 27.02.2023)
+
+GSD Version
+- GSD 2.8.0 (as of 27.02.2023)
 
 ## Libaries to install check HOOMD Webpage
 additional: cereal - A C++11 library for serialization
