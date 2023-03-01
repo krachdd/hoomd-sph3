@@ -16,6 +16,7 @@ import export_gsd2vtu
 import read_input_fromtxt
 import delete_solids_initial_timestep
 import os, sys
+from optparse import OptionParser
 
 import gsd.hoomd
 # ------------------------------------------------------------
@@ -24,8 +25,16 @@ device = hoomd.device.CPU(notice_level=2)
 # device = hoomd.device.CPU(notice_level=10)
 sim = hoomd.Simulation(device=device)
 
+# Option parser
+parser = OptionParser()
+parser.add_option("-n","--resolution"     ,type=int  ,dest="resolution"  ,default=100)
+parser.add_option("-S","--initgsd"        ,type=str,  dest="initgsd"     ,default=None)
+parser.add_option("-i","--steps"          ,type=int  ,dest="steps"       ,default=20000)
+parser.add_option("-R","--reynolds"      ,type=float,dest="reynolds"    ,default=10)
+(options, args) = parser.parse_args()
+
 # Fluid and particle properties
-num_length          = int(sys.argv[1])
+num_length          = options.resolution
 lref                = 1.0               # [m]
 voxelsize           = lref/float(num_length)
 dx                  = voxelsize
@@ -33,9 +42,9 @@ specific_volume     = dx * dx * dx
 rho0                = 1.0
 mass                = rho0 * specific_volume
 fx                  = 0.1                # [m/s]
-viscosity           = 0.01               # [Pa s]
 lidvel              = 1.0
 
+viscosity           = (rho0 * lidvel * lref)/options.reynolds # [Pa s]
 
 # get kernel properties
 kernel  = 'WendlandC4'
@@ -99,11 +108,11 @@ snapshot.particles.velocity[:]   = vels
 
 sim.create_state_from_snapshot(snapshot)
 
-init_filename = f'liddrivencavity_{nx}_{ny}_{nz}_vs_{voxelsize}_init.gsd'
+init_filename = f'liddrivencavity_{nx}_{ny}_{nz}_vs_{voxelsize}_re_{options.reynolds}_init.gsd'
 # hoomd.write.GSD.write(state = sim.state, mode = 'wb', filename = init_filename)
 
 with gsd.hoomd.open(name = init_filename, mode = 'wb') as f:
     f.append(snapshot)
 
-if device.communicator.rank == 0:
-    export_gsd2vtu.export_spf(init_filename)
+# if device.communicator.rank == 0:
+#     export_gsd2vtu.export_spf(init_filename)
