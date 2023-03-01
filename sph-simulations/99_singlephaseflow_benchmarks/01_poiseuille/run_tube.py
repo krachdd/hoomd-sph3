@@ -59,13 +59,13 @@ with sim.state.cpu_local_snapshot as snap:
 
 num_length          = int(sys.argv[1])
 lref                = 0.001               # [m]
-radius              = 0.5 * lref
-voxelsize           = lref/num_length
-dx                  = voxelsize
-specific_volume     = dx * dx * dx
-rho0                = 1000.0
-mass                = rho0 * specific_volume
-fx                  = 0.1                # [m/s]
+radius              = 0.5 * lref          # [m]
+voxelsize           = lref/num_length     # [m]
+dx                  = voxelsize           # [m]
+specific_volume     = dx * dx * dx        # [m**3]
+rho0                = 1000.0              # [kg/m**3]
+mass                = rho0 * specific_volume # [kg]
+fx                  = 0.1                # [m/s**2]
 viscosity           = 0.01               # [Pa s]
 
 refvel = fx * lref * lref * 0.25 / (viscosity/rho0)
