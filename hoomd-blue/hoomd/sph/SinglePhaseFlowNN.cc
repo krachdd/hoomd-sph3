@@ -1,5 +1,5 @@
 /* ---------------------------------------------------------
-maintainer: dkrach, david.krach@mib.uni-stuttgart.de
+maintainer: drostan, daniel.rostan@mib.uni-stuttgart.de
 ----------------------------------------------------------*/
 
 #include "SinglePhaseFlowNN.h"

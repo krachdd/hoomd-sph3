@@ -1,5 +1,5 @@
 /* ---------------------------------------------------------
-maintainer: dkrach, david.krach@mib.uni-stuttgart.de
+maintainer: drostan, daniel.rostan@mib.uni-stuttgart.de
 ----------------------------------------------------------*/
 
 #include "hoomd/Compute.h"
@@ -195,6 +195,7 @@ class PYBIND11_EXPORT SinglePhaseFlowNN : public SPHBaseClass<KT_, SET_>
             flags[comm_flag::pressure] = 1; // Stores pressure
             flags[comm_flag::energy] = 0; // Stores density and pressure
             flags[comm_flag::auxiliary1] = 1; // Stores fictitious velocity
+            flags[comm_flag::auxiliary3] = 1; // Stores viscosity/shear stress/shear rate
             flags[comm_flag::slength] = 1; // Stores smoothing length TODO is this needed
             // Add flags requested by base class
             flags |= ForceCompute::getRequestedCommFlags(timestep);
@@ -234,7 +235,9 @@ class PYBIND11_EXPORT SinglePhaseFlowNN : public SPHBaseClass<KT_, SET_>
         Scalar m_rho0; //!< Rest density (Read from equation of state class)
         Scalar m_c; //!< Speed of sound (Read from equation of state class)
         Scalar m_kappa; //!< Kernel scaling factor (Read from kernel class)
-        Scalar m_mu; //!< Viscosity ( Must be set by user )
+        Scalar m_mu0; //!< Viscosity ( Must be set by user )
+        Scalar m_tau0; //!< Shear stress ( Must be set by user )
+        Scalar m_gamma; //!< Gamma value ( Must be set by user )
         Scalar m_avalpha; //!< Volumetric diffusion coefficient for artificial viscosity operator
         Scalar m_avbeta; //!< Shock diffusion coefficient for artificial viscosity operator
         Scalar m_ddiff; //!< Diffusion coefficient for Molteni type density diffusion
@@ -316,6 +319,11 @@ class PYBIND11_EXPORT SinglePhaseFlowNN : public SPHBaseClass<KT_, SET_>
         * \post Ghost particle auxiliary array 1 is up-to-date
         */
         void update_ghost_aux1(uint64_t timestep);
+
+        void update_ghost_aux3(uint64_t timestep);
+
+        void compute_viscosity(uint64_t timestep);
+
 
     private:
 
