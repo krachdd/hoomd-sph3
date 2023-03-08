@@ -32,6 +32,7 @@ set(_${COMPONENT_NAME}_headers
 #     TwoPhaseFlowGPU.cuh
 #     GeneralGPUFunctions.cuh
     SinglePhaseFlow.h     
+    SinglePhaseFlowNN.h     
     SPHIntegratorTwoStep.h            
 #     TwoPhaseFlowGPU.h
 #     RigidBodyIntegratorGPU.cuh     
