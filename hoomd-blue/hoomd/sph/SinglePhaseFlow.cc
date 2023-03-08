@@ -809,6 +809,7 @@ void SinglePhaseFlow<KT_, SET_>::compute_noslip(uint64_t timestep)
 
         myHead = h_head_list.data[i];
         size = (unsigned int)h_n_neigh.data[i];
+        // std::cout << "Number of Neighbours: " << size << " \n" << std::endl;
         for (unsigned int j = 0; j < size; j++)
             {
             // Index of neighbor (MEM TRANSFER: 1 scalar)
