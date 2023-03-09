@@ -24,7 +24,7 @@ device = hoomd.device.CPU(notice_level=2)
 # device = hoomd.device.CPU(notice_level=10)
 sim = hoomd.Simulation(device=device)
 
-filename = 'cylinder_body_force_200_112_17_vs_0.001_init.gsd'
+filename = 'cylinder_body_force_800_412_17_vs_0.00025_init.gsd'
 
 if device.communicator.rank == 0:
     print(f'{os.path.basename(__file__)}: input file: {filename} ')
@@ -53,7 +53,7 @@ with sim.state.cpu_local_snapshot as snap:
     print(f'{N} particles on rank {device.communicator.rank}')
 
 # Fluid and particle properties
-D                   = 20
+D                   = 80
 lref                = 0.02               # [m]
 voxelsize           = lref/D
 dx                  = voxelsize
@@ -73,7 +73,7 @@ rcut    = hoomd.sph.kernel.Kappa[kernel]*slength     # m
 
 # define model parameters
 densitymethod = 'CONTINUITY'
-steps = 10001
+steps = 1000001
 
 drho = 0.01                        # %
 
