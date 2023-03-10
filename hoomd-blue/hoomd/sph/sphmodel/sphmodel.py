@@ -554,7 +554,7 @@ class SinglePhaseFlow(SPHModel):
             return COURANT*np.min([DT_1,DT_2])
 
 class SinglePhaseFlowNN(SPHModel):
-    R""" SinglePhaseFlow solver
+    R""" SinglePhaseFlowNN solver
     """
     DENSITYMETHODS = {'SUMMATION':_sph.PhaseFlowDensityMethod.DENSITYSUMMATION,
                       'CONTINUITY':_sph.PhaseFlowDensityMethod.DENSITYCONTINUITY}
@@ -575,7 +575,9 @@ class SinglePhaseFlowNN(SPHModel):
         self._param_dict.update(ParameterDict(
                           densitymethod = str('SUMMATION'),
                           viscositymethod = str('HARMONICAVERAGE'), 
-                          mu = float(0.0), 
+                          mu0 = float(0.0),
+                          tau0 = float(0.0),
+                          m = float(0.0),
                           artificialviscosity = bool(True), 
                           alpha = float(0.2),
                           beta = float(0.0),
@@ -591,7 +593,7 @@ class SinglePhaseFlowNN(SPHModel):
 
 
         # self._state = self._simulation.state
-        self._cpp_SPFclass_name = 'SinglePF' '_' + Kernel[self.kernel.name] + '_' + EOS[self.eos.name]
+        self._cpp_SPFclass_name = 'SinglePFNN' '_' + Kernel[self.kernel.name] + '_' + EOS[self.eos.name]
         self.fluidgroup_filter = fluidgroup_filter
         self.solidgroup_filter = solidgroup_filter
         self.str_densitymethod = self._param_dict._dict["densitymethod"]
@@ -734,7 +736,9 @@ class SinglePhaseFlowNN(SPHModel):
             raise ValueError("Using undefined ViscosityMethod.")
 
         # get all params in line
-        self.mu = self._param_dict['mu']
+        self.mu0 = self._param_dict['mu0']
+        self.tau0 = self._param_dict['tau0']
+        self.m = self._param_dict['m']
         self.artificialviscosity = self._param_dict['artificialviscosity']
         self.alpha = self._param_dict['alpha']
         self.beta = self._param_dict['beta']
@@ -744,7 +748,7 @@ class SinglePhaseFlowNN(SPHModel):
         self.shepardfreq = self._param_dict['shepardfreq']
         self.compute_solid_forces = self._param_dict['compute_solid_forces']
 
-        self.set_params(self.mu)
+        self.set_params(self.mu0, self.tau0, self.m)
         self.setdensitymethod(self.str_densitymethod)
         self.setviscositymethod(self.str_viscositymethod)
         
@@ -776,9 +780,9 @@ class SinglePhaseFlowNN(SPHModel):
     def _detach_hook(self):
         self.nlist._detach()
 
-    def set_params(self,mu):
+    def set_params(self, mu0, tau0, m):
         # self.mu   = mu.item()   if isinstance(mu, np.generic)   else mu
-        self._cpp_obj.setParams(self.mu)
+        self._cpp_obj.setParams(self.mu0, self.tau0, self.m)
         self.params_set = True
         self._param_dict.__setattr__('params_set', True)
 
@@ -877,7 +881,7 @@ class SinglePhaseFlowNN(SPHModel):
         # Smoothing length
         H   = self._param_dict['max_sl']
         # Viscosity
-        MU  = self._param_dict['mu']
+        MU  = self._param_dict['mu0']
         # Rest density
         RHO0 = self.eos.RestDensity
 

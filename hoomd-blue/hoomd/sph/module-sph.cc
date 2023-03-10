@@ -134,16 +134,16 @@ PYBIND11_MODULE(_sph, m){
     export_SinglePhaseFlow<cubicspline, linear>(m, "SinglePF_CS_L");
     export_SinglePhaseFlow<cubicspline, tait>(m, "SinglePF_CS_T");
 
-    export_SinglePhaseFlowNN<wendlandc2, linear>(m, "SinglePF_WC2_L");
-    export_SinglePhaseFlowNN<wendlandc2, tait>(m, "SinglePF_WC2_T");
-    export_SinglePhaseFlowNN<wendlandc4, linear>(m, "SinglePF_WC4_L");
-    export_SinglePhaseFlowNN<wendlandc4, tait>(m, "SinglePF_WC4_T");
-    export_SinglePhaseFlowNN<wendlandc6, linear>(m, "SinglePF_WC6_L");
-    export_SinglePhaseFlowNN<wendlandc6, tait>(m, "SinglePF_WC6_T");
-    export_SinglePhaseFlowNN<quintic, linear>(m, "SinglePF_Q_L");
-    export_SinglePhaseFlowNN<quintic, tait>(m, "SinglePF_Q_T");
-    export_SinglePhaseFlowNN<cubicspline, linear>(m, "SinglePF_CS_L");
-    export_SinglePhaseFlowNN<cubicspline, tait>(m, "SinglePF_CS_T");
+    export_SinglePhaseFlowNN<wendlandc2, linear>(m, "SinglePFNN_WC2_L");
+    export_SinglePhaseFlowNN<wendlandc2, tait>(m, "SinglePFNN_WC2_T");
+    export_SinglePhaseFlowNN<wendlandc4, linear>(m, "SinglePFNN_WC4_L");
+    export_SinglePhaseFlowNN<wendlandc4, tait>(m, "SinglePFNN_WC4_T");
+    export_SinglePhaseFlowNN<wendlandc6, linear>(m, "SinglePFNN_WC6_L");
+    export_SinglePhaseFlowNN<wendlandc6, tait>(m, "SinglePFNN_WC6_T");
+    export_SinglePhaseFlowNN<quintic, linear>(m, "SinglePFNN_Q_L");
+    export_SinglePhaseFlowNN<quintic, tait>(m, "SinglePFNN_Q_T");
+    export_SinglePhaseFlowNN<cubicspline, linear>(m, "SinglePFNN_CS_L");
+    export_SinglePhaseFlowNN<cubicspline, tait>(m, "SinglePFNN_CS_T");
 
     export_CustomForceCompute(m);
 

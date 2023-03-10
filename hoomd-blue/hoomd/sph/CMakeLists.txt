@@ -16,6 +16,7 @@ set(_${COMPONENT_NAME}_sources
     StateEquations.cc
     SPHBaseClass.cc
     SinglePhaseFlow.cc
+    SinglePhaseFlowNN.cc
 #     TwoPhaseFlow.cc
 #     SmoothingKernelExport.cc
     SmoothingKernel.cc

@@ -88,7 +88,7 @@ class PYBIND11_EXPORT SinglePhaseFlowNN : public SPHBaseClass<KT_, SET_>
         /*! Set the parameters
          * \param mu Dynamic viscosity
          */
-        virtual void setParams(Scalar mu);
+        virtual void setParams(Scalar mu, Scalar tau0, Scalar m);
 
         //! Getter and Setter methods for density method
         DensityMethod getDensityMethod()
@@ -237,7 +237,7 @@ class PYBIND11_EXPORT SinglePhaseFlowNN : public SPHBaseClass<KT_, SET_>
         Scalar m_kappa; //!< Kernel scaling factor (Read from kernel class)
         Scalar m_mu0; //!< Viscosity ( Must be set by user )
         Scalar m_tau0; //!< Shear stress ( Must be set by user )
-        Scalar m_gamma; //!< Gamma value ( Must be set by user )
+        Scalar m_m; //!< m value ( Must be set by user )
         Scalar m_avalpha; //!< Volumetric diffusion coefficient for artificial viscosity operator
         Scalar m_avbeta; //!< Shock diffusion coefficient for artificial viscosity operator
         Scalar m_ddiff; //!< Diffusion coefficient for Molteni type density diffusion
@@ -320,8 +320,16 @@ class PYBIND11_EXPORT SinglePhaseFlowNN : public SPHBaseClass<KT_, SET_>
         */
         void update_ghost_aux1(uint64_t timestep);
 
+
+        /*! Helper function to set communication flags and update ghosts auxiliary array 3
+        * \param timestep The time step
+        * \post Ghost particle auxiliary array 1 is up-to-date
+        */
         void update_ghost_aux3(uint64_t timestep);
 
+        /*! Helper function to compute particle viscosites
+         *  \post Viscosity of fluid particle computed
+         */
         void compute_viscosity(uint64_t timestep);
 
 
