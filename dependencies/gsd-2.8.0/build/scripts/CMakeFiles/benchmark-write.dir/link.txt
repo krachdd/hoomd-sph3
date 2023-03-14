@@ -1,0 +1,1 @@
+/usr/bin/c++  -Wall -Wno-unknown-pragmas -Wno-deprecated-declarations -O3 -DNDEBUG CMakeFiles/benchmark-write.dir/benchmark-write.cc.o CMakeFiles/benchmark-write.dir/__/gsd/gsd.c.o -o benchmark-write 

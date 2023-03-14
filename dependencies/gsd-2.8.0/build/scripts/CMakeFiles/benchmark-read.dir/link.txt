@@ -1,0 +1,1 @@
+/usr/bin/c++  -Wall -Wno-unknown-pragmas -Wno-deprecated-declarations -O3 -DNDEBUG CMakeFiles/benchmark-read.dir/benchmark-read.cc.o CMakeFiles/benchmark-read.dir/__/gsd/gsd.c.o -o benchmark-read 

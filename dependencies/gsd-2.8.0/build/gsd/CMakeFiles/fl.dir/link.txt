@@ -1,0 +1,1 @@
+/usr/bin/cc -fPIC  -Wall -Wno-unknown-pragmas -Wno-deprecated-declarations -Wall -Wno-unknown-pragmas -O3 -DNDEBUG -shared -Wl,-soname,fl.so -o fl.so CMakeFiles/fl.dir/fl.c.o CMakeFiles/fl.dir/gsd.c.o 

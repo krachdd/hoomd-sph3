@@ -1,0 +1,37 @@
+[
+{
+  "directory": "/home/USADR/ac130084/HOOMD-SPH/hoomd-sph3/dependencies/gsd-2.8.0/build/gsd",
+  "command": "/usr/bin/cc  -DNO_IMPORT_ARRAY -I/usr/lib/python3/dist-packages/numpy/core/include -I/usr/include/python3.10 -I/home/USADR/ac130084/HOOMD-SPH/hoomd-sph3/dependencies/gsd-2.8.0/gsd  -Wall -Wno-unknown-pragmas -Wno-deprecated-declarations -Wall -Wno-unknown-pragmas -O3 -DNDEBUG -fPIC -o CMakeFiles/gsd_objects.dir/gsd.c.o -c /home/USADR/ac130084/HOOMD-SPH/hoomd-sph3/dependencies/gsd-2.8.0/gsd/gsd.c",
+  "file": "/home/USADR/ac130084/HOOMD-SPH/hoomd-sph3/dependencies/gsd-2.8.0/gsd/gsd.c"
+},
+{
+  "directory": "/home/USADR/ac130084/HOOMD-SPH/hoomd-sph3/dependencies/gsd-2.8.0/build/gsd",
+  "command": "/usr/bin/cc -DNPY_NO_DEPRECATED_API=NPY_1_7_API_VERSION -Dfl_EXPORTS -I/usr/lib/python3/dist-packages/numpy/core/include -I/usr/include/python3.10 -I/home/USADR/ac130084/HOOMD-SPH/hoomd-sph3/dependencies/gsd-2.8.0/gsd  -Wall -Wno-unknown-pragmas -Wno-deprecated-declarations -Wall -Wno-unknown-pragmas -O3 -DNDEBUG -fPIC -o CMakeFiles/fl.dir/fl.c.o -c /home/USADR/ac130084/HOOMD-SPH/hoomd-sph3/dependencies/gsd-2.8.0/build/gsd/fl.c",
+  "file": "/home/USADR/ac130084/HOOMD-SPH/hoomd-sph3/dependencies/gsd-2.8.0/build/gsd/fl.c"
+},
+{
+  "directory": "/home/USADR/ac130084/HOOMD-SPH/hoomd-sph3/dependencies/gsd-2.8.0/build/gsd",
+  "command": "/usr/bin/cc -DNPY_NO_DEPRECATED_API=NPY_1_7_API_VERSION -Dfl_EXPORTS -DNO_IMPORT_ARRAY -I/usr/lib/python3/dist-packages/numpy/core/include -I/usr/include/python3.10 -I/home/USADR/ac130084/HOOMD-SPH/hoomd-sph3/dependencies/gsd-2.8.0/gsd  -Wall -Wno-unknown-pragmas -Wno-deprecated-declarations -Wall -Wno-unknown-pragmas -O3 -DNDEBUG -fPIC -o CMakeFiles/fl.dir/gsd.c.o -c /home/USADR/ac130084/HOOMD-SPH/hoomd-sph3/dependencies/gsd-2.8.0/gsd/gsd.c",
+  "file": "/home/USADR/ac130084/HOOMD-SPH/hoomd-sph3/dependencies/gsd-2.8.0/gsd/gsd.c"
+},
+{
+  "directory": "/home/USADR/ac130084/HOOMD-SPH/hoomd-sph3/dependencies/gsd-2.8.0/build/scripts",
+  "command": "/usr/bin/c++  -I/usr/lib/python3/dist-packages/numpy/core/include -I/usr/include/python3.10 -I/home/USADR/ac130084/HOOMD-SPH/hoomd-sph3/dependencies/gsd-2.8.0/gsd  -Wall -Wno-unknown-pragmas -Wno-deprecated-declarations -O3 -DNDEBUG -std=gnu++11 -o CMakeFiles/benchmark-write.dir/benchmark-write.cc.o -c /home/USADR/ac130084/HOOMD-SPH/hoomd-sph3/dependencies/gsd-2.8.0/scripts/benchmark-write.cc",
+  "file": "/home/USADR/ac130084/HOOMD-SPH/hoomd-sph3/dependencies/gsd-2.8.0/scripts/benchmark-write.cc"
+},
+{
+  "directory": "/home/USADR/ac130084/HOOMD-SPH/hoomd-sph3/dependencies/gsd-2.8.0/build/scripts",
+  "command": "/usr/bin/cc  -I/usr/lib/python3/dist-packages/numpy/core/include -I/usr/include/python3.10 -I/home/USADR/ac130084/HOOMD-SPH/hoomd-sph3/dependencies/gsd-2.8.0/gsd  -Wall -Wno-unknown-pragmas -Wno-deprecated-declarations -Wall -Wno-unknown-pragmas -O3 -DNDEBUG -o CMakeFiles/benchmark-write.dir/__/gsd/gsd.c.o -c /home/USADR/ac130084/HOOMD-SPH/hoomd-sph3/dependencies/gsd-2.8.0/gsd/gsd.c",
+  "file": "/home/USADR/ac130084/HOOMD-SPH/hoomd-sph3/dependencies/gsd-2.8.0/gsd/gsd.c"
+},
+{
+  "directory": "/home/USADR/ac130084/HOOMD-SPH/hoomd-sph3/dependencies/gsd-2.8.0/build/scripts",
+  "command": "/usr/bin/c++  -I/usr/lib/python3/dist-packages/numpy/core/include -I/usr/include/python3.10 -I/home/USADR/ac130084/HOOMD-SPH/hoomd-sph3/dependencies/gsd-2.8.0/gsd  -Wall -Wno-unknown-pragmas -Wno-deprecated-declarations -O3 -DNDEBUG -std=gnu++11 -o CMakeFiles/benchmark-read.dir/benchmark-read.cc.o -c /home/USADR/ac130084/HOOMD-SPH/hoomd-sph3/dependencies/gsd-2.8.0/scripts/benchmark-read.cc",
+  "file": "/home/USADR/ac130084/HOOMD-SPH/hoomd-sph3/dependencies/gsd-2.8.0/scripts/benchmark-read.cc"
+},
+{
+  "directory": "/home/USADR/ac130084/HOOMD-SPH/hoomd-sph3/dependencies/gsd-2.8.0/build/scripts",
+  "command": "/usr/bin/cc  -I/usr/lib/python3/dist-packages/numpy/core/include -I/usr/include/python3.10 -I/home/USADR/ac130084/HOOMD-SPH/hoomd-sph3/dependencies/gsd-2.8.0/gsd  -Wall -Wno-unknown-pragmas -Wno-deprecated-declarations -Wall -Wno-unknown-pragmas -O3 -DNDEBUG -o CMakeFiles/benchmark-read.dir/__/gsd/gsd.c.o -c /home/USADR/ac130084/HOOMD-SPH/hoomd-sph3/dependencies/gsd-2.8.0/gsd/gsd.c",
+  "file": "/home/USADR/ac130084/HOOMD-SPH/hoomd-sph3/dependencies/gsd-2.8.0/gsd/gsd.c"
+}
+]

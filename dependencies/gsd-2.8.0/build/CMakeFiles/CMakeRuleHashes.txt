@@ -1,0 +1,17 @@
+# Hashes of file build rules.
+c2845c3bd451588da8ae57ba6e4144bb gsd/CMakeFiles/copy_gsd
+75e8421e8d98853fe58552d766735faf gsd/__init__.py
+570654dfdb441ea7762b2d39b2074e8d gsd/__main__.py
+1314c6658a70482bee58454b09219360 gsd/conftest.py
+ad9b4e7e15c60495dce9f5745e079a9a gsd/fl.c
+31561df491694644aef3ff9a47abb9ec gsd/hoomd.py
+ab4ed1dfee5663771ad64c0ff9b1dd6e gsd/pygsd.py
+acf5a8f52d9e866e06b4090e9d0fd5f3 gsd/pytest_plugin_validate.py
+340a049e401f7dfebce3ea3b1f34d90a gsd/test/CMakeFiles/copy_gsd_test
+2d254bd39a58ad28f76e2a8569e12ab7 gsd/test/conftest.py
+ff2edeca6eb9ee31ed1c372a2d36c20e gsd/test/pytest.ini
+d11a5b52d588166f5b773546b8368b8b gsd/test/test_fl.py
+0a743277fd8d61e1a299acbac160c4d9 gsd/test/test_gsd_v1.gsd
+61e1389ac079a541e6db627913aec85e gsd/test/test_hoomd.py
+2175002ce284b56e5730626bc05a531e gsd/test/test_largefile.py
+92ba515202bf440c0ff4facc5f67efd5 gsd/version.py
