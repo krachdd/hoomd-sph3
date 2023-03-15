@@ -2,6 +2,7 @@
 # Part of HOOMD-blue, released under the BSD 3-Clause License.
 
 """MD integration methods."""
+
 import warnings
 
 from hoomd.md import _md
@@ -102,7 +103,6 @@ class NVT(Method):
             "NVT is deprecated and wil be removed in hoomd 4.0. In version "
             "4.0, use the ConstantVolume method with the desired thermostat "
             "from hoomd.md.methods.thermostats.", FutureWarning)
-
         # store metadata
         param_dict = ParameterDict(filter=ParticleFilter,
                                    kT=Variant,
@@ -487,7 +487,7 @@ class NPH(Method):
            :math:`[\\mathrm{time}]`.
 
         couple (str): Couplings of diagonal elements of the stress tensor,
-            can be "none", "xy", "xz","yz", or "all", default to "all".
+            can be "none", "xy", "xz","yz", or "xyz".
 
         box_dof(`tuple` [ `bool` ]): Box degrees of freedom with six boolean
             elements corresponding to x, y, z, xy, xz, yz, each. Default to
