@@ -92,6 +92,15 @@ def delete_solids(sim, device, kernel, dt, mu, DX, rho0):
     # Identify solid particles with zero charge and delete them ( redundant solid particles )
     tags    = []
     deleted = 0
+
+    # if device.communicator.rank == 0:
+    #     data = sim.state.get_snapshot()
+    #     for i in range(len(data.particles.position)):
+    #         if data.particles.typeid[i] == 1 and data.particles.energy[i] == 1:
+    #             tags.append(data.particles.tag[i])
+    #             print(f'Rank: {device.communicator.rank} -> Delete Particle {data.particles.tag[i]}')
+    #             deleted += 1
+
     with sim.state.cpu_local_snapshot as data:
         for i in range(len(data.particles.position)):
             if data.particles.typeid[i] == 1 and data.particles.energy[i] == 1:
@@ -99,17 +108,15 @@ def delete_solids(sim, device, kernel, dt, mu, DX, rho0):
                 # print(f'Rank: {device.communicator.rank} -> Delete Particle {data.particles.tag[i]}')
                 deleted += 1
 
-    print(f'Rank: {device.communicator.rank} --> Before removeParticle')
-
+    # if device.communicator.rank == 0:
     for t in tags:
         # print(f'Rank: {device.communicator.rank} --> Remove particle {t} of {deleted}')
         sim.state.removeParticle(t)
-    
-    print(f'Rank: {device.communicator.rank} --> Before  Barrier')
 
     device.communicator.barrier_all()
-    # if device.communicator.rank == 0:
+
     print(f'Rank {device.communicator.rank}: {deleted} unnecessary solid particles deleted.')
+
 
     return sim, deleted
 
