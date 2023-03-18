@@ -339,7 +339,7 @@ void SinglePhaseFlow<KT_, SET_>::mark_solid_particles_toremove(uint64_t timestep
             }
 
         } // End solid particle loop
-    }
+    } // End mark solid particles to remove
 
 /*! Perform number density computation
  * This method computes and stores
@@ -556,7 +556,6 @@ void SinglePhaseFlow<KT_, SET_>::compute_ndensity(uint64_t timestep)
         if ( this->m_density_method == DENSITYSUMMATION && i_isfluid )
             {
             h_density.data[i] = h_density.data[i] * h_velocity.data[i].w;
-
             }
 
         } // End of particle loop
@@ -780,6 +779,9 @@ void SinglePhaseFlow<KT_, SET_>::compute_noslip(uint64_t timestep)
         // Initialize hydrostatic pressure contribution
         Scalar3 ph_c0 = make_scalar3(0, 0, 0);
 
+        // Initialize reziprocal solid particle wise zeroth order normalisation constant 
+        Scalar wij_c0 = Scalar(0);
+
         // Loop over all of the neighbors of this particle
         // Count fluid neighbors before setting solid particle properties
         unsigned int fluidneighbors = 0;
@@ -880,9 +882,12 @@ void SinglePhaseFlow<KT_, SET_>::compute_noslip(uint64_t timestep)
 
             // Add contribution to hydrostatic pressure term
             // this also includes a direction (included in dx)
+            // h_density is the density of the fluid and therefore a real density
             ph_c0.x += h_density.data[k] * dx.x * wij;
             ph_c0.y += h_density.data[k] * dx.y * wij;
             ph_c0.z += h_density.data[k] * dx.z * wij;
+
+            wij_c0 += wij;
 
             // if ( this->m_body_acceleration )
             //     {
@@ -897,17 +902,20 @@ void SinglePhaseFlow<KT_, SET_>::compute_noslip(uint64_t timestep)
             } // End neighbor loop
 
         // Store fictitious solid particle velocity
-        if (fluidneighbors > 0 && h_density.data[i] > 0 )
+        // if (fluidneighbors > 0 && h_density.data[i] > 0 )
+        if (fluidneighbors > 0 && wij_c0 > 0 )
             {
             //  Compute zeroth order normalization constant
-            Scalar norm_constant = 1./h_density.data[i];
+            // Scalar norm_constant = 1./h_density.data[i];
+            Scalar norm_constant = 1./wij_c0;
             // Set fictitious velocity
             h_vf.data[i].x = 2.0 * h_velocity.data[i].x - norm_constant * uf_c0.x;
             h_vf.data[i].y = 2.0 * h_velocity.data[i].y - norm_constant * uf_c0.y;
             h_vf.data[i].z = 2.0 * h_velocity.data[i].z - norm_constant * uf_c0.z;
             // compute fictitious pressure
             // TODO: There is an addition necessary if the acceleration of the solid 
-            // phase is not
+            // phase is not constant, since there is no function that is updating it
+            // see ISSUE # 23
             Scalar3 bodyforce = this->getAcceleration(timestep);
             Scalar3 hp_factor;
             hp_factor.x = bodyforce.x - accel_i.x;
@@ -920,6 +928,7 @@ void SinglePhaseFlow<KT_, SET_>::compute_noslip(uint64_t timestep)
 
             h_pressure.data[i] = norm_constant * pf_c0 + dot(hp_factor , ph_c0);
             // Compute solid densities by inverting equation of state
+            // Here: overwrite the normalisation constant
             h_density.data[i] = this->m_eos->Density(h_pressure.data[i]);
             }
         else
@@ -933,6 +942,7 @@ void SinglePhaseFlow<KT_, SET_>::compute_noslip(uint64_t timestep)
             // Set pressure to background pressure
             h_pressure.data[i] = this->m_eos->getBackgroundPressure();
             // Density to rest density
+            // Here: overwrite the normalisation constant
             h_density.data[i] = this->m_rho0;
             }
 
@@ -1081,7 +1091,7 @@ void SinglePhaseFlow<KT_, SET_>::renormalize_density(uint64_t timestep)
             h_density.data[i] += this->m_const_slength ? factor*this->m_skernel->wij(m_ch,r) : factor*this->m_skernel->wij(Scalar(0.5)*(h_h.data[i]+h_h.data[k]),r);
             }
         } // End of particle loop
-    }
+    } // End renormalize density
 
 /*! Perform force computation
  */
@@ -1358,6 +1368,8 @@ void SinglePhaseFlow<KT_, SET_>::computeForces(uint64_t timestep)
         throw std::runtime_error("Error computing SinglePhaseFlow forces");
         }
 
+    // m_solid_removed flag is set to False initially, so this 
+    // only executes at timestep 0
     if (!m_solid_removed)
         {
         this->m_nlist->forceUpdate();
