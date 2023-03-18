@@ -520,9 +520,11 @@ void SinglePhaseFlow<KT_, SET_>::compute_ndensity(uint64_t timestep)
                 pj.z = h_pos.data[k].z;
 
                 // Compute distance vector
-                Scalar3 dx = pj - pi;
-
-
+                // Scalar3 dx = pj - pi;
+                Scalar3 dx;
+                dx.x = pi.x - pj.x;
+                dx.y = pi.y - pj.y;
+                dx.z = pi.z - pj.z;
 
                 // Apply periodic boundary conditions
                 dx = box.minImage(dx);
@@ -643,10 +645,8 @@ void SinglePhaseFlow<KT_, SET_>::compute_normalization_constant_solid(uint64_t t
             bool j_issolid = checksolid(h_type_property_map.data, h_pos.data[k].w);
 
             // If both particles are solid, continue with next neighbor in loop
-            if ( j_issolid )
-            {
-                continue;
-            }
+            // only fluid particles contribute to the the normalisation constant
+            if ( j_issolid ) { continue; }
 
             // Access neighbor position
             Scalar3 pj;
@@ -655,8 +655,12 @@ void SinglePhaseFlow<KT_, SET_>::compute_normalization_constant_solid(uint64_t t
             pj.z = h_pos.data[k].z;
 
             // Compute distance vector
-            // TODO DEFINE SCALAR NOT in loop but outside !!!!!!!!!
-            Scalar3 dx = pj - pi;
+            // TODO DEFINE SCALAR NOT in loop but outside !
+            // Scalar3 dx = pj - pi;
+            Scalar3 dx;
+            dx.x = pi.x - pj.x;
+            dx.y = pi.y - pj.y;
+            dx.z = pi.z - pj.z;
 
             // Apply periodic boundary conditions
             dx = box.minImage(dx);
@@ -673,14 +677,15 @@ void SinglePhaseFlow<KT_, SET_>::compute_normalization_constant_solid(uint64_t t
             // Calculate distance
             Scalar r = sqrt(rsq);
 
-            // Normalization constant sum (Wij)^-1
+            // Normalization constant for solid particle
+            // \sum_j Wij 
             h_density.data[i] += this->m_const_slength ? this->m_skernel->wij(m_ch,r) : this->m_skernel->wij(Scalar(0.5)*(h_h.data[i]+h_h.data[k]),r);
 
         } // END NEIGHBOR LOOP
 
     } // END PARTICLE LOOP
 
-}
+} // End compute normalisation constant solid
 
 
 
@@ -809,7 +814,9 @@ void SinglePhaseFlow<KT_, SET_>::compute_noslip(uint64_t timestep)
 
         myHead = h_head_list.data[i];
         size = (unsigned int)h_n_neigh.data[i];
-        // std::cout << "Number of Neighbours: " << size << " \n" << std::endl;
+        // loop over all neighbours of the solid particle
+        // effectivly, only fluid particles contribute to properties of the solid
+
         for (unsigned int j = 0; j < size; j++)
             {
             // Index of neighbor (MEM TRANSFER: 1 scalar)
@@ -832,8 +839,11 @@ void SinglePhaseFlow<KT_, SET_>::compute_noslip(uint64_t timestep)
             pj.z = h_pos.data[k].z;
 
             // Compute distance vector (FLOPS: 3)
-            Scalar3 dx = pi - pj;
-
+            // in this case i is the solid particle, j its fluid neighbour
+            Scalar3 dx;
+            dx.x = pi.x - pj.x;
+            dx.y = pi.y - pj.y;
+            dx.z = pi.z - pj.z;
 
             // Apply periodic boundary conditions (FLOPS: 9)
             dx = box.minImage(dx);
@@ -868,17 +878,12 @@ void SinglePhaseFlow<KT_, SET_>::compute_noslip(uint64_t timestep)
             // Add contribution to solid fictitious pressure
             pf_c0 += Pj*wij;
 
-            // DK: siehe ADAMI 2012 !!!
-            // dx: this should also be absolute numbers TODO : Stimmt das ?? 
-            // ph_c0.x += h_dpe.data[k].x * abs(dx.x) * wij;
-            // ph_c0.y += h_dpe.data[k].x * abs(dx.y) * wij;
-            // ph_c0.z += h_dpe.data[k].x * abs(dx.z) * wij;
-
+            // Add contribution to hydrostatic pressure term
+            // this also includes a direction (included in dx)
             ph_c0.x += h_density.data[k] * dx.x * wij;
             ph_c0.y += h_density.data[k] * dx.y * wij;
             ph_c0.z += h_density.data[k] * dx.z * wij;
 
-            // Add contribution to hydrostatic pressure term
             // if ( this->m_body_acceleration )
             //     {
 
@@ -900,7 +905,20 @@ void SinglePhaseFlow<KT_, SET_>::compute_noslip(uint64_t timestep)
             h_vf.data[i].x = 2.0 * h_velocity.data[i].x - norm_constant * uf_c0.x;
             h_vf.data[i].y = 2.0 * h_velocity.data[i].y - norm_constant * uf_c0.y;
             h_vf.data[i].z = 2.0 * h_velocity.data[i].z - norm_constant * uf_c0.z;
-            h_pressure.data[i] = norm_constant * (pf_c0 + dot( this->getAcceleration(timestep) - accel_i , ph_c0));
+            // compute fictitious pressure
+            // TODO: There is an addition necessary if the acceleration of the solid 
+            // phase is not
+            Scalar3 bodyforce = this->getAcceleration(timestep);
+            Scalar3 hp_factor;
+            hp_factor.x = bodyforce.x - accel_i.x;
+            hp_factor.y = bodyforce.y - accel_i.y;
+            hp_factor.z = bodyforce.z - accel_i.z;
+
+            ph_c0.x *= norm_constant;
+            ph_c0.y *= norm_constant;
+            ph_c0.z *= norm_constant;
+
+            h_pressure.data[i] = norm_constant * pf_c0 + dot(hp_factor , ph_c0);
             // Compute solid densities by inverting equation of state
             h_density.data[i] = this->m_eos->Density(h_pressure.data[i]);
             }
@@ -920,7 +938,7 @@ void SinglePhaseFlow<KT_, SET_>::compute_noslip(uint64_t timestep)
 
         } // End solid particle loop
 
-    }
+    } // End compute noslip computation
 
 
 /*! Perform Shepard density renormalization
@@ -993,7 +1011,11 @@ void SinglePhaseFlow<KT_, SET_>::renormalize_density(uint64_t timestep)
                 pj.z = h_pos.data[k].z;
 
                 // Compute distance vector
-                Scalar3 dx = pj - pi;
+                // Scalar3 dx = pj - pi;
+                Scalar3 dx;
+                dx.x = pj.x - pi.x;
+                dx.y = pj.y - pi.y;
+                dx.z = pj.z - pi.z;
 
                 // Apply periodic boundary conditions
                 dx = box.minImage(dx);
@@ -1035,7 +1057,11 @@ void SinglePhaseFlow<KT_, SET_>::renormalize_density(uint64_t timestep)
             pj.z = h_pos.data[k].z;
 
             // Compute distance vector
-            Scalar3 dx = pj - pi;
+            // Scalar3 dx = pj - pi;
+            Scalar3 dx;
+            dx.x = pj.x - pi.x;
+            dx.y = pj.y - pi.y;
+            dx.z = pj.z - pi.z;
 
             // Apply periodic boundary conditions
             dx = box.minImage(dx);
@@ -1166,7 +1192,11 @@ void SinglePhaseFlow<KT_, SET_>::forcecomputation(uint64_t timestep)
             bool issolid = checksolid(h_type_property_map.data, h_pos.data[k].w);
 
             // Compute distance vector (FLOPS: 3)
-            Scalar3 dx = pi - pj;
+            // Scalar3 dx = pi - pj;
+            Scalar3 dx;
+            dx.x = pi.x - pj.x;
+            dx.y = pi.y - pj.y;
+            dx.z = pi.z - pj.z;
 
             // Apply periodic boundary conditions (FLOPS: 9)
             dx = box.minImage(dx);
@@ -1320,20 +1350,20 @@ void SinglePhaseFlow<KT_, SET_>::computeForces(uint64_t timestep)
     // start by updating the neighborlist
     this->m_nlist->compute(timestep);
 
-    if (!m_solid_removed)
-        {
-        this->m_nlist->forceUpdate();
-        this->m_nlist->compute(timestep);
-        mark_solid_particles_toremove(timestep);
-        m_solid_removed = true;
-        }
-
     // This is executed once to initialize protected/private variables
     if (!m_params_set)
         {
         this->m_exec_conf->msg->error() << "sph.models.SinglePhaseFlow requires parameters to be set before run()"
             << std::endl;
         throw std::runtime_error("Error computing SinglePhaseFlow forces");
+        }
+
+    if (!m_solid_removed)
+        {
+        this->m_nlist->forceUpdate();
+        this->m_nlist->compute(timestep);
+        mark_solid_particles_toremove(timestep);
+        m_solid_removed = true;
         }
 
     // Apply density renormalization if requested

@@ -114,9 +114,11 @@ class PYBIND11_EXPORT SinglePhaseFlow : public SPHBaseClass<KT_, SET_>
         void setConstSmoothingLength(Scalar h)
             {
             m_const_slength = true;
+            // constant slength in most cases
             m_ch = h;
             m_rcut = m_kappa * m_ch;
-            m_rcutsq = m_rcut * m_rcut;
+            // squared cutoff radius to compare with distance dot(dx, dx)
+            m_rcutsq = m_rcut * m_rcut;  
 
             }
 
