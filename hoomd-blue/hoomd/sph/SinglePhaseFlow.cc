@@ -224,7 +224,7 @@ void SinglePhaseFlow<KT_, SET_>::update_ghost_aux1(uint64_t timestep)
         flags[comm_flag::density] = 1;
         flags[comm_flag::pressure] = 1;
         flags[comm_flag::energy] = 0;
-        flags[comm_flag::auxiliary1] = 1;
+        flags[comm_flag::auxiliary1] = 1; // ficticios velocity
         flags[comm_flag::auxiliary2] = 0;
         flags[comm_flag::auxiliary3] = 0;
         flags[comm_flag::auxiliary4] = 0;
@@ -407,7 +407,8 @@ void SinglePhaseFlow<KT_, SET_>::compute_particlenumberdensity(uint64_t timestep
 
 
         } // End of particle loop
-    }
+
+    } // End particle number density
 
 
 
@@ -560,7 +561,7 @@ void SinglePhaseFlow<KT_, SET_>::compute_ndensity(uint64_t timestep)
 
         } // End of particle loop
 
-    }
+    } // End compute number density
 
 
 
@@ -1394,15 +1395,16 @@ void SinglePhaseFlow<KT_, SET_>::computeForces(uint64_t timestep)
         compute_ndensity(timestep);
     }
     // The contribution to the normalization constant is also computed for summation approach in compute_ndensity
-    else if (m_density_method == DENSITYCONTINUITY)
-    {
-        compute_normalization_constant_solid(timestep);
-    }
+    // else if (m_density_method == DENSITYCONTINUITY)
+    // {
+    //     compute_normalization_constant_solid(timestep);
+    // }
 
     // compute_ndensity(timestep);
     // compute_particlenumberdensity(timestep);
 
     // Compute fluid pressure based on m_eos;
+    // Only working on the fluidgroup
     compute_pressure(timestep);
 
 #ifdef ENABLE_MPI
@@ -1411,6 +1413,8 @@ void SinglePhaseFlow<KT_, SET_>::computeForces(uint64_t timestep)
 #endif
 
     // Compute particle pressures
+    // Includes the computation of the density of solid particles
+    // based on ficticios pressure p_i^\ast
     compute_noslip(timestep);
 
 #ifdef ENABLE_MPI
@@ -1485,6 +1489,6 @@ namespace detail
     template void export_SinglePhaseFlow<cubicspline, linear>(pybind11::module& m, std::string name = "SinglePF_CS_L");
     template void export_SinglePhaseFlow<cubicspline, tait>(pybind11::module& m, std::string name = "SinglePF_CS_T");
 
-}  // end namespace detail
+} // end namespace detail
 } // end namespace sph
 } // end namespace hoomd
