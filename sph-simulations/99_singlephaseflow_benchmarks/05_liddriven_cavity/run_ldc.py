@@ -42,7 +42,7 @@ dx                  = voxelsize
 specific_volume     = dx * dx * dx
 rho0                = 1.0
 mass                = rho0 * specific_volume
-fx                  = 0.1                # [m/s]
+fx                  = 0.0                # [m/s]
 lidvel              = 1.0
 refvel              = lidvel
 viscosity           = (rho0 * lidvel * lref)/options.reynolds # [Pa s]
@@ -81,7 +81,7 @@ slength = hoomd.sph.kernel.OptimalH[kernel]*dx       # m
 rcut    = hoomd.sph.kernel.Kappa[kernel]*slength     # m
 
 # define model parameters
-densitymethod = 'CONTINUITY'
+densitymethod = 'SUMMATION'
 steps = options.steps
 
 drho = 0.01                        # %
