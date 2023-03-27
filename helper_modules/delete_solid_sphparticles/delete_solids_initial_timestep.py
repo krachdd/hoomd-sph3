@@ -57,7 +57,7 @@ def delete_solids(sim, device, kernel, dt, mu, DX, rho0):
     
     # Setup all necessary simulation inputs
     EOS = hoomd.sph.eos.Linear()
-    EOS.set_params(rho0 ,0.05)
+    EOS.set_params(rho0 ,0.01)
 
     # Define groups/filters
     filterFLUID  = hoomd.filter.Type(['F']) # is zero
@@ -103,7 +103,8 @@ def delete_solids(sim, device, kernel, dt, mu, DX, rho0):
 
     with sim.state.cpu_local_snapshot as data:
         for i in range(len(data.particles.position)):
-            if data.particles.typeid[i] == 1 and data.particles.energy[i] == 1:
+            # print(data.particles.mass[i])
+            if data.particles.typeid[i] == 1 and data.particles.mass[i] == -999:
                 tags.append(data.particles.tag[i])
                 # print(f'Rank: {device.communicator.rank} -> Delete Particle {data.particles.tag[i]}')
                 deleted += 1

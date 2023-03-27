@@ -300,7 +300,8 @@ void SinglePhaseFlow<KT_, SET_>::mark_solid_particles_toremove(uint64_t timestep
 
     // Grab handles for particle and neighbor data
     ArrayHandle<Scalar4> h_pos(this->m_pdata->getPositions(), access_location::host, access_mode::read);
-    ArrayHandle<Scalar> h_energy(this->m_pdata->getEnergies(), access_location::host, access_mode::readwrite);
+    // ArrayHandle<Scalar> h_energy(this->m_pdata->getEnergies(), access_location::host, access_mode::readwrite);
+    ArrayHandle<Scalar4> h_velocity(this->m_pdata->getVelocities(), access_location::host, access_mode::read);
 
     // Grab handles for neighbor data
     ArrayHandle<unsigned int> h_n_neigh(this->m_nlist->getNNeighArray(), access_location::host, access_mode::read);
@@ -334,8 +335,8 @@ void SinglePhaseFlow<KT_, SET_>::mark_solid_particles_toremove(uint64_t timestep
         if ( !(solid_w_fluid_neigh) )
             {
             // Solid particles which do not have fluid neighbors are marked
-            // using energy=1 so that they can be deleted during simulation
-            h_energy.data[i] = Scalar(1.0);
+            // using mass=-999 so that they can be deleted during simulation
+            h_velocity.data[i].w = Scalar(-999.0);
             }
 
         } // End solid particle loop
