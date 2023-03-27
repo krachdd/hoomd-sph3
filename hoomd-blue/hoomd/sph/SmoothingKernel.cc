@@ -124,7 +124,7 @@ Scalar SmoothingKernel<KT_>::getKernelKappa()
 template<SmoothingKernelType KT_>
 Scalar SmoothingKernel<KT_>::w0(const Scalar h)
 {
-    return normalizationfactor(h);
+    return m_self_density * normalizationfactor(h);
 }
 
 //! Return kernel normalization factor

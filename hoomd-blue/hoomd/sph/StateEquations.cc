@@ -55,7 +55,7 @@ template<>
 Scalar StateEquation<tait>::Pressure(const Scalar rho)
     {
         // p = (r0*c^2/7)*( (rho/r0)^7 - 1 )  + backp*rho*c^2
-        return (((m_rho0*m_c*m_c)/Scalar(7))*(pow(rho/m_rho0,Scalar(7))-Scalar(1)))+m_bp;
+        return (((m_rho0*m_c*m_c)/Scalar(7))*(pow((rho/m_rho0), Scalar(7))-Scalar(1)))+m_bp;
     }
 
 template<>

@@ -93,8 +93,8 @@ kappa      = kernel_obj.Kappa()
 nlist = hoomd.nsearch.nlist.Cell(buffer = rcut*0.05, rebuild_check_delay = 1, kappa = kappa)
 
 # Equation of State
-eos = hoomd.sph.eos.Tait()
-eos.set_params(rho0,0.01)
+eos = hoomd.sph.eos.Linear()
+eos.set_params(rho0,drho)
 
 # Define groups/filters
 filterfluid  = hoomd.filter.Type(['F']) # is zero

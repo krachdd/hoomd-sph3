@@ -355,57 +355,32 @@ void SinglePhaseFlow<KT_, SET_>::compute_particlenumberdensity(uint64_t timestep
 
     // Grab handles for particle data
     ArrayHandle<Scalar> h_density(this->m_pdata->getDensities(), access_location::host, access_mode::readwrite);
-    ArrayHandle<Scalar4> h_pos(this->m_pdata->getPositions(), access_location::host, access_mode::read);
+    // ArrayHandle<Scalar4> h_pos(this->m_pdata->getPositions(), access_location::host, access_mode::read);
     ArrayHandle<Scalar4> h_velocity(this->m_pdata->getVelocities(), access_location::host, access_mode::read);
 
     // Grab handles for neighbor data
     ArrayHandle<unsigned int> h_n_neigh(this->m_nlist->getNNeighArray(), access_location::host, access_mode::read);
-    ArrayHandle<unsigned int> h_nlist(this->m_nlist->getNListArray(), access_location::host, access_mode::read);
-    ArrayHandle<size_t> h_head_list(this->m_nlist->getHeadList(), access_location::host, access_mode::read);
-    ArrayHandle<unsigned int> h_type_property_map(this->m_type_property_map, access_location::host, access_mode::read);
+    // ArrayHandle<unsigned int> h_nlist(this->m_nlist->getNListArray(), access_location::host, access_mode::read);
+    // ArrayHandle<size_t> h_head_list(this->m_nlist->getHeadList(), access_location::host, access_mode::read);
+    // ArrayHandle<unsigned int> h_type_property_map(this->m_type_property_map, access_location::host, access_mode::read);
 
     unsigned int size;
-    long unsigned int myHead;
 
     // Volume of sphere with radius m_rcut
     double sphere_vol = Scalar(4.0)/Scalar(3.0) * Scalar(3.14159265359) * pow(m_rcut, 3);
 
     // Particle loop
-    for (unsigned int i = 0; i < this->m_pdata->getN(); i++)
+    // For each fluid particle
+    unsigned int group_size = this->m_fluidgroup->getNumMembers();
+    for (unsigned int group_idx = 0; group_idx < group_size; group_idx++)
         {
-
-        // Determine particle i type
-        bool i_issolid = checksolid(h_type_property_map.data, h_pos.data[i].w);
-
-        // Skip neighbor loop if this solid solid particle does not have fluid neighbors
-        bool solid_w_fluid_neigh = false;
-        if ( i_issolid )
-            {
-            myHead = h_head_list.data[i];
-            size = (unsigned int)h_n_neigh.data[i];
-            for (unsigned int j = 0; j < size; j++)
-                {
-                    unsigned int k = h_nlist.data[myHead + j];
-                    if ( checkfluid(h_type_property_map.data, h_pos.data[k].w) )
-                        {
-                        solid_w_fluid_neigh = true;
-                        break;
-                        }
-                    }
-            }
-
-        if ( i_issolid && !(solid_w_fluid_neigh) )
-            {
-            h_density.data[i] = this->m_rho0;
-            continue;
-            }
-
+        // Read particle index
+        unsigned int i = this->m_fluidgroup->getMemberIndex(group_idx);
+        
         // All of the neighbors of this particle
-        unsigned int size = (unsigned int)h_n_neigh.data[i];
+        size = (unsigned int)h_n_neigh.data[i];
         // +1 because particle itself also contributes to density
         h_density.data[i] = (size + 1) * h_velocity.data[i].w / sphere_vol;
-        // std::cout << "Mass: " << h_velocity.data[i].w << " size " << size << " sphere_vol " << sphere_vol << " density " << h_dpe.data[i].x << std::endl;
-
 
         } // End of particle loop
 
@@ -1368,6 +1343,7 @@ void SinglePhaseFlow<KT_, SET_>::computeForces(uint64_t timestep)
     if (m_density_method == DENSITYSUMMATION)
     {
         compute_ndensity(timestep);
+        // compute_particlenumberdensity(timestep);
     }
     // The contribution to the normalization constant is also computed for summation approach in compute_ndensity
     // else if (m_density_method == DENSITYCONTINUITY)
@@ -1376,7 +1352,6 @@ void SinglePhaseFlow<KT_, SET_>::computeForces(uint64_t timestep)
     // }
 
     // compute_ndensity(timestep);
-    // compute_particlenumberdensity(timestep);
 
     // Compute fluid pressure based on m_eos;
     // Only working on the fluidgroup
