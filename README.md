@@ -44,7 +44,7 @@ Rigid bodies are defined by a single central particle and a number of
     into the simulation box. 
 ```
 - DENSITYSUMMATION Method benchmarken (this is important) not correct in old SPH, can be seen if mean density is checked
-- test limit implementation in Velocity-Verlet (easier in **HOOMD-Blue v3.5.0**)
+- test limit implementation in Velocity-Verlet (easier in **HOOMD-Blue v3.10.0**)
 - timer for different parts of program flow
 - density computation dependent on number of ranks (is this now fixed)
 - use extern gsd, DK migrated it, but there is still an
