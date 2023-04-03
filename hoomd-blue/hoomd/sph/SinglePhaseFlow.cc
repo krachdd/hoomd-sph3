@@ -1180,7 +1180,6 @@ void SinglePhaseFlow<KT_, SET_>::computeForces(uint64_t timestep)
     // Apply density renormalization if requested
     if ( m_shepard_renormalization && timestep % m_shepardfreq == 0 )
         {
-        std::cout << "in renormalization density" << std::endl;
         renormalize_density(timestep);
 #ifdef ENABLE_MPI
          // Update ghost particle densities and pressures.
@@ -1193,13 +1192,6 @@ void SinglePhaseFlow<KT_, SET_>::computeForces(uint64_t timestep)
         compute_ndensity(timestep);
         // compute_particlenumberdensity(timestep);
     }
-    // The contribution to the normalization constant is also computed for summation approach in compute_ndensity
-    // else if (m_density_method == DENSITYCONTINUITY)
-    // {
-    //     compute_normalization_constant_solid(timestep);
-    // }
-
-    // compute_ndensity(timestep);
 
     // Compute fluid pressure based on m_eos;
     // Only working on the fluidgroup
@@ -1221,6 +1213,8 @@ void SinglePhaseFlow<KT_, SET_>::computeForces(uint64_t timestep)
 #endif
 
     // Execute the force computation
+    // This includes the computation of the density if 
+    // DENSITYCONTINUITY method is used
     forcecomputation(timestep);
 
     }
