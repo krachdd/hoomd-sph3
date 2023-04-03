@@ -1119,8 +1119,10 @@ void SinglePhaseFlow<KT_, SET_>::forcecomputation(uint64_t timestep)
                     vj.z = h_velocity.data[k].z;
 
                     // Recompute velocity difference
-                    dv = vi - vj;
-
+                    // dv = vi - vj;
+                    dv.x = vi.x - vj.x;
+                    dv.y = vi.y - vj.y;
+                    dv.z = vi.z - vj.z;
                     //Vj = mj / m_rho0;
                     }
 
