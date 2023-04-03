@@ -37,7 +37,7 @@ rho0                = 1000.0
 mass                = rho0 * specific_volume
 radius              = 0.25 * lref
 fx                  = 2.5e-04                # [m/s]
-viscosity           = 0.00001               # [Pa s] 
+viscosity           = 0.1               # [Pa s] 
 
 
 # get kernel properties
