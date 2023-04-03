@@ -290,7 +290,8 @@ void SinglePhaseFlow<KT_, SET_>::setRCutPython(pybind11::tuple types, Scalar r_c
 
 
 /*! Mark solid particles to remove
-    set energie of a particle to 1
+    set mass of a particle to -999.0
+
  */
 
 template<SmoothingKernelType KT_,StateEquationType SET_>
@@ -300,7 +301,6 @@ void SinglePhaseFlow<KT_, SET_>::mark_solid_particles_toremove(uint64_t timestep
 
     // Grab handles for particle and neighbor data
     ArrayHandle<Scalar4> h_pos(this->m_pdata->getPositions(), access_location::host, access_mode::read);
-    // ArrayHandle<Scalar> h_energy(this->m_pdata->getEnergies(), access_location::host, access_mode::readwrite);
     ArrayHandle<Scalar4> h_velocity(this->m_pdata->getVelocities(), access_location::host, access_mode::read);
 
     // Grab handles for neighbor data
@@ -310,7 +310,7 @@ void SinglePhaseFlow<KT_, SET_>::mark_solid_particles_toremove(uint64_t timestep
     ArrayHandle<unsigned int> h_type_property_map(this->m_type_property_map, access_location::host, access_mode::read);
 
     unsigned int size;
-    long unsigned int myHead;
+    size_t myHead;
 
     // For all solid particles
     unsigned int group_size = this->m_solidgroup->getNumMembers();
@@ -340,6 +340,7 @@ void SinglePhaseFlow<KT_, SET_>::mark_solid_particles_toremove(uint64_t timestep
             }
 
         } // End solid particle loop
+
     } // End mark solid particles to remove
 
 /*! Perform number density computation
@@ -355,14 +356,10 @@ void SinglePhaseFlow<KT_, SET_>::compute_particlenumberdensity(uint64_t timestep
 
     // Grab handles for particle data
     ArrayHandle<Scalar> h_density(this->m_pdata->getDensities(), access_location::host, access_mode::readwrite);
-    // ArrayHandle<Scalar4> h_pos(this->m_pdata->getPositions(), access_location::host, access_mode::read);
     ArrayHandle<Scalar4> h_velocity(this->m_pdata->getVelocities(), access_location::host, access_mode::read);
 
     // Grab handles for neighbor data
     ArrayHandle<unsigned int> h_n_neigh(this->m_nlist->getNNeighArray(), access_location::host, access_mode::read);
-    // ArrayHandle<unsigned int> h_nlist(this->m_nlist->getNListArray(), access_location::host, access_mode::read);
-    // ArrayHandle<size_t> h_head_list(this->m_nlist->getHeadList(), access_location::host, access_mode::read);
-    // ArrayHandle<unsigned int> h_type_property_map(this->m_type_property_map, access_location::host, access_mode::read);
 
     unsigned int size;
 
@@ -389,10 +386,8 @@ void SinglePhaseFlow<KT_, SET_>::compute_particlenumberdensity(uint64_t timestep
 
 /*! Perform number density computation
  * This method computes and stores
-     - the number density based mass density ( rho_i = m_i * \sum w_ij ) for fluid particles
-       if the SUMMATION approach is being used.
-     - the zeroth order normalization constant for solid particles
-   in the density Array.
+   the number density based mass density ( rho_i = m_i * \sum w_ij ) for fluid particles 
+   if the SUMMATION approach is being used in the density Array.
  */
 template<SmoothingKernelType KT_,StateEquationType SET_>
 void SinglePhaseFlow<KT_, SET_>::compute_ndensity(uint64_t timestep)
@@ -409,7 +404,6 @@ void SinglePhaseFlow<KT_, SET_>::compute_ndensity(uint64_t timestep)
     ArrayHandle<unsigned int> h_n_neigh(this->m_nlist->getNNeighArray(), access_location::host, access_mode::read);
     ArrayHandle<unsigned int> h_nlist(this->m_nlist->getNListArray(), access_location::host, access_mode::read);
     ArrayHandle<size_t> h_head_list(this->m_nlist->getHeadList(), access_location::host, access_mode::read);
-    // ArrayHandle<unsigned int> h_head_list(this->m_nlist->getHeadList(), access_location::host, access_mode::read);
     ArrayHandle<unsigned int> h_type_property_map(this->m_type_property_map, access_location::host, access_mode::read);
 
     // Local copy of the simulation box
@@ -480,12 +474,11 @@ void SinglePhaseFlow<KT_, SET_>::compute_ndensity(uint64_t timestep)
 
         // Compute mass density from number density if particle i is a fluid particle
         // rho_i = m_i * \sum_j wij
-
         h_density.data[i] = ni * h_velocity.data[i].w;
 
     } // End fluid group loop
 
-} // END compute number density
+} // End compute number density
 
 
 /*! Perform pressure computation
@@ -508,8 +501,10 @@ void SinglePhaseFlow<KT_, SET_>::compute_pressure(uint64_t timestep)
         unsigned int i = this->m_fluidgroup->getMemberIndex(group_idx);
         // Evaluate pressure
         h_pressure.data[i] = this->m_eos->Pressure(h_density.data[i]);
-        }
-    }
+        
+        } // End fluid group loop
+
+    } // End compute pressure
 
 /*! Compute fictitious solid particle properties
     This method updates fictitious solid particle pressures and velocities to account for
@@ -533,7 +528,6 @@ void SinglePhaseFlow<KT_, SET_>::compute_noslip(uint64_t timestep)
     // Grab handles for neighbor data
     ArrayHandle<unsigned int> h_n_neigh(this->m_nlist->getNNeighArray(), access_location::host, access_mode::read);
     ArrayHandle<unsigned int> h_nlist(this->m_nlist->getNListArray(), access_location::host, access_mode::read);
-    // ArrayHandle<unsigned int> h_head_list(this->m_nlist->getHeadList(), access_location::host, access_mode::read);
     ArrayHandle<size_t> h_head_list(this->m_nlist->getHeadList(), access_location::host, access_mode::read);
     ArrayHandle<unsigned int> h_type_property_map(this->m_type_property_map, access_location::host, access_mode::read);
 
@@ -541,7 +535,7 @@ void SinglePhaseFlow<KT_, SET_>::compute_noslip(uint64_t timestep)
     const BoxDim& box = this->m_pdata->getGlobalBox();
 
     unsigned int size;
-    long unsigned int myHead;
+    size_t myHead;
 
     // For all solid particles
     unsigned int group_size = this->m_solidgroup->getNumMembers();
@@ -936,6 +930,9 @@ void SinglePhaseFlow<KT_, SET_>::forcecomputation(uint64_t timestep)
     // Check input data
     assert(h_pos.data != NULL);
 
+    unsigned int size;
+    size_t myHead;
+
     // Local copy of the simulation box
     const BoxDim& box = this->m_pdata->getGlobalBox();
 
@@ -974,16 +971,14 @@ void SinglePhaseFlow<KT_, SET_>::forcecomputation(uint64_t timestep)
         // // Total velocity of particle
         Scalar vi_total = sqrt((vi.x * vi.x) + (vi.y * vi.y) + (vi.z * vi.z));
 
-        if (i == 0) {
-            max_vel = vi_total;
-        } 
-        else if (vi_total > max_vel) {
-            max_vel = vi_total;
-        }
+        // Properties needed for adaptive timestep
+        if (i == 0) { max_vel = vi_total; }
+        else if (vi_total > max_vel) { max_vel = vi_total; }
 
         // Loop over all of the neighbors of this particle
-        const long unsigned int myHead = h_head_list.data[i];
-        const unsigned int size = (unsigned int)h_n_neigh.data[i];
+        myHead = h_head_list.data[i];
+        size = (unsigned int)h_n_neigh.data[i];
+
         for (unsigned int j = 0; j < size; j++)
             {
             // Index of neighbor (MEM TRANSFER: 1 scalar)
@@ -1040,7 +1035,10 @@ void SinglePhaseFlow<KT_, SET_>::forcecomputation(uint64_t timestep)
             Scalar Pj = h_pressure.data[k];
 
             // Compute velocity difference
-            Scalar3 dv = vi - vj;
+            Scalar3 dv;
+            dv.x = vi.x - vj.x;
+            dv.y = vi.y - vj.y;
+            dv.z = vi.z - vj.z;
 
             // Calculate absolute and normalized distance
             Scalar r = sqrt(rsq);
@@ -1060,8 +1058,9 @@ void SinglePhaseFlow<KT_, SET_>::forcecomputation(uint64_t timestep)
             //temp0 = -mi*mj*(Pi+Pj)/(rhoi*rhoj);
             //temp0 = -mi*mj*( Pi/(rhoi*rhoj) + Pj/(rhoj*rhoj) );
             if ( m_density_method == DENSITYSUMMATION )
-            { 
-                temp0 = -(Vi*Vi+Vj*Vj)*((rhoj*Pi+rhoi*Pj)/(rhoi+rhoj));
+            {
+                // Transport formulation proposed by Adami 2013
+                temp0 = -(Vi*Vi+Vj*Vj)*((rhoj*Pi+rhoi*Pj)/(rhoi+rhoj)); 
             }
             else if ( m_density_method == DENSITYCONTINUITY) 
             { 
