@@ -2,8 +2,8 @@
 # Part of HOOMD-blue, released under the BSD 3-Clause License.
 
 import hoomd
-import pytest
 import math
+import pytest
 import numpy as np
 from hoomd.error import DataAccessError
 from hoomd.logging import LoggerCategories
@@ -94,6 +94,7 @@ def test_logging():
             'category': LoggerCategories.scalar,
             'default': True
         }})
+
 
 def test_2d_free_volume(simulation_factory):
     snapshot = hoomd.Snapshot()

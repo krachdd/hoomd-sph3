@@ -545,7 +545,7 @@ class SinglePhaseFlow(SPHModel):
         # DT_1 = 0.25*H/C
         DT_1 = 0.25*DX/C
         # Fourier condition
-        DT_2 = (H*H*RHO0)/(8.0*MU)
+        DT_2 = (DX*DX*RHO0)/(8.0*MU)
         if GMAG > 0.0:
             # Gravity waves condition
             DT_3 = np.sqrt(H/(16.0*GMAG))

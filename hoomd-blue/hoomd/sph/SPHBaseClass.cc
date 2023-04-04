@@ -129,9 +129,62 @@ Scalar3 SPHBaseClass<KT_, SET_>::getAcceleration(uint64_t timestep)
     else
         return m_bodyforce;
     }
-// template Scalar3 SPHBaseClass<wendlandc2, SET_>::getAcceleration(uint64_t timestep);
+
+
 /*! \post Body forces mass*body acceleration are applied
+ * damp factor for 5000 steps
+1 +-----------------------------------------------------------------------------------------+
+      |                                                                               *****     |
+      |                                                                            ****         |
+      |                                                                         ****            |
+      |                                                                       ***               |
+  0.9 |                                                                     ***                 |
+      |                                                                   ***                   |
+      |                                                                 ***                     |
+      |                                                                **                       |
+  0.8 |                                                              ***                        |
+      |                                                            ***                          |
+      |                                                           **                            |
+      |                                                          **                             |
+      |                                                        ***                              |
+  0.7 |                                                       **                                |
+      |                                                      **                                 |
+      |                                                    ***                                  |
+      |                                                   **                                    |
+  0.6 |                                                  **                                     |
+      |                                                ***                                      |
+      |                                               **                                        |
+      |                                              **                                         |
+      |                                             **                                          |
+  0.5 |                                           ***                                           |
+      |                                          **                                             |
+      |                                         **                                              |
+      |                                        **                                               |
+      |                                      ***                                                |
+  0.4 |                                     **                                                  |
+      |                                    **                                                   |
+      |                                  ***                                                    |
+      |                                 **                                                      |
+  0.3 |                                **                                                       |
+      |                              ***                                                        |
+      |                             **                                                          |
+      |                            **                                                           |
+      |                          ***                                                            |
+  0.2 |                        ***                                                              |
+      |                       **                                                                |
+      |                     ***                                                                 |
+      |                   ***                                                                   |
+  0.1 |                 ***                                                                     |
+      |               ***                                                                       |
+      |            ****                                                                         |
+      |         ****                                                                            |
+      |     *****                                                                               |
+    0 +-----------------------------------------------------------------------------------------+
+      0       500      1000     1500     2000     2500     3000     3500     4000     4500     5000
 */
+
+
+
 template<SmoothingKernelType KT_, StateEquationType SET_>
 void SPHBaseClass<KT_, SET_>::applyBodyForce(uint64_t timestep, std::shared_ptr<ParticleGroup> pgroup)
     {
@@ -284,6 +337,6 @@ namespace detail
     template void export_SPHBaseClass<cubicspline, linear>(pybind11::module& m, std::string name = "SPHBaseClass_CS_L");
     template void export_SPHBaseClass<cubicspline, tait>(pybind11::module& m, std::string name = "SPHBaseClass_CS_T");
 
-}  // end namespace detail
+} // end namespace detail
 } // end namespace sph
 } // end namespace hoomd

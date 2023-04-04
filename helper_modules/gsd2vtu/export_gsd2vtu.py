@@ -102,20 +102,20 @@ def export_spf(GSDfilename):
         filename = pname+'/'+pname+'_'+str(snapshot.configuration.step)
         
         vtk(filename, np.array(snapshot.particles.position.T[0]),
-                    np.array(snapshot.particles.position.T[1]),
-                    np.array(snapshot.particles.position.T[2]),
-            data = {'Velocity x' :np.array(snapshot.particles.velocity.T[0]),
-                    'Velocity y' :np.array(snapshot.particles.velocity.T[1]),
-                    'Velocity z' :np.array(snapshot.particles.velocity.T[2]),
-                    'TypeId'     :np.array(snapshot.particles.typeid),
-                    'Slength'          :np.array(snapshot.particles.slength),
-                    'Mass'       :np.array(snapshot.particles.mass),
-                    'Density'    :np.array(snapshot.particles.density),
-                    'Pressure'   :np.array(snapshot.particles.pressure),
-                    'Energy'     :np.array(snapshot.particles.energy),
-                    'Aux1x'      :np.array(snapshot.particles.auxiliary1.T[0]),
-                    'Aux1y'      :np.array(snapshot.particles.auxiliary1.T[1]),
-                    'Aux1z'      :np.array(snapshot.particles.auxiliary1.T[2]),
+                      np.array(snapshot.particles.position.T[1]),
+                      np.array(snapshot.particles.position.T[2]),
+            data = {'Velocity x'          :np.array(snapshot.particles.velocity.T[0]),
+                    'Velocity y'          :np.array(snapshot.particles.velocity.T[1]),
+                    'Velocity z'          :np.array(snapshot.particles.velocity.T[2]),
+                    'TypeId'              :np.array(snapshot.particles.typeid),
+                    'Slength'             :np.array(snapshot.particles.slength),
+                    'Mass'                :np.array(snapshot.particles.mass),
+                    'Density'             :np.array(snapshot.particles.density),
+                    'Pressure'            :np.array(snapshot.particles.pressure),
+                    'Energy'              :np.array(snapshot.particles.energy),
+                    'Ficticious Velx'     :np.array(snapshot.particles.auxiliary1.T[0]),
+                    'Ficticious Vely'     :np.array(snapshot.particles.auxiliary1.T[1]),
+                    'Ficticious Velz'     :np.array(snapshot.particles.auxiliary1.T[2]),
                     # 'Aux2x'      :np.array(snapshot.particles.auxiliary2.T[0]),
                     # 'Aux2y'      :np.array(snapshot.particles.auxiliary2.T[1]),
                     # 'Aux2z'      :np.array(snapshot.particles.auxiliary2.T[2]),
@@ -128,6 +128,55 @@ def export_spf(GSDfilename):
                       },
                   )
 
+def export_tpf(GSDfilename):
+    """
+    filename: str
+    export all fields with description based on two phase flow model
+
+    """
+    print(f'{os.path.basename(__file__)}: Export {GSDfilename} to .vtu')
+
+    t = import_trajectory(GSDfilename = GSDfilename)
+
+    # Run loop over all snapshots
+    count = 0
+    for snapshot in t:
+        count += 1
+       
+        pname = GSDfilename.replace('.gsd','')
+        
+        if not os.path.exists(pname):
+            os.makedirs(pname)
+            
+        # Define VTU export filename
+        filename = pname+'/'+pname+'_'+str(snapshot.configuration.step)
+        
+        vtk(filename, np.array(snapshot.particles.position.T[0]),
+                      np.array(snapshot.particles.position.T[1]),
+                      np.array(snapshot.particles.position.T[2]),
+            data = {'Velocity x'                :np.array(snapshot.particles.velocity.T[0]),
+                    'Velocity y'                :np.array(snapshot.particles.velocity.T[1]),
+                    'Velocity z'                :np.array(snapshot.particles.velocity.T[2]),
+                    'TypeId'                    :np.array(snapshot.particles.typeid),
+                    'Slength'                   :np.array(snapshot.particles.slength),
+                    'Mass'                      :np.array(snapshot.particles.mass),
+                    'Density'                   :np.array(snapshot.particles.density),
+                    'Pressure'                  :np.array(snapshot.particles.pressure),
+                    'Energy'                    :np.array(snapshot.particles.energy),
+                    'Ficticious Velocity x'     :np.array(snapshot.particles.auxiliary1.T[0]),
+                    'Ficticious Velocity y'     :np.array(snapshot.particles.auxiliary1.T[1]),
+                    'Ficticious Velocity z'     :np.array(snapshot.particles.auxiliary1.T[2]),
+                    'Solid normal-vector x'     :np.array(snapshot.particles.auxiliary2.T[0]),
+                    'Solid normal-vector y'     :np.array(snapshot.particles.auxiliary2.T[1]),
+                    'Solid normal-vector z'     :np.array(snapshot.particles.auxiliary2.T[2]),
+                    'Fluid-Fluid n-vector x'    :np.array(snapshot.particles.auxiliary3.T[0]),
+                    'Fluid-Fluid n-vector y'    :np.array(snapshot.particles.auxiliary3.T[1]),
+                    'Fluid-Fluid n-vector z'    :np.array(snapshot.particles.auxiliary3.T[2]),
+                    'Surface Force density x'   :np.array(snapshot.particles.auxiliary4.T[0]),
+                    'Surface Force density y'   :np.array(snapshot.particles.auxiliary4.T[1]),
+                    'Surface Force density z'   :np.array(snapshot.particles.auxiliary4.T[2]),
+                      },
+                  )
 
 def export_all(GSDfilename):
     """

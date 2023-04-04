@@ -42,7 +42,7 @@ dx                  = voxelsize
 specific_volume     = dx * dx * dx
 rho0                = 1.0
 mass                = rho0 * specific_volume
-fx                  = 0.1                # [m/s]
+fx                  = 0.0                # [m/s]
 lidvel              = 1.0
 refvel              = lidvel
 viscosity           = (rho0 * lidvel * lref)/options.reynolds # [Pa s]
@@ -81,7 +81,7 @@ slength = hoomd.sph.kernel.OptimalH[kernel]*dx       # m
 rcut    = hoomd.sph.kernel.Kappa[kernel]*slength     # m
 
 # define model parameters
-densitymethod = 'CONTINUITY'
+densitymethod = 'SUMMATION'
 steps = options.steps
 
 drho = 0.01                        # %
@@ -93,8 +93,8 @@ kappa      = kernel_obj.Kappa()
 nlist = hoomd.nsearch.nlist.Cell(buffer = rcut*0.05, rebuild_check_delay = 1, kappa = kappa)
 
 # Equation of State
-eos = hoomd.sph.eos.Tait()
-eos.set_params(rho0,0.01)
+eos = hoomd.sph.eos.Linear()
+eos.set_params(rho0,drho)
 
 # Define groups/filters
 filterfluid  = hoomd.filter.Type(['F']) # is zero

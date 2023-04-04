@@ -18,6 +18,7 @@ energies and virials in the same manner as `hoomd.md.pair.Pair`
 `AnisotropicPair` does not support the ``'xplor'`` shifting mode or the ``r_on``
 parameter.
 """
+
 import warnings
 
 from collections.abc import Sequence

@@ -4,6 +4,7 @@ SPH Implementation in
 - HOOMD-Blue 3.8.0 (as of 28.01.2023)
 - HOOMD-Blue 3.8.1 (as of 29.01.2023)
 - HOOMD-Blue 3.9.0 (as of 27.02.2023)
+- HOOMD-Blue 3.10.0 (as of 15.03.2023)
 
 GSD Version
 - GSD 2.8.0 (as of 27.02.2023)
@@ -23,7 +24,7 @@ sudo apt install libcereal-dev
 - better internal separation of model, logger, and integrator
 - access to particle fields direct in python interface easily possible
 - generally more modularized (in all aspects of the model)
-- **HOOMD-Blue v3.9.0** instead of **HOOMD-Blue v1.8.2/v2.2.0**. Try to keep that up to date in the future
+- **HOOMD-Blue v3.10.0** instead of **HOOMD-Blue v1.8.2/v2.2.0**. Try to keep that up to date in the future
 
 ### Organizational apsects
 - differnt Loggers, physical models, integrators can be applied added additivly (use filters instead of groups)
@@ -43,7 +44,7 @@ Rigid bodies are defined by a single central particle and a number of
     into the simulation box. 
 ```
 - DENSITYSUMMATION Method benchmarken (this is important) not correct in old SPH, can be seen if mean density is checked
-- test limit implementation in Velocity-Verlet (easier in **HOOMD-Blue v3.5.0**)
+- test limit implementation in Velocity-Verlet (easier in **HOOMD-Blue v3.10.0**)
 - timer for different parts of program flow
 - density computation dependent on number of ranks (is this now fixed)
 - use extern gsd, DK migrated it, but there is still an

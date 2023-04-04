@@ -6,5 +6,7 @@
 *.vtu
 *.raw
 *.log
+*slurm*.sh
+*wrun*.sh
 
 99_singlephaseflow_benchmarks/.ipynb_checkpoints/*

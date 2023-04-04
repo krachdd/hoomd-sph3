@@ -4,12 +4,6 @@ maintainer: dkrach, david.krach@mib.uni-stuttgart.de
 
 #include "SmoothingKernel.h"
 
-// #include <boost/python.hpp>
-// using namespace boost::python;
-
-// #include <boost/bind.hpp>
-// using namespace boost;
-
 #include <pybind11/pybind11.h>
 
 using namespace std;
@@ -42,7 +36,7 @@ SmoothingKernel<wendlandc2>::SmoothingKernel()
 Wendland C4 Kernel
 m_alpha = 495./(256. * PI),
 m_kappa = 2.0 
-m_self_density = 
+m_self_density = 3.0
 see https://pysph.readthedocs.io/en/latest/reference/kernels.html
 */
 template<>
@@ -130,7 +124,7 @@ Scalar SmoothingKernel<KT_>::getKernelKappa()
 template<SmoothingKernelType KT_>
 Scalar SmoothingKernel<KT_>::w0(const Scalar h)
 {
-    return m_self_density*normalizationfactor(h);
+    return m_self_density * normalizationfactor(h);
 }
 
 //! Return kernel normalization factor

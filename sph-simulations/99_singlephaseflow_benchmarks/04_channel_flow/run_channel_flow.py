@@ -73,7 +73,7 @@ slength = hoomd.sph.kernel.OptimalH[kernel]*dx       # m
 rcut    = hoomd.sph.kernel.Kappa[kernel]*slength     # m
 
 # define model parameters
-densitymethod = 'CONTINUITY'
+densitymethod = 'SUMMATION'
 steps = int(sys.argv[3])
 
 drho = 0.01                        # %

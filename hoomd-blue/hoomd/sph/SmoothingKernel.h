@@ -11,15 +11,22 @@ maintainer: dkrach, david.krach@mib.uni-stuttgart.de
 #include <pybind11/pybind11.h>
 #include <pybind11/stl_bind.h>
 
-// #include <boost/shared_ptr.hpp>
-// #include <boost/preprocessor/seq.hpp>
-
 
 #ifndef __SPH_SMOOTHING_KERNEL_H__
 #define __SPH_SMOOTHING_KERNEL_H__
 
 /*! \file SmoothingKernel.h
     \brief Declares a base class for smoothing kernels.
+
+    DK: Included the self density directly in alpha. 
+    e.g. WendlandC4:
+    actually: m_alpha = 165./(256. * PI)
+    changed : m_alpha = 495./(256. * PI)
+    which is m_self_density * 165./(256. * PI)
+    Therefore the w0 has to equal the normalisation factor
+    normalisationfactor = m_alpha/(h*h*h) 
+    instead of :
+    normalisationfactor = m_self_density * m_alpha/(h*h*h) 
 */
 
 #ifdef __HIPCC__
