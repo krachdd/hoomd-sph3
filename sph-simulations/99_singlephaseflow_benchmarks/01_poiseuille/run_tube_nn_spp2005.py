@@ -33,9 +33,9 @@ if device.communicator.rank == 0:
 
 dt_string = datetime.now().strftime("%Y-%m-%d-%H-%M-%S")
 logname  = filename.replace('_init.gsd', '')
-logname  = f'{logname}_run.log'
+logname  = f'{logname}_run_summation.log'
 dumpname = filename.replace('_init.gsd', '')
-dumpname = f'{dumpname}_run.gsd'
+dumpname = f'{dumpname}_run_summation.gsd'
 
 sim.create_state_from_gsd(filename = filename)
 
@@ -78,7 +78,8 @@ slength = hoomd.sph.kernel.OptimalH[kernel]*dx       # m
 rcut    = hoomd.sph.kernel.Kappa[kernel]*slength     # m
 
 # define model parameters
-densitymethod = 'CONTINUITY'
+densitymethod = 'SUMMATION'
+#densitymethod = 'CONTINUITY'
 steps = int(sys.argv[3])
 
 drho = 0.01                        # %
@@ -122,7 +123,7 @@ model.artificialviscosity = True
 model.alpha = 0.2
 model.beta = 0.0
 model.densitydiffusion = False
-model.shepardrenormanlization = False
+model.shepardrenormalization = False
 
 maximum_smoothing_length = 0.0
 # Call get_snapshot on all ranks.
@@ -136,7 +137,7 @@ model.max_sl = maximum_smoothing_length
 
 # compute dt
 dt = model.compute_dt(lref, refvel, dx, drho)
-dt = dt/10
+dt = dt/5
 
 
 integrator = hoomd.sph.Integrator(dt=dt)
