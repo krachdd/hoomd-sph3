@@ -19,6 +19,6 @@ import sys, os
 
 import gsd.hoomd
 
-filename = 'poiseuille_flow_20_32_32_vs_5e-05_run_nn.gsd'
+filename = 'couette_flow_20_28_17_vs_5e-05_run.gsd'
 
 export_gsd2vtu.export_spf(filename)

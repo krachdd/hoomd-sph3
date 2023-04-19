@@ -104,4 +104,3 @@ with gsd.hoomd.open(name = init_filename, mode = 'wb') as f:
 
 # if device.communicator.rank == 0:
 #     export_gsd2vtu.export_spf(init_filename)
-

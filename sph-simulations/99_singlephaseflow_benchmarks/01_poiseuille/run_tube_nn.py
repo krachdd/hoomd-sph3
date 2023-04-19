@@ -33,7 +33,7 @@ if device.communicator.rank == 0:
 
 dt_string = datetime.now().strftime("%Y-%m-%d-%H-%M-%S")
 logname  = filename.replace('_init.gsd', '')
-logname  = f'{logname}_run.log'
+logname  = f'{logname}_run_nn.log'
 dumpname = filename.replace('_init.gsd', '')
 dumpname = f'{dumpname}_run_nn.gsd'
 
@@ -58,17 +58,17 @@ with sim.state.cpu_local_snapshot as snap:
 # Fluid and particle properties
 
 num_length          = int(sys.argv[1])
-lref                = 0.01               # [m]
+lref                = 0.001               # [m]
 radius              = 0.5 * lref          # [m]
 voxelsize           = lref/num_length     # [m]
 dx                  = voxelsize           # [m]
 specific_volume     = dx * dx * dx        # [m**3]
-rho0                = 1560.0              # [kg/m**3]
+rho0                = 1000.0              # [kg/m**3]
 mass                = rho0 * specific_volume # [kg]
-fx                  = 29.29                # [m/s**2]
-viscosity0          = 0.91               # [Pa s]
-shearstress0        = 87.77
-m_model             = 500
+fx                  = 0.1                 # [m/s**2]
+viscosity0          = 0.001                 # [Pa s]
+shearstress0        = 1.0
+m_model             = 50
 
 refvel = fx * lref * lref * 0.25 / (viscosity0/rho0)
 
@@ -78,7 +78,7 @@ slength = hoomd.sph.kernel.OptimalH[kernel]*dx       # m
 rcut    = hoomd.sph.kernel.Kappa[kernel]*slength     # m
 
 # define model parameters
-densitymethod = 'CONTINUITY'
+densitymethod = 'SUMMATION'
 steps = int(sys.argv[3])
 
 drho = 0.01                        # %
@@ -111,7 +111,7 @@ model = hoomd.sph.sphmodel.SinglePhaseFlowNN(kernel = kernel_obj,
 if device.communicator.rank == 0:
     print("SetModelParameter on all ranks")
 
-model.mu = viscosity0
+model.mu0 = viscosity0
 model.tau0 = shearstress0
 model.m = m_model
 model.densitymethod = densitymethod
@@ -136,7 +136,7 @@ model.max_sl = maximum_smoothing_length
 
 # compute dt
 dt = model.compute_dt(lref, refvel, dx, drho)
-
+dt = dt/100
 
 integrator = hoomd.sph.Integrator(dt=dt)
 
@@ -157,7 +157,7 @@ if device.communicator.rank == 0:
     print(f'Integrator Methods: {integrator.methods[:]}')
     print(f'Simulation Computes: {sim.operations.computes[:]}')
 
-gsd_trigger = hoomd.trigger.Periodic(100)
+gsd_trigger = hoomd.trigger.Periodic(1)
 gsd_writer = hoomd.write.GSD(filename=dumpname,
                              trigger=gsd_trigger,
                              mode='wb',

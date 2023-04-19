@@ -1143,7 +1143,7 @@ void SinglePhaseFlowNN<KT_, SET_>::compute_viscosity(uint64_t timestep)
         // Read particle i density
         Scalar rhoi = h_density.data[i];
 
-                // Determine particle i type
+        // Determine particle i type
         bool i_issolid = checksolid(h_type_property_map.data, h_pos.data[i].w);
 
         // Skip neighbor loop if this solid solid particle does not have fluid neighbors
@@ -1172,8 +1172,11 @@ void SinglePhaseFlowNN<KT_, SET_>::compute_viscosity(uint64_t timestep)
             }
 
         // Loop over all of the neighbors of this particle
-        const long unsigned int myHead = h_head_list.data[i];
-        const unsigned int size = (unsigned int)h_n_neigh.data[i];
+        // const long unsigned int myHead = h_head_list.data[i];
+        // const unsigned int size = (unsigned int)h_n_neigh.data[i];
+        myHead = h_head_list.data[i];
+        size = (unsigned int)h_n_neigh.data[i];
+
         for (unsigned int j = 0; j < size; j++)
             {
 
@@ -1191,7 +1194,10 @@ void SinglePhaseFlowNN<KT_, SET_>::compute_viscosity(uint64_t timestep)
             pj.z = h_pos.data[k].z;
 
             // Compute distance vector (FLOPS: 3)
-            Scalar3 dx = pi - pj;
+            Scalar3 dx;
+            dx.x = pi.x - pj.x;
+            dx.y = pi.y - pj.y;
+            dx.z = pi.z - pj.z;
 
             // Apply periodic boundary conditions (FLOPS: 9)
             dx = box.minImage(dx);
@@ -1236,32 +1242,32 @@ void SinglePhaseFlowNN<KT_, SET_>::compute_viscosity(uint64_t timestep)
             Scalar dwdr   = this->m_skernel->dwijdr(meanh,r);
             Scalar dwdr_r = dwdr/(r+eps);
 
-            // // Evaluate grad u gradC0
-            // L[0] += Vj * (vj.x - vi.x) * (dx.x) * dwdr_r;
-            // L[1] += Vj * (vj.x - vi.x) * (dx.y) * dwdr_r;
-            // L[2] += Vj * (vj.x - vi.x) * (dx.z) * dwdr_r;
+            // Evaluate grad u gradC0
+            L[0] += Vj * (vj.x - vi.x) * (dx.x) * dwdr_r;
+            L[1] += Vj * (vj.x - vi.x) * (dx.y) * dwdr_r;
+            L[2] += Vj * (vj.x - vi.x) * (dx.z) * dwdr_r;
 
-            // L[3] += Vj * (vj.y - vi.y) * (dx.x) * dwdr_r;
-            // L[4] += Vj * (vj.y - vi.y) * (dx.y) * dwdr_r;
-            // L[5] += Vj * (vj.y - vi.y) * (dx.z) * dwdr_r;
+            L[3] += Vj * (vj.y - vi.y) * (dx.x) * dwdr_r;
+            L[4] += Vj * (vj.y - vi.y) * (dx.y) * dwdr_r;
+            L[5] += Vj * (vj.y - vi.y) * (dx.z) * dwdr_r;
 
-            // L[6] += Vj * (vj.z - vi.z) * (dx.x) * dwdr_r;
-            // L[7] += Vj * (vj.z - vi.z) * (dx.y) * dwdr_r;
-            // L[8] += Vj * (vj.z - vi.z) * (dx.z) * dwdr_r;
+            L[6] += Vj * (vj.z - vi.z) * (dx.x) * dwdr_r;
+            L[7] += Vj * (vj.z - vi.z) * (dx.y) * dwdr_r;
+            L[8] += Vj * (vj.z - vi.z) * (dx.z) * dwdr_r;
 
 
-            // Test
-            L[0] += (mi*mj*(vj.x+vi.x)/(rhoi*rhoj))*dwdr_r*dx.x;
-            L[1] += (mi*mj*(vj.x+vi.x)/(rhoi*rhoj))*dwdr_r*dx.y;
-            L[2] += (mi*mj*(vj.x+vi.x)/(rhoi*rhoj))*dwdr_r*dx.z;
+            // // Test
+            // L[0] += (mi*mj*(vj.x+vi.x)/(rhoi*rhoj))*dwdr_r*dx.x;
+            // L[1] += (mi*mj*(vj.x+vi.x)/(rhoi*rhoj))*dwdr_r*dx.y;
+            // L[2] += (mi*mj*(vj.x+vi.x)/(rhoi*rhoj))*dwdr_r*dx.z;
 
-            L[3] += (mi*mj*(vj.y+vi.y)/(rhoi*rhoj))*dwdr_r*dx.x;
-            L[4] += (mi*mj*(vj.y+vi.y)/(rhoi*rhoj))*dwdr_r*dx.y;
-            L[5] += (mi*mj*(vj.y+vi.y)/(rhoi*rhoj))*dwdr_r*dx.z;
+            // L[3] += (mi*mj*(vj.y+vi.y)/(rhoi*rhoj))*dwdr_r*dx.x;
+            // L[4] += (mi*mj*(vj.y+vi.y)/(rhoi*rhoj))*dwdr_r*dx.y;
+            // L[5] += (mi*mj*(vj.y+vi.y)/(rhoi*rhoj))*dwdr_r*dx.z;
 
-            L[6] += (mi*mj*(vj.z+vi.z)/(rhoi*rhoj))*dwdr_r*dx.x;
-            L[7] += (mi*mj*(vj.z+vi.z)/(rhoi*rhoj))*dwdr_r*dx.y;
-            L[8] += (mi*mj*(vj.z+vi.z)/(rhoi*rhoj))*dwdr_r*dx.z;
+            // L[6] += (mi*mj*(vj.z+vi.z)/(rhoi*rhoj))*dwdr_r*dx.x;
+            // L[7] += (mi*mj*(vj.z+vi.z)/(rhoi*rhoj))*dwdr_r*dx.y;
+            // L[8] += (mi*mj*(vj.z+vi.z)/(rhoi*rhoj))*dwdr_r*dx.z;
 
 
             // // Eventuell so

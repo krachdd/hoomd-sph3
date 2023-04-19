@@ -14,7 +14,7 @@ import math
 from datetime import datetime
 import export_gsd2vtu 
 import read_input_fromtxt
-#import delete_solids_initial_timestep
+import delete_solids_initial_timestep
 import sys, os
 
 import gsd.hoomd
@@ -61,11 +61,9 @@ dx                  = voxelsize
 specific_volume     = dx * dx * dx
 rho0                = 1000.0
 mass                = rho0 * specific_volume
-viscosity0          = 0.328           # [Pa s]
-shearstress0        = 2.25
-m_model             = 5.0
+viscosity           = 1.e-03            # [Pa s]
 fx                  = 0.1
-refvel              = fx * lref * lref * 0.25 / (viscosity0/rho0)
+refvel              = fx * lref * lref * 0.25 / (viscosity/rho0)
 
 
 # get kernel properties
@@ -74,7 +72,7 @@ slength = hoomd.sph.kernel.OptimalH[kernel]*dx       # m
 rcut    = hoomd.sph.kernel.Kappa[kernel]*slength     # m
 
 # define model parameters
-densitymethod = 'CONTINUITY'
+densitymethod = 'SUMMATION'
 steps = int(sys.argv[3])
 
 drho = 0.01                        # %
@@ -99,7 +97,7 @@ with sim.state.cpu_local_snapshot as snap:
     print(f'{np.count_nonzero(snap.particles.typeid == 1)} solid particles on rank {device.communicator.rank}')
 
 # Set up SPH solver
-model = hoomd.sph.sphmodel.SinglePhaseFlowNN(kernel = kernel_obj,
+model = hoomd.sph.sphmodel.SinglePhaseFlow(kernel = kernel_obj,
                                            eos    = eos,
                                            nlist  = nlist,
                                            fluidgroup_filter = filterfluid,
@@ -107,9 +105,7 @@ model = hoomd.sph.sphmodel.SinglePhaseFlowNN(kernel = kernel_obj,
 if device.communicator.rank == 0:
     print("SetModelParameter on all ranks")
 
-model.mu0 = viscosity0
-model.tau0 = shearstress0
-model.m = m_model
+model.mu = viscosity
 model.densitymethod = densitymethod
 model.gx = fx
 model.damp = 1000
@@ -131,9 +127,7 @@ maximum_smoothing_length = device.communicator.bcast_double(maximum_smoothing_le
 model.max_sl = maximum_smoothing_length
 
 # compute dt
-#dt = model.compute_dt(lref, refvel, dx, drho)
-dt = 1.0e-12
-
+dt = model.compute_dt(lref, refvel, dx, drho)
 
 
 integrator = hoomd.sph.Integrator(dt=dt)
@@ -155,7 +149,7 @@ if device.communicator.rank == 0:
     print(f'Integrator Methods: {integrator.methods[:]}')
     print(f'Simulation Computes: {sim.operations.computes[:]}')
 
-gsd_trigger = hoomd.trigger.Periodic(100)
+gsd_trigger = hoomd.trigger.Periodic(500)
 gsd_writer = hoomd.write.GSD(filename=dumpname,
                              trigger=gsd_trigger,
                              mode='wb',
