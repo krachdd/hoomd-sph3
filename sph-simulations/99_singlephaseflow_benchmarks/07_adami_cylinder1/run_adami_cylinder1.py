@@ -65,7 +65,7 @@ mass                = rho0 * specific_volume
 radius              = 0.02
 fx                  = factorfx * 1.5e-07                # [m/s]
 viscosity           = 0.001               # [Pa s] 
-refvel = 5e-05/factorfx
+refvel = 5e-05 * factorfx
 
 # get kernel properties
 kernel  = 'WendlandC4'
