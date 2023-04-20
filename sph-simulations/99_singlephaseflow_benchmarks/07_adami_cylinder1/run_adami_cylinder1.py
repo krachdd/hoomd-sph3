@@ -26,14 +26,16 @@ sim = hoomd.Simulation(device=device)
 
 filename = 'cylinder_body_force_100_100_17_vs_0.001_init.gsd'
 
+factorfx = float(sys.argv[1])
+
 if device.communicator.rank == 0:
     print(f'{os.path.basename(__file__)}: input file: {filename} ')
 
 dt_string = datetime.now().strftime("%Y-%m-%d-%H-%M-%S")
 logname  = filename.replace('_init.gsd', '')
-logname  = f'{logname}_run.log'
+logname  = f'{logname}_run_{factorfx}.log'
 dumpname = filename.replace('_init.gsd', '')
-dumpname = f'{dumpname}_run.gsd'
+dumpname = f'{dumpname}_run_{factorfx}.gsd'
 
 sim.create_state_from_gsd(filename = filename)
 
@@ -51,6 +53,7 @@ if device.communicator.rank == 0:
 with sim.state.cpu_local_snapshot as snap:
     N = len(snap.particles.position)
     print(f'{N} particles on rank {device.communicator.rank}')
+
 
 D                   = 100
 lref                = 0.1               # [m]
@@ -71,7 +74,7 @@ rcut    = hoomd.sph.kernel.Kappa[kernel]*slength     # m
 
 # define model parameters
 densitymethod = 'SUMMATION'
-steps = 1000001
+steps = 500001
 
 drho = 0.01                        # %
 
