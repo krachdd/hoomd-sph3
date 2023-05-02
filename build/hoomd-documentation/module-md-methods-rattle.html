@@ -1,0 +1,1063 @@
+<!doctype html>
+<html class="no-js" lang="en">
+  <head><meta charset="utf-8"/>
+    <meta name="viewport" content="width=device-width,initial-scale=1"/>
+    <meta name="color-scheme" content="light dark"><meta name="generator" content="Docutils 0.18.1: http://docutils.sourceforge.net/" />
+<link rel="index" title="Index" href="genindex.html" /><link rel="search" title="Search" href="search.html" /><link rel="next" title="md.mesh" href="module-md-mesh.html" /><link rel="prev" title="md.methods" href="module-md-methods.html" />
+
+    <link rel="shortcut icon" href="_static/hoomdblue-logo-favicon.svg"/><!-- Generated with Sphinx 5.0.2 and Furo 2023.03.27 -->
+        <title>md.methods.rattle - HOOMD-blue 3.10.0 documentation</title>
+      <link rel="stylesheet" type="text/css" href="_static/pygments.css" />
+    <link rel="stylesheet" type="text/css" href="_static/styles/furo.css?digest=fad236701ea90a88636c2a8c73b44ae642ed2a53" />
+    <link rel="stylesheet" type="text/css" href="_static/styles/furo-extensions.css?digest=30d1aed668e5c3a91c3e3bf6a60b675221979f0e" />
+    
+    
+
+
+<style>
+  body {
+    --color-code-background: #f0f0f0;
+  --color-code-foreground: black;
+  --color-brand-primary: #406a8c;
+  --color-brand-content: #406a8c;
+  
+  }
+  @media not print {
+    body[data-theme="dark"] {
+      --color-code-background: #202020;
+  --color-code-foreground: #d0d0d0;
+  --color-brand-primary: #5187b2;
+  --color-brand-content: #5187b2;
+  
+    }
+    @media (prefers-color-scheme: dark) {
+      body:not([data-theme="light"]) {
+        --color-code-background: #202020;
+  --color-code-foreground: #d0d0d0;
+  --color-brand-primary: #5187b2;
+  --color-brand-content: #5187b2;
+  
+      }
+    }
+  }
+</style></head>
+  <body>
+    
+    <script>
+      document.body.dataset.theme = localStorage.getItem("theme") || "auto";
+    </script>
+    
+
+<svg xmlns="http://www.w3.org/2000/svg" style="display: none;">
+  <symbol id="svg-toc" viewBox="0 0 24 24">
+    <title>Contents</title>
+    <svg stroke="currentColor" fill="currentColor" stroke-width="0" viewBox="0 0 1024 1024">
+      <path d="M408 442h480c4.4 0 8-3.6 8-8v-56c0-4.4-3.6-8-8-8H408c-4.4 0-8 3.6-8 8v56c0 4.4 3.6 8 8 8zm-8 204c0 4.4 3.6 8 8 8h480c4.4 0 8-3.6 8-8v-56c0-4.4-3.6-8-8-8H408c-4.4 0-8 3.6-8 8v56zm504-486H120c-4.4 0-8 3.6-8 8v56c0 4.4 3.6 8 8 8h784c4.4 0 8-3.6 8-8v-56c0-4.4-3.6-8-8-8zm0 632H120c-4.4 0-8 3.6-8 8v56c0 4.4 3.6 8 8 8h784c4.4 0 8-3.6 8-8v-56c0-4.4-3.6-8-8-8zM115.4 518.9L271.7 642c5.8 4.6 14.4.5 14.4-6.9V388.9c0-7.4-8.5-11.5-14.4-6.9L115.4 505.1a8.74 8.74 0 0 0 0 13.8z"/>
+    </svg>
+  </symbol>
+  <symbol id="svg-menu" viewBox="0 0 24 24">
+    <title>Menu</title>
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+      stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="feather-menu">
+      <line x1="3" y1="12" x2="21" y2="12"></line>
+      <line x1="3" y1="6" x2="21" y2="6"></line>
+      <line x1="3" y1="18" x2="21" y2="18"></line>
+    </svg>
+  </symbol>
+  <symbol id="svg-arrow-right" viewBox="0 0 24 24">
+    <title>Expand</title>
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+      stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="feather-chevron-right">
+      <polyline points="9 18 15 12 9 6"></polyline>
+    </svg>
+  </symbol>
+  <symbol id="svg-sun" viewBox="0 0 24 24">
+    <title>Light mode</title>
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+      stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" class="feather-sun">
+      <circle cx="12" cy="12" r="5"></circle>
+      <line x1="12" y1="1" x2="12" y2="3"></line>
+      <line x1="12" y1="21" x2="12" y2="23"></line>
+      <line x1="4.22" y1="4.22" x2="5.64" y2="5.64"></line>
+      <line x1="18.36" y1="18.36" x2="19.78" y2="19.78"></line>
+      <line x1="1" y1="12" x2="3" y2="12"></line>
+      <line x1="21" y1="12" x2="23" y2="12"></line>
+      <line x1="4.22" y1="19.78" x2="5.64" y2="18.36"></line>
+      <line x1="18.36" y1="5.64" x2="19.78" y2="4.22"></line>
+    </svg>
+  </symbol>
+  <symbol id="svg-moon" viewBox="0 0 24 24">
+    <title>Dark mode</title>
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+      stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" class="icon-tabler-moon">
+      <path stroke="none" d="M0 0h24v24H0z" fill="none" />
+      <path d="M12 3c.132 0 .263 0 .393 0a7.5 7.5 0 0 0 7.92 12.446a9 9 0 1 1 -8.313 -12.454z" />
+    </svg>
+  </symbol>
+  <symbol id="svg-sun-half" viewBox="0 0 24 24">
+    <title>Auto light/dark mode</title>
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+      stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" class="icon-tabler-shadow">
+      <path stroke="none" d="M0 0h24v24H0z" fill="none"/>
+      <circle cx="12" cy="12" r="9" />
+      <path d="M13 12h5" />
+      <path d="M13 15h4" />
+      <path d="M13 18h1" />
+      <path d="M13 9h4" />
+      <path d="M13 6h1" />
+    </svg>
+  </symbol>
+</svg>
+
+<input type="checkbox" class="sidebar-toggle" name="__navigation" id="__navigation">
+<input type="checkbox" class="sidebar-toggle" name="__toc" id="__toc">
+<label class="overlay sidebar-overlay" for="__navigation">
+  <div class="visually-hidden">Hide navigation sidebar</div>
+</label>
+<label class="overlay toc-overlay" for="__toc">
+  <div class="visually-hidden">Hide table of contents sidebar</div>
+</label>
+
+
+
+<div class="page">
+  <header class="mobile-header">
+    <div class="header-left">
+      <label class="nav-overlay-icon" for="__navigation">
+        <div class="visually-hidden">Toggle site navigation sidebar</div>
+        <i class="icon"><svg><use href="#svg-menu"></use></svg></i>
+      </label>
+    </div>
+    <div class="header-center">
+      <a href="index.html"><div class="brand">HOOMD-blue 3.10.0 documentation</div></a>
+    </div>
+    <div class="header-right">
+      <div class="theme-toggle-container theme-toggle-header">
+        <button class="theme-toggle">
+          <div class="visually-hidden">Toggle Light / Dark / Auto color theme</div>
+          <svg class="theme-icon-when-auto"><use href="#svg-sun-half"></use></svg>
+          <svg class="theme-icon-when-dark"><use href="#svg-moon"></use></svg>
+          <svg class="theme-icon-when-light"><use href="#svg-sun"></use></svg>
+        </button>
+      </div>
+      <label class="toc-overlay-icon toc-header-icon no-toc" for="__toc">
+        <div class="visually-hidden">Toggle table of contents sidebar</div>
+        <i class="icon"><svg><use href="#svg-toc"></use></svg></i>
+      </label>
+    </div>
+  </header>
+  <aside class="sidebar-drawer">
+    <div class="sidebar-container">
+      
+      <div class="sidebar-sticky"><a class="sidebar-brand centered" href="index.html">
+  
+  <div class="sidebar-logo-container">
+    <img class="sidebar-logo" src="_static/hoomdblue-logo-vertical.svg" alt="Logo"/>
+  </div>
+  
+  
+</a><form class="sidebar-search-container" method="get" action="search.html" role="search">
+  <input class="sidebar-search" placeholder="Search" name="q" aria-label="Search">
+  <input type="hidden" name="check_keywords" value="yes">
+  <input type="hidden" name="area" value="default">
+</form>
+<div id="searchbox"></div><div class="sidebar-scroll"><div class="sidebar-tree">
+  <p class="caption" role="heading"><span class="caption-text">Getting started</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="features.html">Features</a></li>
+<li class="toctree-l1"><a class="reference internal" href="installation.html">Installing binaries</a></li>
+<li class="toctree-l1"><a class="reference internal" href="building.html">Building from source</a></li>
+<li class="toctree-l1"><a class="reference internal" href="migrating.html">Migrating to HOOMD v3</a></li>
+<li class="toctree-l1"><a class="reference internal" href="changelog.html">Change Log</a></li>
+<li class="toctree-l1"><a class="reference internal" href="citing.html">Citing HOOMD-blue</a></li>
+</ul>
+<p class="caption" role="heading"><span class="caption-text">Tutorials</span></p>
+<ul>
+<li class="toctree-l1 has-children"><a class="reference internal" href="tutorial/00-Introducing-HOOMD-blue/00-index.html">Introducing HOOMD-blue</a><input class="toctree-checkbox" id="toctree-checkbox-1" name="toctree-checkbox-1" role="switch" type="checkbox"/><label for="toctree-checkbox-1"><div class="visually-hidden">Toggle child pages in navigation</div><i class="icon"><svg><use href="#svg-arrow-right"></use></svg></i></label><ul>
+<li class="toctree-l2"><a class="reference internal" href="tutorial/00-Introducing-HOOMD-blue/01-The-Simulation-Object.html">The Simulation Object</a></li>
+<li class="toctree-l2"><a class="reference internal" href="tutorial/00-Introducing-HOOMD-blue/02-Performing-Hard-Particle-Monte-Carlo-Simulations.html">Performing Hard Particle Monte Carlo Simulations</a></li>
+<li class="toctree-l2"><a class="reference internal" href="tutorial/00-Introducing-HOOMD-blue/03-Initializing-the-System-State.html">Initializing the System State</a></li>
+<li class="toctree-l2"><a class="reference internal" href="tutorial/00-Introducing-HOOMD-blue/04-Randomizing-the-System.html">Randomizing the System</a></li>
+<li class="toctree-l2"><a class="reference internal" href="tutorial/00-Introducing-HOOMD-blue/05-Compressing-the-System.html">Compressing the System</a></li>
+<li class="toctree-l2"><a class="reference internal" href="tutorial/00-Introducing-HOOMD-blue/06-Equilibrating-the-System.html">Equilibrating the System</a></li>
+<li class="toctree-l2"><a class="reference internal" href="tutorial/00-Introducing-HOOMD-blue/07-Analyzing-Trajectories.html">Analyzing Trajectories</a></li>
+</ul>
+</li>
+<li class="toctree-l1 has-children"><a class="reference internal" href="tutorial/01-Introducing-Molecular-Dynamics/00-index.html">Introducing Molecular Dynamics</a><input class="toctree-checkbox" id="toctree-checkbox-2" name="toctree-checkbox-2" role="switch" type="checkbox"/><label for="toctree-checkbox-2"><div class="visually-hidden">Toggle child pages in navigation</div><i class="icon"><svg><use href="#svg-arrow-right"></use></svg></i></label><ul>
+<li class="toctree-l2"><a class="reference internal" href="tutorial/01-Introducing-Molecular-Dynamics/01-Molecular-Dynamics-Simulations.html">Molecular Dynamics Simulations</a></li>
+<li class="toctree-l2"><a class="reference internal" href="tutorial/01-Introducing-Molecular-Dynamics/02-Initializing-a-Random-System.html">Initializing a Random System</a></li>
+<li class="toctree-l2"><a class="reference internal" href="tutorial/01-Introducing-Molecular-Dynamics/03-Compressing-the-System.html">Compressing the System</a></li>
+</ul>
+</li>
+<li class="toctree-l1 has-children"><a class="reference internal" href="tutorial/02-Logging/00-index.html">Logging</a><input class="toctree-checkbox" id="toctree-checkbox-3" name="toctree-checkbox-3" role="switch" type="checkbox"/><label for="toctree-checkbox-3"><div class="visually-hidden">Toggle child pages in navigation</div><i class="icon"><svg><use href="#svg-arrow-right"></use></svg></i></label><ul>
+<li class="toctree-l2"><a class="reference internal" href="tutorial/02-Logging/01-Logging-to-a-GSD-file.html">Logging to a GSD file</a></li>
+<li class="toctree-l2"><a class="reference internal" href="tutorial/02-Logging/02-Saving-Array-Quantities.html">Saving Array Quantities</a></li>
+<li class="toctree-l2"><a class="reference internal" href="tutorial/02-Logging/03-Storing-Particle-Shape.html">Storing Particle Shape</a></li>
+<li class="toctree-l2"><a class="reference internal" href="tutorial/02-Logging/04-Writing-Formatted-Output.html">Writing Formatted Output</a></li>
+</ul>
+</li>
+<li class="toctree-l1 has-children"><a class="reference internal" href="tutorial/03-Parallel-Simulations-With-MPI/00-index.html">Parallel Simulation With MPI</a><input class="toctree-checkbox" id="toctree-checkbox-4" name="toctree-checkbox-4" role="switch" type="checkbox"/><label for="toctree-checkbox-4"><div class="visually-hidden">Toggle child pages in navigation</div><i class="icon"><svg><use href="#svg-arrow-right"></use></svg></i></label><ul>
+<li class="toctree-l2"><a class="reference internal" href="tutorial/03-Parallel-Simulations-With-MPI/01-Introduction-to-MPI.html">Introduction to MPI</a></li>
+<li class="toctree-l2"><a class="reference internal" href="tutorial/03-Parallel-Simulations-With-MPI/02-Domain-Decomposition.html">Domain Decomposition</a></li>
+<li class="toctree-l2"><a class="reference internal" href="tutorial/03-Parallel-Simulations-With-MPI/03-Accessing-System-Configurations-With-MPI.html">Accessing System Configurations With MPI</a></li>
+<li class="toctree-l2"><a class="reference internal" href="tutorial/03-Parallel-Simulations-With-MPI/04-Running-Multiple-Simulations-With-Partitions.html">Running Multiple Simulations With Partitions</a></li>
+</ul>
+</li>
+<li class="toctree-l1 has-children"><a class="reference internal" href="tutorial/04-Custom-Actions-In-Python/00-index.html">Custom Actions in Python</a><input class="toctree-checkbox" id="toctree-checkbox-5" name="toctree-checkbox-5" role="switch" type="checkbox"/><label for="toctree-checkbox-5"><div class="visually-hidden">Toggle child pages in navigation</div><i class="icon"><svg><use href="#svg-arrow-right"></use></svg></i></label><ul>
+<li class="toctree-l2"><a class="reference internal" href="tutorial/04-Custom-Actions-In-Python/01-What-are-Actions.html">What are Actions?</a></li>
+<li class="toctree-l2"><a class="reference internal" href="tutorial/04-Custom-Actions-In-Python/02-An-Initial-Custom-Action.html">An Initial Custom Action</a></li>
+<li class="toctree-l2"><a class="reference internal" href="tutorial/04-Custom-Actions-In-Python/03-Custom-Action-Features.html">Custom Action Features</a></li>
+<li class="toctree-l2"><a class="reference internal" href="tutorial/04-Custom-Actions-In-Python/04-Custom-Updater.html">Custom Updater</a></li>
+<li class="toctree-l2"><a class="reference internal" href="tutorial/04-Custom-Actions-In-Python/05-Custom-Writer.html">Custom Writer</a></li>
+<li class="toctree-l2"><a class="reference internal" href="tutorial/04-Custom-Actions-In-Python/06-Improving-Performance.html">Improving Performance</a></li>
+</ul>
+</li>
+<li class="toctree-l1 has-children"><a class="reference internal" href="tutorial/05-Organizing-and-Executing-Simulations/00-index.html">Organizing and Executing Simulations</a><input class="toctree-checkbox" id="toctree-checkbox-6" name="toctree-checkbox-6" role="switch" type="checkbox"/><label for="toctree-checkbox-6"><div class="visually-hidden">Toggle child pages in navigation</div><i class="icon"><svg><use href="#svg-arrow-right"></use></svg></i></label><ul>
+<li class="toctree-l2"><a class="reference internal" href="tutorial/05-Organizing-and-Executing-Simulations/01-Organizing-Data.html">Organizing Data</a></li>
+<li class="toctree-l2"><a class="reference internal" href="tutorial/05-Organizing-and-Executing-Simulations/02-Executing-Simulations.html">Executing Simulations</a></li>
+<li class="toctree-l2"><a class="reference internal" href="tutorial/05-Organizing-and-Executing-Simulations/03-Continuing-Simulations.html">Continuing Simulations</a></li>
+<li class="toctree-l2"><a class="reference internal" href="tutorial/05-Organizing-and-Executing-Simulations/04-Submitting-Cluster-Jobs.html">Submitting Cluster Jobs</a></li>
+</ul>
+</li>
+<li class="toctree-l1 has-children"><a class="reference internal" href="tutorial/06-Modelling-Rigid-Bodies/00-index.html">Modelling Rigid Bodies</a><input class="toctree-checkbox" id="toctree-checkbox-7" name="toctree-checkbox-7" role="switch" type="checkbox"/><label for="toctree-checkbox-7"><div class="visually-hidden">Toggle child pages in navigation</div><i class="icon"><svg><use href="#svg-arrow-right"></use></svg></i></label><ul>
+<li class="toctree-l2"><a class="reference internal" href="tutorial/06-Modelling-Rigid-Bodies/01-Introduction-to-Rigid-Bodies.html">Introduction to Rigid Bodies</a></li>
+<li class="toctree-l2"><a class="reference internal" href="tutorial/06-Modelling-Rigid-Bodies/02-Running-Rigid-Body-Simulations.html">Running Rigid Body Simulations</a></li>
+<li class="toctree-l2"><a class="reference internal" href="tutorial/06-Modelling-Rigid-Bodies/03-Preparing-a-General-Body.html">Preparing a General Body</a></li>
+</ul>
+</li>
+</ul>
+<p class="caption" role="heading"><span class="caption-text">How to guides</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="howto/molecular.html">How to model molecular systems</a></li>
+<li class="toctree-l1"><a class="reference internal" href="howto/cpppotential.html">How to apply arbitrary pair potentials in HPMC</a></li>
+</ul>
+<p class="caption" role="heading"><span class="caption-text">Python API</span></p>
+<ul class="current">
+<li class="toctree-l1 has-children"><a class="reference internal" href="package-hoomd.html">hoomd</a><input class="toctree-checkbox" id="toctree-checkbox-8" name="toctree-checkbox-8" role="switch" type="checkbox"/><label for="toctree-checkbox-8"><div class="visually-hidden">Toggle child pages in navigation</div><i class="icon"><svg><use href="#svg-arrow-right"></use></svg></i></label><ul>
+<li class="toctree-l2"><a class="reference internal" href="module-hoomd-box.html">hoomd.box</a></li>
+<li class="toctree-l2"><a class="reference internal" href="module-hoomd-communicator.html">hoomd.communicator</a></li>
+<li class="toctree-l2"><a class="reference internal" href="module-hoomd-custom.html">hoomd.custom</a></li>
+<li class="toctree-l2 has-children"><a class="reference internal" href="module-hoomd-data.html">hoomd.data</a><input class="toctree-checkbox" id="toctree-checkbox-9" name="toctree-checkbox-9" role="switch" type="checkbox"/><label for="toctree-checkbox-9"><div class="visually-hidden">Toggle child pages in navigation</div><i class="icon"><svg><use href="#svg-arrow-right"></use></svg></i></label><ul>
+<li class="toctree-l3"><a class="reference internal" href="module-hoomd-array.html">hoomd.data.array</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="module-hoomd-device.html">hoomd.device</a></li>
+<li class="toctree-l2"><a class="reference internal" href="module-hoomd-error.html">hoomd.error</a></li>
+<li class="toctree-l2"><a class="reference internal" href="module-hoomd-filter.html">hoomd.filter</a></li>
+<li class="toctree-l2"><a class="reference internal" href="module-hoomd-logging.html">hoomd.logging</a></li>
+<li class="toctree-l2"><a class="reference internal" href="module-hoomd-mesh.html">hoomd.mesh</a></li>
+<li class="toctree-l2"><a class="reference internal" href="module-hoomd-operation.html">hoomd.operation</a></li>
+<li class="toctree-l2"><a class="reference internal" href="module-hoomd-triggers.html">hoomd.trigger</a></li>
+<li class="toctree-l2"><a class="reference internal" href="module-hoomd-tune.html">hoomd.tune</a></li>
+<li class="toctree-l2"><a class="reference internal" href="module-hoomd-update.html">hoomd.update</a></li>
+<li class="toctree-l2"><a class="reference internal" href="module-hoomd-variant.html">hoomd.variant</a></li>
+<li class="toctree-l2"><a class="reference internal" href="module-hoomd-version.html">hoomd.version</a></li>
+<li class="toctree-l2"><a class="reference internal" href="module-hoomd-wall.html">hoomd.wall</a></li>
+<li class="toctree-l2"><a class="reference internal" href="module-hoomd-write.html">hoomd.write</a></li>
+</ul>
+</li>
+<li class="toctree-l1 has-children"><a class="reference internal" href="package-hpmc.html">hoomd.hpmc</a><input class="toctree-checkbox" id="toctree-checkbox-10" name="toctree-checkbox-10" role="switch" type="checkbox"/><label for="toctree-checkbox-10"><div class="visually-hidden">Toggle child pages in navigation</div><i class="icon"><svg><use href="#svg-arrow-right"></use></svg></i></label><ul>
+<li class="toctree-l2"><a class="reference internal" href="module-hpmc-compute.html">hoomd.hpmc.compute</a></li>
+<li class="toctree-l2"><a class="reference internal" href="module-hpmc-integrate.html">hoomd.hpmc.integrate</a></li>
+<li class="toctree-l2 has-children"><a class="reference internal" href="module-hpmc-nec.html">hoomd.hpmc.nec</a><input class="toctree-checkbox" id="toctree-checkbox-11" name="toctree-checkbox-11" role="switch" type="checkbox"/><label for="toctree-checkbox-11"><div class="visually-hidden">Toggle child pages in navigation</div><i class="icon"><svg><use href="#svg-arrow-right"></use></svg></i></label><ul>
+<li class="toctree-l3"><a class="reference internal" href="module-hpmc-nec-integrate.html">hoomd.hpmc.nec.integrate</a></li>
+<li class="toctree-l3"><a class="reference internal" href="module-hpmc-nec-tune.html">hoomd.hpmc.nec.tune</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="module-hpmc-tune.html">hoomd.hpmc.tune</a></li>
+<li class="toctree-l2"><a class="reference internal" href="module-hpmc-update.html">hoomd.hpmc.update</a></li>
+<li class="toctree-l2 has-children"><a class="reference internal" href="module-hpmc-pair.html">hoomd.hpmc.pair</a><input class="toctree-checkbox" id="toctree-checkbox-12" name="toctree-checkbox-12" role="switch" type="checkbox"/><label for="toctree-checkbox-12"><div class="visually-hidden">Toggle child pages in navigation</div><i class="icon"><svg><use href="#svg-arrow-right"></use></svg></i></label><ul>
+<li class="toctree-l3"><a class="reference internal" href="module-hpmc-pair-user.html">hoomd.hpmc.pair.user</a></li>
+</ul>
+</li>
+<li class="toctree-l2 has-children"><a class="reference internal" href="module-hpmc-external.html">hoomd.hpmc.external</a><input class="toctree-checkbox" id="toctree-checkbox-13" name="toctree-checkbox-13" role="switch" type="checkbox"/><label for="toctree-checkbox-13"><div class="visually-hidden">Toggle child pages in navigation</div><i class="icon"><svg><use href="#svg-arrow-right"></use></svg></i></label><ul>
+<li class="toctree-l3"><a class="reference internal" href="module-hpmc-external-user.html">hoomd.hpmc.external.user</a></li>
+<li class="toctree-l3"><a class="reference internal" href="module-hpmc-external-field.html">hoomd.hpmc.external.field</a></li>
+<li class="toctree-l3"><a class="reference internal" href="module-hpmc-external-wall.html">hoomd.hpmc.external.wall</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="module-hpmc-shape_move.html">hoomd.hpmc.shape_move</a></li>
+</ul>
+</li>
+<li class="toctree-l1 current has-children"><a class="reference internal" href="package-md.html">hoomd.md</a><input checked="" class="toctree-checkbox" id="toctree-checkbox-14" name="toctree-checkbox-14" role="switch" type="checkbox"/><label for="toctree-checkbox-14"><div class="visually-hidden">Toggle child pages in navigation</div><i class="icon"><svg><use href="#svg-arrow-right"></use></svg></i></label><ul class="current">
+<li class="toctree-l2 has-children"><a class="reference internal" href="module-md-alchemy.html">md.alchemy</a><input class="toctree-checkbox" id="toctree-checkbox-15" name="toctree-checkbox-15" role="switch" type="checkbox"/><label for="toctree-checkbox-15"><div class="visually-hidden">Toggle child pages in navigation</div><i class="icon"><svg><use href="#svg-arrow-right"></use></svg></i></label><ul>
+<li class="toctree-l3"><a class="reference internal" href="module-md-alchemy-pair.html">md.alchemy.pair</a></li>
+<li class="toctree-l3"><a class="reference internal" href="module-md-alchemy-methods.html">md.alchemy.methods</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="module-md-angle.html">md.angle</a></li>
+<li class="toctree-l2"><a class="reference internal" href="module-md-bond.html">md.bond</a></li>
+<li class="toctree-l2"><a class="reference internal" href="module-md-constrain.html">md.constrain</a></li>
+<li class="toctree-l2"><a class="reference internal" href="module-md-compute.html">md.compute</a></li>
+<li class="toctree-l2"><a class="reference internal" href="module-md-data.html">md.data</a></li>
+<li class="toctree-l2"><a class="reference internal" href="module-md-dihedral.html">md.dihedral</a></li>
+<li class="toctree-l2 has-children"><a class="reference internal" href="module-md-external.html">md.external</a><input class="toctree-checkbox" id="toctree-checkbox-16" name="toctree-checkbox-16" role="switch" type="checkbox"/><label for="toctree-checkbox-16"><div class="visually-hidden">Toggle child pages in navigation</div><i class="icon"><svg><use href="#svg-arrow-right"></use></svg></i></label><ul>
+<li class="toctree-l3"><a class="reference internal" href="module-md-external-field.html">md.external.field</a></li>
+<li class="toctree-l3"><a class="reference internal" href="module-md-external-wall.html">md.external.wall</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="module-md-force.html">md.force</a></li>
+<li class="toctree-l2"><a class="reference internal" href="module-md-improper.html">md.improper</a></li>
+<li class="toctree-l2 has-children"><a class="reference internal" href="module-md-long_range.html">md.long_range</a><input class="toctree-checkbox" id="toctree-checkbox-17" name="toctree-checkbox-17" role="switch" type="checkbox"/><label for="toctree-checkbox-17"><div class="visually-hidden">Toggle child pages in navigation</div><i class="icon"><svg><use href="#svg-arrow-right"></use></svg></i></label><ul>
+<li class="toctree-l3"><a class="reference internal" href="module-md-long_range-pppm.html">md.long_range.pppm</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="module-md-manifold.html">md.manifold</a></li>
+<li class="toctree-l2"><a class="reference internal" href="module-md-many_body.html">md.many_body</a></li>
+<li class="toctree-l2 current has-children"><a class="reference internal" href="module-md-methods.html">md.methods</a><input checked="" class="toctree-checkbox" id="toctree-checkbox-18" name="toctree-checkbox-18" role="switch" type="checkbox"/><label for="toctree-checkbox-18"><div class="visually-hidden">Toggle child pages in navigation</div><i class="icon"><svg><use href="#svg-arrow-right"></use></svg></i></label><ul class="current">
+<li class="toctree-l3 current current-page"><a class="current reference internal" href="#">md.methods.rattle</a></li>
+</ul>
+</li>
+<li class="toctree-l2 has-children"><a class="reference internal" href="module-md-mesh.html">md.mesh</a><input class="toctree-checkbox" id="toctree-checkbox-19" name="toctree-checkbox-19" role="switch" type="checkbox"/><label for="toctree-checkbox-19"><div class="visually-hidden">Toggle child pages in navigation</div><i class="icon"><svg><use href="#svg-arrow-right"></use></svg></i></label><ul>
+<li class="toctree-l3"><a class="reference internal" href="module-md-mesh-bond.html">md.mesh.bond</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="module-md-minimize.html">md.minimize</a></li>
+<li class="toctree-l2"><a class="reference internal" href="module-md-nlist.html">md.nlist</a></li>
+<li class="toctree-l2 has-children"><a class="reference internal" href="module-md-pair.html">md.pair</a><input class="toctree-checkbox" id="toctree-checkbox-20" name="toctree-checkbox-20" role="switch" type="checkbox"/><label for="toctree-checkbox-20"><div class="visually-hidden">Toggle child pages in navigation</div><i class="icon"><svg><use href="#svg-arrow-right"></use></svg></i></label><ul>
+<li class="toctree-l3"><a class="reference internal" href="module-md-pair-aniso.html">md.pair.aniso</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="module-md-special_pair.html">md.special_pair</a></li>
+<li class="toctree-l2"><a class="reference internal" href="module-md-tune.html">md.tune</a></li>
+<li class="toctree-l2"><a class="reference internal" href="module-md-update.html">md.update</a></li>
+</ul>
+</li>
+</ul>
+<p class="caption" role="heading"><span class="caption-text">Developer guide</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="contributing.html">Contributing</a></li>
+<li class="toctree-l1"><a class="reference internal" href="style.html">Code style</a></li>
+<li class="toctree-l1"><a class="reference internal" href="testing.html">Testing</a></li>
+<li class="toctree-l1"><a class="reference internal" href="components.html">Components</a></li>
+</ul>
+<p class="caption" role="heading"><span class="caption-text">Reference</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="notation.html">Notation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="units.html">Units</a></li>
+<li class="toctree-l1"><a class="reference internal" href="deprecated.html">Deprecated</a></li>
+<li class="toctree-l1"><a class="reference internal" href="logo.html">Logo</a></li>
+<li class="toctree-l1"><a class="reference internal" href="license.html">License</a></li>
+<li class="toctree-l1"><a class="reference internal" href="credits.html">Credits</a></li>
+<li class="toctree-l1"><a class="reference internal" href="indices.html">Index</a></li>
+</ul>
+
+</div>
+</div>
+
+      </div>
+      
+    </div>
+  </aside>
+  <div class="main">
+    <div class="content">
+      <div class="article-container">
+        <a href="#" class="back-to-top muted-link">
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24">
+            <path d="M13 20h-2V8l-5.5 5.5-1.42-1.42L12 4.16l7.92 7.92-1.42 1.42L13 8v12z"></path>
+          </svg>
+          <span>Back to top</span>
+        </a>
+        <div class="content-icon-container">
+          <div class="theme-toggle-container theme-toggle-content">
+            <button class="theme-toggle">
+              <div class="visually-hidden">Toggle Light / Dark / Auto color theme</div>
+              <svg class="theme-icon-when-auto"><use href="#svg-sun-half"></use></svg>
+              <svg class="theme-icon-when-dark"><use href="#svg-moon"></use></svg>
+              <svg class="theme-icon-when-light"><use href="#svg-sun"></use></svg>
+            </button>
+          </div>
+          <label class="toc-overlay-icon toc-content-icon no-toc" for="__toc">
+            <div class="visually-hidden">Toggle table of contents sidebar</div>
+            <i class="icon"><svg><use href="#svg-toc"></use></svg></i>
+          </label>
+        </div>
+        <article role="main">
+          <section id="md-methods-rattle">
+<h1>md.methods.rattle<a class="headerlink" href="#md-methods-rattle" title="Permalink to this heading">#</a></h1>
+<p class="rubric">Overview</p>
+<div class="table-wrapper autosummary longtable docutils container">
+<table class="autosummary longtable docutils align-default">
+<tbody>
+<tr class="row-odd"><td><p><a class="reference internal" href="#hoomd.md.methods.rattle.MethodRATTLE" title="hoomd.md.methods.rattle.MethodRATTLE"><code class="xref py py-obj docutils literal notranslate"><span class="pre">MethodRATTLE</span></code></a></p></td>
+<td><p>Base class RATTLE integration method.</p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="#hoomd.md.methods.rattle.Brownian" title="hoomd.md.methods.rattle.Brownian"><code class="xref py py-obj docutils literal notranslate"><span class="pre">Brownian</span></code></a></p></td>
+<td><p>Brownian dynamics with RATTLE constraint.</p></td>
+</tr>
+<tr class="row-odd"><td><p><a class="reference internal" href="#hoomd.md.methods.rattle.DisplacementCapped" title="hoomd.md.methods.rattle.DisplacementCapped"><code class="xref py py-obj docutils literal notranslate"><span class="pre">DisplacementCapped</span></code></a></p></td>
+<td><p>Newtonian dynamics with a cap on the maximum displacement per time step.</p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="#hoomd.md.methods.rattle.Langevin" title="hoomd.md.methods.rattle.Langevin"><code class="xref py py-obj docutils literal notranslate"><span class="pre">Langevin</span></code></a></p></td>
+<td><p>Langevin dynamics with RATTLE constraint.</p></td>
+</tr>
+<tr class="row-odd"><td><p><a class="reference internal" href="#hoomd.md.methods.rattle.NVE" title="hoomd.md.methods.rattle.NVE"><code class="xref py py-obj docutils literal notranslate"><span class="pre">NVE</span></code></a></p></td>
+<td><p>NVE Integration via Velocity-Verlet with RATTLE constraint.</p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="#hoomd.md.methods.rattle.OverdampedViscous" title="hoomd.md.methods.rattle.OverdampedViscous"><code class="xref py py-obj docutils literal notranslate"><span class="pre">OverdampedViscous</span></code></a></p></td>
+<td><p>Overdamped viscous dynamics with RATTLE constraint.</p></td>
+</tr>
+</tbody>
+</table>
+</div>
+<p class="rubric">Details</p>
+<span class="target" id="module-hoomd.md.methods.rattle"></span><p>MD integration methods with manifold constraints.</p>
+<dl class="py class">
+<dt class="sig sig-object py" id="hoomd.md.methods.rattle.Brownian">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">hoomd.md.methods.rattle.</span></span><span class="sig-name descname"><span class="pre">Brownian</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">filter</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">kT</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">manifold_constraint</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">tolerance</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">1e-06</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">alpha</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#hoomd.md.methods.rattle.Brownian" title="Permalink to this definition">#</a></dt>
+<dd><p>Brownian dynamics with RATTLE constraint.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>filter</strong> (<a class="reference internal" href="module-hoomd-filter.html#hoomd.filter.filter_like" title="hoomd.filter.filter_like"><em>hoomd.filter.filter_like</em></a>) – Subset of particles to apply this
+method to.</p></li>
+<li><p><strong>kT</strong> (<a class="reference internal" href="module-hoomd-variant.html#hoomd.variant.variant_like" title="hoomd.variant.variant_like"><em>hoomd.variant.variant_like</em></a>) – Temperature of the simulation
+<span class="math notranslate nohighlight">\([\mathrm{energy}]\)</span>.</p></li>
+<li><p><strong>manifold_constraint</strong> (<a class="reference internal" href="module-md-manifold.html#hoomd.md.manifold.Manifold" title="hoomd.md.manifold.Manifold"><em>hoomd.md.manifold.Manifold</em></a>) – Manifold
+constraint.</p></li>
+<li><p><strong>alpha</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#float" title="(in Python v3.11)"><em>float</em></a>) – When set, use <span class="math notranslate nohighlight">\(\alpha d_i\)</span> for the
+drag coefficient where <span class="math notranslate nohighlight">\(d_i\)</span> is particle diameter.
+Defaults to None
+<span class="math notranslate nohighlight">\([\mathrm{mass} \cdot \mathrm{length}^{-1}
+\cdot \mathrm{time}^{-1}]\)</span>.</p></li>
+<li><p><strong>tolerance</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#float" title="(in Python v3.11)"><em>float</em></a>) – Defines the tolerated error particles are allowed
+to deviate from the manifold in terms of the implicit function.
+The units of tolerance match that of the selected manifold’s
+implicit function. Defaults to 1e-6</p></li>
+</ul>
+</dd>
+</dl>
+<p><a class="reference internal" href="#hoomd.md.methods.rattle.Brownian" title="hoomd.md.methods.rattle.Brownian"><code class="xref any py py-class docutils literal notranslate"><span class="pre">Brownian</span></code></a> uses the same integrator as <a class="reference internal" href="module-md-methods.html#hoomd.md.methods.Brownian" title="hoomd.md.methods.Brownian"><code class="xref any py py-class docutils literal notranslate"><span class="pre">hoomd.md.methods.Brownian</span></code></a>, which
+follows the overdamped Langevin equations of motion with the additional
+force term <span class="math notranslate nohighlight">\(- \lambda \vec{F}_\mathrm{M}\)</span>. The force
+<span class="math notranslate nohighlight">\(\vec{F}_\mathrm{M}\)</span> keeps the particles on the manifold constraint,
+where the Lagrange multiplier <span class="math notranslate nohighlight">\(\lambda\)</span> is calculated via the RATTLE
+algorithm. For more details about Brownian dynamics see
+<a class="reference internal" href="module-md-methods.html#hoomd.md.methods.Brownian" title="hoomd.md.methods.Brownian"><code class="xref any py py-class docutils literal notranslate"><span class="pre">hoomd.md.methods.Brownian</span></code></a>.</p>
+<p>Examples of using <code class="docutils literal notranslate"><span class="pre">manifold_constraint</span></code>:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">sphere</span> <span class="o">=</span> <span class="n">hoomd</span><span class="o">.</span><span class="n">md</span><span class="o">.</span><span class="n">manifold</span><span class="o">.</span><span class="n">Sphere</span><span class="p">(</span><span class="n">r</span><span class="o">=</span><span class="mi">10</span><span class="p">)</span>
+<span class="n">brownian_rattle</span> <span class="o">=</span> <span class="n">hoomd</span><span class="o">.</span><span class="n">md</span><span class="o">.</span><span class="n">methods</span><span class="o">.</span><span class="n">rattle</span><span class="o">.</span><span class="n">Brownian</span><span class="p">(</span>
+<span class="nb">filter</span><span class="o">=</span><span class="n">hoomd</span><span class="o">.</span><span class="n">filter</span><span class="o">.</span><span class="n">All</span><span class="p">(),</span> <span class="n">kT</span><span class="o">=</span><span class="mf">0.2</span><span class="p">,</span> <span class="n">manifold_constraint</span><span class="o">=</span><span class="n">sphere</span><span class="p">,</span>
+<span class="n">seed</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span> <span class="n">alpha</span><span class="o">=</span><span class="mf">1.0</span><span class="p">)</span>
+<span class="n">integrator</span> <span class="o">=</span> <span class="n">hoomd</span><span class="o">.</span><span class="n">md</span><span class="o">.</span><span class="n">Integrator</span><span class="p">(</span><span class="n">dt</span><span class="o">=</span><span class="mf">0.001</span><span class="p">,</span> <span class="n">methods</span><span class="o">=</span><span class="p">[</span><span class="n">brownian_rattle</span><span class="p">],</span>
+<span class="n">forces</span><span class="o">=</span><span class="p">[</span><span class="n">lj</span><span class="p">])</span>
+</pre></div>
+</div>
+<dl class="py attribute">
+<dt class="sig sig-object py" id="hoomd.md.methods.rattle.Brownian.filter">
+<span class="sig-name descname"><span class="pre">filter</span></span><a class="headerlink" href="#hoomd.md.methods.rattle.Brownian.filter" title="Permalink to this definition">#</a></dt>
+<dd><p>Subset of particles to apply this
+method to.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Type<span class="colon">:</span></dt>
+<dd class="field-odd"><p><a class="reference internal" href="module-hoomd-filter.html#hoomd.filter.filter_like" title="hoomd.filter.filter_like">hoomd.filter.filter_like</a></p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="hoomd.md.methods.rattle.Brownian.kT">
+<span class="sig-name descname"><span class="pre">kT</span></span><a class="headerlink" href="#hoomd.md.methods.rattle.Brownian.kT" title="Permalink to this definition">#</a></dt>
+<dd><p>Temperature of the
+simulation <span class="math notranslate nohighlight">\([\mathrm{energy}]\)</span>.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Type<span class="colon">:</span></dt>
+<dd class="field-odd"><p><a class="reference internal" href="module-hoomd-variant.html#hoomd.variant.Variant" title="hoomd.variant.Variant">hoomd.variant.Variant</a></p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="hoomd.md.methods.rattle.Brownian.manifold_constraint">
+<span class="sig-name descname"><span class="pre">manifold_constraint</span></span><a class="headerlink" href="#hoomd.md.methods.rattle.Brownian.manifold_constraint" title="Permalink to this definition">#</a></dt>
+<dd><p>Manifold constraint
+which is used by and as a trigger for the RATTLE algorithm of this
+method.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Type<span class="colon">:</span></dt>
+<dd class="field-odd"><p><a class="reference internal" href="module-md-manifold.html#hoomd.md.manifold.Manifold" title="hoomd.md.manifold.Manifold">hoomd.md.manifold.Manifold</a></p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="hoomd.md.methods.rattle.Brownian.alpha">
+<span class="sig-name descname"><span class="pre">alpha</span></span><a class="headerlink" href="#hoomd.md.methods.rattle.Brownian.alpha" title="Permalink to this definition">#</a></dt>
+<dd><p>When set, use <span class="math notranslate nohighlight">\(\alpha d_i\)</span> for the drag
+coefficient where <span class="math notranslate nohighlight">\(d_i\)</span> is particle diameter
+<span class="math notranslate nohighlight">\([\mathrm{mass} \cdot \mathrm{length}^{-1}
+\cdot \mathrm{time}^{-1}]\)</span>. Defaults to None.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Type<span class="colon">:</span></dt>
+<dd class="field-odd"><p><a class="reference external" href="https://docs.python.org/3/library/functions.html#float" title="(in Python v3.11)">float</a></p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="hoomd.md.methods.rattle.Brownian.tolerance">
+<span class="sig-name descname"><span class="pre">tolerance</span></span><a class="headerlink" href="#hoomd.md.methods.rattle.Brownian.tolerance" title="Permalink to this definition">#</a></dt>
+<dd><p>Defines the tolerated error particles are allowed to
+deviate from the manifold in terms of the implicit function.
+The units of tolerance match that of the selected manifold’s
+implicit function. Defaults to 1e-6</p>
+<dl class="field-list simple">
+<dt class="field-odd">Type<span class="colon">:</span></dt>
+<dd class="field-odd"><p><a class="reference external" href="https://docs.python.org/3/library/functions.html#float" title="(in Python v3.11)">float</a></p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="hoomd.md.methods.rattle.Brownian.gamma">
+<span class="sig-name descname"><span class="pre">gamma</span></span><a class="headerlink" href="#hoomd.md.methods.rattle.Brownian.gamma" title="Permalink to this definition">#</a></dt>
+<dd><p>The drag
+coefficient can be directly set instead of the ratio of particle
+diameter (<span class="math notranslate nohighlight">\(\gamma = \alpha d_i\)</span>). The type of <code class="docutils literal notranslate"><span class="pre">gamma</span></code>
+parameter is either positive float or zero
+<span class="math notranslate nohighlight">\([\mathrm{mass} \cdot \mathrm{time}^{-1}]\)</span>.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>TypeParameter[ <code class="docutils literal notranslate"><span class="pre">particle</span> <span class="pre">type</span></code>, <a class="reference external" href="https://docs.python.org/3/library/functions.html#float" title="(in Python v3.11)"><code class="xref any docutils literal notranslate"><span class="pre">float</span></code></a> ]</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="hoomd.md.methods.rattle.Brownian.gamma_r">
+<span class="sig-name descname"><span class="pre">gamma_r</span></span><a class="headerlink" href="#hoomd.md.methods.rattle.Brownian.gamma_r" title="Permalink to this definition">#</a></dt>
+<dd><p>The rotational drag coefficient can be set. The type of <code class="docutils literal notranslate"><span class="pre">gamma_r</span></code>
+parameter is a tuple of three float. The type of each element of
+tuple is either positive float or zero
+<span class="math notranslate nohighlight">\([\mathrm{force} \cdot \mathrm{length} \cdot
+\mathrm{radian}^{-1} \cdot \mathrm{time}^{-1}]\)</span>.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>TypeParameter[<code class="docutils literal notranslate"><span class="pre">particle</span> <span class="pre">type</span></code>, [<a class="reference external" href="https://docs.python.org/3/library/functions.html#float" title="(in Python v3.11)"><code class="xref any docutils literal notranslate"><span class="pre">float</span></code></a>, <a class="reference external" href="https://docs.python.org/3/library/functions.html#float" title="(in Python v3.11)"><code class="xref any docutils literal notranslate"><span class="pre">float</span></code></a>, <a class="reference external" href="https://docs.python.org/3/library/functions.html#float" title="(in Python v3.11)"><code class="xref any docutils literal notranslate"><span class="pre">float</span></code></a>]]</p>
+</dd>
+</dl>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="py class">
+<dt class="sig sig-object py" id="hoomd.md.methods.rattle.DisplacementCapped">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">hoomd.md.methods.rattle.</span></span><span class="sig-name descname"><span class="pre">DisplacementCapped</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">filter</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference external" href="https://docs.python.org/3/library/typing.html#typing.Union" title="(in Python v3.11)"><span class="pre">Union</span></a><span class="p"><span class="pre">[</span></span><a class="reference internal" href="module-hoomd-filter.html#hoomd.filter.ParticleFilter" title="hoomd.filter.filter_.ParticleFilter"><span class="pre">ParticleFilter</span></a><span class="p"><span class="pre">,</span></span><span class="w"> </span><a class="reference internal" href="module-hoomd-filter.html#hoomd.filter.CustomFilter" title="hoomd.filter.custom.CustomFilter"><span class="pre">CustomFilter</span></a><span class="p"><span class="pre">]</span></span></span></em>, <em class="sig-param"><span class="n"><span class="pre">maximum_displacement</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference external" href="https://docs.python.org/3/library/typing.html#typing.Union" title="(in Python v3.11)"><span class="pre">Union</span></a><span class="p"><span class="pre">[</span></span><a class="reference internal" href="module-hoomd-variant.html#hoomd.variant.Variant" title="hoomd.variant.Variant"><span class="pre">Variant</span></a><span class="p"><span class="pre">,</span></span><span class="w"> </span><a class="reference external" href="https://docs.python.org/3/library/functions.html#float" title="(in Python v3.11)"><span class="pre">float</span></a><span class="p"><span class="pre">]</span></span></span></em>, <em class="sig-param"><span class="n"><span class="pre">manifold_constraint</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference internal" href="module-md-manifold.html#hoomd.md.manifold.Manifold" title="hoomd.md.manifold.Manifold"><span class="pre">Manifold</span></a></span></em>, <em class="sig-param"><span class="n"><span class="pre">tolerance</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference external" href="https://docs.python.org/3/library/functions.html#float" title="(in Python v3.11)"><span class="pre">float</span></a></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">1e-06</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#hoomd.md.methods.rattle.DisplacementCapped" title="Permalink to this definition">#</a></dt>
+<dd><p>Newtonian dynamics with a cap on the maximum displacement per time step.</p>
+<p>Integration is via a maximum displacement capped Velocity-Verlet with
+RATTLE constraint. This class is useful to relax a simulation on a manifold.</p>
+<div class="admonition warning">
+<p class="admonition-title">Warning</p>
+<p>This method does not conserve energy or momentum.</p>
+</div>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>filter</strong> (<a class="reference internal" href="module-hoomd-filter.html#hoomd.filter.filter_like" title="hoomd.filter.filter_like"><em>hoomd.filter.filter_like</em></a>) – Subset of particles on which to apply
+this method.</p></li>
+<li><p><strong>maximum_displacement</strong> (<a class="reference internal" href="module-hoomd-variant.html#hoomd.variant.variant_like" title="hoomd.variant.variant_like"><em>hoomd.variant.variant_like</em></a>) – The maximum
+displacement allowed for a particular timestep
+<span class="math notranslate nohighlight">\([\mathrm{length}]\)</span>.</p></li>
+<li><p><strong>manifold_constraint</strong> (<a class="reference internal" href="module-md-manifold.html#hoomd.md.manifold.Manifold" title="hoomd.md.manifold.Manifold"><em>hoomd.md.manifold.Manifold</em></a>) – Manifold
+constraint.</p></li>
+<li><p><strong>tolerance</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#float" title="(in Python v3.11)"><code class="xref any docutils literal notranslate"><span class="pre">float</span></code></a>, optional) – Defines the tolerated error particles are
+allowed to deviate from the manifold in terms of the implicit
+function. The units of tolerance match that of the selected
+manifold’s implicit function. Defaults to 1e-6</p></li>
+</ul>
+</dd>
+</dl>
+<p><a class="reference internal" href="#hoomd.md.methods.rattle.DisplacementCapped" title="hoomd.md.methods.rattle.DisplacementCapped"><code class="xref any py py-class docutils literal notranslate"><span class="pre">DisplacementCapped</span></code></a> performs constant volume simulations as described in
+<a class="reference internal" href="module-md-methods.html#hoomd.md.methods.DisplacementCapped" title="hoomd.md.methods.DisplacementCapped"><code class="xref any py py-class docutils literal notranslate"><span class="pre">hoomd.md.methods.DisplacementCapped</span></code></a>. In addition the particles are
+constrained to a manifold by using the RATTLE algorithm.</p>
+<p>Examples:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">sphere</span> <span class="o">=</span> <span class="n">hoomd</span><span class="o">.</span><span class="n">md</span><span class="o">.</span><span class="n">manifold</span><span class="o">.</span><span class="n">Sphere</span><span class="p">(</span><span class="n">r</span><span class="o">=</span><span class="mi">10</span><span class="p">)</span>
+<span class="n">relax_rattle</span> <span class="o">=</span> <span class="n">hoomd</span><span class="o">.</span><span class="n">md</span><span class="o">.</span><span class="n">methods</span><span class="o">.</span><span class="n">rattle</span><span class="o">.</span><span class="n">DisplacementCapped</span><span class="p">(</span>
+    <span class="nb">filter</span><span class="o">=</span><span class="n">hoomd</span><span class="o">.</span><span class="n">filter</span><span class="o">.</span><span class="n">All</span><span class="p">(),</span> <span class="n">maximum_displacement</span><span class="o">=</span><span class="mf">0.01</span><span class="p">,</span>
+    <span class="n">manifold</span><span class="o">=</span><span class="n">sphere</span><span class="p">)</span>
+<span class="n">integrator</span> <span class="o">=</span> <span class="n">hoomd</span><span class="o">.</span><span class="n">md</span><span class="o">.</span><span class="n">Integrator</span><span class="p">(</span>
+    <span class="n">dt</span><span class="o">=</span><span class="mf">0.005</span><span class="p">,</span> <span class="n">methods</span><span class="o">=</span><span class="p">[</span><span class="n">relax_rattle</span><span class="p">],</span> <span class="n">forces</span><span class="o">=</span><span class="p">[</span><span class="n">lj</span><span class="p">])</span>
+</pre></div>
+</div>
+<dl class="py attribute">
+<dt class="sig sig-object py" id="hoomd.md.methods.rattle.DisplacementCapped.filter">
+<span class="sig-name descname"><span class="pre">filter</span></span><a class="headerlink" href="#hoomd.md.methods.rattle.DisplacementCapped.filter" title="Permalink to this definition">#</a></dt>
+<dd><p>Subset of particles on which to apply
+this method.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Type<span class="colon">:</span></dt>
+<dd class="field-odd"><p><a class="reference internal" href="module-hoomd-filter.html#hoomd.filter.filter_like" title="hoomd.filter.filter_like">hoomd.filter.filter_like</a></p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="hoomd.md.methods.rattle.DisplacementCapped.maximum_displacement">
+<span class="sig-name descname"><span class="pre">maximum_displacement</span></span><a class="headerlink" href="#hoomd.md.methods.rattle.DisplacementCapped.maximum_displacement" title="Permalink to this definition">#</a></dt>
+<dd><p>The maximum
+displacement allowed for a particular timestep
+<span class="math notranslate nohighlight">\([\mathrm{length}]\)</span>.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Type<span class="colon">:</span></dt>
+<dd class="field-odd"><p><a class="reference internal" href="module-hoomd-variant.html#hoomd.variant.variant_like" title="hoomd.variant.variant_like">hoomd.variant.variant_like</a></p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="hoomd.md.methods.rattle.DisplacementCapped.manifold_constraint">
+<span class="sig-name descname"><span class="pre">manifold_constraint</span></span><a class="headerlink" href="#hoomd.md.methods.rattle.DisplacementCapped.manifold_constraint" title="Permalink to this definition">#</a></dt>
+<dd><p>Manifold constraint
+which is used by and as a trigger for the RATTLE algorithm of this
+method.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Type<span class="colon">:</span></dt>
+<dd class="field-odd"><p><a class="reference internal" href="module-md-manifold.html#hoomd.md.manifold.Manifold" title="hoomd.md.manifold.Manifold">hoomd.md.manifold.Manifold</a></p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="hoomd.md.methods.rattle.DisplacementCapped.tolerance">
+<span class="sig-name descname"><span class="pre">tolerance</span></span><a class="headerlink" href="#hoomd.md.methods.rattle.DisplacementCapped.tolerance" title="Permalink to this definition">#</a></dt>
+<dd><p>Defines the tolerated error particles are allowed to
+deviate from the manifold in terms of the implicit function. The
+units of tolerance match that of the selected manifold’s implicit
+function. Defaults to 1e-6</p>
+<dl class="field-list simple">
+<dt class="field-odd">Type<span class="colon">:</span></dt>
+<dd class="field-odd"><p><a class="reference external" href="https://docs.python.org/3/library/functions.html#float" title="(in Python v3.11)">float</a></p>
+</dd>
+</dl>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="py class">
+<dt class="sig sig-object py" id="hoomd.md.methods.rattle.Langevin">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">hoomd.md.methods.rattle.</span></span><span class="sig-name descname"><span class="pre">Langevin</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">filter</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">kT</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">manifold_constraint</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">alpha</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">tally_reservoir_energy</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">tolerance</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">1e-06</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#hoomd.md.methods.rattle.Langevin" title="Permalink to this definition">#</a></dt>
+<dd><p>Langevin dynamics with RATTLE constraint.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>filter</strong> (<a class="reference internal" href="module-hoomd-filter.html#hoomd.filter.filter_like" title="hoomd.filter.filter_like"><em>hoomd.filter.filter_like</em></a>) – Subset of particles to apply this
+method to.</p></li>
+<li><p><strong>kT</strong> (<a class="reference internal" href="module-hoomd-variant.html#hoomd.variant.variant_like" title="hoomd.variant.variant_like"><em>hoomd.variant.variant_like</em></a>) – Temperature of the simulation
+<span class="math notranslate nohighlight">\([\mathrm{energy}]\)</span>.</p></li>
+<li><p><strong>manifold_constraint</strong> (<a class="reference internal" href="module-md-manifold.html#hoomd.md.manifold.Manifold" title="hoomd.md.manifold.Manifold"><em>hoomd.md.manifold.Manifold</em></a>) – Manifold
+constraint.</p></li>
+<li><p><strong>alpha</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#float" title="(in Python v3.11)"><em>float</em></a>) – When set, use <span class="math notranslate nohighlight">\(\alpha d_i\)</span> for the drag
+coefficient where <span class="math notranslate nohighlight">\(d_i\)</span> is particle diameter
+<span class="math notranslate nohighlight">\([\mathrm{mass} \cdot
+\mathrm{length}^{-1} \cdot \mathrm{time}^{-1}]\)</span>.
+Defaults to None.</p></li>
+<li><p><strong>tally_reservoir_energy</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#bool" title="(in Python v3.11)"><em>bool</em></a>) – If true, the energy exchange
+between the thermal reservoir and the particles is tracked. Total
+energy conservation can then be monitored by adding
+<code class="docutils literal notranslate"><span class="pre">langevin_reservoir_energy_groupname</span></code> to the logged quantities.
+Defaults to False <span class="math notranslate nohighlight">\([\mathrm{energy}]\)</span>.</p></li>
+<li><p><strong>tolerance</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#float" title="(in Python v3.11)"><em>float</em></a>) – Defines the tolerated error particles are allowed
+to deviate from the manifold in terms of the implicit function.
+The units of tolerance match that of the selected manifold’s
+implicit function. Defaults to 1e-6</p></li>
+</ul>
+</dd>
+</dl>
+<p class="rubric">Translational degrees of freedom</p>
+<p><a class="reference internal" href="#hoomd.md.methods.rattle.Langevin" title="hoomd.md.methods.rattle.Langevin"><code class="xref any py py-class docutils literal notranslate"><span class="pre">Langevin</span></code></a> uses the same integrator as <a class="reference internal" href="module-md-methods.html#hoomd.md.methods.Langevin" title="hoomd.md.methods.Langevin"><code class="xref any py py-class docutils literal notranslate"><span class="pre">hoomd.md.methods.Langevin</span></code></a>, which
+follows the Langevin equations of motion with the additional force term
+<span class="math notranslate nohighlight">\(- \lambda \vec{F}_\mathrm{M}\)</span>. The force <span class="math notranslate nohighlight">\(\vec{F}_\mathrm{M}\)</span>
+keeps the particles on the manifold constraint, where the Lagrange
+multiplier <span class="math notranslate nohighlight">\(\lambda\)</span> is calculated via the RATTLE algorithm. For
+more details about Langevin dynamics see <a class="reference internal" href="module-md-methods.html#hoomd.md.methods.Langevin" title="hoomd.md.methods.Langevin"><code class="xref any py py-class docutils literal notranslate"><span class="pre">hoomd.md.methods.Langevin</span></code></a>.</p>
+<p>Use <a class="reference internal" href="#hoomd.md.methods.rattle.Brownian" title="hoomd.md.methods.rattle.Brownian"><code class="xref any py py-class docutils literal notranslate"><span class="pre">Brownian</span></code></a> if your system is not underdamped.</p>
+<p>Examples:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">sphere</span> <span class="o">=</span> <span class="n">hoomd</span><span class="o">.</span><span class="n">md</span><span class="o">.</span><span class="n">manifold</span><span class="o">.</span><span class="n">Sphere</span><span class="p">(</span><span class="n">r</span><span class="o">=</span><span class="mi">10</span><span class="p">)</span>
+<span class="n">langevin_rattle</span> <span class="o">=</span> <span class="n">hoomd</span><span class="o">.</span><span class="n">md</span><span class="o">.</span><span class="n">methods</span><span class="o">.</span><span class="n">rattle</span><span class="o">.</span><span class="n">Langevin</span><span class="p">(</span>
+    <span class="nb">filter</span><span class="o">=</span><span class="n">hoomd</span><span class="o">.</span><span class="n">filter</span><span class="o">.</span><span class="n">All</span><span class="p">(),</span> <span class="n">kT</span><span class="o">=</span><span class="mf">0.2</span><span class="p">,</span> <span class="n">manifold_constraint</span><span class="o">=</span><span class="n">sphere</span><span class="p">,</span>
+    <span class="n">seed</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span> <span class="n">alpha</span><span class="o">=</span><span class="mf">1.0</span><span class="p">)</span>
+</pre></div>
+</div>
+<p>Examples of using <code class="docutils literal notranslate"><span class="pre">gamma</span></code> or <code class="docutils literal notranslate"><span class="pre">gamma_r</span></code> on drag coefficient:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">sphere</span> <span class="o">=</span> <span class="n">hoomd</span><span class="o">.</span><span class="n">md</span><span class="o">.</span><span class="n">manifold</span><span class="o">.</span><span class="n">Sphere</span><span class="p">(</span><span class="n">r</span><span class="o">=</span><span class="mi">10</span><span class="p">)</span>
+<span class="n">langevin_rattle</span> <span class="o">=</span> <span class="n">hoomd</span><span class="o">.</span><span class="n">md</span><span class="o">.</span><span class="n">methods</span><span class="o">.</span><span class="n">rattle</span><span class="o">.</span><span class="n">Langevin</span><span class="p">(</span>
+<span class="nb">filter</span><span class="o">=</span><span class="n">hoomd</span><span class="o">.</span><span class="n">filter</span><span class="o">.</span><span class="n">All</span><span class="p">(),</span> <span class="n">kT</span><span class="o">=</span><span class="mf">0.2</span><span class="p">,</span>
+<span class="n">manifold_constraint</span> <span class="o">=</span> <span class="n">sphere</span><span class="p">,</span> <span class="n">seed</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span> <span class="n">alpha</span><span class="o">=</span><span class="mf">1.0</span><span class="p">)</span>
+</pre></div>
+</div>
+<dl class="py attribute">
+<dt class="sig sig-object py" id="hoomd.md.methods.rattle.Langevin.filter">
+<span class="sig-name descname"><span class="pre">filter</span></span><a class="headerlink" href="#hoomd.md.methods.rattle.Langevin.filter" title="Permalink to this definition">#</a></dt>
+<dd><p>Subset of particles to apply this
+method to.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Type<span class="colon">:</span></dt>
+<dd class="field-odd"><p><a class="reference internal" href="module-hoomd-filter.html#hoomd.filter.filter_like" title="hoomd.filter.filter_like">hoomd.filter.filter_like</a></p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="hoomd.md.methods.rattle.Langevin.kT">
+<span class="sig-name descname"><span class="pre">kT</span></span><a class="headerlink" href="#hoomd.md.methods.rattle.Langevin.kT" title="Permalink to this definition">#</a></dt>
+<dd><p>Temperature of the
+simulation <span class="math notranslate nohighlight">\([\mathrm{energy}]\)</span>.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Type<span class="colon">:</span></dt>
+<dd class="field-odd"><p><a class="reference internal" href="module-hoomd-variant.html#hoomd.variant.Variant" title="hoomd.variant.Variant">hoomd.variant.Variant</a></p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="hoomd.md.methods.rattle.Langevin.manifold_constraint">
+<span class="sig-name descname"><span class="pre">manifold_constraint</span></span><a class="headerlink" href="#hoomd.md.methods.rattle.Langevin.manifold_constraint" title="Permalink to this definition">#</a></dt>
+<dd><p>Manifold constraint
+which is used by and as a trigger for the RATTLE algorithm of this
+method.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Type<span class="colon">:</span></dt>
+<dd class="field-odd"><p><a class="reference internal" href="module-md-manifold.html#hoomd.md.manifold.Manifold" title="hoomd.md.manifold.Manifold">hoomd.md.manifold.Manifold</a></p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="hoomd.md.methods.rattle.Langevin.alpha">
+<span class="sig-name descname"><span class="pre">alpha</span></span><a class="headerlink" href="#hoomd.md.methods.rattle.Langevin.alpha" title="Permalink to this definition">#</a></dt>
+<dd><p>When set, use <span class="math notranslate nohighlight">\(\alpha d_i\)</span> for the drag
+coefficient where <span class="math notranslate nohighlight">\(d_i\)</span> is particle diameter
+<span class="math notranslate nohighlight">\([\mathrm{mass} \cdot \mathrm{length}^{-1}
+\cdot \mathrm{time}^{-1}]\)</span>. Defaults to None.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Type<span class="colon">:</span></dt>
+<dd class="field-odd"><p><a class="reference external" href="https://docs.python.org/3/library/functions.html#float" title="(in Python v3.11)">float</a></p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="hoomd.md.methods.rattle.Langevin.tolerance">
+<span class="sig-name descname"><span class="pre">tolerance</span></span><a class="headerlink" href="#hoomd.md.methods.rattle.Langevin.tolerance" title="Permalink to this definition">#</a></dt>
+<dd><p>Defines the tolerated error particles are allowed
+to deviate from the manifold in terms of the implicit function.
+The units of tolerance match that of the selected manifold’s
+implicit function. Defaults to 1e-6</p>
+<dl class="field-list simple">
+<dt class="field-odd">Type<span class="colon">:</span></dt>
+<dd class="field-odd"><p><a class="reference external" href="https://docs.python.org/3/library/functions.html#float" title="(in Python v3.11)">float</a></p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="hoomd.md.methods.rattle.Langevin.gamma">
+<span class="sig-name descname"><span class="pre">gamma</span></span><a class="headerlink" href="#hoomd.md.methods.rattle.Langevin.gamma" title="Permalink to this definition">#</a></dt>
+<dd><p>The drag
+coefficient can be directly set instead of the ratio of particle
+diameter (<span class="math notranslate nohighlight">\(\gamma = \alpha d_i\)</span>). The type of <code class="docutils literal notranslate"><span class="pre">gamma</span></code>
+parameter is either positive float or zero
+<span class="math notranslate nohighlight">\([\mathrm{mass} \cdot \mathrm{time}^{-1}]\)</span>.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>TypeParameter[ <code class="docutils literal notranslate"><span class="pre">particle</span> <span class="pre">type</span></code>, <a class="reference external" href="https://docs.python.org/3/library/functions.html#float" title="(in Python v3.11)"><code class="xref any docutils literal notranslate"><span class="pre">float</span></code></a> ]</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="hoomd.md.methods.rattle.Langevin.gamma_r">
+<span class="sig-name descname"><span class="pre">gamma_r</span></span><a class="headerlink" href="#hoomd.md.methods.rattle.Langevin.gamma_r" title="Permalink to this definition">#</a></dt>
+<dd><p>The rotational drag coefficient can be set. The type of <code class="docutils literal notranslate"><span class="pre">gamma_r</span></code>
+parameter is a tuple of three float. The type of each element of
+tuple is either positive float or zero
+<span class="math notranslate nohighlight">\([\mathrm{mass} \cdot \mathrm{time}^{-1}]\)</span>.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>TypeParameter[<code class="docutils literal notranslate"><span class="pre">particle</span> <span class="pre">type</span></code>,[<a class="reference external" href="https://docs.python.org/3/library/functions.html#float" title="(in Python v3.11)"><code class="xref any docutils literal notranslate"><span class="pre">float</span></code></a>, <a class="reference external" href="https://docs.python.org/3/library/functions.html#float" title="(in Python v3.11)"><code class="xref any docutils literal notranslate"><span class="pre">float</span></code></a> , <a class="reference external" href="https://docs.python.org/3/library/functions.html#float" title="(in Python v3.11)"><code class="xref any docutils literal notranslate"><span class="pre">float</span></code></a>]]</p>
+</dd>
+</dl>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="py class">
+<dt class="sig sig-object py" id="hoomd.md.methods.rattle.MethodRATTLE">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">hoomd.md.methods.rattle.</span></span><span class="sig-name descname"><span class="pre">MethodRATTLE</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">manifold_constraint</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">tolerance</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#hoomd.md.methods.rattle.MethodRATTLE" title="Permalink to this definition">#</a></dt>
+<dd><p>Base class RATTLE integration method.</p>
+<p>Provides common methods for all integration methods which implement the
+RATTLE algorithm to constrain particles to a manifold surface.</p>
+<div class="admonition warning">
+<p class="admonition-title">Warning</p>
+<p>The particles should be initialised close to the implicit surface of
+the manifold. Even though the particles are mapped to the set surface
+automatically, the mapping can lead to small inter-particle distances
+and, hence, large forces between particles!</p>
+</div>
+<p>See Also:
+* <a class="reference external" href="https://doi.org/10.1016/j.bpj.2016.02.017">Paquay and Kusters 2016</a></p>
+<div class="admonition note">
+<p class="admonition-title">Note</p>
+<p>Users should use the subclasses and not instantiate <a class="reference internal" href="#hoomd.md.methods.rattle.MethodRATTLE" title="hoomd.md.methods.rattle.MethodRATTLE"><code class="xref any py py-class docutils literal notranslate"><span class="pre">MethodRATTLE</span></code></a>
+directly.</p>
+</div>
+</dd></dl>
+
+<dl class="py class">
+<dt class="sig sig-object py" id="hoomd.md.methods.rattle.NVE">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">hoomd.md.methods.rattle.</span></span><span class="sig-name descname"><span class="pre">NVE</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">filter</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">manifold_constraint</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">tolerance</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">1e-06</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#hoomd.md.methods.rattle.NVE" title="Permalink to this definition">#</a></dt>
+<dd><p>NVE Integration via Velocity-Verlet with RATTLE constraint.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>filter</strong> (<a class="reference internal" href="module-hoomd-filter.html#hoomd.filter.filter_like" title="hoomd.filter.filter_like"><em>hoomd.filter.filter_like</em></a>) – Subset of particles on which to apply
+this method.</p></li>
+<li><p><strong>manifold_constraint</strong> (<a class="reference internal" href="module-md-manifold.html#hoomd.md.manifold.Manifold" title="hoomd.md.manifold.Manifold"><em>hoomd.md.manifold.Manifold</em></a>) – Manifold
+constraint.</p></li>
+<li><p><strong>tolerance</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#float" title="(in Python v3.11)"><em>float</em></a>) – Defines the tolerated error particles are allowed to
+deviate from the manifold in terms of the implicit function. The
+units of tolerance match that of the selected manifold’s implicit
+function. Defaults to 1e-6</p></li>
+</ul>
+</dd>
+</dl>
+<p><a class="reference internal" href="#hoomd.md.methods.rattle.NVE" title="hoomd.md.methods.rattle.NVE"><code class="xref any py py-class docutils literal notranslate"><span class="pre">NVE</span></code></a> performs constant volume, constant energy simulations as described
+in <a class="reference internal" href="module-md-methods.html#hoomd.md.methods.NVE" title="hoomd.md.methods.NVE"><code class="xref any py py-class docutils literal notranslate"><span class="pre">hoomd.md.methods.NVE</span></code></a>. In addition the particles are constrained to a
+manifold by using the RATTLE algorithm.</p>
+<p>Examples:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">sphere</span> <span class="o">=</span> <span class="n">hoomd</span><span class="o">.</span><span class="n">md</span><span class="o">.</span><span class="n">manifold</span><span class="o">.</span><span class="n">Sphere</span><span class="p">(</span><span class="n">r</span><span class="o">=</span><span class="mi">10</span><span class="p">)</span>
+<span class="n">nve_rattle</span> <span class="o">=</span> <span class="n">hoomd</span><span class="o">.</span><span class="n">md</span><span class="o">.</span><span class="n">methods</span><span class="o">.</span><span class="n">rattle</span><span class="o">.</span><span class="n">NVE</span><span class="p">(</span>
+    <span class="nb">filter</span><span class="o">=</span><span class="n">hoomd</span><span class="o">.</span><span class="n">filter</span><span class="o">.</span><span class="n">All</span><span class="p">(),</span><span class="n">maifold</span><span class="o">=</span><span class="n">sphere</span><span class="p">)</span>
+<span class="n">integrator</span> <span class="o">=</span> <span class="n">hoomd</span><span class="o">.</span><span class="n">md</span><span class="o">.</span><span class="n">Integrator</span><span class="p">(</span>
+    <span class="n">dt</span><span class="o">=</span><span class="mf">0.005</span><span class="p">,</span> <span class="n">methods</span><span class="o">=</span><span class="p">[</span><span class="n">nve_rattle</span><span class="p">],</span> <span class="n">forces</span><span class="o">=</span><span class="p">[</span><span class="n">lj</span><span class="p">])</span>
+</pre></div>
+</div>
+<dl class="py attribute">
+<dt class="sig sig-object py" id="hoomd.md.methods.rattle.NVE.filter">
+<span class="sig-name descname"><span class="pre">filter</span></span><a class="headerlink" href="#hoomd.md.methods.rattle.NVE.filter" title="Permalink to this definition">#</a></dt>
+<dd><p>Subset of particles on which to apply
+this method.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Type<span class="colon">:</span></dt>
+<dd class="field-odd"><p><a class="reference internal" href="module-hoomd-filter.html#hoomd.filter.filter_like" title="hoomd.filter.filter_like">hoomd.filter.filter_like</a></p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="hoomd.md.methods.rattle.NVE.manifold_constraint">
+<span class="sig-name descname"><span class="pre">manifold_constraint</span></span><a class="headerlink" href="#hoomd.md.methods.rattle.NVE.manifold_constraint" title="Permalink to this definition">#</a></dt>
+<dd><p>Manifold constraint
+which is used by and as a trigger for the RATTLE algorithm of this
+method.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Type<span class="colon">:</span></dt>
+<dd class="field-odd"><p><a class="reference internal" href="module-md-manifold.html#hoomd.md.manifold.Manifold" title="hoomd.md.manifold.Manifold">hoomd.md.manifold.Manifold</a></p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="hoomd.md.methods.rattle.NVE.tolerance">
+<span class="sig-name descname"><span class="pre">tolerance</span></span><a class="headerlink" href="#hoomd.md.methods.rattle.NVE.tolerance" title="Permalink to this definition">#</a></dt>
+<dd><p>Defines the tolerated error particles are allowed to
+deviate from the manifold in terms of the implicit function. The
+units of tolerance match that of the selected manifold’s implicit
+function. Defaults to 1e-6</p>
+<dl class="field-list simple">
+<dt class="field-odd">Type<span class="colon">:</span></dt>
+<dd class="field-odd"><p><a class="reference external" href="https://docs.python.org/3/library/functions.html#float" title="(in Python v3.11)">float</a></p>
+</dd>
+</dl>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="py class">
+<dt class="sig sig-object py" id="hoomd.md.methods.rattle.OverdampedViscous">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">hoomd.md.methods.rattle.</span></span><span class="sig-name descname"><span class="pre">OverdampedViscous</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">filter</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">manifold_constraint</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">tolerance</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">1e-06</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">alpha</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#hoomd.md.methods.rattle.OverdampedViscous" title="Permalink to this definition">#</a></dt>
+<dd><p>Overdamped viscous dynamics with RATTLE constraint.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>filter</strong> (<a class="reference internal" href="module-hoomd-filter.html#hoomd.filter.filter_like" title="hoomd.filter.filter_like"><em>hoomd.filter.filter_like</em></a>) – Subset of particles to apply this
+method to.</p></li>
+<li><p><strong>manifold_constraint</strong> (<a class="reference internal" href="module-md-manifold.html#hoomd.md.manifold.Manifold" title="hoomd.md.manifold.Manifold"><em>hoomd.md.manifold.Manifold</em></a>) – Manifold constraint.</p></li>
+<li><p><strong>alpha</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#float" title="(in Python v3.11)"><em>float</em></a>) – When set, use <span class="math notranslate nohighlight">\(\alpha d_i\)</span> for the drag coefficient
+where <span class="math notranslate nohighlight">\(d_i\)</span> is particle diameter. Defaults to None
+<span class="math notranslate nohighlight">\([\mathrm{mass} \cdot \mathrm{length}^{-1}
+\cdot \mathrm{time}^{-1}]\)</span>.</p></li>
+<li><p><strong>tolerance</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#float" title="(in Python v3.11)"><em>float</em></a>) – Defines the tolerated error particles are allowed to
+deviate from the manifold in terms of the implicit function. The
+units of tolerance match that of the selected manifold’s implicit
+function. Defaults to 1e-6</p></li>
+</ul>
+</dd>
+</dl>
+<p><a class="reference internal" href="#hoomd.md.methods.rattle.OverdampedViscous" title="hoomd.md.methods.rattle.OverdampedViscous"><code class="xref any py py-class docutils literal notranslate"><span class="pre">OverdampedViscous</span></code></a> uses the same integrator as
+<a class="reference internal" href="module-md-methods.html#hoomd.md.methods.OverdampedViscous" title="hoomd.md.methods.OverdampedViscous"><code class="xref any py py-class docutils literal notranslate"><span class="pre">hoomd.md.methods.OverdampedViscous</span></code></a>, with the additional force term
+<span class="math notranslate nohighlight">\(- \lambda \vec{F}_\mathrm{M}\)</span>. The force <span class="math notranslate nohighlight">\(\vec{F}_\mathrm{M}\)</span>
+keeps the particles on the manifold constraint, where the Lagrange
+multiplier <span class="math notranslate nohighlight">\(\lambda\)</span> is calculated via the RATTLE algorithm. For more
+details about overdamped viscous dynamics see
+<a class="reference internal" href="module-md-methods.html#hoomd.md.methods.OverdampedViscous" title="hoomd.md.methods.OverdampedViscous"><code class="xref any py py-class docutils literal notranslate"><span class="pre">hoomd.md.methods.OverdampedViscous</span></code></a>.</p>
+<p>Examples of using <code class="docutils literal notranslate"><span class="pre">manifold_constraint</span></code>:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">sphere</span> <span class="o">=</span> <span class="n">hoomd</span><span class="o">.</span><span class="n">md</span><span class="o">.</span><span class="n">manifold</span><span class="o">.</span><span class="n">Sphere</span><span class="p">(</span><span class="n">r</span><span class="o">=</span><span class="mi">10</span><span class="p">)</span>
+<span class="n">odv_rattle</span> <span class="o">=</span> <span class="n">hoomd</span><span class="o">.</span><span class="n">md</span><span class="o">.</span><span class="n">methods</span><span class="o">.</span><span class="n">rattle</span><span class="o">.</span><span class="n">OverdampedViscous</span><span class="p">(</span>
+    <span class="nb">filter</span><span class="o">=</span><span class="n">hoomd</span><span class="o">.</span><span class="n">filter</span><span class="o">.</span><span class="n">All</span><span class="p">(),</span> <span class="n">manifold_constraint</span><span class="o">=</span><span class="n">sphere</span><span class="p">,</span> <span class="n">seed</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span>
+    <span class="n">alpha</span><span class="o">=</span><span class="mf">1.0</span><span class="p">)</span>
+<span class="n">integrator</span> <span class="o">=</span> <span class="n">hoomd</span><span class="o">.</span><span class="n">md</span><span class="o">.</span><span class="n">Integrator</span><span class="p">(</span>
+    <span class="n">dt</span><span class="o">=</span><span class="mf">0.001</span><span class="p">,</span> <span class="n">methods</span><span class="o">=</span><span class="p">[</span><span class="n">odv_rattle</span><span class="p">],</span> <span class="n">forces</span><span class="o">=</span><span class="p">[</span><span class="n">lj</span><span class="p">])</span>
+</pre></div>
+</div>
+<dl class="py attribute">
+<dt class="sig sig-object py" id="hoomd.md.methods.rattle.OverdampedViscous.filter">
+<span class="sig-name descname"><span class="pre">filter</span></span><a class="headerlink" href="#hoomd.md.methods.rattle.OverdampedViscous.filter" title="Permalink to this definition">#</a></dt>
+<dd><p>Subset of particles to apply this
+method to.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Type<span class="colon">:</span></dt>
+<dd class="field-odd"><p><a class="reference internal" href="module-hoomd-filter.html#hoomd.filter.filter_like" title="hoomd.filter.filter_like">hoomd.filter.filter_like</a></p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="hoomd.md.methods.rattle.OverdampedViscous.manifold_constraint">
+<span class="sig-name descname"><span class="pre">manifold_constraint</span></span><a class="headerlink" href="#hoomd.md.methods.rattle.OverdampedViscous.manifold_constraint" title="Permalink to this definition">#</a></dt>
+<dd><p>Manifold constraint
+which is used by and as a trigger for the RATTLE algorithm of this
+method.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Type<span class="colon">:</span></dt>
+<dd class="field-odd"><p><a class="reference internal" href="module-md-manifold.html#hoomd.md.manifold.Manifold" title="hoomd.md.manifold.Manifold">hoomd.md.manifold.Manifold</a></p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="hoomd.md.methods.rattle.OverdampedViscous.alpha">
+<span class="sig-name descname"><span class="pre">alpha</span></span><a class="headerlink" href="#hoomd.md.methods.rattle.OverdampedViscous.alpha" title="Permalink to this definition">#</a></dt>
+<dd><p>When set, use <span class="math notranslate nohighlight">\(\alpha d_i\)</span> for the drag coefficient
+where <span class="math notranslate nohighlight">\(d_i\)</span> is particle diameter
+<span class="math notranslate nohighlight">\([\mathrm{mass} \cdot \mathrm{length}^{-1}
+\cdot \mathrm{time}^{-1}]\)</span>. Defaults to None.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Type<span class="colon">:</span></dt>
+<dd class="field-odd"><p><a class="reference external" href="https://docs.python.org/3/library/functions.html#float" title="(in Python v3.11)">float</a></p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="hoomd.md.methods.rattle.OverdampedViscous.tolerance">
+<span class="sig-name descname"><span class="pre">tolerance</span></span><a class="headerlink" href="#hoomd.md.methods.rattle.OverdampedViscous.tolerance" title="Permalink to this definition">#</a></dt>
+<dd><p>Defines the tolerated error particles are allowed to
+deviate from the manifold in terms of the implicit function. The
+units of tolerance match that of the selected manifold’s implicit
+function. Defaults to 1e-6</p>
+<dl class="field-list simple">
+<dt class="field-odd">Type<span class="colon">:</span></dt>
+<dd class="field-odd"><p><a class="reference external" href="https://docs.python.org/3/library/functions.html#float" title="(in Python v3.11)">float</a></p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="hoomd.md.methods.rattle.OverdampedViscous.gamma">
+<span class="sig-name descname"><span class="pre">gamma</span></span><a class="headerlink" href="#hoomd.md.methods.rattle.OverdampedViscous.gamma" title="Permalink to this definition">#</a></dt>
+<dd><p>The drag
+coefficient can be directly set instead of the ratio of particle
+diameter (<span class="math notranslate nohighlight">\(\gamma = \alpha d_i\)</span>). The type of <code class="docutils literal notranslate"><span class="pre">gamma</span></code>
+parameter is either positive float or zero
+<span class="math notranslate nohighlight">\([\mathrm{mass} \cdot \mathrm{time}^{-1}]\)</span>.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>TypeParameter[ <code class="docutils literal notranslate"><span class="pre">particle</span> <span class="pre">type</span></code>, <a class="reference external" href="https://docs.python.org/3/library/functions.html#float" title="(in Python v3.11)"><code class="xref any docutils literal notranslate"><span class="pre">float</span></code></a> ]</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="hoomd.md.methods.rattle.OverdampedViscous.gamma_r">
+<span class="sig-name descname"><span class="pre">gamma_r</span></span><a class="headerlink" href="#hoomd.md.methods.rattle.OverdampedViscous.gamma_r" title="Permalink to this definition">#</a></dt>
+<dd><p>The rotational drag coefficient can be set. The type of <code class="docutils literal notranslate"><span class="pre">gamma_r</span></code>
+parameter is a tuple of three float. The type of each element of
+tuple is either positive float or zero
+<span class="math notranslate nohighlight">\([\mathrm{force} \cdot \mathrm{length} \cdot
+\mathrm{radian}^{-1} \cdot \mathrm{time}^{-1}]\)</span>.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>TypeParameter[<code class="docutils literal notranslate"><span class="pre">particle</span> <span class="pre">type</span></code>, [<a class="reference external" href="https://docs.python.org/3/library/functions.html#float" title="(in Python v3.11)"><code class="xref any docutils literal notranslate"><span class="pre">float</span></code></a>, <a class="reference external" href="https://docs.python.org/3/library/functions.html#float" title="(in Python v3.11)"><code class="xref any docutils literal notranslate"><span class="pre">float</span></code></a>, <a class="reference external" href="https://docs.python.org/3/library/functions.html#float" title="(in Python v3.11)"><code class="xref any docutils literal notranslate"><span class="pre">float</span></code></a>]]</p>
+</dd>
+</dl>
+</dd></dl>
+
+</dd></dl>
+
+</section>
+
+        </article>
+      </div>
+      <footer>
+        
+<div class="related-pages">
+<a class="next-page" href="module-md-mesh.html">
+    <div class="page-info">
+        <div class="context">
+        <span>Next</span>
+        </div>
+        <div class="title">md.mesh</div>
+    </div>
+    <svg class="furo-related-icon"><use href="#svg-arrow-right"></use></svg>
+    </a>
+<a class="prev-page" href="module-md-methods.html">
+    <svg class="furo-related-icon"><use href="#svg-arrow-right"></use></svg>
+    <div class="page-info">
+        <div class="context">
+        <span>Previous</span>
+        </div>
+        
+        <div class="title">md.methods</div>
+        
+    </div>
+    </a>
+</div>
+<div class="bottom-of-page">
+<div class="left-details">
+    <p>Development of HOOMD-blue is led by the <a href="https://glotzerlab.engin.umich.edu">Glotzer Group</a> at the <a href="https://umich.edu">University of Michigan</a> (supported by NSF DMR 1808342) with many <a href="credits.html">external contributions</a>.
+    </p>
+    <div class="copyright">
+        Copyright &#169; 2009-2023 The Regents of the University of Michigan
+    </div>
+    Made with <a href="https://www.sphinx-doc.org/">Sphinx</a> and <a class="muted-link" href="https://pradyunsg.me">@pradyunsg</a>'s
+    
+    <a href="https://github.com/pradyunsg/furo">Furo</a>
+    
+</div>
+<div class="right-details">
+    <a class="muted-link" href="http://umich.edu">
+    <img src="_static/umich-block-M.svg" alt="University of Michigan logo" style="width: 84px; float: right;" />
+    </a>
+</div>
+</div>
+
+      </footer>
+    </div>
+    <aside class="toc-drawer no-toc">
+      
+      
+      
+    </aside>
+  </div>
+</div><script data-url_root="./" id="documentation_options" src="_static/documentation_options.js"></script>
+    <script src="_static/jquery.js"></script>
+    <script src="_static/underscore.js"></script>
+    <script src="_static/_sphinx_javascript_frameworks_compat.js"></script>
+    <script src="_static/doctools.js"></script>
+    <script src="_static/scripts/furo.js"></script>
+    <script crossorigin="anonymous" integrity="sha256-Ae2Vz/4ePdIu6ZyI/5ZGsYnb+m0JlOmKPjt6XZ9JJkA=" src="https://cdnjs.cloudflare.com/ajax/libs/require.js/2.3.4/require.min.js"></script>
+    <script>window.MathJax = {"tex": {"inlineMath": [["$", "$"], ["\\(", "\\)"]], "processEscapes": true}, "options": {"ignoreHtmlClass": "tex2jax_ignore|mathjax_ignore|document", "processHtmlClass": "tex2jax_process|mathjax_process|math|output_area"}}</script>
+    <script defer="defer" src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
+    </body>
+</html>

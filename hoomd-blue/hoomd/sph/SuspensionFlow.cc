@@ -722,7 +722,7 @@ void SinglePhaseFlow<KT_, SET_>::compute_noslip(uint64_t timestep)
 
             h_pressure.data[i] = norm_constant * pf_c0 + dot(hp_factor , ph_c0);
             // Compute solid densities by inverting equation of state
-            // Here: overwrite the normalization constant
+            // Here: overwrite the normalisation constant
             h_density.data[i] = this->m_eos->Density(h_pressure.data[i]);
             }
         else

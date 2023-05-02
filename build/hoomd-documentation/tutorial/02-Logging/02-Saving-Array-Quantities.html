@@ -1,0 +1,1004 @@
+<!doctype html>
+<html class="no-js" lang="en">
+  <head><meta charset="utf-8"/>
+    <meta name="viewport" content="width=device-width,initial-scale=1"/>
+    <meta name="color-scheme" content="light dark"><meta name="generator" content="Docutils 0.18.1: http://docutils.sourceforge.net/" />
+<link rel="index" title="Index" href="../../genindex.html" /><link rel="search" title="Search" href="../../search.html" /><link rel="next" title="Storing Particle Shape" href="03-Storing-Particle-Shape.html" /><link rel="prev" title="Logging to a GSD file" href="01-Logging-to-a-GSD-file.html" />
+
+    <link rel="shortcut icon" href="../../_static/hoomdblue-logo-favicon.svg"/><!-- Generated with Sphinx 5.0.2 and Furo 2023.03.27 -->
+        <title>Saving Array Quantities - HOOMD-blue 3.10.0 documentation</title>
+      <link rel="stylesheet" type="text/css" href="../../_static/pygments.css" />
+    <link rel="stylesheet" type="text/css" href="../../_static/styles/furo.css?digest=fad236701ea90a88636c2a8c73b44ae642ed2a53" />
+    <link rel="stylesheet" type="text/css" href="../../_static/styles/furo-extensions.css?digest=30d1aed668e5c3a91c3e3bf6a60b675221979f0e" />
+    
+    
+
+
+<style>
+  body {
+    --color-code-background: #f0f0f0;
+  --color-code-foreground: black;
+  --color-brand-primary: #406a8c;
+  --color-brand-content: #406a8c;
+  
+  }
+  @media not print {
+    body[data-theme="dark"] {
+      --color-code-background: #202020;
+  --color-code-foreground: #d0d0d0;
+  --color-brand-primary: #5187b2;
+  --color-brand-content: #5187b2;
+  
+    }
+    @media (prefers-color-scheme: dark) {
+      body:not([data-theme="light"]) {
+        --color-code-background: #202020;
+  --color-code-foreground: #d0d0d0;
+  --color-brand-primary: #5187b2;
+  --color-brand-content: #5187b2;
+  
+      }
+    }
+  }
+</style></head>
+  <body>
+    
+    <script>
+      document.body.dataset.theme = localStorage.getItem("theme") || "auto";
+    </script>
+    
+
+<svg xmlns="http://www.w3.org/2000/svg" style="display: none;">
+  <symbol id="svg-toc" viewBox="0 0 24 24">
+    <title>Contents</title>
+    <svg stroke="currentColor" fill="currentColor" stroke-width="0" viewBox="0 0 1024 1024">
+      <path d="M408 442h480c4.4 0 8-3.6 8-8v-56c0-4.4-3.6-8-8-8H408c-4.4 0-8 3.6-8 8v56c0 4.4 3.6 8 8 8zm-8 204c0 4.4 3.6 8 8 8h480c4.4 0 8-3.6 8-8v-56c0-4.4-3.6-8-8-8H408c-4.4 0-8 3.6-8 8v56zm504-486H120c-4.4 0-8 3.6-8 8v56c0 4.4 3.6 8 8 8h784c4.4 0 8-3.6 8-8v-56c0-4.4-3.6-8-8-8zm0 632H120c-4.4 0-8 3.6-8 8v56c0 4.4 3.6 8 8 8h784c4.4 0 8-3.6 8-8v-56c0-4.4-3.6-8-8-8zM115.4 518.9L271.7 642c5.8 4.6 14.4.5 14.4-6.9V388.9c0-7.4-8.5-11.5-14.4-6.9L115.4 505.1a8.74 8.74 0 0 0 0 13.8z"/>
+    </svg>
+  </symbol>
+  <symbol id="svg-menu" viewBox="0 0 24 24">
+    <title>Menu</title>
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+      stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="feather-menu">
+      <line x1="3" y1="12" x2="21" y2="12"></line>
+      <line x1="3" y1="6" x2="21" y2="6"></line>
+      <line x1="3" y1="18" x2="21" y2="18"></line>
+    </svg>
+  </symbol>
+  <symbol id="svg-arrow-right" viewBox="0 0 24 24">
+    <title>Expand</title>
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+      stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="feather-chevron-right">
+      <polyline points="9 18 15 12 9 6"></polyline>
+    </svg>
+  </symbol>
+  <symbol id="svg-sun" viewBox="0 0 24 24">
+    <title>Light mode</title>
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+      stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" class="feather-sun">
+      <circle cx="12" cy="12" r="5"></circle>
+      <line x1="12" y1="1" x2="12" y2="3"></line>
+      <line x1="12" y1="21" x2="12" y2="23"></line>
+      <line x1="4.22" y1="4.22" x2="5.64" y2="5.64"></line>
+      <line x1="18.36" y1="18.36" x2="19.78" y2="19.78"></line>
+      <line x1="1" y1="12" x2="3" y2="12"></line>
+      <line x1="21" y1="12" x2="23" y2="12"></line>
+      <line x1="4.22" y1="19.78" x2="5.64" y2="18.36"></line>
+      <line x1="18.36" y1="5.64" x2="19.78" y2="4.22"></line>
+    </svg>
+  </symbol>
+  <symbol id="svg-moon" viewBox="0 0 24 24">
+    <title>Dark mode</title>
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+      stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" class="icon-tabler-moon">
+      <path stroke="none" d="M0 0h24v24H0z" fill="none" />
+      <path d="M12 3c.132 0 .263 0 .393 0a7.5 7.5 0 0 0 7.92 12.446a9 9 0 1 1 -8.313 -12.454z" />
+    </svg>
+  </symbol>
+  <symbol id="svg-sun-half" viewBox="0 0 24 24">
+    <title>Auto light/dark mode</title>
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+      stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" class="icon-tabler-shadow">
+      <path stroke="none" d="M0 0h24v24H0z" fill="none"/>
+      <circle cx="12" cy="12" r="9" />
+      <path d="M13 12h5" />
+      <path d="M13 15h4" />
+      <path d="M13 18h1" />
+      <path d="M13 9h4" />
+      <path d="M13 6h1" />
+    </svg>
+  </symbol>
+</svg>
+
+<input type="checkbox" class="sidebar-toggle" name="__navigation" id="__navigation">
+<input type="checkbox" class="sidebar-toggle" name="__toc" id="__toc">
+<label class="overlay sidebar-overlay" for="__navigation">
+  <div class="visually-hidden">Hide navigation sidebar</div>
+</label>
+<label class="overlay toc-overlay" for="__toc">
+  <div class="visually-hidden">Hide table of contents sidebar</div>
+</label>
+
+
+
+<div class="page">
+  <header class="mobile-header">
+    <div class="header-left">
+      <label class="nav-overlay-icon" for="__navigation">
+        <div class="visually-hidden">Toggle site navigation sidebar</div>
+        <i class="icon"><svg><use href="#svg-menu"></use></svg></i>
+      </label>
+    </div>
+    <div class="header-center">
+      <a href="../../index.html"><div class="brand">HOOMD-blue 3.10.0 documentation</div></a>
+    </div>
+    <div class="header-right">
+      <div class="theme-toggle-container theme-toggle-header">
+        <button class="theme-toggle">
+          <div class="visually-hidden">Toggle Light / Dark / Auto color theme</div>
+          <svg class="theme-icon-when-auto"><use href="#svg-sun-half"></use></svg>
+          <svg class="theme-icon-when-dark"><use href="#svg-moon"></use></svg>
+          <svg class="theme-icon-when-light"><use href="#svg-sun"></use></svg>
+        </button>
+      </div>
+      <label class="toc-overlay-icon toc-header-icon" for="__toc">
+        <div class="visually-hidden">Toggle table of contents sidebar</div>
+        <i class="icon"><svg><use href="#svg-toc"></use></svg></i>
+      </label>
+    </div>
+  </header>
+  <aside class="sidebar-drawer">
+    <div class="sidebar-container">
+      
+      <div class="sidebar-sticky"><a class="sidebar-brand centered" href="../../index.html">
+  
+  <div class="sidebar-logo-container">
+    <img class="sidebar-logo" src="../../_static/hoomdblue-logo-vertical.svg" alt="Logo"/>
+  </div>
+  
+  
+</a><form class="sidebar-search-container" method="get" action="../../search.html" role="search">
+  <input class="sidebar-search" placeholder="Search" name="q" aria-label="Search">
+  <input type="hidden" name="check_keywords" value="yes">
+  <input type="hidden" name="area" value="default">
+</form>
+<div id="searchbox"></div><div class="sidebar-scroll"><div class="sidebar-tree">
+  <p class="caption" role="heading"><span class="caption-text">Getting started</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../features.html">Features</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../installation.html">Installing binaries</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../building.html">Building from source</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../migrating.html">Migrating to HOOMD v3</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../changelog.html">Change Log</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../citing.html">Citing HOOMD-blue</a></li>
+</ul>
+<p class="caption" role="heading"><span class="caption-text">Tutorials</span></p>
+<ul class="current">
+<li class="toctree-l1 has-children"><a class="reference internal" href="../00-Introducing-HOOMD-blue/00-index.html">Introducing HOOMD-blue</a><input class="toctree-checkbox" id="toctree-checkbox-1" name="toctree-checkbox-1" role="switch" type="checkbox"/><label for="toctree-checkbox-1"><div class="visually-hidden">Toggle child pages in navigation</div><i class="icon"><svg><use href="#svg-arrow-right"></use></svg></i></label><ul>
+<li class="toctree-l2"><a class="reference internal" href="../00-Introducing-HOOMD-blue/01-The-Simulation-Object.html">The Simulation Object</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../00-Introducing-HOOMD-blue/02-Performing-Hard-Particle-Monte-Carlo-Simulations.html">Performing Hard Particle Monte Carlo Simulations</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../00-Introducing-HOOMD-blue/03-Initializing-the-System-State.html">Initializing the System State</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../00-Introducing-HOOMD-blue/04-Randomizing-the-System.html">Randomizing the System</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../00-Introducing-HOOMD-blue/05-Compressing-the-System.html">Compressing the System</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../00-Introducing-HOOMD-blue/06-Equilibrating-the-System.html">Equilibrating the System</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../00-Introducing-HOOMD-blue/07-Analyzing-Trajectories.html">Analyzing Trajectories</a></li>
+</ul>
+</li>
+<li class="toctree-l1 has-children"><a class="reference internal" href="../01-Introducing-Molecular-Dynamics/00-index.html">Introducing Molecular Dynamics</a><input class="toctree-checkbox" id="toctree-checkbox-2" name="toctree-checkbox-2" role="switch" type="checkbox"/><label for="toctree-checkbox-2"><div class="visually-hidden">Toggle child pages in navigation</div><i class="icon"><svg><use href="#svg-arrow-right"></use></svg></i></label><ul>
+<li class="toctree-l2"><a class="reference internal" href="../01-Introducing-Molecular-Dynamics/01-Molecular-Dynamics-Simulations.html">Molecular Dynamics Simulations</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../01-Introducing-Molecular-Dynamics/02-Initializing-a-Random-System.html">Initializing a Random System</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../01-Introducing-Molecular-Dynamics/03-Compressing-the-System.html">Compressing the System</a></li>
+</ul>
+</li>
+<li class="toctree-l1 current has-children"><a class="reference internal" href="00-index.html">Logging</a><input checked="" class="toctree-checkbox" id="toctree-checkbox-3" name="toctree-checkbox-3" role="switch" type="checkbox"/><label for="toctree-checkbox-3"><div class="visually-hidden">Toggle child pages in navigation</div><i class="icon"><svg><use href="#svg-arrow-right"></use></svg></i></label><ul class="current">
+<li class="toctree-l2"><a class="reference internal" href="01-Logging-to-a-GSD-file.html">Logging to a GSD file</a></li>
+<li class="toctree-l2 current current-page"><a class="current reference internal" href="#">Saving Array Quantities</a></li>
+<li class="toctree-l2"><a class="reference internal" href="03-Storing-Particle-Shape.html">Storing Particle Shape</a></li>
+<li class="toctree-l2"><a class="reference internal" href="04-Writing-Formatted-Output.html">Writing Formatted Output</a></li>
+</ul>
+</li>
+<li class="toctree-l1 has-children"><a class="reference internal" href="../03-Parallel-Simulations-With-MPI/00-index.html">Parallel Simulation With MPI</a><input class="toctree-checkbox" id="toctree-checkbox-4" name="toctree-checkbox-4" role="switch" type="checkbox"/><label for="toctree-checkbox-4"><div class="visually-hidden">Toggle child pages in navigation</div><i class="icon"><svg><use href="#svg-arrow-right"></use></svg></i></label><ul>
+<li class="toctree-l2"><a class="reference internal" href="../03-Parallel-Simulations-With-MPI/01-Introduction-to-MPI.html">Introduction to MPI</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../03-Parallel-Simulations-With-MPI/02-Domain-Decomposition.html">Domain Decomposition</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../03-Parallel-Simulations-With-MPI/03-Accessing-System-Configurations-With-MPI.html">Accessing System Configurations With MPI</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../03-Parallel-Simulations-With-MPI/04-Running-Multiple-Simulations-With-Partitions.html">Running Multiple Simulations With Partitions</a></li>
+</ul>
+</li>
+<li class="toctree-l1 has-children"><a class="reference internal" href="../04-Custom-Actions-In-Python/00-index.html">Custom Actions in Python</a><input class="toctree-checkbox" id="toctree-checkbox-5" name="toctree-checkbox-5" role="switch" type="checkbox"/><label for="toctree-checkbox-5"><div class="visually-hidden">Toggle child pages in navigation</div><i class="icon"><svg><use href="#svg-arrow-right"></use></svg></i></label><ul>
+<li class="toctree-l2"><a class="reference internal" href="../04-Custom-Actions-In-Python/01-What-are-Actions.html">What are Actions?</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../04-Custom-Actions-In-Python/02-An-Initial-Custom-Action.html">An Initial Custom Action</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../04-Custom-Actions-In-Python/03-Custom-Action-Features.html">Custom Action Features</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../04-Custom-Actions-In-Python/04-Custom-Updater.html">Custom Updater</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../04-Custom-Actions-In-Python/05-Custom-Writer.html">Custom Writer</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../04-Custom-Actions-In-Python/06-Improving-Performance.html">Improving Performance</a></li>
+</ul>
+</li>
+<li class="toctree-l1 has-children"><a class="reference internal" href="../05-Organizing-and-Executing-Simulations/00-index.html">Organizing and Executing Simulations</a><input class="toctree-checkbox" id="toctree-checkbox-6" name="toctree-checkbox-6" role="switch" type="checkbox"/><label for="toctree-checkbox-6"><div class="visually-hidden">Toggle child pages in navigation</div><i class="icon"><svg><use href="#svg-arrow-right"></use></svg></i></label><ul>
+<li class="toctree-l2"><a class="reference internal" href="../05-Organizing-and-Executing-Simulations/01-Organizing-Data.html">Organizing Data</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../05-Organizing-and-Executing-Simulations/02-Executing-Simulations.html">Executing Simulations</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../05-Organizing-and-Executing-Simulations/03-Continuing-Simulations.html">Continuing Simulations</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../05-Organizing-and-Executing-Simulations/04-Submitting-Cluster-Jobs.html">Submitting Cluster Jobs</a></li>
+</ul>
+</li>
+<li class="toctree-l1 has-children"><a class="reference internal" href="../06-Modelling-Rigid-Bodies/00-index.html">Modelling Rigid Bodies</a><input class="toctree-checkbox" id="toctree-checkbox-7" name="toctree-checkbox-7" role="switch" type="checkbox"/><label for="toctree-checkbox-7"><div class="visually-hidden">Toggle child pages in navigation</div><i class="icon"><svg><use href="#svg-arrow-right"></use></svg></i></label><ul>
+<li class="toctree-l2"><a class="reference internal" href="../06-Modelling-Rigid-Bodies/01-Introduction-to-Rigid-Bodies.html">Introduction to Rigid Bodies</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../06-Modelling-Rigid-Bodies/02-Running-Rigid-Body-Simulations.html">Running Rigid Body Simulations</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../06-Modelling-Rigid-Bodies/03-Preparing-a-General-Body.html">Preparing a General Body</a></li>
+</ul>
+</li>
+</ul>
+<p class="caption" role="heading"><span class="caption-text">How to guides</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../howto/molecular.html">How to model molecular systems</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../howto/cpppotential.html">How to apply arbitrary pair potentials in HPMC</a></li>
+</ul>
+<p class="caption" role="heading"><span class="caption-text">Python API</span></p>
+<ul>
+<li class="toctree-l1 has-children"><a class="reference internal" href="../../package-hoomd.html">hoomd</a><input class="toctree-checkbox" id="toctree-checkbox-8" name="toctree-checkbox-8" role="switch" type="checkbox"/><label for="toctree-checkbox-8"><div class="visually-hidden">Toggle child pages in navigation</div><i class="icon"><svg><use href="#svg-arrow-right"></use></svg></i></label><ul>
+<li class="toctree-l2"><a class="reference internal" href="../../module-hoomd-box.html">hoomd.box</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../module-hoomd-communicator.html">hoomd.communicator</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../module-hoomd-custom.html">hoomd.custom</a></li>
+<li class="toctree-l2 has-children"><a class="reference internal" href="../../module-hoomd-data.html">hoomd.data</a><input class="toctree-checkbox" id="toctree-checkbox-9" name="toctree-checkbox-9" role="switch" type="checkbox"/><label for="toctree-checkbox-9"><div class="visually-hidden">Toggle child pages in navigation</div><i class="icon"><svg><use href="#svg-arrow-right"></use></svg></i></label><ul>
+<li class="toctree-l3"><a class="reference internal" href="../../module-hoomd-array.html">hoomd.data.array</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="../../module-hoomd-device.html">hoomd.device</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../module-hoomd-error.html">hoomd.error</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../module-hoomd-filter.html">hoomd.filter</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../module-hoomd-logging.html">hoomd.logging</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../module-hoomd-mesh.html">hoomd.mesh</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../module-hoomd-operation.html">hoomd.operation</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../module-hoomd-triggers.html">hoomd.trigger</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../module-hoomd-tune.html">hoomd.tune</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../module-hoomd-update.html">hoomd.update</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../module-hoomd-variant.html">hoomd.variant</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../module-hoomd-version.html">hoomd.version</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../module-hoomd-wall.html">hoomd.wall</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../module-hoomd-write.html">hoomd.write</a></li>
+</ul>
+</li>
+<li class="toctree-l1 has-children"><a class="reference internal" href="../../package-hpmc.html">hoomd.hpmc</a><input class="toctree-checkbox" id="toctree-checkbox-10" name="toctree-checkbox-10" role="switch" type="checkbox"/><label for="toctree-checkbox-10"><div class="visually-hidden">Toggle child pages in navigation</div><i class="icon"><svg><use href="#svg-arrow-right"></use></svg></i></label><ul>
+<li class="toctree-l2"><a class="reference internal" href="../../module-hpmc-compute.html">hoomd.hpmc.compute</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../module-hpmc-integrate.html">hoomd.hpmc.integrate</a></li>
+<li class="toctree-l2 has-children"><a class="reference internal" href="../../module-hpmc-nec.html">hoomd.hpmc.nec</a><input class="toctree-checkbox" id="toctree-checkbox-11" name="toctree-checkbox-11" role="switch" type="checkbox"/><label for="toctree-checkbox-11"><div class="visually-hidden">Toggle child pages in navigation</div><i class="icon"><svg><use href="#svg-arrow-right"></use></svg></i></label><ul>
+<li class="toctree-l3"><a class="reference internal" href="../../module-hpmc-nec-integrate.html">hoomd.hpmc.nec.integrate</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../module-hpmc-nec-tune.html">hoomd.hpmc.nec.tune</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="../../module-hpmc-tune.html">hoomd.hpmc.tune</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../module-hpmc-update.html">hoomd.hpmc.update</a></li>
+<li class="toctree-l2 has-children"><a class="reference internal" href="../../module-hpmc-pair.html">hoomd.hpmc.pair</a><input class="toctree-checkbox" id="toctree-checkbox-12" name="toctree-checkbox-12" role="switch" type="checkbox"/><label for="toctree-checkbox-12"><div class="visually-hidden">Toggle child pages in navigation</div><i class="icon"><svg><use href="#svg-arrow-right"></use></svg></i></label><ul>
+<li class="toctree-l3"><a class="reference internal" href="../../module-hpmc-pair-user.html">hoomd.hpmc.pair.user</a></li>
+</ul>
+</li>
+<li class="toctree-l2 has-children"><a class="reference internal" href="../../module-hpmc-external.html">hoomd.hpmc.external</a><input class="toctree-checkbox" id="toctree-checkbox-13" name="toctree-checkbox-13" role="switch" type="checkbox"/><label for="toctree-checkbox-13"><div class="visually-hidden">Toggle child pages in navigation</div><i class="icon"><svg><use href="#svg-arrow-right"></use></svg></i></label><ul>
+<li class="toctree-l3"><a class="reference internal" href="../../module-hpmc-external-user.html">hoomd.hpmc.external.user</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../module-hpmc-external-field.html">hoomd.hpmc.external.field</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../module-hpmc-external-wall.html">hoomd.hpmc.external.wall</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="../../module-hpmc-shape_move.html">hoomd.hpmc.shape_move</a></li>
+</ul>
+</li>
+<li class="toctree-l1 has-children"><a class="reference internal" href="../../package-md.html">hoomd.md</a><input class="toctree-checkbox" id="toctree-checkbox-14" name="toctree-checkbox-14" role="switch" type="checkbox"/><label for="toctree-checkbox-14"><div class="visually-hidden">Toggle child pages in navigation</div><i class="icon"><svg><use href="#svg-arrow-right"></use></svg></i></label><ul>
+<li class="toctree-l2 has-children"><a class="reference internal" href="../../module-md-alchemy.html">md.alchemy</a><input class="toctree-checkbox" id="toctree-checkbox-15" name="toctree-checkbox-15" role="switch" type="checkbox"/><label for="toctree-checkbox-15"><div class="visually-hidden">Toggle child pages in navigation</div><i class="icon"><svg><use href="#svg-arrow-right"></use></svg></i></label><ul>
+<li class="toctree-l3"><a class="reference internal" href="../../module-md-alchemy-pair.html">md.alchemy.pair</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../module-md-alchemy-methods.html">md.alchemy.methods</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="../../module-md-angle.html">md.angle</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../module-md-bond.html">md.bond</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../module-md-constrain.html">md.constrain</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../module-md-compute.html">md.compute</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../module-md-data.html">md.data</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../module-md-dihedral.html">md.dihedral</a></li>
+<li class="toctree-l2 has-children"><a class="reference internal" href="../../module-md-external.html">md.external</a><input class="toctree-checkbox" id="toctree-checkbox-16" name="toctree-checkbox-16" role="switch" type="checkbox"/><label for="toctree-checkbox-16"><div class="visually-hidden">Toggle child pages in navigation</div><i class="icon"><svg><use href="#svg-arrow-right"></use></svg></i></label><ul>
+<li class="toctree-l3"><a class="reference internal" href="../../module-md-external-field.html">md.external.field</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../module-md-external-wall.html">md.external.wall</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="../../module-md-force.html">md.force</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../module-md-improper.html">md.improper</a></li>
+<li class="toctree-l2 has-children"><a class="reference internal" href="../../module-md-long_range.html">md.long_range</a><input class="toctree-checkbox" id="toctree-checkbox-17" name="toctree-checkbox-17" role="switch" type="checkbox"/><label for="toctree-checkbox-17"><div class="visually-hidden">Toggle child pages in navigation</div><i class="icon"><svg><use href="#svg-arrow-right"></use></svg></i></label><ul>
+<li class="toctree-l3"><a class="reference internal" href="../../module-md-long_range-pppm.html">md.long_range.pppm</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="../../module-md-manifold.html">md.manifold</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../module-md-many_body.html">md.many_body</a></li>
+<li class="toctree-l2 has-children"><a class="reference internal" href="../../module-md-methods.html">md.methods</a><input class="toctree-checkbox" id="toctree-checkbox-18" name="toctree-checkbox-18" role="switch" type="checkbox"/><label for="toctree-checkbox-18"><div class="visually-hidden">Toggle child pages in navigation</div><i class="icon"><svg><use href="#svg-arrow-right"></use></svg></i></label><ul>
+<li class="toctree-l3"><a class="reference internal" href="../../module-md-methods-rattle.html">md.methods.rattle</a></li>
+</ul>
+</li>
+<li class="toctree-l2 has-children"><a class="reference internal" href="../../module-md-mesh.html">md.mesh</a><input class="toctree-checkbox" id="toctree-checkbox-19" name="toctree-checkbox-19" role="switch" type="checkbox"/><label for="toctree-checkbox-19"><div class="visually-hidden">Toggle child pages in navigation</div><i class="icon"><svg><use href="#svg-arrow-right"></use></svg></i></label><ul>
+<li class="toctree-l3"><a class="reference internal" href="../../module-md-mesh-bond.html">md.mesh.bond</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="../../module-md-minimize.html">md.minimize</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../module-md-nlist.html">md.nlist</a></li>
+<li class="toctree-l2 has-children"><a class="reference internal" href="../../module-md-pair.html">md.pair</a><input class="toctree-checkbox" id="toctree-checkbox-20" name="toctree-checkbox-20" role="switch" type="checkbox"/><label for="toctree-checkbox-20"><div class="visually-hidden">Toggle child pages in navigation</div><i class="icon"><svg><use href="#svg-arrow-right"></use></svg></i></label><ul>
+<li class="toctree-l3"><a class="reference internal" href="../../module-md-pair-aniso.html">md.pair.aniso</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="../../module-md-special_pair.html">md.special_pair</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../module-md-tune.html">md.tune</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../module-md-update.html">md.update</a></li>
+</ul>
+</li>
+</ul>
+<p class="caption" role="heading"><span class="caption-text">Developer guide</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../contributing.html">Contributing</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../style.html">Code style</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../testing.html">Testing</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../components.html">Components</a></li>
+</ul>
+<p class="caption" role="heading"><span class="caption-text">Reference</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../notation.html">Notation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../units.html">Units</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../deprecated.html">Deprecated</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../logo.html">Logo</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../license.html">License</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../credits.html">Credits</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../indices.html">Index</a></li>
+</ul>
+
+</div>
+</div>
+
+      </div>
+      
+    </div>
+  </aside>
+  <div class="main">
+    <div class="content">
+      <div class="article-container">
+        <a href="#" class="back-to-top muted-link">
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24">
+            <path d="M13 20h-2V8l-5.5 5.5-1.42-1.42L12 4.16l7.92 7.92-1.42 1.42L13 8v12z"></path>
+          </svg>
+          <span>Back to top</span>
+        </a>
+        <div class="content-icon-container">
+          <div class="theme-toggle-container theme-toggle-content">
+            <button class="theme-toggle">
+              <div class="visually-hidden">Toggle Light / Dark / Auto color theme</div>
+              <svg class="theme-icon-when-auto"><use href="#svg-sun-half"></use></svg>
+              <svg class="theme-icon-when-dark"><use href="#svg-moon"></use></svg>
+              <svg class="theme-icon-when-light"><use href="#svg-sun"></use></svg>
+            </button>
+          </div>
+          <label class="toc-overlay-icon toc-content-icon" for="__toc">
+            <div class="visually-hidden">Toggle table of contents sidebar</div>
+            <i class="icon"><svg><use href="#svg-toc"></use></svg></i>
+          </label>
+        </div>
+        <article role="main">
+          
+<style>
+/* CSS for nbsphinx extension */
+
+/* remove conflicting styling from Sphinx themes */
+div.nbinput.container div.prompt *,
+div.nboutput.container div.prompt *,
+div.nbinput.container div.input_area pre,
+div.nboutput.container div.output_area pre,
+div.nbinput.container div.input_area .highlight,
+div.nboutput.container div.output_area .highlight {
+    border: none;
+    padding: 0;
+    margin: 0;
+    box-shadow: none;
+}
+
+div.nbinput.container > div[class*=highlight],
+div.nboutput.container > div[class*=highlight] {
+    margin: 0;
+}
+
+div.nbinput.container div.prompt *,
+div.nboutput.container div.prompt * {
+    background: none;
+}
+
+div.nboutput.container div.output_area .highlight,
+div.nboutput.container div.output_area pre {
+    background: unset;
+}
+
+div.nboutput.container div.output_area div.highlight {
+    color: unset;  /* override Pygments text color */
+}
+
+/* avoid gaps between output lines */
+div.nboutput.container div[class*=highlight] pre {
+    line-height: normal;
+}
+
+/* input/output containers */
+div.nbinput.container,
+div.nboutput.container {
+    display: -webkit-flex;
+    display: flex;
+    align-items: flex-start;
+    margin: 0;
+    width: 100%;
+}
+@media (max-width: 540px) {
+    div.nbinput.container,
+    div.nboutput.container {
+        flex-direction: column;
+    }
+}
+
+/* input container */
+div.nbinput.container {
+    padding-top: 5px;
+}
+
+/* last container */
+div.nblast.container {
+    padding-bottom: 5px;
+}
+
+/* input prompt */
+div.nbinput.container div.prompt pre {
+    color: #307FC1;
+}
+
+/* output prompt */
+div.nboutput.container div.prompt pre {
+    color: #BF5B3D;
+}
+
+/* all prompts */
+div.nbinput.container div.prompt,
+div.nboutput.container div.prompt {
+    width: 4.5ex;
+    padding-top: 5px;
+    position: relative;
+    user-select: none;
+}
+
+div.nbinput.container div.prompt > div,
+div.nboutput.container div.prompt > div {
+    position: absolute;
+    right: 0;
+    margin-right: 0.3ex;
+}
+
+@media (max-width: 540px) {
+    div.nbinput.container div.prompt,
+    div.nboutput.container div.prompt {
+        width: unset;
+        text-align: left;
+        padding: 0.4em;
+    }
+    div.nboutput.container div.prompt.empty {
+        padding: 0;
+    }
+
+    div.nbinput.container div.prompt > div,
+    div.nboutput.container div.prompt > div {
+        position: unset;
+    }
+}
+
+/* disable scrollbars and line breaks on prompts */
+div.nbinput.container div.prompt pre,
+div.nboutput.container div.prompt pre {
+    overflow: hidden;
+    white-space: pre;
+}
+
+/* input/output area */
+div.nbinput.container div.input_area,
+div.nboutput.container div.output_area {
+    -webkit-flex: 1;
+    flex: 1;
+    overflow: auto;
+}
+@media (max-width: 540px) {
+    div.nbinput.container div.input_area,
+    div.nboutput.container div.output_area {
+        width: 100%;
+    }
+}
+
+/* input area */
+div.nbinput.container div.input_area {
+    border: 1px solid #e0e0e0;
+    border-radius: 2px;
+    /*background: #f5f5f5;*/
+}
+
+/* override MathJax center alignment in output cells */
+div.nboutput.container div[class*=MathJax] {
+    text-align: left !important;
+}
+
+/* override sphinx.ext.imgmath center alignment in output cells */
+div.nboutput.container div.math p {
+    text-align: left;
+}
+
+/* standard error */
+div.nboutput.container div.output_area.stderr {
+    background: #fdd;
+}
+
+/* ANSI colors */
+.ansi-black-fg { color: #3E424D; }
+.ansi-black-bg { background-color: #3E424D; }
+.ansi-black-intense-fg { color: #282C36; }
+.ansi-black-intense-bg { background-color: #282C36; }
+.ansi-red-fg { color: #E75C58; }
+.ansi-red-bg { background-color: #E75C58; }
+.ansi-red-intense-fg { color: #B22B31; }
+.ansi-red-intense-bg { background-color: #B22B31; }
+.ansi-green-fg { color: #00A250; }
+.ansi-green-bg { background-color: #00A250; }
+.ansi-green-intense-fg { color: #007427; }
+.ansi-green-intense-bg { background-color: #007427; }
+.ansi-yellow-fg { color: #DDB62B; }
+.ansi-yellow-bg { background-color: #DDB62B; }
+.ansi-yellow-intense-fg { color: #B27D12; }
+.ansi-yellow-intense-bg { background-color: #B27D12; }
+.ansi-blue-fg { color: #208FFB; }
+.ansi-blue-bg { background-color: #208FFB; }
+.ansi-blue-intense-fg { color: #0065CA; }
+.ansi-blue-intense-bg { background-color: #0065CA; }
+.ansi-magenta-fg { color: #D160C4; }
+.ansi-magenta-bg { background-color: #D160C4; }
+.ansi-magenta-intense-fg { color: #A03196; }
+.ansi-magenta-intense-bg { background-color: #A03196; }
+.ansi-cyan-fg { color: #60C6C8; }
+.ansi-cyan-bg { background-color: #60C6C8; }
+.ansi-cyan-intense-fg { color: #258F8F; }
+.ansi-cyan-intense-bg { background-color: #258F8F; }
+.ansi-white-fg { color: #C5C1B4; }
+.ansi-white-bg { background-color: #C5C1B4; }
+.ansi-white-intense-fg { color: #A1A6B2; }
+.ansi-white-intense-bg { background-color: #A1A6B2; }
+
+.ansi-default-inverse-fg { color: #FFFFFF; }
+.ansi-default-inverse-bg { background-color: #000000; }
+
+.ansi-bold { font-weight: bold; }
+.ansi-underline { text-decoration: underline; }
+
+
+div.nbinput.container div.input_area div[class*=highlight] > pre,
+div.nboutput.container div.output_area div[class*=highlight] > pre,
+div.nboutput.container div.output_area div[class*=highlight].math,
+div.nboutput.container div.output_area.rendered_html,
+div.nboutput.container div.output_area > div.output_javascript,
+div.nboutput.container div.output_area:not(.rendered_html) > img{
+    padding: 5px;
+    margin: 0;
+}
+
+/* fix copybtn overflow problem in chromium (needed for 'sphinx_copybutton') */
+div.nbinput.container div.input_area > div[class^='highlight'],
+div.nboutput.container div.output_area > div[class^='highlight']{
+    overflow-y: hidden;
+}
+
+/* hide copybtn icon on prompts (needed for 'sphinx_copybutton') */
+.prompt .copybtn {
+    display: none;
+}
+
+/* Some additional styling taken form the Jupyter notebook CSS */
+.jp-RenderedHTMLCommon table,
+div.rendered_html table {
+  border: none;
+  border-collapse: collapse;
+  border-spacing: 0;
+  color: black;
+  font-size: 12px;
+  table-layout: fixed;
+}
+.jp-RenderedHTMLCommon thead,
+div.rendered_html thead {
+  border-bottom: 1px solid black;
+  vertical-align: bottom;
+}
+.jp-RenderedHTMLCommon tr,
+.jp-RenderedHTMLCommon th,
+.jp-RenderedHTMLCommon td,
+div.rendered_html tr,
+div.rendered_html th,
+div.rendered_html td {
+  text-align: right;
+  vertical-align: middle;
+  padding: 0.5em 0.5em;
+  line-height: normal;
+  white-space: normal;
+  max-width: none;
+  border: none;
+}
+.jp-RenderedHTMLCommon th,
+div.rendered_html th {
+  font-weight: bold;
+}
+.jp-RenderedHTMLCommon tbody tr:nth-child(odd),
+div.rendered_html tbody tr:nth-child(odd) {
+  background: #f5f5f5;
+}
+.jp-RenderedHTMLCommon tbody tr:hover,
+div.rendered_html tbody tr:hover {
+  background: rgba(66, 165, 245, 0.2);
+}
+</style>
+<section id="Saving-Array-Quantities">
+<h1>Saving Array Quantities<a class="headerlink" href="#Saving-Array-Quantities" title="Permalink to this heading">#</a></h1>
+<section id="Overview">
+<h2>Overview<a class="headerlink" href="#Overview" title="Permalink to this heading">#</a></h2>
+<section id="Questions">
+<h3>Questions<a class="headerlink" href="#Questions" title="Permalink to this heading">#</a></h3>
+<ul class="simple">
+<li><p>How can I save per-particle quantities for later analysis?</p></li>
+<li><p>How can I access that data?</p></li>
+</ul>
+</section>
+<section id="Objectives">
+<h3>Objectives<a class="headerlink" href="#Objectives" title="Permalink to this heading">#</a></h3>
+<ul class="simple">
+<li><p>Show how to log <strong>per-particle properties</strong> to a <strong>GSD</strong> file.</p></li>
+<li><p>Explain how to read logged quantities from a <strong>GSD</strong> file.</p></li>
+<li><p>Mention that OVITO reads these quantities.</p></li>
+</ul>
+</section>
+</section>
+<section id="Boilerplate-code">
+<h2>Boilerplate code<a class="headerlink" href="#Boilerplate-code" title="Permalink to this heading">#</a></h2>
+<div class="nbinput nblast docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[1]:
+</pre></div>
+</div>
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="kn">import</span> <span class="nn">gsd.hoomd</span>
+<span class="kn">import</span> <span class="nn">hoomd</span>
+<span class="kn">import</span> <span class="nn">matplotlib</span>
+<span class="kn">import</span> <span class="nn">numpy</span>
+
+<span class="o">%</span><span class="k">matplotlib</span> inline
+<span class="n">matplotlib</span><span class="o">.</span><span class="n">style</span><span class="o">.</span><span class="n">use</span><span class="p">(</span><span class="s1">&#39;ggplot&#39;</span><span class="p">)</span>
+</pre></div>
+</div>
+</div>
+<p>The <code class="docutils literal notranslate"><span class="pre">render</span></code> function in the next (hidden) cell will render the system state using <strong>fresnel</strong>.</p>
+<div class="admonition note">
+<p>This is not intended as a full tutorial on fresnel - see the fresnel user documentation if you would like to learn more.</p>
+</div>
+</section>
+<section id="Array-quantities">
+<h2>Array quantities<a class="headerlink" href="#Array-quantities" title="Permalink to this heading">#</a></h2>
+<p>You logged a 6-element array quantity in the previous section, the pressure tensor. You can also log larger arrays and per-particle quantities (e.g. energy and force) in a <strong>GSD</strong> file along with the trajectory. Then you can use utilize the data in your analysis and visualization workflow, such as using <a class="reference external" href="https://www.ovito.org/">OVITO</a> to color particles by energy or display force vectors. When using OVITO, open the <strong>GSD</strong> file and all logged quantities will be available in the inspector and
+for use in the pipeline.</p>
+</section>
+<section id="Define-the-Simulation">
+<h2>Define the Simulation<a class="headerlink" href="#Define-the-Simulation" title="Permalink to this heading">#</a></h2>
+<p>This tutorial executes the Lennard-Jones particle simulation from a previous tutorial. See <a class="reference internal" href="../01-Introducing-Molecular-Dynamics/00-index.html"><span class="doc">Introducing Molecular Dyamics</span></a> for a complete description of this code.</p>
+<div class="nbinput nblast docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[4]:
+</pre></div>
+</div>
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="n">cpu</span> <span class="o">=</span> <span class="n">hoomd</span><span class="o">.</span><span class="n">device</span><span class="o">.</span><span class="n">CPU</span><span class="p">()</span>
+<span class="n">sim</span> <span class="o">=</span> <span class="n">hoomd</span><span class="o">.</span><span class="n">Simulation</span><span class="p">(</span><span class="n">device</span><span class="o">=</span><span class="n">cpu</span><span class="p">)</span>
+<span class="n">sim</span><span class="o">.</span><span class="n">create_state_from_gsd</span><span class="p">(</span>
+    <span class="n">filename</span><span class="o">=</span><span class="s1">&#39;../01-Introducing-Molecular-Dynamics/random.gsd&#39;</span><span class="p">)</span>
+
+<span class="n">integrator</span> <span class="o">=</span> <span class="n">hoomd</span><span class="o">.</span><span class="n">md</span><span class="o">.</span><span class="n">Integrator</span><span class="p">(</span><span class="n">dt</span><span class="o">=</span><span class="mf">0.005</span><span class="p">)</span>
+<span class="n">cell</span> <span class="o">=</span> <span class="n">hoomd</span><span class="o">.</span><span class="n">md</span><span class="o">.</span><span class="n">nlist</span><span class="o">.</span><span class="n">Cell</span><span class="p">(</span><span class="n">buffer</span><span class="o">=</span><span class="mf">0.4</span><span class="p">)</span>
+<span class="n">lj</span> <span class="o">=</span> <span class="n">hoomd</span><span class="o">.</span><span class="n">md</span><span class="o">.</span><span class="n">pair</span><span class="o">.</span><span class="n">LJ</span><span class="p">(</span><span class="n">nlist</span><span class="o">=</span><span class="n">cell</span><span class="p">)</span>
+<span class="n">lj</span><span class="o">.</span><span class="n">params</span><span class="p">[(</span><span class="s1">&#39;A&#39;</span><span class="p">,</span> <span class="s1">&#39;A&#39;</span><span class="p">)]</span> <span class="o">=</span> <span class="nb">dict</span><span class="p">(</span><span class="n">epsilon</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span> <span class="n">sigma</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span>
+<span class="n">lj</span><span class="o">.</span><span class="n">r_cut</span><span class="p">[(</span><span class="s1">&#39;A&#39;</span><span class="p">,</span> <span class="s1">&#39;A&#39;</span><span class="p">)]</span> <span class="o">=</span> <span class="mf">2.5</span>
+<span class="n">integrator</span><span class="o">.</span><span class="n">forces</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">lj</span><span class="p">)</span>
+<span class="n">nvt</span> <span class="o">=</span> <span class="n">hoomd</span><span class="o">.</span><span class="n">md</span><span class="o">.</span><span class="n">methods</span><span class="o">.</span><span class="n">NVT</span><span class="p">(</span><span class="n">kT</span><span class="o">=</span><span class="mf">1.5</span><span class="p">,</span> <span class="nb">filter</span><span class="o">=</span><span class="n">hoomd</span><span class="o">.</span><span class="n">filter</span><span class="o">.</span><span class="n">All</span><span class="p">(),</span> <span class="n">tau</span><span class="o">=</span><span class="mf">1.0</span><span class="p">)</span>
+<span class="n">integrator</span><span class="o">.</span><span class="n">methods</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">nvt</span><span class="p">)</span>
+<span class="n">sim</span><span class="o">.</span><span class="n">operations</span><span class="o">.</span><span class="n">integrator</span> <span class="o">=</span> <span class="n">integrator</span>
+<span class="n">sim</span><span class="o">.</span><span class="n">run</span><span class="p">(</span><span class="mi">0</span><span class="p">)</span>
+</pre></div>
+</div>
+</div>
+</section>
+<section id="Logging-per-particle-quantities">
+<h2>Logging per-particle quantities<a class="headerlink" href="#Logging-per-particle-quantities" title="Permalink to this heading">#</a></h2>
+<p>MD forces provide a number of loggable quantities including their contribution to the system energy, but also per-particle energy contributions (in <code class="docutils literal notranslate"><span class="pre">energies</span></code>) and per-particle forces, torques, and virials.</p>
+<div class="nbinput docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[5]:
+</pre></div>
+</div>
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="n">lj</span><span class="o">.</span><span class="n">loggables</span>
+</pre></div>
+</div>
+</div>
+<div class="nboutput nblast docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[5]:
+</pre></div>
+</div>
+<div class="output_area docutils container">
+<div class="highlight"><pre>
+{&#39;energy&#39;: &#39;scalar&#39;,
+ &#39;energies&#39;: &#39;particle&#39;,
+ &#39;additional_energy&#39;: &#39;scalar&#39;,
+ &#39;forces&#39;: &#39;particle&#39;,
+ &#39;torques&#39;: &#39;particle&#39;,
+ &#39;virials&#39;: &#39;particle&#39;,
+ &#39;additional_virial&#39;: &#39;sequence&#39;}
+</pre></div></div>
+</div>
+<p>Add the per-particle LJ energies and forces to a logger:</p>
+<div class="nbinput nblast docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[6]:
+</pre></div>
+</div>
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="n">logger</span> <span class="o">=</span> <span class="n">hoomd</span><span class="o">.</span><span class="n">logging</span><span class="o">.</span><span class="n">Logger</span><span class="p">()</span>
+<span class="n">logger</span><span class="o">.</span><span class="n">add</span><span class="p">(</span><span class="n">lj</span><span class="p">,</span> <span class="n">quantities</span><span class="o">=</span><span class="p">[</span><span class="s1">&#39;energies&#39;</span><span class="p">,</span> <span class="s1">&#39;forces&#39;</span><span class="p">])</span>
+</pre></div>
+</div>
+</div>
+</section>
+<section id="Writing-per-particle-quantities-to-a-GSD-file">
+<h2>Writing per-particle quantities to a GSD file<a class="headerlink" href="#Writing-per-particle-quantities-to-a-GSD-file" title="Permalink to this heading">#</a></h2>
+<p>In the previous section, you used the <strong>Null</strong> filter to produce <strong>GSD</strong> file with <em>only</em> logged data. In this section, include all particles so that you can associate logged per-particle quantities with the particle properties.</p>
+<div class="nbinput nblast docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[7]:
+</pre></div>
+</div>
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="n">gsd_writer</span> <span class="o">=</span> <span class="n">hoomd</span><span class="o">.</span><span class="n">write</span><span class="o">.</span><span class="n">GSD</span><span class="p">(</span><span class="n">filename</span><span class="o">=</span><span class="s1">&#39;trajectory.gsd&#39;</span><span class="p">,</span>
+                             <span class="n">trigger</span><span class="o">=</span><span class="n">hoomd</span><span class="o">.</span><span class="n">trigger</span><span class="o">.</span><span class="n">Periodic</span><span class="p">(</span><span class="mi">10000</span><span class="p">),</span>
+                             <span class="n">mode</span><span class="o">=</span><span class="s1">&#39;xb&#39;</span><span class="p">,</span>
+                             <span class="nb">filter</span><span class="o">=</span><span class="n">hoomd</span><span class="o">.</span><span class="n">filter</span><span class="o">.</span><span class="n">All</span><span class="p">(),</span>
+                             <span class="n">log</span><span class="o">=</span><span class="n">logger</span><span class="p">)</span>
+<span class="n">sim</span><span class="o">.</span><span class="n">operations</span><span class="o">.</span><span class="n">writers</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">gsd_writer</span><span class="p">)</span>
+</pre></div>
+</div>
+</div>
+<p>Run the simulation:</p>
+<div class="nbinput nblast docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[8]:
+</pre></div>
+</div>
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="n">sim</span><span class="o">.</span><span class="n">run</span><span class="p">(</span><span class="mi">100000</span><span class="p">)</span>
+</pre></div>
+</div>
+</div>
+<p>As discussed in the previous section, delete the simulation so it is safe to open the GSD file for reading in the same process.</p>
+<div class="nbinput nblast docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[9]:
+</pre></div>
+</div>
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="k">del</span> <span class="n">sim</span><span class="p">,</span> <span class="n">gsd_writer</span><span class="p">,</span> <span class="n">logger</span><span class="p">,</span> <span class="n">integrator</span><span class="p">,</span> <span class="n">nvt</span><span class="p">,</span> <span class="n">lj</span><span class="p">,</span> <span class="n">cell</span><span class="p">,</span> <span class="n">cpu</span>
+</pre></div>
+</div>
+</div>
+</section>
+<section id="Reading-logged-data-from-a-GSD-file">
+<h2>Reading logged data from a GSD file<a class="headerlink" href="#Reading-logged-data-from-a-GSD-file" title="Permalink to this heading">#</a></h2>
+<p>Use the <code class="docutils literal notranslate"><span class="pre">gsd</span></code> package to open the file:</p>
+<div class="nbinput nblast docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[10]:
+</pre></div>
+</div>
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="n">traj</span> <span class="o">=</span> <span class="n">gsd</span><span class="o">.</span><span class="n">hoomd</span><span class="o">.</span><span class="n">open</span><span class="p">(</span><span class="s1">&#39;trajectory.gsd&#39;</span><span class="p">,</span> <span class="s1">&#39;rb&#39;</span><span class="p">)</span>
+</pre></div>
+</div>
+</div>
+<p>GSD prepends <code class="docutils literal notranslate"><span class="pre">particles/</span></code> to the logged name of per-particle quantities:</p>
+<div class="nbinput docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[11]:
+</pre></div>
+</div>
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="n">traj</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">log</span><span class="o">.</span><span class="n">keys</span><span class="p">()</span>
+</pre></div>
+</div>
+</div>
+<div class="nboutput nblast docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[11]:
+</pre></div>
+</div>
+<div class="output_area docutils container">
+<div class="highlight"><pre>
+dict_keys([&#39;particles/md/pair/LJ/energies&#39;, &#39;particles/md/pair/LJ/forces&#39;])
+</pre></div></div>
+</div>
+<p>The quantities are numpy arrays with <code class="docutils literal notranslate"><span class="pre">N_particles</span></code> elements. Here are a few slices:</p>
+<div class="nbinput docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[12]:
+</pre></div>
+</div>
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="n">traj</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span><span class="o">.</span><span class="n">log</span><span class="p">[</span><span class="s1">&#39;particles/md/pair/LJ/energies&#39;</span><span class="p">][</span><span class="mi">0</span><span class="p">:</span><span class="mi">10</span><span class="p">]</span>
+</pre></div>
+</div>
+</div>
+<div class="nboutput nblast docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[12]:
+</pre></div>
+</div>
+<div class="output_area docutils container">
+<div class="highlight"><pre>
+array([-3.39840884, -2.03033218, -3.15903353, -2.30211083, -0.97440217,
+       -2.66465184, -1.63920762, -0.29580836, -1.14112247, -1.36468275])
+</pre></div></div>
+</div>
+<div class="nbinput docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[13]:
+</pre></div>
+</div>
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="n">traj</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span><span class="o">.</span><span class="n">log</span><span class="p">[</span><span class="s1">&#39;particles/md/pair/LJ/forces&#39;</span><span class="p">][</span><span class="mi">0</span><span class="p">:</span><span class="mi">10</span><span class="p">]</span>
+</pre></div>
+</div>
+</div>
+<div class="nboutput nblast docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[13]:
+</pre></div>
+</div>
+<div class="output_area docutils container">
+<div class="highlight"><pre>
+array([[ 1.44681031,  2.01198357,  1.0663342 ],
+       [ 0.63208369,  0.6460156 ,  2.66476508],
+       [-6.49972295,  1.1223018 , -2.62407767],
+       [-9.1854849 , 16.68038846, -2.25596829],
+       [-0.22897598, -2.50517732,  0.39782844],
+       [-4.04538785, -5.33049461, -3.18924051],
+       [ 0.58601689,  1.03414847, -1.51408613],
+       [ 0.5440693 ,  0.40387901, -0.44558506],
+       [ 4.02543414, -5.13080125,  0.17843608],
+       [ 0.60842181,  0.4165125 ,  0.20256789]])
+</pre></div></div>
+</div>
+<p>You can use these arrays as inputs to any computation or plotting tools:</p>
+<div class="nbinput docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[14]:
+</pre></div>
+</div>
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="n">numpy</span><span class="o">.</span><span class="n">mean</span><span class="p">(</span><span class="n">traj</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span><span class="o">.</span><span class="n">log</span><span class="p">[</span><span class="s1">&#39;particles/md/pair/LJ/forces&#39;</span><span class="p">],</span> <span class="n">axis</span><span class="o">=</span><span class="mi">0</span><span class="p">)</span>
+</pre></div>
+</div>
+</div>
+<div class="nboutput nblast docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[14]:
+</pre></div>
+</div>
+<div class="output_area docutils container">
+<div class="highlight"><pre>
+array([ 2.22044605e-16,  3.31223764e-16, -4.51028104e-17])
+</pre></div></div>
+</div>
+<div class="nbinput docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[15]:
+</pre></div>
+</div>
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="n">fig</span> <span class="o">=</span> <span class="n">matplotlib</span><span class="o">.</span><span class="n">figure</span><span class="o">.</span><span class="n">Figure</span><span class="p">(</span><span class="n">figsize</span><span class="o">=</span><span class="p">(</span><span class="mi">10</span><span class="p">,</span> <span class="mf">6.18</span><span class="p">))</span>
+<span class="n">ax</span> <span class="o">=</span> <span class="n">fig</span><span class="o">.</span><span class="n">add_subplot</span><span class="p">()</span>
+<span class="n">ax</span><span class="o">.</span><span class="n">hist</span><span class="p">(</span><span class="n">traj</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span><span class="o">.</span><span class="n">log</span><span class="p">[</span><span class="s1">&#39;particles/md/pair/LJ/energies&#39;</span><span class="p">],</span> <span class="mi">100</span><span class="p">)</span>
+<span class="n">ax</span><span class="o">.</span><span class="n">set_xlabel</span><span class="p">(</span><span class="s1">&#39;potential energy&#39;</span><span class="p">)</span>
+<span class="n">ax</span><span class="o">.</span><span class="n">set_ylabel</span><span class="p">(</span><span class="s1">&#39;count&#39;</span><span class="p">)</span>
+<span class="n">fig</span>
+</pre></div>
+</div>
+</div>
+<div class="nboutput nblast docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[15]:
+</pre></div>
+</div>
+<div class="output_area docutils container">
+<img alt="../../_images/tutorial_02-Logging_02-Saving-Array-Quantities_27_0.png" src="../../_images/tutorial_02-Logging_02-Saving-Array-Quantities_27_0.png" />
+</div>
+</div>
+<p>As with scalar quantities, the array quantities are stored separately in each frame. Use a loop to access a range of frames and compute time-series data or averages.</p>
+<p>This is what the system looks like when you color the particles by the values in <code class="docutils literal notranslate"><span class="pre">particles/md/pair/LJ/energies</span></code>:</p>
+<div class="nbinput docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[16]:
+</pre></div>
+</div>
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="n">render</span><span class="p">(</span><span class="n">traj</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">])</span>
+</pre></div>
+</div>
+</div>
+<div class="nboutput nblast docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[16]:
+</pre></div>
+</div>
+<div class="output_area docutils container">
+<img alt="../../_images/tutorial_02-Logging_02-Saving-Array-Quantities_30_0.png" src="../../_images/tutorial_02-Logging_02-Saving-Array-Quantities_30_0.png" />
+</div>
+</div>
+<p>In this section, you have logged per-particle quantities to a GSD file during a simulation run and accessed that data with a script. The next section of this tutorial demonstrates how to log particle shape information that OVITO can use.</p>
+</section>
+</section>
+
+        </article>
+      </div>
+      <footer>
+        
+<div class="related-pages">
+<a class="next-page" href="03-Storing-Particle-Shape.html">
+    <div class="page-info">
+        <div class="context">
+        <span>Next</span>
+        </div>
+        <div class="title">Storing Particle Shape</div>
+    </div>
+    <svg class="furo-related-icon"><use href="#svg-arrow-right"></use></svg>
+    </a>
+<a class="prev-page" href="01-Logging-to-a-GSD-file.html">
+    <svg class="furo-related-icon"><use href="#svg-arrow-right"></use></svg>
+    <div class="page-info">
+        <div class="context">
+        <span>Previous</span>
+        </div>
+        
+        <div class="title">Logging to a GSD file</div>
+        
+    </div>
+    </a>
+</div>
+<div class="bottom-of-page">
+<div class="left-details">
+    <p>Development of HOOMD-blue is led by the <a href="https://glotzerlab.engin.umich.edu">Glotzer Group</a> at the <a href="https://umich.edu">University of Michigan</a> (supported by NSF DMR 1808342) with many <a href="credits.html">external contributions</a>.
+    </p>
+    <div class="copyright">
+        Copyright &#169; 2009-2023 The Regents of the University of Michigan
+    </div>
+    Made with <a href="https://www.sphinx-doc.org/">Sphinx</a> and <a class="muted-link" href="https://pradyunsg.me">@pradyunsg</a>'s
+    
+    <a href="https://github.com/pradyunsg/furo">Furo</a>
+    
+</div>
+<div class="right-details">
+    <a class="muted-link" href="http://umich.edu">
+    <img src="../../_static/umich-block-M.svg" alt="University of Michigan logo" style="width: 84px; float: right;" />
+    </a>
+</div>
+</div>
+
+      </footer>
+    </div>
+    <aside class="toc-drawer">
+      
+      
+      <div class="toc-sticky toc-scroll">
+        <div class="toc-title-container">
+          <span class="toc-title">
+            On this page
+          </span>
+        </div>
+        <div class="toc-tree-container">
+          <div class="toc-tree">
+            <ul>
+<li><a class="reference internal" href="#">Saving Array Quantities</a><ul>
+<li><a class="reference internal" href="#Overview">Overview</a><ul>
+<li><a class="reference internal" href="#Questions">Questions</a></li>
+<li><a class="reference internal" href="#Objectives">Objectives</a></li>
+</ul>
+</li>
+<li><a class="reference internal" href="#Boilerplate-code">Boilerplate code</a></li>
+<li><a class="reference internal" href="#Array-quantities">Array quantities</a></li>
+<li><a class="reference internal" href="#Define-the-Simulation">Define the Simulation</a></li>
+<li><a class="reference internal" href="#Logging-per-particle-quantities">Logging per-particle quantities</a></li>
+<li><a class="reference internal" href="#Writing-per-particle-quantities-to-a-GSD-file">Writing per-particle quantities to a GSD file</a></li>
+<li><a class="reference internal" href="#Reading-logged-data-from-a-GSD-file">Reading logged data from a GSD file</a></li>
+</ul>
+</li>
+</ul>
+
+          </div>
+        </div>
+      </div>
+      
+      
+    </aside>
+  </div>
+</div><script data-url_root="../../" id="documentation_options" src="../../_static/documentation_options.js"></script>
+    <script src="../../_static/jquery.js"></script>
+    <script src="../../_static/underscore.js"></script>
+    <script src="../../_static/_sphinx_javascript_frameworks_compat.js"></script>
+    <script src="../../_static/doctools.js"></script>
+    <script src="../../_static/scripts/furo.js"></script>
+    <script crossorigin="anonymous" integrity="sha256-Ae2Vz/4ePdIu6ZyI/5ZGsYnb+m0JlOmKPjt6XZ9JJkA=" src="https://cdnjs.cloudflare.com/ajax/libs/require.js/2.3.4/require.min.js"></script>
+    <script>window.MathJax = {"tex": {"inlineMath": [["$", "$"], ["\\(", "\\)"]], "processEscapes": true}, "options": {"ignoreHtmlClass": "tex2jax_ignore|mathjax_ignore|document", "processHtmlClass": "tex2jax_process|mathjax_process|math|output_area"}}</script>
+    <script defer="defer" src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
+    </body>
+</html>

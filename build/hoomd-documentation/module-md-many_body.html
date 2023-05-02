@@ -1,0 +1,821 @@
+<!doctype html>
+<html class="no-js" lang="en">
+  <head><meta charset="utf-8"/>
+    <meta name="viewport" content="width=device-width,initial-scale=1"/>
+    <meta name="color-scheme" content="light dark"><meta name="generator" content="Docutils 0.18.1: http://docutils.sourceforge.net/" />
+<link rel="index" title="Index" href="genindex.html" /><link rel="search" title="Search" href="search.html" /><link rel="next" title="md.methods" href="module-md-methods.html" /><link rel="prev" title="md.manifold" href="module-md-manifold.html" />
+
+    <link rel="shortcut icon" href="_static/hoomdblue-logo-favicon.svg"/><!-- Generated with Sphinx 5.0.2 and Furo 2023.03.27 -->
+        <title>md.many_body - HOOMD-blue 3.10.0 documentation</title>
+      <link rel="stylesheet" type="text/css" href="_static/pygments.css" />
+    <link rel="stylesheet" type="text/css" href="_static/styles/furo.css?digest=fad236701ea90a88636c2a8c73b44ae642ed2a53" />
+    <link rel="stylesheet" type="text/css" href="_static/styles/furo-extensions.css?digest=30d1aed668e5c3a91c3e3bf6a60b675221979f0e" />
+    
+    
+
+
+<style>
+  body {
+    --color-code-background: #f0f0f0;
+  --color-code-foreground: black;
+  --color-brand-primary: #406a8c;
+  --color-brand-content: #406a8c;
+  
+  }
+  @media not print {
+    body[data-theme="dark"] {
+      --color-code-background: #202020;
+  --color-code-foreground: #d0d0d0;
+  --color-brand-primary: #5187b2;
+  --color-brand-content: #5187b2;
+  
+    }
+    @media (prefers-color-scheme: dark) {
+      body:not([data-theme="light"]) {
+        --color-code-background: #202020;
+  --color-code-foreground: #d0d0d0;
+  --color-brand-primary: #5187b2;
+  --color-brand-content: #5187b2;
+  
+      }
+    }
+  }
+</style></head>
+  <body>
+    
+    <script>
+      document.body.dataset.theme = localStorage.getItem("theme") || "auto";
+    </script>
+    
+
+<svg xmlns="http://www.w3.org/2000/svg" style="display: none;">
+  <symbol id="svg-toc" viewBox="0 0 24 24">
+    <title>Contents</title>
+    <svg stroke="currentColor" fill="currentColor" stroke-width="0" viewBox="0 0 1024 1024">
+      <path d="M408 442h480c4.4 0 8-3.6 8-8v-56c0-4.4-3.6-8-8-8H408c-4.4 0-8 3.6-8 8v56c0 4.4 3.6 8 8 8zm-8 204c0 4.4 3.6 8 8 8h480c4.4 0 8-3.6 8-8v-56c0-4.4-3.6-8-8-8H408c-4.4 0-8 3.6-8 8v56zm504-486H120c-4.4 0-8 3.6-8 8v56c0 4.4 3.6 8 8 8h784c4.4 0 8-3.6 8-8v-56c0-4.4-3.6-8-8-8zm0 632H120c-4.4 0-8 3.6-8 8v56c0 4.4 3.6 8 8 8h784c4.4 0 8-3.6 8-8v-56c0-4.4-3.6-8-8-8zM115.4 518.9L271.7 642c5.8 4.6 14.4.5 14.4-6.9V388.9c0-7.4-8.5-11.5-14.4-6.9L115.4 505.1a8.74 8.74 0 0 0 0 13.8z"/>
+    </svg>
+  </symbol>
+  <symbol id="svg-menu" viewBox="0 0 24 24">
+    <title>Menu</title>
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+      stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="feather-menu">
+      <line x1="3" y1="12" x2="21" y2="12"></line>
+      <line x1="3" y1="6" x2="21" y2="6"></line>
+      <line x1="3" y1="18" x2="21" y2="18"></line>
+    </svg>
+  </symbol>
+  <symbol id="svg-arrow-right" viewBox="0 0 24 24">
+    <title>Expand</title>
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+      stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="feather-chevron-right">
+      <polyline points="9 18 15 12 9 6"></polyline>
+    </svg>
+  </symbol>
+  <symbol id="svg-sun" viewBox="0 0 24 24">
+    <title>Light mode</title>
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+      stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" class="feather-sun">
+      <circle cx="12" cy="12" r="5"></circle>
+      <line x1="12" y1="1" x2="12" y2="3"></line>
+      <line x1="12" y1="21" x2="12" y2="23"></line>
+      <line x1="4.22" y1="4.22" x2="5.64" y2="5.64"></line>
+      <line x1="18.36" y1="18.36" x2="19.78" y2="19.78"></line>
+      <line x1="1" y1="12" x2="3" y2="12"></line>
+      <line x1="21" y1="12" x2="23" y2="12"></line>
+      <line x1="4.22" y1="19.78" x2="5.64" y2="18.36"></line>
+      <line x1="18.36" y1="5.64" x2="19.78" y2="4.22"></line>
+    </svg>
+  </symbol>
+  <symbol id="svg-moon" viewBox="0 0 24 24">
+    <title>Dark mode</title>
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+      stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" class="icon-tabler-moon">
+      <path stroke="none" d="M0 0h24v24H0z" fill="none" />
+      <path d="M12 3c.132 0 .263 0 .393 0a7.5 7.5 0 0 0 7.92 12.446a9 9 0 1 1 -8.313 -12.454z" />
+    </svg>
+  </symbol>
+  <symbol id="svg-sun-half" viewBox="0 0 24 24">
+    <title>Auto light/dark mode</title>
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+      stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" class="icon-tabler-shadow">
+      <path stroke="none" d="M0 0h24v24H0z" fill="none"/>
+      <circle cx="12" cy="12" r="9" />
+      <path d="M13 12h5" />
+      <path d="M13 15h4" />
+      <path d="M13 18h1" />
+      <path d="M13 9h4" />
+      <path d="M13 6h1" />
+    </svg>
+  </symbol>
+</svg>
+
+<input type="checkbox" class="sidebar-toggle" name="__navigation" id="__navigation">
+<input type="checkbox" class="sidebar-toggle" name="__toc" id="__toc">
+<label class="overlay sidebar-overlay" for="__navigation">
+  <div class="visually-hidden">Hide navigation sidebar</div>
+</label>
+<label class="overlay toc-overlay" for="__toc">
+  <div class="visually-hidden">Hide table of contents sidebar</div>
+</label>
+
+
+
+<div class="page">
+  <header class="mobile-header">
+    <div class="header-left">
+      <label class="nav-overlay-icon" for="__navigation">
+        <div class="visually-hidden">Toggle site navigation sidebar</div>
+        <i class="icon"><svg><use href="#svg-menu"></use></svg></i>
+      </label>
+    </div>
+    <div class="header-center">
+      <a href="index.html"><div class="brand">HOOMD-blue 3.10.0 documentation</div></a>
+    </div>
+    <div class="header-right">
+      <div class="theme-toggle-container theme-toggle-header">
+        <button class="theme-toggle">
+          <div class="visually-hidden">Toggle Light / Dark / Auto color theme</div>
+          <svg class="theme-icon-when-auto"><use href="#svg-sun-half"></use></svg>
+          <svg class="theme-icon-when-dark"><use href="#svg-moon"></use></svg>
+          <svg class="theme-icon-when-light"><use href="#svg-sun"></use></svg>
+        </button>
+      </div>
+      <label class="toc-overlay-icon toc-header-icon no-toc" for="__toc">
+        <div class="visually-hidden">Toggle table of contents sidebar</div>
+        <i class="icon"><svg><use href="#svg-toc"></use></svg></i>
+      </label>
+    </div>
+  </header>
+  <aside class="sidebar-drawer">
+    <div class="sidebar-container">
+      
+      <div class="sidebar-sticky"><a class="sidebar-brand centered" href="index.html">
+  
+  <div class="sidebar-logo-container">
+    <img class="sidebar-logo" src="_static/hoomdblue-logo-vertical.svg" alt="Logo"/>
+  </div>
+  
+  
+</a><form class="sidebar-search-container" method="get" action="search.html" role="search">
+  <input class="sidebar-search" placeholder="Search" name="q" aria-label="Search">
+  <input type="hidden" name="check_keywords" value="yes">
+  <input type="hidden" name="area" value="default">
+</form>
+<div id="searchbox"></div><div class="sidebar-scroll"><div class="sidebar-tree">
+  <p class="caption" role="heading"><span class="caption-text">Getting started</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="features.html">Features</a></li>
+<li class="toctree-l1"><a class="reference internal" href="installation.html">Installing binaries</a></li>
+<li class="toctree-l1"><a class="reference internal" href="building.html">Building from source</a></li>
+<li class="toctree-l1"><a class="reference internal" href="migrating.html">Migrating to HOOMD v3</a></li>
+<li class="toctree-l1"><a class="reference internal" href="changelog.html">Change Log</a></li>
+<li class="toctree-l1"><a class="reference internal" href="citing.html">Citing HOOMD-blue</a></li>
+</ul>
+<p class="caption" role="heading"><span class="caption-text">Tutorials</span></p>
+<ul>
+<li class="toctree-l1 has-children"><a class="reference internal" href="tutorial/00-Introducing-HOOMD-blue/00-index.html">Introducing HOOMD-blue</a><input class="toctree-checkbox" id="toctree-checkbox-1" name="toctree-checkbox-1" role="switch" type="checkbox"/><label for="toctree-checkbox-1"><div class="visually-hidden">Toggle child pages in navigation</div><i class="icon"><svg><use href="#svg-arrow-right"></use></svg></i></label><ul>
+<li class="toctree-l2"><a class="reference internal" href="tutorial/00-Introducing-HOOMD-blue/01-The-Simulation-Object.html">The Simulation Object</a></li>
+<li class="toctree-l2"><a class="reference internal" href="tutorial/00-Introducing-HOOMD-blue/02-Performing-Hard-Particle-Monte-Carlo-Simulations.html">Performing Hard Particle Monte Carlo Simulations</a></li>
+<li class="toctree-l2"><a class="reference internal" href="tutorial/00-Introducing-HOOMD-blue/03-Initializing-the-System-State.html">Initializing the System State</a></li>
+<li class="toctree-l2"><a class="reference internal" href="tutorial/00-Introducing-HOOMD-blue/04-Randomizing-the-System.html">Randomizing the System</a></li>
+<li class="toctree-l2"><a class="reference internal" href="tutorial/00-Introducing-HOOMD-blue/05-Compressing-the-System.html">Compressing the System</a></li>
+<li class="toctree-l2"><a class="reference internal" href="tutorial/00-Introducing-HOOMD-blue/06-Equilibrating-the-System.html">Equilibrating the System</a></li>
+<li class="toctree-l2"><a class="reference internal" href="tutorial/00-Introducing-HOOMD-blue/07-Analyzing-Trajectories.html">Analyzing Trajectories</a></li>
+</ul>
+</li>
+<li class="toctree-l1 has-children"><a class="reference internal" href="tutorial/01-Introducing-Molecular-Dynamics/00-index.html">Introducing Molecular Dynamics</a><input class="toctree-checkbox" id="toctree-checkbox-2" name="toctree-checkbox-2" role="switch" type="checkbox"/><label for="toctree-checkbox-2"><div class="visually-hidden">Toggle child pages in navigation</div><i class="icon"><svg><use href="#svg-arrow-right"></use></svg></i></label><ul>
+<li class="toctree-l2"><a class="reference internal" href="tutorial/01-Introducing-Molecular-Dynamics/01-Molecular-Dynamics-Simulations.html">Molecular Dynamics Simulations</a></li>
+<li class="toctree-l2"><a class="reference internal" href="tutorial/01-Introducing-Molecular-Dynamics/02-Initializing-a-Random-System.html">Initializing a Random System</a></li>
+<li class="toctree-l2"><a class="reference internal" href="tutorial/01-Introducing-Molecular-Dynamics/03-Compressing-the-System.html">Compressing the System</a></li>
+</ul>
+</li>
+<li class="toctree-l1 has-children"><a class="reference internal" href="tutorial/02-Logging/00-index.html">Logging</a><input class="toctree-checkbox" id="toctree-checkbox-3" name="toctree-checkbox-3" role="switch" type="checkbox"/><label for="toctree-checkbox-3"><div class="visually-hidden">Toggle child pages in navigation</div><i class="icon"><svg><use href="#svg-arrow-right"></use></svg></i></label><ul>
+<li class="toctree-l2"><a class="reference internal" href="tutorial/02-Logging/01-Logging-to-a-GSD-file.html">Logging to a GSD file</a></li>
+<li class="toctree-l2"><a class="reference internal" href="tutorial/02-Logging/02-Saving-Array-Quantities.html">Saving Array Quantities</a></li>
+<li class="toctree-l2"><a class="reference internal" href="tutorial/02-Logging/03-Storing-Particle-Shape.html">Storing Particle Shape</a></li>
+<li class="toctree-l2"><a class="reference internal" href="tutorial/02-Logging/04-Writing-Formatted-Output.html">Writing Formatted Output</a></li>
+</ul>
+</li>
+<li class="toctree-l1 has-children"><a class="reference internal" href="tutorial/03-Parallel-Simulations-With-MPI/00-index.html">Parallel Simulation With MPI</a><input class="toctree-checkbox" id="toctree-checkbox-4" name="toctree-checkbox-4" role="switch" type="checkbox"/><label for="toctree-checkbox-4"><div class="visually-hidden">Toggle child pages in navigation</div><i class="icon"><svg><use href="#svg-arrow-right"></use></svg></i></label><ul>
+<li class="toctree-l2"><a class="reference internal" href="tutorial/03-Parallel-Simulations-With-MPI/01-Introduction-to-MPI.html">Introduction to MPI</a></li>
+<li class="toctree-l2"><a class="reference internal" href="tutorial/03-Parallel-Simulations-With-MPI/02-Domain-Decomposition.html">Domain Decomposition</a></li>
+<li class="toctree-l2"><a class="reference internal" href="tutorial/03-Parallel-Simulations-With-MPI/03-Accessing-System-Configurations-With-MPI.html">Accessing System Configurations With MPI</a></li>
+<li class="toctree-l2"><a class="reference internal" href="tutorial/03-Parallel-Simulations-With-MPI/04-Running-Multiple-Simulations-With-Partitions.html">Running Multiple Simulations With Partitions</a></li>
+</ul>
+</li>
+<li class="toctree-l1 has-children"><a class="reference internal" href="tutorial/04-Custom-Actions-In-Python/00-index.html">Custom Actions in Python</a><input class="toctree-checkbox" id="toctree-checkbox-5" name="toctree-checkbox-5" role="switch" type="checkbox"/><label for="toctree-checkbox-5"><div class="visually-hidden">Toggle child pages in navigation</div><i class="icon"><svg><use href="#svg-arrow-right"></use></svg></i></label><ul>
+<li class="toctree-l2"><a class="reference internal" href="tutorial/04-Custom-Actions-In-Python/01-What-are-Actions.html">What are Actions?</a></li>
+<li class="toctree-l2"><a class="reference internal" href="tutorial/04-Custom-Actions-In-Python/02-An-Initial-Custom-Action.html">An Initial Custom Action</a></li>
+<li class="toctree-l2"><a class="reference internal" href="tutorial/04-Custom-Actions-In-Python/03-Custom-Action-Features.html">Custom Action Features</a></li>
+<li class="toctree-l2"><a class="reference internal" href="tutorial/04-Custom-Actions-In-Python/04-Custom-Updater.html">Custom Updater</a></li>
+<li class="toctree-l2"><a class="reference internal" href="tutorial/04-Custom-Actions-In-Python/05-Custom-Writer.html">Custom Writer</a></li>
+<li class="toctree-l2"><a class="reference internal" href="tutorial/04-Custom-Actions-In-Python/06-Improving-Performance.html">Improving Performance</a></li>
+</ul>
+</li>
+<li class="toctree-l1 has-children"><a class="reference internal" href="tutorial/05-Organizing-and-Executing-Simulations/00-index.html">Organizing and Executing Simulations</a><input class="toctree-checkbox" id="toctree-checkbox-6" name="toctree-checkbox-6" role="switch" type="checkbox"/><label for="toctree-checkbox-6"><div class="visually-hidden">Toggle child pages in navigation</div><i class="icon"><svg><use href="#svg-arrow-right"></use></svg></i></label><ul>
+<li class="toctree-l2"><a class="reference internal" href="tutorial/05-Organizing-and-Executing-Simulations/01-Organizing-Data.html">Organizing Data</a></li>
+<li class="toctree-l2"><a class="reference internal" href="tutorial/05-Organizing-and-Executing-Simulations/02-Executing-Simulations.html">Executing Simulations</a></li>
+<li class="toctree-l2"><a class="reference internal" href="tutorial/05-Organizing-and-Executing-Simulations/03-Continuing-Simulations.html">Continuing Simulations</a></li>
+<li class="toctree-l2"><a class="reference internal" href="tutorial/05-Organizing-and-Executing-Simulations/04-Submitting-Cluster-Jobs.html">Submitting Cluster Jobs</a></li>
+</ul>
+</li>
+<li class="toctree-l1 has-children"><a class="reference internal" href="tutorial/06-Modelling-Rigid-Bodies/00-index.html">Modelling Rigid Bodies</a><input class="toctree-checkbox" id="toctree-checkbox-7" name="toctree-checkbox-7" role="switch" type="checkbox"/><label for="toctree-checkbox-7"><div class="visually-hidden">Toggle child pages in navigation</div><i class="icon"><svg><use href="#svg-arrow-right"></use></svg></i></label><ul>
+<li class="toctree-l2"><a class="reference internal" href="tutorial/06-Modelling-Rigid-Bodies/01-Introduction-to-Rigid-Bodies.html">Introduction to Rigid Bodies</a></li>
+<li class="toctree-l2"><a class="reference internal" href="tutorial/06-Modelling-Rigid-Bodies/02-Running-Rigid-Body-Simulations.html">Running Rigid Body Simulations</a></li>
+<li class="toctree-l2"><a class="reference internal" href="tutorial/06-Modelling-Rigid-Bodies/03-Preparing-a-General-Body.html">Preparing a General Body</a></li>
+</ul>
+</li>
+</ul>
+<p class="caption" role="heading"><span class="caption-text">How to guides</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="howto/molecular.html">How to model molecular systems</a></li>
+<li class="toctree-l1"><a class="reference internal" href="howto/cpppotential.html">How to apply arbitrary pair potentials in HPMC</a></li>
+</ul>
+<p class="caption" role="heading"><span class="caption-text">Python API</span></p>
+<ul class="current">
+<li class="toctree-l1 has-children"><a class="reference internal" href="package-hoomd.html">hoomd</a><input class="toctree-checkbox" id="toctree-checkbox-8" name="toctree-checkbox-8" role="switch" type="checkbox"/><label for="toctree-checkbox-8"><div class="visually-hidden">Toggle child pages in navigation</div><i class="icon"><svg><use href="#svg-arrow-right"></use></svg></i></label><ul>
+<li class="toctree-l2"><a class="reference internal" href="module-hoomd-box.html">hoomd.box</a></li>
+<li class="toctree-l2"><a class="reference internal" href="module-hoomd-communicator.html">hoomd.communicator</a></li>
+<li class="toctree-l2"><a class="reference internal" href="module-hoomd-custom.html">hoomd.custom</a></li>
+<li class="toctree-l2 has-children"><a class="reference internal" href="module-hoomd-data.html">hoomd.data</a><input class="toctree-checkbox" id="toctree-checkbox-9" name="toctree-checkbox-9" role="switch" type="checkbox"/><label for="toctree-checkbox-9"><div class="visually-hidden">Toggle child pages in navigation</div><i class="icon"><svg><use href="#svg-arrow-right"></use></svg></i></label><ul>
+<li class="toctree-l3"><a class="reference internal" href="module-hoomd-array.html">hoomd.data.array</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="module-hoomd-device.html">hoomd.device</a></li>
+<li class="toctree-l2"><a class="reference internal" href="module-hoomd-error.html">hoomd.error</a></li>
+<li class="toctree-l2"><a class="reference internal" href="module-hoomd-filter.html">hoomd.filter</a></li>
+<li class="toctree-l2"><a class="reference internal" href="module-hoomd-logging.html">hoomd.logging</a></li>
+<li class="toctree-l2"><a class="reference internal" href="module-hoomd-mesh.html">hoomd.mesh</a></li>
+<li class="toctree-l2"><a class="reference internal" href="module-hoomd-operation.html">hoomd.operation</a></li>
+<li class="toctree-l2"><a class="reference internal" href="module-hoomd-triggers.html">hoomd.trigger</a></li>
+<li class="toctree-l2"><a class="reference internal" href="module-hoomd-tune.html">hoomd.tune</a></li>
+<li class="toctree-l2"><a class="reference internal" href="module-hoomd-update.html">hoomd.update</a></li>
+<li class="toctree-l2"><a class="reference internal" href="module-hoomd-variant.html">hoomd.variant</a></li>
+<li class="toctree-l2"><a class="reference internal" href="module-hoomd-version.html">hoomd.version</a></li>
+<li class="toctree-l2"><a class="reference internal" href="module-hoomd-wall.html">hoomd.wall</a></li>
+<li class="toctree-l2"><a class="reference internal" href="module-hoomd-write.html">hoomd.write</a></li>
+</ul>
+</li>
+<li class="toctree-l1 has-children"><a class="reference internal" href="package-hpmc.html">hoomd.hpmc</a><input class="toctree-checkbox" id="toctree-checkbox-10" name="toctree-checkbox-10" role="switch" type="checkbox"/><label for="toctree-checkbox-10"><div class="visually-hidden">Toggle child pages in navigation</div><i class="icon"><svg><use href="#svg-arrow-right"></use></svg></i></label><ul>
+<li class="toctree-l2"><a class="reference internal" href="module-hpmc-compute.html">hoomd.hpmc.compute</a></li>
+<li class="toctree-l2"><a class="reference internal" href="module-hpmc-integrate.html">hoomd.hpmc.integrate</a></li>
+<li class="toctree-l2 has-children"><a class="reference internal" href="module-hpmc-nec.html">hoomd.hpmc.nec</a><input class="toctree-checkbox" id="toctree-checkbox-11" name="toctree-checkbox-11" role="switch" type="checkbox"/><label for="toctree-checkbox-11"><div class="visually-hidden">Toggle child pages in navigation</div><i class="icon"><svg><use href="#svg-arrow-right"></use></svg></i></label><ul>
+<li class="toctree-l3"><a class="reference internal" href="module-hpmc-nec-integrate.html">hoomd.hpmc.nec.integrate</a></li>
+<li class="toctree-l3"><a class="reference internal" href="module-hpmc-nec-tune.html">hoomd.hpmc.nec.tune</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="module-hpmc-tune.html">hoomd.hpmc.tune</a></li>
+<li class="toctree-l2"><a class="reference internal" href="module-hpmc-update.html">hoomd.hpmc.update</a></li>
+<li class="toctree-l2 has-children"><a class="reference internal" href="module-hpmc-pair.html">hoomd.hpmc.pair</a><input class="toctree-checkbox" id="toctree-checkbox-12" name="toctree-checkbox-12" role="switch" type="checkbox"/><label for="toctree-checkbox-12"><div class="visually-hidden">Toggle child pages in navigation</div><i class="icon"><svg><use href="#svg-arrow-right"></use></svg></i></label><ul>
+<li class="toctree-l3"><a class="reference internal" href="module-hpmc-pair-user.html">hoomd.hpmc.pair.user</a></li>
+</ul>
+</li>
+<li class="toctree-l2 has-children"><a class="reference internal" href="module-hpmc-external.html">hoomd.hpmc.external</a><input class="toctree-checkbox" id="toctree-checkbox-13" name="toctree-checkbox-13" role="switch" type="checkbox"/><label for="toctree-checkbox-13"><div class="visually-hidden">Toggle child pages in navigation</div><i class="icon"><svg><use href="#svg-arrow-right"></use></svg></i></label><ul>
+<li class="toctree-l3"><a class="reference internal" href="module-hpmc-external-user.html">hoomd.hpmc.external.user</a></li>
+<li class="toctree-l3"><a class="reference internal" href="module-hpmc-external-field.html">hoomd.hpmc.external.field</a></li>
+<li class="toctree-l3"><a class="reference internal" href="module-hpmc-external-wall.html">hoomd.hpmc.external.wall</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="module-hpmc-shape_move.html">hoomd.hpmc.shape_move</a></li>
+</ul>
+</li>
+<li class="toctree-l1 current has-children"><a class="reference internal" href="package-md.html">hoomd.md</a><input checked="" class="toctree-checkbox" id="toctree-checkbox-14" name="toctree-checkbox-14" role="switch" type="checkbox"/><label for="toctree-checkbox-14"><div class="visually-hidden">Toggle child pages in navigation</div><i class="icon"><svg><use href="#svg-arrow-right"></use></svg></i></label><ul class="current">
+<li class="toctree-l2 has-children"><a class="reference internal" href="module-md-alchemy.html">md.alchemy</a><input class="toctree-checkbox" id="toctree-checkbox-15" name="toctree-checkbox-15" role="switch" type="checkbox"/><label for="toctree-checkbox-15"><div class="visually-hidden">Toggle child pages in navigation</div><i class="icon"><svg><use href="#svg-arrow-right"></use></svg></i></label><ul>
+<li class="toctree-l3"><a class="reference internal" href="module-md-alchemy-pair.html">md.alchemy.pair</a></li>
+<li class="toctree-l3"><a class="reference internal" href="module-md-alchemy-methods.html">md.alchemy.methods</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="module-md-angle.html">md.angle</a></li>
+<li class="toctree-l2"><a class="reference internal" href="module-md-bond.html">md.bond</a></li>
+<li class="toctree-l2"><a class="reference internal" href="module-md-constrain.html">md.constrain</a></li>
+<li class="toctree-l2"><a class="reference internal" href="module-md-compute.html">md.compute</a></li>
+<li class="toctree-l2"><a class="reference internal" href="module-md-data.html">md.data</a></li>
+<li class="toctree-l2"><a class="reference internal" href="module-md-dihedral.html">md.dihedral</a></li>
+<li class="toctree-l2 has-children"><a class="reference internal" href="module-md-external.html">md.external</a><input class="toctree-checkbox" id="toctree-checkbox-16" name="toctree-checkbox-16" role="switch" type="checkbox"/><label for="toctree-checkbox-16"><div class="visually-hidden">Toggle child pages in navigation</div><i class="icon"><svg><use href="#svg-arrow-right"></use></svg></i></label><ul>
+<li class="toctree-l3"><a class="reference internal" href="module-md-external-field.html">md.external.field</a></li>
+<li class="toctree-l3"><a class="reference internal" href="module-md-external-wall.html">md.external.wall</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="module-md-force.html">md.force</a></li>
+<li class="toctree-l2"><a class="reference internal" href="module-md-improper.html">md.improper</a></li>
+<li class="toctree-l2 has-children"><a class="reference internal" href="module-md-long_range.html">md.long_range</a><input class="toctree-checkbox" id="toctree-checkbox-17" name="toctree-checkbox-17" role="switch" type="checkbox"/><label for="toctree-checkbox-17"><div class="visually-hidden">Toggle child pages in navigation</div><i class="icon"><svg><use href="#svg-arrow-right"></use></svg></i></label><ul>
+<li class="toctree-l3"><a class="reference internal" href="module-md-long_range-pppm.html">md.long_range.pppm</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="module-md-manifold.html">md.manifold</a></li>
+<li class="toctree-l2 current current-page"><a class="current reference internal" href="#">md.many_body</a></li>
+<li class="toctree-l2 has-children"><a class="reference internal" href="module-md-methods.html">md.methods</a><input class="toctree-checkbox" id="toctree-checkbox-18" name="toctree-checkbox-18" role="switch" type="checkbox"/><label for="toctree-checkbox-18"><div class="visually-hidden">Toggle child pages in navigation</div><i class="icon"><svg><use href="#svg-arrow-right"></use></svg></i></label><ul>
+<li class="toctree-l3"><a class="reference internal" href="module-md-methods-rattle.html">md.methods.rattle</a></li>
+</ul>
+</li>
+<li class="toctree-l2 has-children"><a class="reference internal" href="module-md-mesh.html">md.mesh</a><input class="toctree-checkbox" id="toctree-checkbox-19" name="toctree-checkbox-19" role="switch" type="checkbox"/><label for="toctree-checkbox-19"><div class="visually-hidden">Toggle child pages in navigation</div><i class="icon"><svg><use href="#svg-arrow-right"></use></svg></i></label><ul>
+<li class="toctree-l3"><a class="reference internal" href="module-md-mesh-bond.html">md.mesh.bond</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="module-md-minimize.html">md.minimize</a></li>
+<li class="toctree-l2"><a class="reference internal" href="module-md-nlist.html">md.nlist</a></li>
+<li class="toctree-l2 has-children"><a class="reference internal" href="module-md-pair.html">md.pair</a><input class="toctree-checkbox" id="toctree-checkbox-20" name="toctree-checkbox-20" role="switch" type="checkbox"/><label for="toctree-checkbox-20"><div class="visually-hidden">Toggle child pages in navigation</div><i class="icon"><svg><use href="#svg-arrow-right"></use></svg></i></label><ul>
+<li class="toctree-l3"><a class="reference internal" href="module-md-pair-aniso.html">md.pair.aniso</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="module-md-special_pair.html">md.special_pair</a></li>
+<li class="toctree-l2"><a class="reference internal" href="module-md-tune.html">md.tune</a></li>
+<li class="toctree-l2"><a class="reference internal" href="module-md-update.html">md.update</a></li>
+</ul>
+</li>
+</ul>
+<p class="caption" role="heading"><span class="caption-text">Developer guide</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="contributing.html">Contributing</a></li>
+<li class="toctree-l1"><a class="reference internal" href="style.html">Code style</a></li>
+<li class="toctree-l1"><a class="reference internal" href="testing.html">Testing</a></li>
+<li class="toctree-l1"><a class="reference internal" href="components.html">Components</a></li>
+</ul>
+<p class="caption" role="heading"><span class="caption-text">Reference</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="notation.html">Notation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="units.html">Units</a></li>
+<li class="toctree-l1"><a class="reference internal" href="deprecated.html">Deprecated</a></li>
+<li class="toctree-l1"><a class="reference internal" href="logo.html">Logo</a></li>
+<li class="toctree-l1"><a class="reference internal" href="license.html">License</a></li>
+<li class="toctree-l1"><a class="reference internal" href="credits.html">Credits</a></li>
+<li class="toctree-l1"><a class="reference internal" href="indices.html">Index</a></li>
+</ul>
+
+</div>
+</div>
+
+      </div>
+      
+    </div>
+  </aside>
+  <div class="main">
+    <div class="content">
+      <div class="article-container">
+        <a href="#" class="back-to-top muted-link">
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24">
+            <path d="M13 20h-2V8l-5.5 5.5-1.42-1.42L12 4.16l7.92 7.92-1.42 1.42L13 8v12z"></path>
+          </svg>
+          <span>Back to top</span>
+        </a>
+        <div class="content-icon-container">
+          <div class="theme-toggle-container theme-toggle-content">
+            <button class="theme-toggle">
+              <div class="visually-hidden">Toggle Light / Dark / Auto color theme</div>
+              <svg class="theme-icon-when-auto"><use href="#svg-sun-half"></use></svg>
+              <svg class="theme-icon-when-dark"><use href="#svg-moon"></use></svg>
+              <svg class="theme-icon-when-light"><use href="#svg-sun"></use></svg>
+            </button>
+          </div>
+          <label class="toc-overlay-icon toc-content-icon no-toc" for="__toc">
+            <div class="visually-hidden">Toggle table of contents sidebar</div>
+            <i class="icon"><svg><use href="#svg-toc"></use></svg></i>
+          </label>
+        </div>
+        <article role="main">
+          <section id="md-many-body">
+<h1>md.many_body<a class="headerlink" href="#md-many-body" title="Permalink to this heading">#</a></h1>
+<p class="rubric">Overview</p>
+<div class="table-wrapper autosummary longtable docutils container">
+<table class="autosummary longtable docutils align-default">
+<tbody>
+<tr class="row-odd"><td><p><a class="reference internal" href="#hoomd.md.many_body.Triplet" title="hoomd.md.many_body.Triplet"><code class="xref py py-obj docutils literal notranslate"><span class="pre">Triplet</span></code></a></p></td>
+<td><p>Base class triplet force.</p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="#hoomd.md.many_body.RevCross" title="hoomd.md.many_body.RevCross"><code class="xref py py-obj docutils literal notranslate"><span class="pre">RevCross</span></code></a></p></td>
+<td><p>Reversible crosslinker three-body force.</p></td>
+</tr>
+<tr class="row-odd"><td><p><a class="reference internal" href="#hoomd.md.many_body.SquareDensity" title="hoomd.md.many_body.SquareDensity"><code class="xref py py-obj docutils literal notranslate"><span class="pre">SquareDensity</span></code></a></p></td>
+<td><p>Soft force for simulating a van der Waals liquid.</p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="#hoomd.md.many_body.Tersoff" title="hoomd.md.many_body.Tersoff"><code class="xref py py-obj docutils literal notranslate"><span class="pre">Tersoff</span></code></a></p></td>
+<td><p>Tersoff force.</p></td>
+</tr>
+</tbody>
+</table>
+</div>
+<p class="rubric">Details</p>
+<span class="target" id="module-hoomd.md.many_body"></span><p>Implement many body potentials.</p>
+<p>Triplet force classes apply a force and virial on every particle in the
+simulation state commensurate with the potential energy:</p>
+<div class="math-wrapper docutils container">
+<div class="math notranslate nohighlight">
+\[U_\mathrm{many-body} = \frac{1}{2} \sum_{i=0}^\mathrm{N_particles-1}
+                       \sum_{j \ne i}
+                       \sum_{j \ne k} U(\vec{r}_{ij}, \vec{r}_{ik})\]</div>
+</div>
+<p>where <span class="math notranslate nohighlight">\(\vec{r}_{ij} = \mathrm{minimum\_image}(\vec{r}_j - \vec{r}_i)\)</span>.
+<a class="reference internal" href="#hoomd.md.many_body.Triplet" title="hoomd.md.many_body.Triplet"><code class="xref any py py-class docutils literal notranslate"><span class="pre">Triplet</span></code></a> applies a short range cutoff for performance and assumes that both
+<span class="math notranslate nohighlight">\(U(\vec{r}_{ij}, \vec{r}_{ik})\)</span> and its derivatives are 0 when
+<span class="math notranslate nohighlight">\(r_{ij} &gt; r_\mathrm{cut}\)</span> or <span class="math notranslate nohighlight">\(r_{ik} &gt; r_\mathrm{cut}\)</span>.</p>
+<p>Specifically, the force <span class="math notranslate nohighlight">\(\vec{F}\)</span> applied to each particle <span class="math notranslate nohighlight">\(i\)</span> is:</p>
+<div class="math-wrapper docutils container">
+<div class="math notranslate nohighlight">
+\[\begin{split}\vec{F_i} =
+\begin{cases}
+ -\nabla V(\vec r_{ij}, \vec r_{ik})
+        &amp; r_{ij} &lt; r_{\mathrm{cut}}
+        \land r_{ik} &lt; r_{\mathrm{cut}} \\
+    0 &amp; \mathrm{otherwise}
+\end{cases}\end{split}\]</div>
+</div>
+<p>The per particle energy terms are:</p>
+<div class="math-wrapper docutils container">
+<div class="math notranslate nohighlight">
+\[U_i = \frac{1}{2} \sum_{j \ne i}
+      \sum_{j \ne k} U(\vec{r}_{ij}, \vec{r}_{ik})
+      [r_{ij} &lt; r_{\mathrm{cut}} \land r_{ik} &lt; r_{\mathrm{cut}}]\]</div>
+</div>
+<dl class="py class">
+<dt class="sig sig-object py" id="hoomd.md.many_body.RevCross">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">hoomd.md.many_body.</span></span><span class="sig-name descname"><span class="pre">RevCross</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">nlist</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">default_r_cut</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#hoomd.md.many_body.RevCross" title="Permalink to this definition">#</a></dt>
+<dd><p>Bases: <a class="reference internal" href="#hoomd.md.many_body.Triplet" title="hoomd.md.many_body.Triplet"><code class="xref py py-class docutils literal notranslate"><span class="pre">Triplet</span></code></a></p>
+<p>Reversible crosslinker three-body force.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>nlist</strong> (<a class="reference internal" href="module-md-nlist.html#hoomd.md.nlist.NeighborList" title="hoomd.md.nlist.NeighborList"><em>hoomd.md.nlist.NeighborList</em></a>) – Neighbor list</p></li>
+<li><p><strong>default_r_cut</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#float" title="(in Python v3.11)"><em>float</em></a>) – Default cutoff radius <span class="math notranslate nohighlight">\([\mathrm{length}]\)</span>.</p></li>
+</ul>
+</dd>
+</dl>
+<p><a class="reference internal" href="#hoomd.md.many_body.RevCross" title="hoomd.md.many_body.RevCross"><code class="xref any py py-class docutils literal notranslate"><span class="pre">RevCross</span></code></a> computes the revcross three-body force on every particle in the
+simulation state. Despite the fact that the revcross potential accounts for
+the effects of third bodies, it is actually just a combination of two body
+potential terms. It can thus use type-pair parameters similar to those of
+the pair potentials.</p>
+<p>The RevCross potential has been described in detail in
+<a class="reference external" href="https://arxiv.org/abs/1912.08569">S. Ciarella and W.G. Ellenbroek 2019</a>.
+It is based on a generalized Lennard-Jones pairwise attraction to form bonds
+between interacting particles:</p>
+<div class="math-wrapper docutils container">
+<div class="math notranslate nohighlight">
+\[\begin{split}U_{ij}(r) =
+\begin{cases}
+4 \varepsilon \left[
+    \left( \dfrac{ \sigma}{r_{ij}} \right)^{2n}
+    - \left( \dfrac{ \sigma}{r_{ij}} \right)^{n}
+\right] &amp; r &lt; r_\mathrm{cut} \\
+0 &amp; r \ge r_\mathrm{cut}
+\end{cases}\end{split}\]</div>
+</div>
+<p>Then an additional three-body repulsion is evaluated to compensate the bond
+energies imposing single bond per particle condition:</p>
+<div class="math-wrapper docutils container">
+<div class="math notranslate nohighlight">
+\[v^{\left( 3b \right)}_{ijk} = \lambda \epsilon
+\hat{v}^{ \left( 2b \right)}_{ij}
+\left(\vec{r}_{ij}\right)
+\cdot \hat{v}^{ \left( 2b \right)}_{ik}
+\left(\vec{r}_{ik}\right)~,\]</div>
+</div>
+<p>where the two body potential is rewritten as:</p>
+<div class="math-wrapper docutils container">
+<div class="math notranslate nohighlight">
+\[\begin{split}\hat{v}^{ \left( 2b \right)}_{ij}\left(\vec{r}_{ij}\right) =
+\begin{cases}
+1 &amp; r \le r_{min} \\
+- \dfrac{v_{ij}\left(\vec{r}_{ij}\right)}{\epsilon}
+    &amp; r &gt; r_{min} \\
+\end{cases}\end{split}\]</div>
+</div>
+<div class="admonition attention">
+<p class="admonition-title">Attention</p>
+<p>The RevCross potential models an asymmetric interaction between two
+different chemical moieties that can form a reversible bond. This
+requires the definition of (at least) two different types of particles.
+A reversible bond is only possible between two different species,
+otherwise <span class="math notranslate nohighlight">\(v^{\left( 3b \right)}_{ijk}\)</span>, would prevent any bond.
+In our example we then set the interactions for types A and B with
+<code class="docutils literal notranslate"><span class="pre">rev_c.params[[('A','B'),('A','B')]]</span></code> to
+<code class="docutils literal notranslate"><span class="pre">{&quot;sigma&quot;:</span> <span class="pre">0.0,</span> <span class="pre">&quot;n&quot;:</span> <span class="pre">0,</span> <span class="pre">&quot;epsilon&quot;:</span> <span class="pre">0,</span> <span class="pre">&quot;lambda3&quot;:</span> <span class="pre">0}</span></code>
+and the only non-zero energy only between the different types with
+setting <code class="docutils literal notranslate"><span class="pre">rev_c.params[('A','B')]</span></code> to
+<code class="docutils literal notranslate"><span class="pre">{&quot;sigma&quot;:1,</span> <span class="pre">&quot;n&quot;:</span> <span class="pre">100,</span> <span class="pre">&quot;epsilon&quot;:</span> <span class="pre">100,</span> <span class="pre">&quot;lambda3&quot;:</span> <span class="pre">1}</span></code>.
+Notice that the number of the minority species corresponds to the
+maximum number of bonds.</p>
+</div>
+<p>This three-body term also tunes the energy required for a bond swap through
+the coefficient:- <span class="math notranslate nohighlight">\(\lambda\)</span> - <em>lambda3</em> (unitless)
+in <a class="reference external" href="https://arxiv.org/abs/1912.08569">S. Ciarella and W.G. Ellenbroek 2019</a>
+is explained that setting <span class="math notranslate nohighlight">\(\lambda=1\)</span> corresponds to no energy
+requirement to initiate bond swap, while this energy barrier scales roughly
+as <span class="math notranslate nohighlight">\(\beta \Delta E_\text{sw} =\beta \varepsilon(\lambda-1)\)</span>.</p>
+<div class="admonition note">
+<p class="admonition-title">Note</p>
+<p>Choosing <span class="math notranslate nohighlight">\(\lambda=1\)</span> pushes the system to cluster because the
+three-body term is not enough to compensate the energy of multiple
+bonds, so it may cause nonphysical situations.</p>
+</div>
+<dl class="py attribute">
+<dt class="sig sig-object py" id="hoomd.md.many_body.RevCross.params">
+<span class="sig-name descname"><span class="pre">params</span></span><a class="headerlink" href="#hoomd.md.many_body.RevCross.params" title="Permalink to this definition">#</a></dt>
+<dd><p>The revcross potential parameters. The dictionary has the following
+keys:</p>
+<ul class="simple">
+<li><p><code class="docutils literal notranslate"><span class="pre">epsilon</span></code> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#float" title="(in Python v3.11)"><code class="xref any docutils literal notranslate"><span class="pre">float</span></code></a>, <strong>required</strong>) - <span class="math notranslate nohighlight">\(\varepsilon\)</span>
+<span class="math notranslate nohighlight">\([\mathrm{energy}]\)</span></p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">sigma</span></code> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#float" title="(in Python v3.11)"><code class="xref any docutils literal notranslate"><span class="pre">float</span></code></a>, <strong>required</strong>) - <span class="math notranslate nohighlight">\(\sigma\)</span>
+<span class="math notranslate nohighlight">\([\mathrm{length}]\)</span></p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">n</span></code> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#float" title="(in Python v3.11)"><code class="xref any docutils literal notranslate"><span class="pre">float</span></code></a>, <strong>required</strong>) - <span class="math notranslate nohighlight">\(n\)</span>
+<span class="math notranslate nohighlight">\([\mathrm{dimensionless}]\)</span></p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">lambda3</span></code> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#float" title="(in Python v3.11)"><code class="xref any docutils literal notranslate"><span class="pre">float</span></code></a>, <strong>required</strong>) - <span class="math notranslate nohighlight">\(\lambda_3\)</span>
+<span class="math notranslate nohighlight">\([\mathrm{dimensionless}]\)</span></p></li>
+</ul>
+<p>Type: <a class="reference internal" href="module-hoomd-data.html#hoomd.data.typeparam.TypeParameter" title="hoomd.data.typeparam.TypeParameter"><code class="xref any py py-class docutils literal notranslate"><span class="pre">TypeParameter</span></code></a> [<a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#tuple" title="(in Python v3.11)"><code class="xref any docutils literal notranslate"><span class="pre">tuple</span></code></a> [<code class="docutils literal notranslate"><span class="pre">particle_type</span></code>, <code class="docutils literal notranslate"><span class="pre">particle_type</span></code>],
+<a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#dict" title="(in Python v3.11)"><code class="xref any docutils literal notranslate"><span class="pre">dict</span></code></a>]</p>
+</dd></dl>
+
+<p>Example:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">nl</span> <span class="o">=</span> <span class="n">md</span><span class="o">.</span><span class="n">nlist</span><span class="o">.</span><span class="n">Cell</span><span class="p">()</span>
+<span class="n">bond_swap</span> <span class="o">=</span> <span class="n">md</span><span class="o">.</span><span class="n">many_body</span><span class="o">.</span><span class="n">RevCross</span><span class="p">(</span><span class="n">default_r_cut</span><span class="o">=</span><span class="mf">1.3</span><span class="p">,</span><span class="n">nlist</span><span class="o">=</span><span class="n">nl</span><span class="p">)</span>
+<span class="n">bond_swap</span><span class="o">.</span><span class="n">params</span><span class="p">[(</span><span class="s1">&#39;A&#39;</span><span class="p">,</span> <span class="s1">&#39;A&#39;</span><span class="p">),</span> <span class="p">(</span><span class="s1">&#39;B&#39;</span><span class="p">,</span> <span class="s1">&#39;B&#39;</span><span class="p">)]</span> <span class="o">=</span> <span class="p">{</span>
+    <span class="s2">&quot;sigma&quot;</span><span class="p">:</span><span class="mi">0</span><span class="p">,</span><span class="s2">&quot;n&quot;</span><span class="p">:</span> <span class="mi">0</span><span class="p">,</span> <span class="s2">&quot;epsilon&quot;</span><span class="p">:</span> <span class="mi">0</span><span class="p">,</span> <span class="s2">&quot;lambda3&quot;</span><span class="p">:</span> <span class="mi">0</span><span class="p">}</span>
+<span class="c1"># a bond can be made only between A-B and not A-A or B-B</span>
+<span class="n">bond_swap</span><span class="o">.</span><span class="n">params</span><span class="p">[(</span><span class="s1">&#39;A&#39;</span><span class="p">,</span><span class="s1">&#39;B&#39;</span><span class="p">)]</span> <span class="o">=</span> <span class="p">{</span>
+    <span class="s2">&quot;sigma&quot;</span><span class="p">:</span> <span class="mi">1</span><span class="p">,</span> <span class="s2">&quot;n&quot;</span><span class="p">:</span> <span class="mi">100</span><span class="p">,</span> <span class="s2">&quot;epsilon&quot;</span><span class="p">:</span> <span class="mi">10</span><span class="p">,</span> <span class="s2">&quot;lambda3&quot;</span><span class="p">:</span> <span class="mi">1</span><span class="p">}</span>
+</pre></div>
+</div>
+</dd></dl>
+
+<dl class="py class">
+<dt class="sig sig-object py" id="hoomd.md.many_body.SquareDensity">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">hoomd.md.many_body.</span></span><span class="sig-name descname"><span class="pre">SquareDensity</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">nlist</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">default_r_cut</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#hoomd.md.many_body.SquareDensity" title="Permalink to this definition">#</a></dt>
+<dd><p>Bases: <a class="reference internal" href="#hoomd.md.many_body.Triplet" title="hoomd.md.many_body.Triplet"><code class="xref py py-class docutils literal notranslate"><span class="pre">Triplet</span></code></a></p>
+<p>Soft force for simulating a van der Waals liquid.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>nlist</strong> (<a class="reference internal" href="module-md-nlist.html#hoomd.md.nlist.NeighborList" title="hoomd.md.nlist.NeighborList"><em>hoomd.md.nlist.NeighborList</em></a>) – Neighbor list</p></li>
+<li><p><strong>default_r_cut</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#float" title="(in Python v3.11)"><em>float</em></a>) – Default cutoff radius <span class="math notranslate nohighlight">\([\mathrm{length}]\)</span>.</p></li>
+</ul>
+</dd>
+</dl>
+<p><a class="reference internal" href="#hoomd.md.many_body.SquareDensity" title="hoomd.md.many_body.SquareDensity"><code class="xref any py py-class docutils literal notranslate"><span class="pre">SquareDensity</span></code></a> that the square density three-body force should on every
+particle in the simulation state.</p>
+<p>The self energy per particle takes the form:</p>
+<div class="math-wrapper docutils container">
+<div class="math notranslate nohighlight">
+\[\Psi^{ex} = B (\rho - A)^2\]</div>
+</div>
+<p>which gives a pair-wise additive, three-body force:</p>
+<div class="math-wrapper docutils container">
+<div class="math notranslate nohighlight">
+\[\vec{f}_{ij} = \left( B (n_i - A) + B (n_j - A) \right) w'_{ij}
+\vec{e}_{ij}\]</div>
+</div>
+<p>Here, <span class="math notranslate nohighlight">\(w_{ij}\)</span> is a quadratic, normalized weighting function,</p>
+<div class="math-wrapper docutils container">
+<div class="math notranslate nohighlight">
+\[w(x) = \frac{15}{2 \pi r_{c,\mathrm{weight}}^3}
+       (1-r/r_{c,\mathrm{weight}})^2\]</div>
+</div>
+<p>The local density at the location of particle <em>i</em> is defined as</p>
+<div class="math-wrapper docutils container">
+<div class="math notranslate nohighlight">
+\[n_i = \sum\limits_{j\neq i} w_{ij}
+      \left(\big| \vec r_i - \vec r_j \big|\right)\]</div>
+</div>
+<dl class="py attribute">
+<dt class="sig sig-object py" id="hoomd.md.many_body.SquareDensity.params">
+<span class="sig-name descname"><span class="pre">params</span></span><a class="headerlink" href="#hoomd.md.many_body.SquareDensity.params" title="Permalink to this definition">#</a></dt>
+<dd><p>The SquareDensity potential parameters. The dictionary has the
+following keys:</p>
+<ul class="simple">
+<li><p><code class="docutils literal notranslate"><span class="pre">A</span></code> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#float" title="(in Python v3.11)"><code class="xref any docutils literal notranslate"><span class="pre">float</span></code></a>, <strong>required</strong>) - <span class="math notranslate nohighlight">\(A\)</span> - mean density
+(<em>default</em>:0) <span class="math notranslate nohighlight">\([\mathrm{length}^{-2}]\)</span> in 2D and
+<span class="math notranslate nohighlight">\([\mathrm{length}^{-3}]\)</span> in 3D</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">B</span></code> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#float" title="(in Python v3.11)"><code class="xref any docutils literal notranslate"><span class="pre">float</span></code></a>, <strong>required</strong>) - <span class="math notranslate nohighlight">\(B\)</span> - coefficient of the
+harmonic density term
+<span class="math notranslate nohighlight">\([\mathrm{energy} \cdot \mathrm{length}^4]\)</span> in 2D and
+<span class="math notranslate nohighlight">\([\mathrm{energy} \cdot \mathrm{length}^6]\)</span> in 3D</p></li>
+</ul>
+<p>Type: <a class="reference internal" href="module-hoomd-data.html#hoomd.data.typeparam.TypeParameter" title="hoomd.data.typeparam.TypeParameter"><code class="xref any py py-class docutils literal notranslate"><span class="pre">TypeParameter</span></code></a> [<a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#tuple" title="(in Python v3.11)"><code class="xref any docutils literal notranslate"><span class="pre">tuple</span></code></a> [<code class="docutils literal notranslate"><span class="pre">particle_type</span></code>, <code class="docutils literal notranslate"><span class="pre">particle_type</span></code>],
+<a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#dict" title="(in Python v3.11)"><code class="xref any docutils literal notranslate"><span class="pre">dict</span></code></a>]</p>
+</dd></dl>
+
+<p>Example:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">nl</span> <span class="o">=</span> <span class="n">nlist</span><span class="o">.</span><span class="n">Cell</span><span class="p">()</span>
+<span class="n">sqd</span> <span class="o">=</span> <span class="n">md</span><span class="o">.</span><span class="n">many_body</span><span class="o">.</span><span class="n">SquareDensity</span><span class="p">(</span><span class="n">nl</span><span class="p">,</span> <span class="n">default_r_cut</span><span class="o">=</span><span class="mf">3.0</span><span class="p">)</span>
+<span class="n">sqd</span><span class="o">.</span><span class="n">params</span><span class="p">[(</span><span class="s1">&#39;A&#39;</span><span class="p">,</span> <span class="s1">&#39;B&#39;</span><span class="p">)]</span> <span class="o">=</span> <span class="nb">dict</span><span class="p">(</span><span class="n">A</span><span class="o">=</span><span class="mf">1.0</span><span class="p">,</span> <span class="n">B</span><span class="o">=</span><span class="mf">2.0</span><span class="p">)</span>
+<span class="n">sqd</span><span class="o">.</span><span class="n">params</span><span class="p">[(</span><span class="s1">&#39;B&#39;</span><span class="p">,</span> <span class="s1">&#39;B&#39;</span><span class="p">)]</span> <span class="o">=</span> <span class="nb">dict</span><span class="p">(</span><span class="n">A</span><span class="o">=</span><span class="mf">2.0</span><span class="p">,</span> <span class="n">B</span><span class="o">=</span><span class="mf">2.0</span><span class="p">,</span> <span class="n">default_r_on</span><span class="o">=</span><span class="mf">1.0</span><span class="p">)</span>
+</pre></div>
+</div>
+<p>For further details regarding this multibody potential, see</p>
+<p>[1] P. B. Warren, “Vapor-liquid coexistence in many-body dissipative
+particle dynamics” Phys. Rev. E. Stat. Nonlin. Soft Matter Phys., vol. 68,
+no. 6 Pt 2, p. 066702, 2003.</p>
+</dd></dl>
+
+<dl class="py class">
+<dt class="sig sig-object py" id="hoomd.md.many_body.Tersoff">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">hoomd.md.many_body.</span></span><span class="sig-name descname"><span class="pre">Tersoff</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">nlist</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">default_r_cut</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#hoomd.md.many_body.Tersoff" title="Permalink to this definition">#</a></dt>
+<dd><p>Bases: <a class="reference internal" href="#hoomd.md.many_body.Triplet" title="hoomd.md.many_body.Triplet"><code class="xref py py-class docutils literal notranslate"><span class="pre">Triplet</span></code></a></p>
+<p>Tersoff force.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>nlist</strong> (<a class="reference internal" href="module-md-nlist.html#hoomd.md.nlist.NeighborList" title="hoomd.md.nlist.NeighborList"><em>hoomd.md.nlist.NeighborList</em></a>) – Neighbor list</p></li>
+<li><p><strong>default_r_cut</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#float" title="(in Python v3.11)"><em>float</em></a>) – Default cutoff radius <span class="math notranslate nohighlight">\([\mathrm{length}]\)</span>.</p></li>
+</ul>
+</dd>
+</dl>
+<p>The Tersoff potential is a bond-order potential based on the Morse potential
+that accounts for the weakening of individual bonds with increasing
+coordination number. It does this by computing a modifier to the attractive
+term of the potential. The modifier contains the effects of third-bodies on
+the bond energies. The potential also includes a smoothing function around
+the cutoff. The implemented smoothing function is exponential in nature as
+opposed to the sinusoid used by <a class="reference external" href="https://journals.aps.org/prb/abstract/10.1103/PhysRevB.38.9902">J. Tersoff 1988</a>.</p>
+<p><a class="reference internal" href="#hoomd.md.many_body.Tersoff" title="hoomd.md.many_body.Tersoff"><code class="xref any py py-class docutils literal notranslate"><span class="pre">Tersoff</span></code></a> computes the Tersoff three-body force on every particle in the
+simulation state. Despite the fact that the Tersoff potential accounts for
+the effects of third bodies, the species of the third body is irrelevant. It
+can thus use type-pair parameters similar to those of the pair potentials:</p>
+<div class="math-wrapper docutils container">
+<div class="math notranslate nohighlight">
+\[U_{ij}(r) = \frac{1}{2} f_C(r_{ij})
+    \left[f_R(r_{ij}) + b_{ij}f_A(r_{ij})\right]\]</div>
+</div>
+<p>where</p>
+<div class="math-wrapper docutils container">
+<div class="math notranslate nohighlight">
+\[ \begin{align}\begin{aligned}f_R(r) = A_1e^{\lambda_1(r_D-r)}\\f_A(r) = A_2e^{\lambda_2(r_D-r)}\end{aligned}\end{align} \]</div>
+</div>
+<div class="math-wrapper docutils container">
+<div class="math notranslate nohighlight">
+\[\begin{split}f_C(r) =
+\begin{cases}
+    1 &amp; r &lt; r_{\mathrm{cut}} - r_{CT} \\
+    \exp \left[-\alpha\frac{x(r)^3}{x(r)^3 - 1} \right]
+        &amp; r_{\mathrm{cut}} - r_{CT} &lt; r &lt; r_{\mathrm{cut}} \\
+    0 &amp; r &gt; r_{\mathrm{cut}}
+\end{cases}\end{split}\]</div>
+</div>
+<div class="math-wrapper docutils container">
+<div class="math notranslate nohighlight">
+\[b_{ij} = (1 + \gamma^n\chi_{ij}^n)^{\frac{-1}{2n}}\]</div>
+</div>
+<p>In the definition of <span class="math notranslate nohighlight">\(f_C(r)\)</span>, there is a quantity <span class="math notranslate nohighlight">\(x(r)\)</span>, which
+is defined as</p>
+<div class="math-wrapper docutils container">
+<div class="math notranslate nohighlight">
+\[x(r) = \frac{r - (r_{\mathrm{cut}} - r_{CT})}{r_{CT}}\]</div>
+</div>
+<p>which ensures continuity between the different regions of the potential. In
+the definition of <span class="math notranslate nohighlight">\(b_{ij}\)</span>, there is a quantity <span class="math notranslate nohighlight">\(\chi_{ij}\)</span>
+which is defined as</p>
+<div class="math-wrapper docutils container">
+<div class="math notranslate nohighlight">
+\[ \begin{align}\begin{aligned}\chi_{ij} = \sum_{k \neq i,j} f_C(r_{ik})
+             \cdot e^{\lambda_3^3 |r_{ij} - r_{ik}|^3}
+\cdot g(\theta_{ijk})\\g(\theta_{ijk}) = 1 + \frac{c^2}{d^2}
+                   - \frac{c^2}{d^2 + |m - \cos(\theta_{ijk})|^2}\end{aligned}\end{align} \]</div>
+</div>
+<dl class="py attribute">
+<dt class="sig sig-object py" id="hoomd.md.many_body.Tersoff.params">
+<span class="sig-name descname"><span class="pre">params</span></span><a class="headerlink" href="#hoomd.md.many_body.Tersoff.params" title="Permalink to this definition">#</a></dt>
+<dd><p>The Tersoff potential parameters. The dictionary has the following
+keys:</p>
+<ul class="simple">
+<li><p><code class="docutils literal notranslate"><span class="pre">magnitudes</span></code> (tuple[<a class="reference external" href="https://docs.python.org/3/library/functions.html#float" title="(in Python v3.11)"><code class="xref any docutils literal notranslate"><span class="pre">float</span></code></a>, <a class="reference external" href="https://docs.python.org/3/library/functions.html#float" title="(in Python v3.11)"><code class="xref any docutils literal notranslate"><span class="pre">float</span></code></a>]) - <span class="math notranslate nohighlight">\((A_1, A_2)\)</span> -
+Magnitudes of the repulsive and attractive
+terms (<em>default</em>: (1.0, 1.0)) <span class="math notranslate nohighlight">\([\mathrm{energy}]\)</span></p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">exp_factors</span></code> (tuple[<a class="reference external" href="https://docs.python.org/3/library/functions.html#float" title="(in Python v3.11)"><code class="xref any docutils literal notranslate"><span class="pre">float</span></code></a>, <a class="reference external" href="https://docs.python.org/3/library/functions.html#float" title="(in Python v3.11)"><code class="xref any docutils literal notranslate"><span class="pre">float</span></code></a>]) -
+<span class="math notranslate nohighlight">\((\lambda_1, \lambda_2)\)</span> - exponential factors of the
+repulsive and attractive
+terms (<em>default</em>: 2.0) <span class="math notranslate nohighlight">\([\mathrm{length}^{-1}]\)</span></p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">lambda3</span></code> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#float" title="(in Python v3.11)"><code class="xref any docutils literal notranslate"><span class="pre">float</span></code></a>) - <span class="math notranslate nohighlight">\(\lambda_3\)</span> - exponential factor in
+<span class="math notranslate nohighlight">\(\chi_{ij}\)</span> (<em>default</em>: 0.0) <span class="math notranslate nohighlight">\([\mathrm{length}^{-1}]\)</span></p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">dimer_r</span></code> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#float" title="(in Python v3.11)"><code class="xref any docutils literal notranslate"><span class="pre">float</span></code></a>) - <span class="math notranslate nohighlight">\(r_D\)</span> - length shift in attractive
+and repulsive terms (<em>default</em>: 1.5) <span class="math notranslate nohighlight">\([\mathrm{length}]\)</span></p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">cutoff_thickness</span></code> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#float" title="(in Python v3.11)"><code class="xref any docutils literal notranslate"><span class="pre">float</span></code></a>) - <span class="math notranslate nohighlight">\(r_{CT}\)</span> - distance which
+defines the different regions of the
+potential (<em>default</em>: 0.2) <span class="math notranslate nohighlight">\([\mathrm{length}]\)</span></p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">alpha</span></code> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#float" title="(in Python v3.11)"><code class="xref any docutils literal notranslate"><span class="pre">float</span></code></a>) - <span class="math notranslate nohighlight">\(\alpha\)</span> - decay rate of the cutoff
+term
+<span class="math notranslate nohighlight">\(f_C(r)\)</span> (<em>default</em>: 3.0) <span class="math notranslate nohighlight">\([\mathrm{dimensionless}]\)</span></p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">n</span></code> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#float" title="(in Python v3.11)"><code class="xref any docutils literal notranslate"><span class="pre">float</span></code></a>) - <span class="math notranslate nohighlight">\(n\)</span> - power in
+<span class="math notranslate nohighlight">\(b_{ij}\)</span> (<em>default</em>: 0.0) <span class="math notranslate nohighlight">\([\mathrm{dimensionless}]\)</span></p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">gamma</span></code> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#float" title="(in Python v3.11)"><code class="xref any docutils literal notranslate"><span class="pre">float</span></code></a>) - <span class="math notranslate nohighlight">\(\gamma\)</span> - coefficient in
+<span class="math notranslate nohighlight">\(b_{ij}\)</span> (<em>default</em>: 0.0) <span class="math notranslate nohighlight">\([\mathrm{dimensionless}]\)</span></p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">c</span></code> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#float" title="(in Python v3.11)"><code class="xref any docutils literal notranslate"><span class="pre">float</span></code></a>) - <span class="math notranslate nohighlight">\(c\)</span> - coefficient in
+<span class="math notranslate nohighlight">\(g(\theta)\)</span> (<em>default</em>: 0.0) <span class="math notranslate nohighlight">\([\mathrm{dimensionless}]\)</span></p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">d</span></code> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#float" title="(in Python v3.11)"><code class="xref any docutils literal notranslate"><span class="pre">float</span></code></a>) - <span class="math notranslate nohighlight">\(d\)</span> - coefficient in
+<span class="math notranslate nohighlight">\(g(\theta)\)</span> (<em>default</em>: 1.0) <span class="math notranslate nohighlight">\([\mathrm{dimensionless}]\)</span></p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">m</span></code> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#float" title="(in Python v3.11)"><code class="xref any docutils literal notranslate"><span class="pre">float</span></code></a>) - <span class="math notranslate nohighlight">\(m\)</span> - coefficient in
+<span class="math notranslate nohighlight">\(g(\theta)\)</span> (<em>default</em>: 0.0) <span class="math notranslate nohighlight">\([\mathrm{dimensionless}]\)</span></p></li>
+</ul>
+<p>Type: <a class="reference internal" href="module-hoomd-data.html#hoomd.data.typeparam.TypeParameter" title="hoomd.data.typeparam.TypeParameter"><code class="xref any py py-class docutils literal notranslate"><span class="pre">TypeParameter</span></code></a> [<a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#tuple" title="(in Python v3.11)"><code class="xref any docutils literal notranslate"><span class="pre">tuple</span></code></a> [<code class="docutils literal notranslate"><span class="pre">particle_type</span></code>, <code class="docutils literal notranslate"><span class="pre">particle_type</span></code>],
+<a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#dict" title="(in Python v3.11)"><code class="xref any docutils literal notranslate"><span class="pre">dict</span></code></a>]</p>
+</dd></dl>
+
+<p>Example:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">nl</span> <span class="o">=</span> <span class="n">md</span><span class="o">.</span><span class="n">nlist</span><span class="o">.</span><span class="n">Cell</span><span class="p">()</span>
+<span class="n">tersoff</span> <span class="o">=</span> <span class="n">md</span><span class="o">.</span><span class="n">many_body</span><span class="o">.</span><span class="n">Tersoff</span><span class="p">(</span><span class="n">default_r_cut</span><span class="o">=</span><span class="mf">1.3</span><span class="p">,</span> <span class="n">nlist</span><span class="o">=</span><span class="n">nl</span><span class="p">)</span>
+<span class="n">tersoff</span><span class="o">.</span><span class="n">params</span><span class="p">[(</span><span class="s1">&#39;A&#39;</span><span class="p">,</span> <span class="s1">&#39;B&#39;</span><span class="p">)]</span> <span class="o">=</span> <span class="nb">dict</span><span class="p">(</span><span class="n">magnitudes</span><span class="o">=</span><span class="p">(</span><span class="mf">2.0</span><span class="p">,</span> <span class="mf">1.0</span><span class="p">),</span> <span class="n">lambda3</span><span class="o">=</span><span class="mf">5.0</span><span class="p">)</span>
+</pre></div>
+</div>
+</dd></dl>
+
+<dl class="py class">
+<dt class="sig sig-object py" id="hoomd.md.many_body.Triplet">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">hoomd.md.many_body.</span></span><span class="sig-name descname"><span class="pre">Triplet</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">nlist</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">default_r_cut</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#hoomd.md.many_body.Triplet" title="Permalink to this definition">#</a></dt>
+<dd><p>Bases: <a class="reference internal" href="module-md-force.html#hoomd.md.force.Force" title="hoomd.md.force.Force"><code class="xref py py-class docutils literal notranslate"><span class="pre">Force</span></code></a></p>
+<p>Base class triplet force.</p>
+<p><a class="reference internal" href="#hoomd.md.many_body.Triplet" title="hoomd.md.many_body.Triplet"><code class="xref any py py-class docutils literal notranslate"><span class="pre">Triplet</span></code></a> is the base class for many-body triplet forces.</p>
+<div class="admonition warning">
+<p class="admonition-title">Warning</p>
+<p>This class should not be instantiated by users. The class can be used
+for <a class="reference external" href="https://docs.python.org/3/library/functions.html#isinstance" title="(in Python v3.11)"><code class="xref any docutils literal notranslate"><span class="pre">isinstance</span></code></a> or <a class="reference external" href="https://docs.python.org/3/library/functions.html#issubclass" title="(in Python v3.11)"><code class="xref any docutils literal notranslate"><span class="pre">issubclass</span></code></a> checks.</p>
+</div>
+<dl class="py attribute">
+<dt class="sig sig-object py" id="hoomd.md.many_body.Triplet.r_cut">
+<span class="sig-name descname"><span class="pre">r_cut</span></span><a class="headerlink" href="#hoomd.md.many_body.Triplet.r_cut" title="Permalink to this definition">#</a></dt>
+<dd><p><em>r_cut</em> <span class="math notranslate nohighlight">\([\mathrm{length}]\)</span>, <em>optional</em>: defaults to the value
+<code class="docutils literal notranslate"><span class="pre">default_r_cut</span></code> specified on construction.</p>
+<p>Type: <a class="reference internal" href="module-hoomd-data.html#hoomd.data.typeparam.TypeParameter" title="hoomd.data.typeparam.TypeParameter"><code class="xref any py py-class docutils literal notranslate"><span class="pre">TypeParameter</span></code></a> [<a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#tuple" title="(in Python v3.11)"><code class="xref any docutils literal notranslate"><span class="pre">tuple</span></code></a> [<code class="docutils literal notranslate"><span class="pre">particle_type</span></code>, <code class="docutils literal notranslate"><span class="pre">particle_type</span></code>],
+<a class="reference external" href="https://docs.python.org/3/library/functions.html#float" title="(in Python v3.11)"><code class="xref any docutils literal notranslate"><span class="pre">float</span></code></a>])</p>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="hoomd.md.many_body.Triplet.nlist">
+<span class="sig-name descname"><span class="pre">nlist</span></span><a class="headerlink" href="#hoomd.md.many_body.Triplet.nlist" title="Permalink to this definition">#</a></dt>
+<dd><p>Neighbor list used to compute the triplet potential.</p>
+<p>Type: <a class="reference internal" href="module-md-nlist.html#hoomd.md.nlist.NeighborList" title="hoomd.md.nlist.NeighborList"><code class="xref any py py-class docutils literal notranslate"><span class="pre">hoomd.md.nlist.NeighborList</span></code></a></p>
+</dd></dl>
+
+<div class="admonition warning">
+<p class="admonition-title">Warning</p>
+<p>Currently HOOMD-blue does not support reverse force communication
+between MPI domains on the GPU. Since reverse force communication is
+required for the calculation of three-body forces, attempting to use
+this potential on the GPU with MPI will result in an error.</p>
+</div>
+</dd></dl>
+
+</section>
+
+        </article>
+      </div>
+      <footer>
+        
+<div class="related-pages">
+<a class="next-page" href="module-md-methods.html">
+    <div class="page-info">
+        <div class="context">
+        <span>Next</span>
+        </div>
+        <div class="title">md.methods</div>
+    </div>
+    <svg class="furo-related-icon"><use href="#svg-arrow-right"></use></svg>
+    </a>
+<a class="prev-page" href="module-md-manifold.html">
+    <svg class="furo-related-icon"><use href="#svg-arrow-right"></use></svg>
+    <div class="page-info">
+        <div class="context">
+        <span>Previous</span>
+        </div>
+        
+        <div class="title">md.manifold</div>
+        
+    </div>
+    </a>
+</div>
+<div class="bottom-of-page">
+<div class="left-details">
+    <p>Development of HOOMD-blue is led by the <a href="https://glotzerlab.engin.umich.edu">Glotzer Group</a> at the <a href="https://umich.edu">University of Michigan</a> (supported by NSF DMR 1808342) with many <a href="credits.html">external contributions</a>.
+    </p>
+    <div class="copyright">
+        Copyright &#169; 2009-2023 The Regents of the University of Michigan
+    </div>
+    Made with <a href="https://www.sphinx-doc.org/">Sphinx</a> and <a class="muted-link" href="https://pradyunsg.me">@pradyunsg</a>'s
+    
+    <a href="https://github.com/pradyunsg/furo">Furo</a>
+    
+</div>
+<div class="right-details">
+    <a class="muted-link" href="http://umich.edu">
+    <img src="_static/umich-block-M.svg" alt="University of Michigan logo" style="width: 84px; float: right;" />
+    </a>
+</div>
+</div>
+
+      </footer>
+    </div>
+    <aside class="toc-drawer no-toc">
+      
+      
+      
+    </aside>
+  </div>
+</div><script data-url_root="./" id="documentation_options" src="_static/documentation_options.js"></script>
+    <script src="_static/jquery.js"></script>
+    <script src="_static/underscore.js"></script>
+    <script src="_static/_sphinx_javascript_frameworks_compat.js"></script>
+    <script src="_static/doctools.js"></script>
+    <script src="_static/scripts/furo.js"></script>
+    <script crossorigin="anonymous" integrity="sha256-Ae2Vz/4ePdIu6ZyI/5ZGsYnb+m0JlOmKPjt6XZ9JJkA=" src="https://cdnjs.cloudflare.com/ajax/libs/require.js/2.3.4/require.min.js"></script>
+    <script>window.MathJax = {"tex": {"inlineMath": [["$", "$"], ["\\(", "\\)"]], "processEscapes": true}, "options": {"ignoreHtmlClass": "tex2jax_ignore|mathjax_ignore|document", "processHtmlClass": "tex2jax_process|mathjax_process|math|output_area"}}</script>
+    <script defer="defer" src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
+    </body>
+</html>

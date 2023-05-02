@@ -1,0 +1,1263 @@
+<!doctype html>
+<html class="no-js" lang="en">
+  <head><meta charset="utf-8"/>
+    <meta name="viewport" content="width=device-width,initial-scale=1"/>
+    <meta name="color-scheme" content="light dark"><meta name="generator" content="Docutils 0.18.1: http://docutils.sourceforge.net/" />
+<link rel="index" title="Index" href="genindex.html" /><link rel="search" title="Search" href="search.html" /><link rel="next" title="hoomd.update" href="module-hoomd-update.html" /><link rel="prev" title="hoomd.trigger" href="module-hoomd-triggers.html" />
+
+    <link rel="shortcut icon" href="_static/hoomdblue-logo-favicon.svg"/><!-- Generated with Sphinx 5.0.2 and Furo 2023.03.27 -->
+        <title>hoomd.tune - HOOMD-blue 3.10.0 documentation</title>
+      <link rel="stylesheet" type="text/css" href="_static/pygments.css" />
+    <link rel="stylesheet" type="text/css" href="_static/styles/furo.css?digest=fad236701ea90a88636c2a8c73b44ae642ed2a53" />
+    <link rel="stylesheet" type="text/css" href="_static/styles/furo-extensions.css?digest=30d1aed668e5c3a91c3e3bf6a60b675221979f0e" />
+    
+    
+
+
+<style>
+  body {
+    --color-code-background: #f0f0f0;
+  --color-code-foreground: black;
+  --color-brand-primary: #406a8c;
+  --color-brand-content: #406a8c;
+  
+  }
+  @media not print {
+    body[data-theme="dark"] {
+      --color-code-background: #202020;
+  --color-code-foreground: #d0d0d0;
+  --color-brand-primary: #5187b2;
+  --color-brand-content: #5187b2;
+  
+    }
+    @media (prefers-color-scheme: dark) {
+      body:not([data-theme="light"]) {
+        --color-code-background: #202020;
+  --color-code-foreground: #d0d0d0;
+  --color-brand-primary: #5187b2;
+  --color-brand-content: #5187b2;
+  
+      }
+    }
+  }
+</style></head>
+  <body>
+    
+    <script>
+      document.body.dataset.theme = localStorage.getItem("theme") || "auto";
+    </script>
+    
+
+<svg xmlns="http://www.w3.org/2000/svg" style="display: none;">
+  <symbol id="svg-toc" viewBox="0 0 24 24">
+    <title>Contents</title>
+    <svg stroke="currentColor" fill="currentColor" stroke-width="0" viewBox="0 0 1024 1024">
+      <path d="M408 442h480c4.4 0 8-3.6 8-8v-56c0-4.4-3.6-8-8-8H408c-4.4 0-8 3.6-8 8v56c0 4.4 3.6 8 8 8zm-8 204c0 4.4 3.6 8 8 8h480c4.4 0 8-3.6 8-8v-56c0-4.4-3.6-8-8-8H408c-4.4 0-8 3.6-8 8v56zm504-486H120c-4.4 0-8 3.6-8 8v56c0 4.4 3.6 8 8 8h784c4.4 0 8-3.6 8-8v-56c0-4.4-3.6-8-8-8zm0 632H120c-4.4 0-8 3.6-8 8v56c0 4.4 3.6 8 8 8h784c4.4 0 8-3.6 8-8v-56c0-4.4-3.6-8-8-8zM115.4 518.9L271.7 642c5.8 4.6 14.4.5 14.4-6.9V388.9c0-7.4-8.5-11.5-14.4-6.9L115.4 505.1a8.74 8.74 0 0 0 0 13.8z"/>
+    </svg>
+  </symbol>
+  <symbol id="svg-menu" viewBox="0 0 24 24">
+    <title>Menu</title>
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+      stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="feather-menu">
+      <line x1="3" y1="12" x2="21" y2="12"></line>
+      <line x1="3" y1="6" x2="21" y2="6"></line>
+      <line x1="3" y1="18" x2="21" y2="18"></line>
+    </svg>
+  </symbol>
+  <symbol id="svg-arrow-right" viewBox="0 0 24 24">
+    <title>Expand</title>
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+      stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="feather-chevron-right">
+      <polyline points="9 18 15 12 9 6"></polyline>
+    </svg>
+  </symbol>
+  <symbol id="svg-sun" viewBox="0 0 24 24">
+    <title>Light mode</title>
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+      stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" class="feather-sun">
+      <circle cx="12" cy="12" r="5"></circle>
+      <line x1="12" y1="1" x2="12" y2="3"></line>
+      <line x1="12" y1="21" x2="12" y2="23"></line>
+      <line x1="4.22" y1="4.22" x2="5.64" y2="5.64"></line>
+      <line x1="18.36" y1="18.36" x2="19.78" y2="19.78"></line>
+      <line x1="1" y1="12" x2="3" y2="12"></line>
+      <line x1="21" y1="12" x2="23" y2="12"></line>
+      <line x1="4.22" y1="19.78" x2="5.64" y2="18.36"></line>
+      <line x1="18.36" y1="5.64" x2="19.78" y2="4.22"></line>
+    </svg>
+  </symbol>
+  <symbol id="svg-moon" viewBox="0 0 24 24">
+    <title>Dark mode</title>
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+      stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" class="icon-tabler-moon">
+      <path stroke="none" d="M0 0h24v24H0z" fill="none" />
+      <path d="M12 3c.132 0 .263 0 .393 0a7.5 7.5 0 0 0 7.92 12.446a9 9 0 1 1 -8.313 -12.454z" />
+    </svg>
+  </symbol>
+  <symbol id="svg-sun-half" viewBox="0 0 24 24">
+    <title>Auto light/dark mode</title>
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+      stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" class="icon-tabler-shadow">
+      <path stroke="none" d="M0 0h24v24H0z" fill="none"/>
+      <circle cx="12" cy="12" r="9" />
+      <path d="M13 12h5" />
+      <path d="M13 15h4" />
+      <path d="M13 18h1" />
+      <path d="M13 9h4" />
+      <path d="M13 6h1" />
+    </svg>
+  </symbol>
+</svg>
+
+<input type="checkbox" class="sidebar-toggle" name="__navigation" id="__navigation">
+<input type="checkbox" class="sidebar-toggle" name="__toc" id="__toc">
+<label class="overlay sidebar-overlay" for="__navigation">
+  <div class="visually-hidden">Hide navigation sidebar</div>
+</label>
+<label class="overlay toc-overlay" for="__toc">
+  <div class="visually-hidden">Hide table of contents sidebar</div>
+</label>
+
+
+
+<div class="page">
+  <header class="mobile-header">
+    <div class="header-left">
+      <label class="nav-overlay-icon" for="__navigation">
+        <div class="visually-hidden">Toggle site navigation sidebar</div>
+        <i class="icon"><svg><use href="#svg-menu"></use></svg></i>
+      </label>
+    </div>
+    <div class="header-center">
+      <a href="index.html"><div class="brand">HOOMD-blue 3.10.0 documentation</div></a>
+    </div>
+    <div class="header-right">
+      <div class="theme-toggle-container theme-toggle-header">
+        <button class="theme-toggle">
+          <div class="visually-hidden">Toggle Light / Dark / Auto color theme</div>
+          <svg class="theme-icon-when-auto"><use href="#svg-sun-half"></use></svg>
+          <svg class="theme-icon-when-dark"><use href="#svg-moon"></use></svg>
+          <svg class="theme-icon-when-light"><use href="#svg-sun"></use></svg>
+        </button>
+      </div>
+      <label class="toc-overlay-icon toc-header-icon no-toc" for="__toc">
+        <div class="visually-hidden">Toggle table of contents sidebar</div>
+        <i class="icon"><svg><use href="#svg-toc"></use></svg></i>
+      </label>
+    </div>
+  </header>
+  <aside class="sidebar-drawer">
+    <div class="sidebar-container">
+      
+      <div class="sidebar-sticky"><a class="sidebar-brand centered" href="index.html">
+  
+  <div class="sidebar-logo-container">
+    <img class="sidebar-logo" src="_static/hoomdblue-logo-vertical.svg" alt="Logo"/>
+  </div>
+  
+  
+</a><form class="sidebar-search-container" method="get" action="search.html" role="search">
+  <input class="sidebar-search" placeholder="Search" name="q" aria-label="Search">
+  <input type="hidden" name="check_keywords" value="yes">
+  <input type="hidden" name="area" value="default">
+</form>
+<div id="searchbox"></div><div class="sidebar-scroll"><div class="sidebar-tree">
+  <p class="caption" role="heading"><span class="caption-text">Getting started</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="features.html">Features</a></li>
+<li class="toctree-l1"><a class="reference internal" href="installation.html">Installing binaries</a></li>
+<li class="toctree-l1"><a class="reference internal" href="building.html">Building from source</a></li>
+<li class="toctree-l1"><a class="reference internal" href="migrating.html">Migrating to HOOMD v3</a></li>
+<li class="toctree-l1"><a class="reference internal" href="changelog.html">Change Log</a></li>
+<li class="toctree-l1"><a class="reference internal" href="citing.html">Citing HOOMD-blue</a></li>
+</ul>
+<p class="caption" role="heading"><span class="caption-text">Tutorials</span></p>
+<ul>
+<li class="toctree-l1 has-children"><a class="reference internal" href="tutorial/00-Introducing-HOOMD-blue/00-index.html">Introducing HOOMD-blue</a><input class="toctree-checkbox" id="toctree-checkbox-1" name="toctree-checkbox-1" role="switch" type="checkbox"/><label for="toctree-checkbox-1"><div class="visually-hidden">Toggle child pages in navigation</div><i class="icon"><svg><use href="#svg-arrow-right"></use></svg></i></label><ul>
+<li class="toctree-l2"><a class="reference internal" href="tutorial/00-Introducing-HOOMD-blue/01-The-Simulation-Object.html">The Simulation Object</a></li>
+<li class="toctree-l2"><a class="reference internal" href="tutorial/00-Introducing-HOOMD-blue/02-Performing-Hard-Particle-Monte-Carlo-Simulations.html">Performing Hard Particle Monte Carlo Simulations</a></li>
+<li class="toctree-l2"><a class="reference internal" href="tutorial/00-Introducing-HOOMD-blue/03-Initializing-the-System-State.html">Initializing the System State</a></li>
+<li class="toctree-l2"><a class="reference internal" href="tutorial/00-Introducing-HOOMD-blue/04-Randomizing-the-System.html">Randomizing the System</a></li>
+<li class="toctree-l2"><a class="reference internal" href="tutorial/00-Introducing-HOOMD-blue/05-Compressing-the-System.html">Compressing the System</a></li>
+<li class="toctree-l2"><a class="reference internal" href="tutorial/00-Introducing-HOOMD-blue/06-Equilibrating-the-System.html">Equilibrating the System</a></li>
+<li class="toctree-l2"><a class="reference internal" href="tutorial/00-Introducing-HOOMD-blue/07-Analyzing-Trajectories.html">Analyzing Trajectories</a></li>
+</ul>
+</li>
+<li class="toctree-l1 has-children"><a class="reference internal" href="tutorial/01-Introducing-Molecular-Dynamics/00-index.html">Introducing Molecular Dynamics</a><input class="toctree-checkbox" id="toctree-checkbox-2" name="toctree-checkbox-2" role="switch" type="checkbox"/><label for="toctree-checkbox-2"><div class="visually-hidden">Toggle child pages in navigation</div><i class="icon"><svg><use href="#svg-arrow-right"></use></svg></i></label><ul>
+<li class="toctree-l2"><a class="reference internal" href="tutorial/01-Introducing-Molecular-Dynamics/01-Molecular-Dynamics-Simulations.html">Molecular Dynamics Simulations</a></li>
+<li class="toctree-l2"><a class="reference internal" href="tutorial/01-Introducing-Molecular-Dynamics/02-Initializing-a-Random-System.html">Initializing a Random System</a></li>
+<li class="toctree-l2"><a class="reference internal" href="tutorial/01-Introducing-Molecular-Dynamics/03-Compressing-the-System.html">Compressing the System</a></li>
+</ul>
+</li>
+<li class="toctree-l1 has-children"><a class="reference internal" href="tutorial/02-Logging/00-index.html">Logging</a><input class="toctree-checkbox" id="toctree-checkbox-3" name="toctree-checkbox-3" role="switch" type="checkbox"/><label for="toctree-checkbox-3"><div class="visually-hidden">Toggle child pages in navigation</div><i class="icon"><svg><use href="#svg-arrow-right"></use></svg></i></label><ul>
+<li class="toctree-l2"><a class="reference internal" href="tutorial/02-Logging/01-Logging-to-a-GSD-file.html">Logging to a GSD file</a></li>
+<li class="toctree-l2"><a class="reference internal" href="tutorial/02-Logging/02-Saving-Array-Quantities.html">Saving Array Quantities</a></li>
+<li class="toctree-l2"><a class="reference internal" href="tutorial/02-Logging/03-Storing-Particle-Shape.html">Storing Particle Shape</a></li>
+<li class="toctree-l2"><a class="reference internal" href="tutorial/02-Logging/04-Writing-Formatted-Output.html">Writing Formatted Output</a></li>
+</ul>
+</li>
+<li class="toctree-l1 has-children"><a class="reference internal" href="tutorial/03-Parallel-Simulations-With-MPI/00-index.html">Parallel Simulation With MPI</a><input class="toctree-checkbox" id="toctree-checkbox-4" name="toctree-checkbox-4" role="switch" type="checkbox"/><label for="toctree-checkbox-4"><div class="visually-hidden">Toggle child pages in navigation</div><i class="icon"><svg><use href="#svg-arrow-right"></use></svg></i></label><ul>
+<li class="toctree-l2"><a class="reference internal" href="tutorial/03-Parallel-Simulations-With-MPI/01-Introduction-to-MPI.html">Introduction to MPI</a></li>
+<li class="toctree-l2"><a class="reference internal" href="tutorial/03-Parallel-Simulations-With-MPI/02-Domain-Decomposition.html">Domain Decomposition</a></li>
+<li class="toctree-l2"><a class="reference internal" href="tutorial/03-Parallel-Simulations-With-MPI/03-Accessing-System-Configurations-With-MPI.html">Accessing System Configurations With MPI</a></li>
+<li class="toctree-l2"><a class="reference internal" href="tutorial/03-Parallel-Simulations-With-MPI/04-Running-Multiple-Simulations-With-Partitions.html">Running Multiple Simulations With Partitions</a></li>
+</ul>
+</li>
+<li class="toctree-l1 has-children"><a class="reference internal" href="tutorial/04-Custom-Actions-In-Python/00-index.html">Custom Actions in Python</a><input class="toctree-checkbox" id="toctree-checkbox-5" name="toctree-checkbox-5" role="switch" type="checkbox"/><label for="toctree-checkbox-5"><div class="visually-hidden">Toggle child pages in navigation</div><i class="icon"><svg><use href="#svg-arrow-right"></use></svg></i></label><ul>
+<li class="toctree-l2"><a class="reference internal" href="tutorial/04-Custom-Actions-In-Python/01-What-are-Actions.html">What are Actions?</a></li>
+<li class="toctree-l2"><a class="reference internal" href="tutorial/04-Custom-Actions-In-Python/02-An-Initial-Custom-Action.html">An Initial Custom Action</a></li>
+<li class="toctree-l2"><a class="reference internal" href="tutorial/04-Custom-Actions-In-Python/03-Custom-Action-Features.html">Custom Action Features</a></li>
+<li class="toctree-l2"><a class="reference internal" href="tutorial/04-Custom-Actions-In-Python/04-Custom-Updater.html">Custom Updater</a></li>
+<li class="toctree-l2"><a class="reference internal" href="tutorial/04-Custom-Actions-In-Python/05-Custom-Writer.html">Custom Writer</a></li>
+<li class="toctree-l2"><a class="reference internal" href="tutorial/04-Custom-Actions-In-Python/06-Improving-Performance.html">Improving Performance</a></li>
+</ul>
+</li>
+<li class="toctree-l1 has-children"><a class="reference internal" href="tutorial/05-Organizing-and-Executing-Simulations/00-index.html">Organizing and Executing Simulations</a><input class="toctree-checkbox" id="toctree-checkbox-6" name="toctree-checkbox-6" role="switch" type="checkbox"/><label for="toctree-checkbox-6"><div class="visually-hidden">Toggle child pages in navigation</div><i class="icon"><svg><use href="#svg-arrow-right"></use></svg></i></label><ul>
+<li class="toctree-l2"><a class="reference internal" href="tutorial/05-Organizing-and-Executing-Simulations/01-Organizing-Data.html">Organizing Data</a></li>
+<li class="toctree-l2"><a class="reference internal" href="tutorial/05-Organizing-and-Executing-Simulations/02-Executing-Simulations.html">Executing Simulations</a></li>
+<li class="toctree-l2"><a class="reference internal" href="tutorial/05-Organizing-and-Executing-Simulations/03-Continuing-Simulations.html">Continuing Simulations</a></li>
+<li class="toctree-l2"><a class="reference internal" href="tutorial/05-Organizing-and-Executing-Simulations/04-Submitting-Cluster-Jobs.html">Submitting Cluster Jobs</a></li>
+</ul>
+</li>
+<li class="toctree-l1 has-children"><a class="reference internal" href="tutorial/06-Modelling-Rigid-Bodies/00-index.html">Modelling Rigid Bodies</a><input class="toctree-checkbox" id="toctree-checkbox-7" name="toctree-checkbox-7" role="switch" type="checkbox"/><label for="toctree-checkbox-7"><div class="visually-hidden">Toggle child pages in navigation</div><i class="icon"><svg><use href="#svg-arrow-right"></use></svg></i></label><ul>
+<li class="toctree-l2"><a class="reference internal" href="tutorial/06-Modelling-Rigid-Bodies/01-Introduction-to-Rigid-Bodies.html">Introduction to Rigid Bodies</a></li>
+<li class="toctree-l2"><a class="reference internal" href="tutorial/06-Modelling-Rigid-Bodies/02-Running-Rigid-Body-Simulations.html">Running Rigid Body Simulations</a></li>
+<li class="toctree-l2"><a class="reference internal" href="tutorial/06-Modelling-Rigid-Bodies/03-Preparing-a-General-Body.html">Preparing a General Body</a></li>
+</ul>
+</li>
+</ul>
+<p class="caption" role="heading"><span class="caption-text">How to guides</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="howto/molecular.html">How to model molecular systems</a></li>
+<li class="toctree-l1"><a class="reference internal" href="howto/cpppotential.html">How to apply arbitrary pair potentials in HPMC</a></li>
+</ul>
+<p class="caption" role="heading"><span class="caption-text">Python API</span></p>
+<ul class="current">
+<li class="toctree-l1 current has-children"><a class="reference internal" href="package-hoomd.html">hoomd</a><input checked="" class="toctree-checkbox" id="toctree-checkbox-8" name="toctree-checkbox-8" role="switch" type="checkbox"/><label for="toctree-checkbox-8"><div class="visually-hidden">Toggle child pages in navigation</div><i class="icon"><svg><use href="#svg-arrow-right"></use></svg></i></label><ul class="current">
+<li class="toctree-l2"><a class="reference internal" href="module-hoomd-box.html">hoomd.box</a></li>
+<li class="toctree-l2"><a class="reference internal" href="module-hoomd-communicator.html">hoomd.communicator</a></li>
+<li class="toctree-l2"><a class="reference internal" href="module-hoomd-custom.html">hoomd.custom</a></li>
+<li class="toctree-l2 has-children"><a class="reference internal" href="module-hoomd-data.html">hoomd.data</a><input class="toctree-checkbox" id="toctree-checkbox-9" name="toctree-checkbox-9" role="switch" type="checkbox"/><label for="toctree-checkbox-9"><div class="visually-hidden">Toggle child pages in navigation</div><i class="icon"><svg><use href="#svg-arrow-right"></use></svg></i></label><ul>
+<li class="toctree-l3"><a class="reference internal" href="module-hoomd-array.html">hoomd.data.array</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="module-hoomd-device.html">hoomd.device</a></li>
+<li class="toctree-l2"><a class="reference internal" href="module-hoomd-error.html">hoomd.error</a></li>
+<li class="toctree-l2"><a class="reference internal" href="module-hoomd-filter.html">hoomd.filter</a></li>
+<li class="toctree-l2"><a class="reference internal" href="module-hoomd-logging.html">hoomd.logging</a></li>
+<li class="toctree-l2"><a class="reference internal" href="module-hoomd-mesh.html">hoomd.mesh</a></li>
+<li class="toctree-l2"><a class="reference internal" href="module-hoomd-operation.html">hoomd.operation</a></li>
+<li class="toctree-l2"><a class="reference internal" href="module-hoomd-triggers.html">hoomd.trigger</a></li>
+<li class="toctree-l2 current current-page"><a class="current reference internal" href="#">hoomd.tune</a></li>
+<li class="toctree-l2"><a class="reference internal" href="module-hoomd-update.html">hoomd.update</a></li>
+<li class="toctree-l2"><a class="reference internal" href="module-hoomd-variant.html">hoomd.variant</a></li>
+<li class="toctree-l2"><a class="reference internal" href="module-hoomd-version.html">hoomd.version</a></li>
+<li class="toctree-l2"><a class="reference internal" href="module-hoomd-wall.html">hoomd.wall</a></li>
+<li class="toctree-l2"><a class="reference internal" href="module-hoomd-write.html">hoomd.write</a></li>
+</ul>
+</li>
+<li class="toctree-l1 has-children"><a class="reference internal" href="package-hpmc.html">hoomd.hpmc</a><input class="toctree-checkbox" id="toctree-checkbox-10" name="toctree-checkbox-10" role="switch" type="checkbox"/><label for="toctree-checkbox-10"><div class="visually-hidden">Toggle child pages in navigation</div><i class="icon"><svg><use href="#svg-arrow-right"></use></svg></i></label><ul>
+<li class="toctree-l2"><a class="reference internal" href="module-hpmc-compute.html">hoomd.hpmc.compute</a></li>
+<li class="toctree-l2"><a class="reference internal" href="module-hpmc-integrate.html">hoomd.hpmc.integrate</a></li>
+<li class="toctree-l2 has-children"><a class="reference internal" href="module-hpmc-nec.html">hoomd.hpmc.nec</a><input class="toctree-checkbox" id="toctree-checkbox-11" name="toctree-checkbox-11" role="switch" type="checkbox"/><label for="toctree-checkbox-11"><div class="visually-hidden">Toggle child pages in navigation</div><i class="icon"><svg><use href="#svg-arrow-right"></use></svg></i></label><ul>
+<li class="toctree-l3"><a class="reference internal" href="module-hpmc-nec-integrate.html">hoomd.hpmc.nec.integrate</a></li>
+<li class="toctree-l3"><a class="reference internal" href="module-hpmc-nec-tune.html">hoomd.hpmc.nec.tune</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="module-hpmc-tune.html">hoomd.hpmc.tune</a></li>
+<li class="toctree-l2"><a class="reference internal" href="module-hpmc-update.html">hoomd.hpmc.update</a></li>
+<li class="toctree-l2 has-children"><a class="reference internal" href="module-hpmc-pair.html">hoomd.hpmc.pair</a><input class="toctree-checkbox" id="toctree-checkbox-12" name="toctree-checkbox-12" role="switch" type="checkbox"/><label for="toctree-checkbox-12"><div class="visually-hidden">Toggle child pages in navigation</div><i class="icon"><svg><use href="#svg-arrow-right"></use></svg></i></label><ul>
+<li class="toctree-l3"><a class="reference internal" href="module-hpmc-pair-user.html">hoomd.hpmc.pair.user</a></li>
+</ul>
+</li>
+<li class="toctree-l2 has-children"><a class="reference internal" href="module-hpmc-external.html">hoomd.hpmc.external</a><input class="toctree-checkbox" id="toctree-checkbox-13" name="toctree-checkbox-13" role="switch" type="checkbox"/><label for="toctree-checkbox-13"><div class="visually-hidden">Toggle child pages in navigation</div><i class="icon"><svg><use href="#svg-arrow-right"></use></svg></i></label><ul>
+<li class="toctree-l3"><a class="reference internal" href="module-hpmc-external-user.html">hoomd.hpmc.external.user</a></li>
+<li class="toctree-l3"><a class="reference internal" href="module-hpmc-external-field.html">hoomd.hpmc.external.field</a></li>
+<li class="toctree-l3"><a class="reference internal" href="module-hpmc-external-wall.html">hoomd.hpmc.external.wall</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="module-hpmc-shape_move.html">hoomd.hpmc.shape_move</a></li>
+</ul>
+</li>
+<li class="toctree-l1 has-children"><a class="reference internal" href="package-md.html">hoomd.md</a><input class="toctree-checkbox" id="toctree-checkbox-14" name="toctree-checkbox-14" role="switch" type="checkbox"/><label for="toctree-checkbox-14"><div class="visually-hidden">Toggle child pages in navigation</div><i class="icon"><svg><use href="#svg-arrow-right"></use></svg></i></label><ul>
+<li class="toctree-l2 has-children"><a class="reference internal" href="module-md-alchemy.html">md.alchemy</a><input class="toctree-checkbox" id="toctree-checkbox-15" name="toctree-checkbox-15" role="switch" type="checkbox"/><label for="toctree-checkbox-15"><div class="visually-hidden">Toggle child pages in navigation</div><i class="icon"><svg><use href="#svg-arrow-right"></use></svg></i></label><ul>
+<li class="toctree-l3"><a class="reference internal" href="module-md-alchemy-pair.html">md.alchemy.pair</a></li>
+<li class="toctree-l3"><a class="reference internal" href="module-md-alchemy-methods.html">md.alchemy.methods</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="module-md-angle.html">md.angle</a></li>
+<li class="toctree-l2"><a class="reference internal" href="module-md-bond.html">md.bond</a></li>
+<li class="toctree-l2"><a class="reference internal" href="module-md-constrain.html">md.constrain</a></li>
+<li class="toctree-l2"><a class="reference internal" href="module-md-compute.html">md.compute</a></li>
+<li class="toctree-l2"><a class="reference internal" href="module-md-data.html">md.data</a></li>
+<li class="toctree-l2"><a class="reference internal" href="module-md-dihedral.html">md.dihedral</a></li>
+<li class="toctree-l2 has-children"><a class="reference internal" href="module-md-external.html">md.external</a><input class="toctree-checkbox" id="toctree-checkbox-16" name="toctree-checkbox-16" role="switch" type="checkbox"/><label for="toctree-checkbox-16"><div class="visually-hidden">Toggle child pages in navigation</div><i class="icon"><svg><use href="#svg-arrow-right"></use></svg></i></label><ul>
+<li class="toctree-l3"><a class="reference internal" href="module-md-external-field.html">md.external.field</a></li>
+<li class="toctree-l3"><a class="reference internal" href="module-md-external-wall.html">md.external.wall</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="module-md-force.html">md.force</a></li>
+<li class="toctree-l2"><a class="reference internal" href="module-md-improper.html">md.improper</a></li>
+<li class="toctree-l2 has-children"><a class="reference internal" href="module-md-long_range.html">md.long_range</a><input class="toctree-checkbox" id="toctree-checkbox-17" name="toctree-checkbox-17" role="switch" type="checkbox"/><label for="toctree-checkbox-17"><div class="visually-hidden">Toggle child pages in navigation</div><i class="icon"><svg><use href="#svg-arrow-right"></use></svg></i></label><ul>
+<li class="toctree-l3"><a class="reference internal" href="module-md-long_range-pppm.html">md.long_range.pppm</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="module-md-manifold.html">md.manifold</a></li>
+<li class="toctree-l2"><a class="reference internal" href="module-md-many_body.html">md.many_body</a></li>
+<li class="toctree-l2 has-children"><a class="reference internal" href="module-md-methods.html">md.methods</a><input class="toctree-checkbox" id="toctree-checkbox-18" name="toctree-checkbox-18" role="switch" type="checkbox"/><label for="toctree-checkbox-18"><div class="visually-hidden">Toggle child pages in navigation</div><i class="icon"><svg><use href="#svg-arrow-right"></use></svg></i></label><ul>
+<li class="toctree-l3"><a class="reference internal" href="module-md-methods-rattle.html">md.methods.rattle</a></li>
+</ul>
+</li>
+<li class="toctree-l2 has-children"><a class="reference internal" href="module-md-mesh.html">md.mesh</a><input class="toctree-checkbox" id="toctree-checkbox-19" name="toctree-checkbox-19" role="switch" type="checkbox"/><label for="toctree-checkbox-19"><div class="visually-hidden">Toggle child pages in navigation</div><i class="icon"><svg><use href="#svg-arrow-right"></use></svg></i></label><ul>
+<li class="toctree-l3"><a class="reference internal" href="module-md-mesh-bond.html">md.mesh.bond</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="module-md-minimize.html">md.minimize</a></li>
+<li class="toctree-l2"><a class="reference internal" href="module-md-nlist.html">md.nlist</a></li>
+<li class="toctree-l2 has-children"><a class="reference internal" href="module-md-pair.html">md.pair</a><input class="toctree-checkbox" id="toctree-checkbox-20" name="toctree-checkbox-20" role="switch" type="checkbox"/><label for="toctree-checkbox-20"><div class="visually-hidden">Toggle child pages in navigation</div><i class="icon"><svg><use href="#svg-arrow-right"></use></svg></i></label><ul>
+<li class="toctree-l3"><a class="reference internal" href="module-md-pair-aniso.html">md.pair.aniso</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="module-md-special_pair.html">md.special_pair</a></li>
+<li class="toctree-l2"><a class="reference internal" href="module-md-tune.html">md.tune</a></li>
+<li class="toctree-l2"><a class="reference internal" href="module-md-update.html">md.update</a></li>
+</ul>
+</li>
+</ul>
+<p class="caption" role="heading"><span class="caption-text">Developer guide</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="contributing.html">Contributing</a></li>
+<li class="toctree-l1"><a class="reference internal" href="style.html">Code style</a></li>
+<li class="toctree-l1"><a class="reference internal" href="testing.html">Testing</a></li>
+<li class="toctree-l1"><a class="reference internal" href="components.html">Components</a></li>
+</ul>
+<p class="caption" role="heading"><span class="caption-text">Reference</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="notation.html">Notation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="units.html">Units</a></li>
+<li class="toctree-l1"><a class="reference internal" href="deprecated.html">Deprecated</a></li>
+<li class="toctree-l1"><a class="reference internal" href="logo.html">Logo</a></li>
+<li class="toctree-l1"><a class="reference internal" href="license.html">License</a></li>
+<li class="toctree-l1"><a class="reference internal" href="credits.html">Credits</a></li>
+<li class="toctree-l1"><a class="reference internal" href="indices.html">Index</a></li>
+</ul>
+
+</div>
+</div>
+
+      </div>
+      
+    </div>
+  </aside>
+  <div class="main">
+    <div class="content">
+      <div class="article-container">
+        <a href="#" class="back-to-top muted-link">
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24">
+            <path d="M13 20h-2V8l-5.5 5.5-1.42-1.42L12 4.16l7.92 7.92-1.42 1.42L13 8v12z"></path>
+          </svg>
+          <span>Back to top</span>
+        </a>
+        <div class="content-icon-container">
+          <div class="theme-toggle-container theme-toggle-content">
+            <button class="theme-toggle">
+              <div class="visually-hidden">Toggle Light / Dark / Auto color theme</div>
+              <svg class="theme-icon-when-auto"><use href="#svg-sun-half"></use></svg>
+              <svg class="theme-icon-when-dark"><use href="#svg-moon"></use></svg>
+              <svg class="theme-icon-when-light"><use href="#svg-sun"></use></svg>
+            </button>
+          </div>
+          <label class="toc-overlay-icon toc-content-icon no-toc" for="__toc">
+            <div class="visually-hidden">Toggle table of contents sidebar</div>
+            <i class="icon"><svg><use href="#svg-toc"></use></svg></i>
+          </label>
+        </div>
+        <article role="main">
+          <section id="hoomd-tune">
+<h1>hoomd.tune<a class="headerlink" href="#hoomd-tune" title="Permalink to this heading">#</a></h1>
+<p class="rubric">Overview</p>
+<div class="table-wrapper autosummary longtable docutils container">
+<table class="autosummary longtable docutils align-default">
+<tbody>
+<tr class="row-odd"><td><p><a class="reference internal" href="#hoomd.tune.CustomTuner" title="hoomd.tune.CustomTuner"><code class="xref py py-obj docutils literal notranslate"><span class="pre">CustomTuner</span></code></a></p></td>
+<td><p>User-defined tuner.</p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="#hoomd.tune.GradientDescent" title="hoomd.tune.GradientDescent"><code class="xref py py-obj docutils literal notranslate"><span class="pre">GradientDescent</span></code></a></p></td>
+<td><p>Solves equations of <span class="math notranslate nohighlight">\(min_x f(x)\)</span> using gradient descent.</p></td>
+</tr>
+<tr class="row-odd"><td><p><a class="reference internal" href="#hoomd.tune.GridOptimizer" title="hoomd.tune.GridOptimizer"><code class="xref py py-obj docutils literal notranslate"><span class="pre">GridOptimizer</span></code></a></p></td>
+<td><p>Optimize by consistently narrowing the range where the extrema is.</p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="#hoomd.tune.LoadBalancer" title="hoomd.tune.LoadBalancer"><code class="xref py py-obj docutils literal notranslate"><span class="pre">LoadBalancer</span></code></a></p></td>
+<td><p>Adjusts the boundaries of the domain decomposition.</p></td>
+</tr>
+<tr class="row-odd"><td><p><a class="reference internal" href="#hoomd.tune.ManualTuneDefinition" title="hoomd.tune.ManualTuneDefinition"><code class="xref py py-obj docutils literal notranslate"><span class="pre">ManualTuneDefinition</span></code></a></p></td>
+<td><p>Class for defining y = f(x) relationships for tuning x for a set y     target.</p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="#hoomd.tune.Optimizer" title="hoomd.tune.Optimizer"><code class="xref py py-obj docutils literal notranslate"><span class="pre">Optimizer</span></code></a></p></td>
+<td><p>Abstract base class for optimizing <span class="math notranslate nohighlight">\(f(x)\)</span>.</p></td>
+</tr>
+<tr class="row-odd"><td><p><a class="reference internal" href="#hoomd.tune.ParticleSorter" title="hoomd.tune.ParticleSorter"><code class="xref py py-obj docutils literal notranslate"><span class="pre">ParticleSorter</span></code></a></p></td>
+<td><p>Order particles in memory to improve performance.</p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="#hoomd.tune.RootSolver" title="hoomd.tune.RootSolver"><code class="xref py py-obj docutils literal notranslate"><span class="pre">RootSolver</span></code></a></p></td>
+<td><p>Abstract base class for finding x such that <span class="math notranslate nohighlight">\(f(x) = 0\)</span>.</p></td>
+</tr>
+<tr class="row-odd"><td><p><a class="reference internal" href="#hoomd.tune.ScaleSolver" title="hoomd.tune.ScaleSolver"><code class="xref py py-obj docutils literal notranslate"><span class="pre">ScaleSolver</span></code></a></p></td>
+<td><p>Solves equations of f(x) = y using a ratio of y with the target.</p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="#hoomd.tune.SecantSolver" title="hoomd.tune.SecantSolver"><code class="xref py py-obj docutils literal notranslate"><span class="pre">SecantSolver</span></code></a></p></td>
+<td><p>Solves equations of f(x) = y using the secant method.</p></td>
+</tr>
+<tr class="row-odd"><td><p><a class="reference internal" href="#hoomd.tune.SolverStep" title="hoomd.tune.SolverStep"><code class="xref py py-obj docutils literal notranslate"><span class="pre">SolverStep</span></code></a></p></td>
+<td><p>Abstract base class various solver types.</p></td>
+</tr>
+</tbody>
+</table>
+</div>
+<p class="rubric">Details</p>
+<span class="target" id="module-hoomd.tune"></span><p>Tuners.</p>
+<p><a class="reference internal" href="module-hoomd-operation.html#hoomd.operation.Tuner" title="hoomd.operation.Tuner"><code class="xref any py py-class docutils literal notranslate"><span class="pre">Tuner</span></code></a> operations make changes to the parameters of other operations (or the
+simulation state) that adjust the performance of the simulation without changing
+the correctness of the outcome. Every new <a class="reference internal" href="package-hoomd.html#hoomd.Simulation" title="hoomd.Simulation"><code class="xref any py py-class docutils literal notranslate"><span class="pre">hoomd.Simulation</span></code></a> object includes a
+<a class="reference internal" href="#hoomd.tune.ParticleSorter" title="hoomd.tune.ParticleSorter"><code class="xref any py py-class docutils literal notranslate"><span class="pre">ParticleSorter</span></code></a> in its operations by default. <a class="reference internal" href="#hoomd.tune.ParticleSorter" title="hoomd.tune.ParticleSorter"><code class="xref any py py-class docutils literal notranslate"><span class="pre">ParticleSorter</span></code></a> rearranges the
+order of particles in memory to improve cache-coherency.</p>
+<p>This package also defines the <a class="reference internal" href="#hoomd.tune.CustomTuner" title="hoomd.tune.CustomTuner"><code class="xref any py py-class docutils literal notranslate"><span class="pre">CustomTuner</span></code></a> class and a number of helper
+classes. Use these to implement custom tuner operations in Python code.</p>
+<p>..rubric:: Solver</p>
+<p>Most tuners explicitly involve solving some sort of mathematical problem (e.g.
+root-finding or optimizationr). HOOMD provides infrastructure for solving these
+problems as they appear in our provided <a class="reference internal" href="module-hoomd-operation.html#hoomd.operation.Tuner" title="hoomd.operation.Tuner"><code class="xref any py py-class docutils literal notranslate"><span class="pre">hoomd.operation.Tuner</span></code></a> subclasses. All
+tuners that involve iteratively solving a problem compose a <a class="reference internal" href="#hoomd.tune.SolverStep" title="hoomd.tune.SolverStep"><code class="xref any py py-class docutils literal notranslate"><span class="pre">SolverStep</span></code></a>
+subclass instance. The <a class="reference internal" href="#hoomd.tune.SolverStep" title="hoomd.tune.SolverStep"><code class="xref any py py-class docutils literal notranslate"><span class="pre">SolverStep</span></code></a> class implements the boilerplate to do
+iterative solving given a simulation where calls to the “function” being solves
+means running potentially 1,000’s of steps.</p>
+<p>Every solver regardless of type has a <code class="docutils literal notranslate"><span class="pre">solve</span></code> method which accepts a list of
+tunable quantities. The method returns a Boolean indicating whether all
+quantities are considered tuned or not. Tuners indicate they are tuned when two
+successive calls to <a class="reference internal" href="#hoomd.tune.SolverStep.solve" title="hoomd.tune.SolverStep.solve"><code class="xref any py py-meth docutils literal notranslate"><span class="pre">SolverStep.solve</span></code></a> return <code class="docutils literal notranslate"><span class="pre">True</span></code> unless otherwise
+documented.</p>
+<p>Custom solvers can be created from inheriting from the base class of one of the
+problem types (<a class="reference internal" href="#hoomd.tune.RootSolver" title="hoomd.tune.RootSolver"><code class="xref any py py-class docutils literal notranslate"><span class="pre">RootSolver</span></code></a> and <a class="reference internal" href="#hoomd.tune.Optimizer" title="hoomd.tune.Optimizer"><code class="xref any py py-class docutils literal notranslate"><span class="pre">Optimizer</span></code></a>) or <a class="reference internal" href="#hoomd.tune.SolverStep" title="hoomd.tune.SolverStep"><code class="xref any py py-class docutils literal notranslate"><span class="pre">SolverStep</span></code></a> if solving a
+different problem type. All that is required is to implement the
+<a class="reference internal" href="#hoomd.tune.SolverStep.solve_one" title="hoomd.tune.SolverStep.solve_one"><code class="xref any py py-meth docutils literal notranslate"><span class="pre">SolverStep.solve_one</span></code></a> method, and the solver can be used by any HOOMD tuner
+that expects a solver.</p>
+<p class="rubric">Custom Tuners</p>
+<p>Through using <a class="reference internal" href="#hoomd.tune.SolverStep" title="hoomd.tune.SolverStep"><code class="xref any py py-class docutils literal notranslate"><span class="pre">SolverStep</span></code></a> subclasses and <a class="reference internal" href="#hoomd.tune.ManualTuneDefinition" title="hoomd.tune.ManualTuneDefinition"><code class="xref any py py-class docutils literal notranslate"><span class="pre">ManualTuneDefinition</span></code></a> most tuning
+problems should be solvable for a <a class="reference internal" href="#hoomd.tune.CustomTuner" title="hoomd.tune.CustomTuner"><code class="xref any py py-class docutils literal notranslate"><span class="pre">CustomTuner</span></code></a>. To create a tuner define all
+<a class="reference internal" href="#hoomd.tune.ManualTuneDefinition" title="hoomd.tune.ManualTuneDefinition"><code class="xref any py py-class docutils literal notranslate"><span class="pre">ManualTuneDefinition</span></code></a> interfaces for each tunable and plug into a solver in a
+<a class="reference internal" href="#hoomd.tune.CustomTuner" title="hoomd.tune.CustomTuner"><code class="xref any py py-class docutils literal notranslate"><span class="pre">CustomTuner</span></code></a>.</p>
+<dl class="py class">
+<dt class="sig sig-object py" id="hoomd.tune.ManualTuneDefinition">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">hoomd.tune.</span></span><span class="sig-name descname"><span class="pre">ManualTuneDefinition</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">get_y</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">target</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">get_x</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">set_x</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">domain</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#hoomd.tune.ManualTuneDefinition" title="Permalink to this definition">#</a></dt>
+<dd><p>Class for defining y = f(x) relationships for tuning x for a set y     target.</p>
+<p>This class is made to be used with <a class="reference internal" href="#hoomd.tune.SolverStep" title="hoomd.tune.SolverStep"><code class="xref any py py-class docutils literal notranslate"><span class="pre">hoomd.tune.SolverStep</span></code></a> subclasses.  Here
+y represents a dependent variable of x. In general, x and y should be of
+type <a class="reference external" href="https://docs.python.org/3/library/functions.html#float" title="(in Python v3.11)"><code class="xref any docutils literal notranslate"><span class="pre">float</span></code></a>, but specific <a class="reference internal" href="#hoomd.tune.SolverStep" title="hoomd.tune.SolverStep"><code class="xref any py py-class docutils literal notranslate"><span class="pre">hoomd.tune.SolverStep</span></code></a> subclasses may accept
+other types.</p>
+<p>A special case for the return type of y is <code class="docutils literal notranslate"><span class="pre">None</span></code>. If the value is
+currently inaccessible or would be invalid, a <a class="reference internal" href="#hoomd.tune.ManualTuneDefinition" title="hoomd.tune.ManualTuneDefinition"><code class="xref any py py-class docutils literal notranslate"><span class="pre">ManualTuneDefinition</span></code></a> object
+can return a y of <code class="docutils literal notranslate"><span class="pre">None</span></code> to indicate this. <a class="reference internal" href="#hoomd.tune.SolverStep" title="hoomd.tune.SolverStep"><code class="xref any py py-class docutils literal notranslate"><span class="pre">hoomd.tune.SolverStep</span></code></a>
+objects will handle this automatically. Since we check for <code class="docutils literal notranslate"><span class="pre">None</span></code>
+internally in <a class="reference internal" href="#hoomd.tune.SolverStep" title="hoomd.tune.SolverStep"><code class="xref any py py-class docutils literal notranslate"><span class="pre">hoomd.tune.SolverStep</span></code></a> objects, a <a class="reference internal" href="#hoomd.tune.ManualTuneDefinition" title="hoomd.tune.ManualTuneDefinition"><code class="xref any py py-class docutils literal notranslate"><span class="pre">ManualTuneDefinition</span></code></a>
+object’s <code class="docutils literal notranslate"><span class="pre">y</span></code> property should be consistant when called multiple times
+within a timestep.</p>
+<p>When setting <code class="docutils literal notranslate"><span class="pre">x</span></code> the value is clamped between the given domain via,</p>
+<div class="math-wrapper docutils container">
+<div class="math notranslate nohighlight">
+\[\begin{split}x &amp;= x_{max}, \text{ if } x_n &gt; x_{max},\\
+x &amp;= x_{min}, \text{ if } x_n &lt; x_{min},\\
+x &amp;= x_n, \text{ otherwise}\end{split}\]</div>
+</div>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>get_y</strong> (<code class="docutils literal notranslate"><span class="pre">callable</span></code>) – A callable that gets the current value for y.</p></li>
+<li><p><strong>target</strong> (<code class="docutils literal notranslate"><span class="pre">any</span></code>) – The target y value to approach.</p></li>
+<li><p><strong>get_x</strong> (<code class="docutils literal notranslate"><span class="pre">callable</span></code>) – A callable that gets the current value for x.</p></li>
+<li><p><strong>set_x</strong> (<code class="docutils literal notranslate"><span class="pre">callable</span></code>) – A callable that sets the current value for x.</p></li>
+<li><p><strong>domain</strong> (<a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#tuple" title="(in Python v3.11)"><code class="xref any docutils literal notranslate"><span class="pre">tuple</span></code></a> [<code class="docutils literal notranslate"><span class="pre">any</span></code>, <code class="docutils literal notranslate"><span class="pre">any</span></code>], optional) – A tuple pair of the
+minimum and maximum accepted values of x, defaults to <a class="reference external" href="https://docs.python.org/3/library/constants.html#None" title="(in Python v3.11)"><code class="xref any docutils literal notranslate"><span class="pre">None</span></code></a>. When,
+the domain is <a class="reference external" href="https://docs.python.org/3/library/constants.html#None" title="(in Python v3.11)"><code class="xref any docutils literal notranslate"><span class="pre">None</span></code></a> then any value of x is accepted. Either the
+minimum or maximum can be set to <a class="reference external" href="https://docs.python.org/3/library/constants.html#None" title="(in Python v3.11)"><code class="xref any docutils literal notranslate"><span class="pre">None</span></code></a> as well which means there is
+no maximum or minimum. The domain is used to wrap values within the
+specified domain when setting x.</p></li>
+</ul>
+</dd>
+</dl>
+<div class="admonition note">
+<p class="admonition-title">Note</p>
+<p>Placing domain restrictions on x can lead to the target y value being
+impossible to converge to. This will lead to the <a class="reference internal" href="#hoomd.tune.SolverStep" title="hoomd.tune.SolverStep"><code class="xref any py py-class docutils literal notranslate"><span class="pre">hoomd.tune.SolverStep</span></code></a>
+object passed this tunable to never finish solving regardless if all
+other <a class="reference internal" href="#hoomd.tune.ManualTuneDefinition" title="hoomd.tune.ManualTuneDefinition"><code class="xref any py py-class docutils literal notranslate"><span class="pre">ManualTuneDefinition</span></code></a> objects are converged.</p>
+</div>
+<dl class="py method">
+<dt class="sig sig-object py" id="hoomd.tune.ManualTuneDefinition.__eq__">
+<span class="sig-name descname"><span class="pre">__eq__</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">other</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#hoomd.tune.ManualTuneDefinition.__eq__" title="Permalink to this definition">#</a></dt>
+<dd><p>Test for equality.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="hoomd.tune.ManualTuneDefinition.__hash__">
+<span class="sig-name descname"><span class="pre">__hash__</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#hoomd.tune.ManualTuneDefinition.__hash__" title="Permalink to this definition">#</a></dt>
+<dd><p>Compute a hash of the tune definition.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="hoomd.tune.ManualTuneDefinition.clamp_into_domain">
+<span class="sig-name descname"><span class="pre">clamp_into_domain</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">value</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#hoomd.tune.ManualTuneDefinition.clamp_into_domain" title="Permalink to this definition">#</a></dt>
+<dd><p>Return the closest value within the domain.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>value</strong> (<code class="docutils literal notranslate"><span class="pre">any</span></code>) – A value of the same type as x.</p>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>The value clamps within the domains of x. Clamping here refers to
+returning the value or minimum or maximum of the domain if value is
+outside the domain.</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py property">
+<dt class="sig sig-object py" id="hoomd.tune.ManualTuneDefinition.domain">
+<em class="property"><span class="pre">property</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">domain</span></span><a class="headerlink" href="#hoomd.tune.ManualTuneDefinition.domain" title="Permalink to this definition">#</a></dt>
+<dd><p>A tuple pair of the minimum and maximum             accepted values of x.</p>
+<p>When the domain is None, any value of x is accepted. Either the minimum
+or maximum can be set to <code class="docutils literal notranslate"><span class="pre">None</span></code> as well which means there is no
+maximum or minimum. The domain is used to wrap values within the
+specified domain when setting x.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>tuple[<code class="docutils literal notranslate"><span class="pre">any</span></code>, <code class="docutils literal notranslate"><span class="pre">any</span></code>]</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="hoomd.tune.ManualTuneDefinition.in_domain">
+<span class="sig-name descname"><span class="pre">in_domain</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">value</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#hoomd.tune.ManualTuneDefinition.in_domain" title="Permalink to this definition">#</a></dt>
+<dd><p>Check whether a value is in the domain.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>value</strong> (<code class="docutils literal notranslate"><span class="pre">any</span></code>) – A value that can be compared to the minimum and
+maximum of the domain.</p>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>Whether the value is in the domain of x.</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p><a class="reference external" href="https://docs.python.org/3/library/functions.html#bool" title="(in Python v3.11)">bool</a></p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py property">
+<dt class="sig sig-object py" id="hoomd.tune.ManualTuneDefinition.max_x">
+<em class="property"><span class="pre">property</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">max_x</span></span><a class="headerlink" href="#hoomd.tune.ManualTuneDefinition.max_x" title="Permalink to this definition">#</a></dt>
+<dd><p>Maximum allowed x value.</p>
+</dd></dl>
+
+<dl class="py property">
+<dt class="sig sig-object py" id="hoomd.tune.ManualTuneDefinition.min_x">
+<em class="property"><span class="pre">property</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">min_x</span></span><a class="headerlink" href="#hoomd.tune.ManualTuneDefinition.min_x" title="Permalink to this definition">#</a></dt>
+<dd><p>Minimum allowed y value.</p>
+</dd></dl>
+
+<dl class="py property">
+<dt class="sig sig-object py" id="hoomd.tune.ManualTuneDefinition.target">
+<em class="property"><span class="pre">property</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">target</span></span><a class="headerlink" href="#hoomd.tune.ManualTuneDefinition.target" title="Permalink to this definition">#</a></dt>
+<dd><p>The targetted y value, can be set.</p>
+</dd></dl>
+
+<dl class="py property">
+<dt class="sig sig-object py" id="hoomd.tune.ManualTuneDefinition.x">
+<em class="property"><span class="pre">property</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">x</span></span><a class="headerlink" href="#hoomd.tune.ManualTuneDefinition.x" title="Permalink to this definition">#</a></dt>
+<dd><p>The dependent variable.</p>
+<p>Can be set. When set the setting value is clamped within the provided
+domain. See <a class="reference internal" href="#hoomd.tune.ManualTuneDefinition.clamp_into_domain" title="hoomd.tune.ManualTuneDefinition.clamp_into_domain"><code class="xref any py py-meth docutils literal notranslate"><span class="pre">clamp_into_domain</span></code></a> for further explanation.</p>
+</dd></dl>
+
+<dl class="py property">
+<dt class="sig sig-object py" id="hoomd.tune.ManualTuneDefinition.y">
+<em class="property"><span class="pre">property</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">y</span></span><a class="headerlink" href="#hoomd.tune.ManualTuneDefinition.y" title="Permalink to this definition">#</a></dt>
+<dd><p>The independent variable, and is unsettable.</p>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="py class">
+<dt class="sig sig-object py" id="hoomd.tune.CustomTuner">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">hoomd.tune.</span></span><span class="sig-name descname"><span class="pre">CustomTuner</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">trigger</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">action</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#hoomd.tune.CustomTuner" title="Permalink to this definition">#</a></dt>
+<dd><p>Bases: <a class="reference internal" href="module-hoomd-custom.html#hoomd.custom.CustomOperation" title="hoomd.custom.custom_operation.CustomOperation"><code class="xref py py-class docutils literal notranslate"><span class="pre">CustomOperation</span></code></a>, <a class="reference internal" href="module-hoomd-operation.html#hoomd.operation.Tuner" title="hoomd.operation.Tuner"><code class="xref py py-class docutils literal notranslate"><span class="pre">Tuner</span></code></a></p>
+<p>User-defined tuner.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>action</strong> (<a class="reference internal" href="module-hoomd-custom.html#hoomd.custom.Action" title="hoomd.custom.Action"><em>hoomd.custom.Action</em></a>) – The action to call.</p></li>
+<li><p><strong>trigger</strong> (<a class="reference internal" href="module-hoomd-triggers.html#hoomd.trigger.trigger_like" title="hoomd.trigger.trigger_like"><em>hoomd.trigger.trigger_like</em></a>) – Select the timesteps to call the
+action.</p></li>
+</ul>
+</dd>
+</dl>
+<p><a class="reference internal" href="#hoomd.tune.CustomTuner" title="hoomd.tune.CustomTuner"><code class="xref any py py-class docutils literal notranslate"><span class="pre">CustomTuner</span></code></a> is a <a class="reference internal" href="module-hoomd-operation.html#hoomd.operation.Tuner" title="hoomd.operation.Tuner"><code class="xref any py py-class docutils literal notranslate"><span class="pre">hoomd.operation.Tuner</span></code></a> that wraps a user-defined
+<a class="reference internal" href="module-hoomd-custom.html#hoomd.custom.Action" title="hoomd.custom.Action"><code class="xref any py py-class docutils literal notranslate"><span class="pre">hoomd.custom.Action</span></code></a> object so the action can be added to a
+<a class="reference internal" href="package-hoomd.html#hoomd.Operations" title="hoomd.Operations"><code class="xref any py py-class docutils literal notranslate"><span class="pre">hoomd.Operations</span></code></a> instance for use with <a class="reference internal" href="package-hoomd.html#hoomd.Simulation" title="hoomd.Simulation"><code class="xref any py py-class docutils literal notranslate"><span class="pre">hoomd.Simulation</span></code></a> objects.</p>
+<p>Tuners modify the parameters of other operations to improve performance.
+Tuners may read the system state, but not modify it.</p>
+<div class="admonition seealso">
+<p class="admonition-title">See also</p>
+<p>The base class <a class="reference internal" href="module-hoomd-custom.html#hoomd.custom.CustomOperation" title="hoomd.custom.CustomOperation"><code class="xref any py py-class docutils literal notranslate"><span class="pre">hoomd.custom.CustomOperation</span></code></a>.</p>
+<p><a class="reference internal" href="module-hoomd-update.html#hoomd.update.CustomUpdater" title="hoomd.update.CustomUpdater"><code class="xref any py py-class docutils literal notranslate"><span class="pre">hoomd.update.CustomUpdater</span></code></a></p>
+<p><a class="reference internal" href="module-hoomd-write.html#hoomd.write.CustomWriter" title="hoomd.write.CustomWriter"><code class="xref any py py-class docutils literal notranslate"><span class="pre">hoomd.write.CustomWriter</span></code></a></p>
+</div>
+</dd></dl>
+
+<dl class="py class">
+<dt class="sig sig-object py" id="hoomd.tune.GradientDescent">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">hoomd.tune.</span></span><span class="sig-name descname"><span class="pre">GradientDescent</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">alpha</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference external" href="https://docs.python.org/3/library/functions.html#float" title="(in Python v3.11)"><span class="pre">float</span></a></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">0.1</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">kappa</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference external" href="https://docs.python.org/3/library/typing.html#typing.Optional" title="(in Python v3.11)"><span class="pre">Optional</span></a><span class="p"><span class="pre">[</span></span><a class="reference external" href="https://numpy.org/doc/stable/reference/generated/numpy.ndarray.html#numpy.ndarray" title="(in NumPy v1.24)"><span class="pre">ndarray</span></a><span class="p"><span class="pre">]</span></span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">tol</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference external" href="https://docs.python.org/3/library/functions.html#float" title="(in Python v3.11)"><span class="pre">float</span></a></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">1e-05</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">maximize</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference external" href="https://docs.python.org/3/library/functions.html#bool" title="(in Python v3.11)"><span class="pre">bool</span></a></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">True</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">max_delta</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference external" href="https://docs.python.org/3/library/typing.html#typing.Optional" title="(in Python v3.11)"><span class="pre">Optional</span></a><span class="p"><span class="pre">[</span></span><a class="reference external" href="https://docs.python.org/3/library/functions.html#float" title="(in Python v3.11)"><span class="pre">float</span></a><span class="p"><span class="pre">]</span></span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#hoomd.tune.GradientDescent" title="Permalink to this definition">#</a></dt>
+<dd><p>Bases: <a class="reference internal" href="#hoomd.tune.Optimizer" title="hoomd.tune.solve.Optimizer"><code class="xref py py-class docutils literal notranslate"><span class="pre">Optimizer</span></code></a></p>
+<p>Solves equations of <span class="math notranslate nohighlight">\(min_x f(x)\)</span> using gradient descent.</p>
+<p>Derivatives are computed using the forward difference.</p>
+<p>The solver updates <code class="docutils literal notranslate"><span class="pre">x</span></code> each step via,</p>
+<div class="math-wrapper docutils container">
+<div class="math notranslate nohighlight">
+\[x_n = x_{n-1} - \alpha {\left (1 - \kappa) \nabla f
+                        + \kappa \Delta_{n-1} \right)}\]</div>
+</div>
+<p>where <span class="math notranslate nohighlight">\(\Delta\)</span> is the last step size. This gives the optimizer a sense
+of momentum which for noisy (stochastic) optimization can lead to smoother
+optimization. Due to the need for two values to compute a derivative, then
+first time this is called it makes a slight jump higher or lower to start
+the method.</p>
+<p>The solver will stop updating when a maximum is detected (i.e. the step size
+is smaller than <code class="docutils literal notranslate"><span class="pre">tol</span></code>).</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>alpha</strong> (<a class="reference internal" href="module-hoomd-variant.html#hoomd.variant.variant_like" title="hoomd.variant.variant_like"><code class="xref any py py-data docutils literal notranslate"><span class="pre">hoomd.variant.variant_like</span></code></a>, optional) – Either a number between
+0 and 1 used to dampen the rate of change in x or a variant that
+varies not by timestep but by the number of times <a class="reference internal" href="#hoomd.tune.GradientDescent.solve" title="hoomd.tune.GradientDescent.solve"><code class="xref any py py-meth docutils literal notranslate"><span class="pre">solve</span></code></a> has been
+called (i.e. the number of steps taken) (defaults to 0.1). <code class="docutils literal notranslate"><span class="pre">alpha</span></code>
+scales the corrections to x each iteration.  Larger values of
+<code class="docutils literal notranslate"><span class="pre">alpha</span></code> lead to larger changes while a <code class="docutils literal notranslate"><span class="pre">alpha</span></code> of 0 leads to no
+change in x at all.</p></li>
+<li><p><strong>kappa</strong> (<a class="reference external" href="https://numpy.org/doc/stable/reference/generated/numpy.ndarray.html#numpy.ndarray" title="(in NumPy v1.24)"><code class="xref any docutils literal notranslate"><span class="pre">numpy.ndarray</span></code></a>, optional) – Real number array that determines how
+much of the previous steps’ directions to use (defaults to <code class="docutils literal notranslate"><span class="pre">None</span></code>
+which does no averaging over past step directions). The array values
+correspond to weight that the <span class="math notranslate nohighlight">\(N\)</span> last steps are weighted when
+combined with the current step. The current step is weighted by
+<span class="math notranslate nohighlight">\(1 - \sum_{i=1}^{N} \kappa_i\)</span>.</p></li>
+<li><p><strong>tol</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#float" title="(in Python v3.11)"><code class="xref any docutils literal notranslate"><span class="pre">float</span></code></a>, optional) – The absolute tolerance for convergence of
+y, (defaults to <code class="docutils literal notranslate"><span class="pre">1e-5</span></code>).</p></li>
+<li><p><strong>maximize</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#bool" title="(in Python v3.11)"><code class="xref any docutils literal notranslate"><span class="pre">bool</span></code></a>, optional) – Whether or not to maximize function
+(defaults to <code class="docutils literal notranslate"><span class="pre">True</span></code>).</p></li>
+<li><p><strong>max_delta</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#float" title="(in Python v3.11)"><code class="xref any docutils literal notranslate"><span class="pre">float</span></code></a>, optional) – The maximum step size to allow (defaults
+to <code class="docutils literal notranslate"><span class="pre">None</span></code> which allows a step size of any length).</p></li>
+</ul>
+</dd>
+</dl>
+<dl class="py attribute">
+<dt class="sig sig-object py" id="hoomd.tune.GradientDescent.kappa">
+<span class="sig-name descname"><span class="pre">kappa</span></span><a class="headerlink" href="#hoomd.tune.GradientDescent.kappa" title="Permalink to this definition">#</a></dt>
+<dd><p>Real number array that determines how much of the
+previous steps’ directions to use. The array values correspond to
+weight that the <span class="math notranslate nohighlight">\(N\)</span> last steps are weighted when combined with
+the current step. The current step is weighted by
+<span class="math notranslate nohighlight">\(1 - \sum_{i=1}^{N} \kappa_i\)</span>.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Type<span class="colon">:</span></dt>
+<dd class="field-odd"><p><a class="reference external" href="https://numpy.org/doc/stable/reference/generated/numpy.ndarray.html#numpy.ndarray" title="(in NumPy v1.24)">numpy.ndarray</a></p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="hoomd.tune.GradientDescent.tol">
+<span class="sig-name descname"><span class="pre">tol</span></span><a class="headerlink" href="#hoomd.tune.GradientDescent.tol" title="Permalink to this definition">#</a></dt>
+<dd><p>The absolute tolerance for convergence of y.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Type<span class="colon">:</span></dt>
+<dd class="field-odd"><p><a class="reference external" href="https://docs.python.org/3/library/functions.html#float" title="(in Python v3.11)">float</a></p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="hoomd.tune.GradientDescent.maximize">
+<span class="sig-name descname"><span class="pre">maximize</span></span><a class="headerlink" href="#hoomd.tune.GradientDescent.maximize" title="Permalink to this definition">#</a></dt>
+<dd><p>Whether or not to maximize function.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Type<span class="colon">:</span></dt>
+<dd class="field-odd"><p><a class="reference external" href="https://docs.python.org/3/library/functions.html#bool" title="(in Python v3.11)">bool</a></p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="hoomd.tune.GradientDescent.max_delta">
+<span class="sig-name descname"><span class="pre">max_delta</span></span><a class="headerlink" href="#hoomd.tune.GradientDescent.max_delta" title="Permalink to this definition">#</a></dt>
+<dd><p>The maximum step size to allow.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Type<span class="colon">:</span></dt>
+<dd class="field-odd"><p><a class="reference external" href="https://docs.python.org/3/library/functions.html#float" title="(in Python v3.11)">float</a></p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="hoomd.tune.GradientDescent.__eq__">
+<span class="sig-name descname"><span class="pre">__eq__</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">other</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#hoomd.tune.GradientDescent.__eq__" title="Permalink to this definition">#</a></dt>
+<dd><p>Test for equality.</p>
+</dd></dl>
+
+<dl class="py property">
+<dt class="sig sig-object py" id="hoomd.tune.GradientDescent.alpha">
+<em class="property"><span class="pre">property</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">alpha</span></span><a class="headerlink" href="#hoomd.tune.GradientDescent.alpha" title="Permalink to this definition">#</a></dt>
+<dd><p>Number between 0 and 1 that dampens of change in x.</p>
+<p>Larger values of <code class="docutils literal notranslate"><span class="pre">alpha</span></code> lead to larger changes while a <code class="docutils literal notranslate"><span class="pre">alpha</span></code>
+of 0 leads to no change in x at all. The property returns the current
+<code class="docutils literal notranslate"><span class="pre">alpha</span></code> given the current number of steps.</p>
+<p>The property can be set as in the constructor.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Type<span class="colon">:</span></dt>
+<dd class="field-odd"><p><a class="reference external" href="https://docs.python.org/3/library/functions.html#float" title="(in Python v3.11)">float</a></p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="hoomd.tune.GradientDescent.reset">
+<span class="sig-name descname"><span class="pre">reset</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#hoomd.tune.GradientDescent.reset" title="Permalink to this definition">#</a></dt>
+<dd><p>Reset all solving internals.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="hoomd.tune.GradientDescent.solve">
+<span class="sig-name descname"><span class="pre">solve</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">tunables</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#hoomd.tune.GradientDescent.solve" title="Permalink to this definition">#</a></dt>
+<dd><p>Iterates towards a solution for a list of tunables.</p>
+<p>If a y for one of the <code class="docutils literal notranslate"><span class="pre">tunables</span></code> is <code class="docutils literal notranslate"><span class="pre">None</span></code> then we skip that
+<code class="docutils literal notranslate"><span class="pre">tunable</span></code>. Skipping implies that the quantity is not tuned and <a class="reference internal" href="#hoomd.tune.GradientDescent.solve" title="hoomd.tune.GradientDescent.solve"><code class="xref any py py-meth docutils literal notranslate"><span class="pre">solve</span></code></a>
+will return <a class="reference external" href="https://docs.python.org/3/library/constants.html#False" title="(in Python v3.11)"><code class="xref any docutils literal notranslate"><span class="pre">False</span></code></a>.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>tunables</strong> (list[<a class="reference internal" href="#hoomd.tune.ManualTuneDefinition" title="hoomd.tune.ManualTuneDefinition"><code class="xref any py py-class docutils literal notranslate"><span class="pre">hoomd.tune.ManualTuneDefinition</span></code></a>]) – A list of
+tunable objects that represent a relationship f(x) = y.</p>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>Returns whether or not all tunables were considered tuned by
+the object.</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p><a class="reference external" href="https://docs.python.org/3/library/functions.html#bool" title="(in Python v3.11)">bool</a></p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="hoomd.tune.GradientDescent.solve_one">
+<span class="sig-name descname"><span class="pre">solve_one</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">tunable</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#hoomd.tune.GradientDescent.solve_one" title="Permalink to this definition">#</a></dt>
+<dd><p>Solve one step.</p>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="py class">
+<dt class="sig sig-object py" id="hoomd.tune.GridOptimizer">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">hoomd.tune.</span></span><span class="sig-name descname"><span class="pre">GridOptimizer</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">n_bins</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference external" href="https://docs.python.org/3/library/functions.html#int" title="(in Python v3.11)"><span class="pre">int</span></a></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">5</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">n_rounds</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference external" href="https://docs.python.org/3/library/functions.html#int" title="(in Python v3.11)"><span class="pre">int</span></a></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">1</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">maximize</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference external" href="https://docs.python.org/3/library/functions.html#bool" title="(in Python v3.11)"><span class="pre">bool</span></a></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">True</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#hoomd.tune.GridOptimizer" title="Permalink to this definition">#</a></dt>
+<dd><p>Bases: <a class="reference internal" href="#hoomd.tune.Optimizer" title="hoomd.tune.solve.Optimizer"><code class="xref py py-class docutils literal notranslate"><span class="pre">Optimizer</span></code></a></p>
+<p>Optimize by consistently narrowing the range where the extrema is.</p>
+<p>The algorithm is as follows. Given a domain <span class="math notranslate nohighlight">\(d = [a, b]\)</span>, <span class="math notranslate nohighlight">\(d\)</span> is
+broken up into <code class="docutils literal notranslate"><span class="pre">n_bins</span></code> subsequent bins. For the next <code class="docutils literal notranslate"><span class="pre">n_bins</span></code> calls,
+the optimizer tests the function value at each bin center. The next call
+does one of two things. If the number of rounds has reached <code class="docutils literal notranslate"><span class="pre">n_rounds</span></code> the
+optimization is done, and the center of the best bin is the solution.
+Otherwise, another round is performed where the bin’s extent is the new
+domain.</p>
+<div class="admonition warning">
+<p class="admonition-title">Warning</p>
+<p>Changing a tunables domain during usage of a <a class="reference internal" href="#hoomd.tune.GridOptimizer" title="hoomd.tune.GridOptimizer"><code class="xref any py py-class docutils literal notranslate"><span class="pre">GridOptimizer</span></code></a> results
+in incorrect behavior.</p>
+</div>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>n_bins</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#int" title="(in Python v3.11)"><code class="xref any docutils literal notranslate"><span class="pre">int</span></code></a>, optional) – The number of bins in the range to test
+(defaults to 5).</p></li>
+<li><p><strong>n_rounds</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#int" title="(in Python v3.11)"><code class="xref any docutils literal notranslate"><span class="pre">int</span></code></a>, optional) – The number of rounds to perform the
+optimization over (defaults to 1).</p></li>
+<li><p><strong>maximize</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#bool" title="(in Python v3.11)"><code class="xref any docutils literal notranslate"><span class="pre">bool</span></code></a>, optional) – Whether to maximize or minimize the
+function (defaults to <code class="docutils literal notranslate"><span class="pre">True</span></code>).</p></li>
+</ul>
+</dd>
+</dl>
+<dl class="py method">
+<dt class="sig sig-object py" id="hoomd.tune.GridOptimizer.__eq__">
+<span class="sig-name descname"><span class="pre">__eq__</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">other</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#hoomd.tune.GridOptimizer.__eq__" title="Permalink to this definition">#</a></dt>
+<dd><p>Test for equality.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="hoomd.tune.GridOptimizer.reset">
+<span class="sig-name descname"><span class="pre">reset</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#hoomd.tune.GridOptimizer.reset" title="Permalink to this definition">#</a></dt>
+<dd><p>Reset all solving internals.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="hoomd.tune.GridOptimizer.solve_one">
+<span class="sig-name descname"><span class="pre">solve_one</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">tunable</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#hoomd.tune.GridOptimizer.solve_one" title="Permalink to this definition">#</a></dt>
+<dd><p>Perform one step of optimization protocol.</p>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="py class">
+<dt class="sig sig-object py" id="hoomd.tune.LoadBalancer">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">hoomd.tune.</span></span><span class="sig-name descname"><span class="pre">LoadBalancer</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">trigger</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">x</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">True</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">y</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">True</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">z</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">True</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">tolerance</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">1.02</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">max_iterations</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">1</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#hoomd.tune.LoadBalancer" title="Permalink to this definition">#</a></dt>
+<dd><p>Bases: <a class="reference internal" href="module-hoomd-operation.html#hoomd.operation.Tuner" title="hoomd.operation.Tuner"><code class="xref py py-class docutils literal notranslate"><span class="pre">Tuner</span></code></a></p>
+<p>Adjusts the boundaries of the domain decomposition.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>trigger</strong> (<a class="reference internal" href="module-hoomd-triggers.html#hoomd.trigger.trigger_like" title="hoomd.trigger.trigger_like"><em>hoomd.trigger.trigger_like</em></a>) – Select the timesteps on which to
+perform load balancing.</p></li>
+<li><p><strong>x</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#bool" title="(in Python v3.11)"><em>bool</em></a>) – Balance the <strong>x</strong> direction when <a class="reference external" href="https://docs.python.org/3/library/constants.html#True" title="(in Python v3.11)"><code class="xref any docutils literal notranslate"><span class="pre">True</span></code></a>.</p></li>
+<li><p><strong>y</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#bool" title="(in Python v3.11)"><em>bool</em></a>) – Balance the <strong>y</strong> direction when <a class="reference external" href="https://docs.python.org/3/library/constants.html#True" title="(in Python v3.11)"><code class="xref any docutils literal notranslate"><span class="pre">True</span></code></a>.</p></li>
+<li><p><strong>z</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#bool" title="(in Python v3.11)"><em>bool</em></a>) – Balance the <strong>z</strong> direction when <a class="reference external" href="https://docs.python.org/3/library/constants.html#True" title="(in Python v3.11)"><code class="xref any docutils literal notranslate"><span class="pre">True</span></code></a>.</p></li>
+<li><p><strong>tolerance</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#float" title="(in Python v3.11)"><em>float</em></a>) – Load imbalance tolerance.</p></li>
+<li><p><strong>max_iterations</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#int" title="(in Python v3.11)"><em>int</em></a>) – Maximum number of iterations to
+attempt in a single step.</p></li>
+</ul>
+</dd>
+</dl>
+<p><a class="reference internal" href="#hoomd.tune.LoadBalancer" title="hoomd.tune.LoadBalancer"><code class="xref any py py-class docutils literal notranslate"><span class="pre">LoadBalancer</span></code></a> adjusts the boundaries of the MPI domains to distribute
+the particle load close to evenly between them. The load imbalance is
+defined as the number of particles owned by a rank divided by the average
+number of particles per rank if the particles had a uniform distribution:</p>
+<div class="math-wrapper docutils container">
+<div class="math notranslate nohighlight">
+\[I = \frac{N_i}{N / P}\]</div>
+</div>
+<p>where <span class="math notranslate nohighlight">\(N_i\)</span> is the number of particles on rank <span class="math notranslate nohighlight">\(i\)</span>, <span class="math notranslate nohighlight">\(N\)</span> is
+the total number of particles, and <span class="math notranslate nohighlight">\(P\)</span> is the number of ranks.</p>
+<p>In order to adjust the load imbalance, <a class="reference internal" href="#hoomd.tune.LoadBalancer" title="hoomd.tune.LoadBalancer"><code class="xref any py py-class docutils literal notranslate"><span class="pre">LoadBalancer</span></code></a> scales by the inverse
+of the imbalance factor. To reduce oscillations and communication overhead,
+it does not move a domain more than 5% of its current size in a single
+rebalancing step, and not more than half the distance to its neighbors.</p>
+<p>Simulations with interfaces (so that there is a particle density gradient)
+or clustering should benefit from load balancing. The potential speedup is
+<span class="math notranslate nohighlight">\(I-1.0\)</span>, so that if the largest imbalance is 1.4, then the user can
+expect a 40% speedup in the simulation. This is of course an estimate that
+assumes that all algorithms are linear in <span class="math notranslate nohighlight">\(N\)</span>, all GPUs are fully
+occupied, and the simulation is limited by the speed of the slowest
+processor. If you have a simulation where, for example, some particles have
+significantly more pair force neighbors than others, this estimate of the
+load imbalance may not produce the optimal results.</p>
+<p>A load balancing adjustment is only performed when the maximum load
+imbalance exceeds a <em>tolerance</em>. The ideal load balance is 1.0, so setting
+<em>tolerance</em> less than 1.0 will force an adjustment every update. The load
+balancer can attempt multiple iterations of balancing on each update, and up
+to <em>maxiter</em> attempts can be made. The optimal values of update and
+<em>maxiter</em> will depend on your simulation.</p>
+<p>Load balancing can be performed independently and sequentially for each
+dimension of the simulation box. A small performance increase may be
+obtained by disabling load balancing along dimensions that are known to be
+homogeneous.  For example, if there is a planar vapor-liquid interface
+normal to the <span class="math notranslate nohighlight">\(z\)</span> axis, then it may be advantageous to disable
+balancing along <span class="math notranslate nohighlight">\(x\)</span> and <span class="math notranslate nohighlight">\(y\)</span>.</p>
+<p>In systems that are well-behaved, there is minimal overhead of balancing
+with a small update. However, if the system is not capable of being balanced
+(for example, due to the density distribution or minimum domain size),
+having a small update and high <em>maxiter</em> may lead to a large performance
+loss. In such systems, it is currently best to either balance infrequently
+or to balance once in a short test run and then set the decomposition
+statically in a separate initialization.</p>
+<p>Balancing is ignored if there is no domain decomposition available (MPI is
+not built or is running on a single rank).</p>
+<dl class="py attribute">
+<dt class="sig sig-object py" id="hoomd.tune.LoadBalancer.trigger">
+<span class="sig-name descname"><span class="pre">trigger</span></span><a class="headerlink" href="#hoomd.tune.LoadBalancer.trigger" title="Permalink to this definition">#</a></dt>
+<dd><p>Select the timesteps on which to
+perform load balancing.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Type<span class="colon">:</span></dt>
+<dd class="field-odd"><p><a class="reference internal" href="module-hoomd-triggers.html#hoomd.trigger.Trigger" title="hoomd.trigger.Trigger">hoomd.trigger.Trigger</a></p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="hoomd.tune.LoadBalancer.x">
+<span class="sig-name descname"><span class="pre">x</span></span><a class="headerlink" href="#hoomd.tune.LoadBalancer.x" title="Permalink to this definition">#</a></dt>
+<dd><p>Balance the <strong>x</strong> direction when <a class="reference external" href="https://docs.python.org/3/library/constants.html#True" title="(in Python v3.11)"><code class="xref any docutils literal notranslate"><span class="pre">True</span></code></a>.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Type<span class="colon">:</span></dt>
+<dd class="field-odd"><p><a class="reference external" href="https://docs.python.org/3/library/functions.html#bool" title="(in Python v3.11)">bool</a></p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="hoomd.tune.LoadBalancer.y">
+<span class="sig-name descname"><span class="pre">y</span></span><a class="headerlink" href="#hoomd.tune.LoadBalancer.y" title="Permalink to this definition">#</a></dt>
+<dd><p>Balance the <strong>y</strong> direction when <a class="reference external" href="https://docs.python.org/3/library/constants.html#True" title="(in Python v3.11)"><code class="xref any docutils literal notranslate"><span class="pre">True</span></code></a>.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Type<span class="colon">:</span></dt>
+<dd class="field-odd"><p><a class="reference external" href="https://docs.python.org/3/library/functions.html#bool" title="(in Python v3.11)">bool</a></p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="hoomd.tune.LoadBalancer.z">
+<span class="sig-name descname"><span class="pre">z</span></span><a class="headerlink" href="#hoomd.tune.LoadBalancer.z" title="Permalink to this definition">#</a></dt>
+<dd><p>Balance the <strong>z</strong> direction when <a class="reference external" href="https://docs.python.org/3/library/constants.html#True" title="(in Python v3.11)"><code class="xref any docutils literal notranslate"><span class="pre">True</span></code></a>.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Type<span class="colon">:</span></dt>
+<dd class="field-odd"><p><a class="reference external" href="https://docs.python.org/3/library/functions.html#bool" title="(in Python v3.11)">bool</a></p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="hoomd.tune.LoadBalancer.tolerance">
+<span class="sig-name descname"><span class="pre">tolerance</span></span><a class="headerlink" href="#hoomd.tune.LoadBalancer.tolerance" title="Permalink to this definition">#</a></dt>
+<dd><p>Load imbalance tolerance.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Type<span class="colon">:</span></dt>
+<dd class="field-odd"><p><a class="reference external" href="https://docs.python.org/3/library/functions.html#float" title="(in Python v3.11)">float</a></p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="hoomd.tune.LoadBalancer.max_iterations">
+<span class="sig-name descname"><span class="pre">max_iterations</span></span><a class="headerlink" href="#hoomd.tune.LoadBalancer.max_iterations" title="Permalink to this definition">#</a></dt>
+<dd><p>Maximum number of iterations to
+attempt in a single step.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Type<span class="colon">:</span></dt>
+<dd class="field-odd"><p><a class="reference external" href="https://docs.python.org/3/library/functions.html#int" title="(in Python v3.11)">int</a></p>
+</dd>
+</dl>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="py class">
+<dt class="sig sig-object py" id="hoomd.tune.Optimizer">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">hoomd.tune.</span></span><span class="sig-name descname"><span class="pre">Optimizer</span></span><a class="headerlink" href="#hoomd.tune.Optimizer" title="Permalink to this definition">#</a></dt>
+<dd><p>Bases: <a class="reference internal" href="#hoomd.tune.SolverStep" title="hoomd.tune.solve.SolverStep"><code class="xref py py-class docutils literal notranslate"><span class="pre">SolverStep</span></code></a></p>
+<p>Abstract base class for optimizing <span class="math notranslate nohighlight">\(f(x)\)</span>.</p>
+</dd></dl>
+
+<dl class="py class">
+<dt class="sig sig-object py" id="hoomd.tune.ParticleSorter">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">hoomd.tune.</span></span><span class="sig-name descname"><span class="pre">ParticleSorter</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">trigger</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">200</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">grid</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#hoomd.tune.ParticleSorter" title="Permalink to this definition">#</a></dt>
+<dd><p>Bases: <a class="reference internal" href="module-hoomd-operation.html#hoomd.operation.Tuner" title="hoomd.operation.Tuner"><code class="xref py py-class docutils literal notranslate"><span class="pre">Tuner</span></code></a></p>
+<p>Order particles in memory to improve performance.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>trigger</strong> (<a class="reference internal" href="module-hoomd-triggers.html#hoomd.trigger.trigger_like" title="hoomd.trigger.trigger_like"><em>hoomd.trigger.trigger_like</em></a>) – Select the timesteps on which to
+sort. Defaults to a <code class="docutils literal notranslate"><span class="pre">hoomd.trigger.Periodic(200)</span></code> trigger.</p></li>
+<li><p><strong>grid</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#int" title="(in Python v3.11)"><em>int</em></a>) – Resolution of the grid to use when sorting. The default
+value of <a class="reference external" href="https://docs.python.org/3/library/constants.html#None" title="(in Python v3.11)"><code class="xref any docutils literal notranslate"><span class="pre">None</span></code></a> sets <code class="docutils literal notranslate"><span class="pre">grid=4096</span></code> in 2D simulations and
+<code class="docutils literal notranslate"><span class="pre">grid=256</span></code> in 3D simulations.</p></li>
+</ul>
+</dd>
+</dl>
+<p><a class="reference internal" href="#hoomd.tune.ParticleSorter" title="hoomd.tune.ParticleSorter"><code class="xref any py py-class docutils literal notranslate"><span class="pre">ParticleSorter</span></code></a> improves simulation performance by sorting the particles in
+memory along a space-filling curve. This takes particles that are close in
+space and places them close in memory, leading to a higher rate of
+cache hits when computing pair potentials.</p>
+<div class="admonition note">
+<p class="admonition-title">Note</p>
+<p>New <a class="reference internal" href="package-hoomd.html#hoomd.Operations" title="hoomd.Operations"><code class="xref any py py-class docutils literal notranslate"><span class="pre">hoomd.Operations</span></code></a> instances include a <a class="reference internal" href="#hoomd.tune.ParticleSorter" title="hoomd.tune.ParticleSorter"><code class="xref any py py-class docutils literal notranslate"><span class="pre">ParticleSorter</span></code></a>
+constructed with default parameters.</p>
+</div>
+<dl class="py attribute">
+<dt class="sig sig-object py" id="hoomd.tune.ParticleSorter.trigger">
+<span class="sig-name descname"><span class="pre">trigger</span></span><a class="headerlink" href="#hoomd.tune.ParticleSorter.trigger" title="Permalink to this definition">#</a></dt>
+<dd><p>Select the timesteps on which to sort.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Type<span class="colon">:</span></dt>
+<dd class="field-odd"><p><a class="reference internal" href="module-hoomd-triggers.html#hoomd.trigger.Trigger" title="hoomd.trigger.Trigger">hoomd.trigger.Trigger</a></p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="hoomd.tune.ParticleSorter.grid">
+<span class="sig-name descname"><span class="pre">grid</span></span><a class="headerlink" href="#hoomd.tune.ParticleSorter.grid" title="Permalink to this definition">#</a></dt>
+<dd><p>Set the resolution of the space-filling curve.
+<a class="reference internal" href="#hoomd.tune.ParticleSorter.grid" title="hoomd.tune.ParticleSorter.grid"><code class="xref any py py-attr docutils literal notranslate"><span class="pre">grid</span></code></a> rounds up to the nearest power of 2 when set. Larger values
+of <a class="reference internal" href="#hoomd.tune.ParticleSorter.grid" title="hoomd.tune.ParticleSorter.grid"><code class="xref any py py-attr docutils literal notranslate"><span class="pre">grid</span></code></a> provide more accurate space-filling curves, but consume
+more memory (<code class="docutils literal notranslate"><span class="pre">grid**D</span> <span class="pre">*</span> <span class="pre">4</span></code> bytes, where <em>D</em> is the dimensionality
+of the system).</p>
+<dl class="field-list simple">
+<dt class="field-odd">Type<span class="colon">:</span></dt>
+<dd class="field-odd"><p><a class="reference external" href="https://docs.python.org/3/library/functions.html#int" title="(in Python v3.11)">int</a></p>
+</dd>
+</dl>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="py class">
+<dt class="sig sig-object py" id="hoomd.tune.RootSolver">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">hoomd.tune.</span></span><span class="sig-name descname"><span class="pre">RootSolver</span></span><a class="headerlink" href="#hoomd.tune.RootSolver" title="Permalink to this definition">#</a></dt>
+<dd><p>Bases: <a class="reference internal" href="#hoomd.tune.SolverStep" title="hoomd.tune.solve.SolverStep"><code class="xref py py-class docutils literal notranslate"><span class="pre">SolverStep</span></code></a></p>
+<p>Abstract base class for finding x such that <span class="math notranslate nohighlight">\(f(x) = 0\)</span>.</p>
+<p>For solving for a non-zero value, <span class="math notranslate nohighlight">\(f(x) - y_t = 0\)</span> is solved.</p>
+</dd></dl>
+
+<dl class="py class">
+<dt class="sig sig-object py" id="hoomd.tune.ScaleSolver">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">hoomd.tune.</span></span><span class="sig-name descname"><span class="pre">ScaleSolver</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">max_scale</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">2.0</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">gamma</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">2.0</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">correlation</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'positive'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">tol</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">1e-05</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#hoomd.tune.ScaleSolver" title="Permalink to this definition">#</a></dt>
+<dd><p>Bases: <a class="reference internal" href="#hoomd.tune.RootSolver" title="hoomd.tune.solve.RootSolver"><code class="xref py py-class docutils literal notranslate"><span class="pre">RootSolver</span></code></a></p>
+<p>Solves equations of f(x) = y using a ratio of y with the target.</p>
+<p>Each time this solver is called it takes updates according to the following
+equation if the correlation is positive:</p>
+<div class="math-wrapper docutils container">
+<div class="math notranslate nohighlight">
+\[x_n = \min{\left(\frac{\gamma + t}{y + \gamma}, s_{max}\right)} \cdot x\]</div>
+</div>
+<p>and</p>
+<div class="math-wrapper docutils container">
+<div class="math notranslate nohighlight">
+\[x_n = \min{\left(\frac{y + \gamma}{\gamma + t}, s_{max}\right)} \cdot x\]</div>
+</div>
+<p>if the correlation is negative, where <span class="math notranslate nohighlight">\(t\)</span> is the target and
+<span class="math notranslate nohighlight">\(x_n\)</span> is the new x.</p>
+<p>The solver will stop updating when <span class="math notranslate nohighlight">\(\lvert y - t \rvert \le tol\)</span>.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>max_scale</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#float" title="(in Python v3.11)"><code class="xref any docutils literal notranslate"><span class="pre">float</span></code></a>, optional) – The maximum amount to scale the
+current x value with, defaults to 2.0.</p></li>
+<li><p><strong>gamma</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#float" title="(in Python v3.11)"><code class="xref any docutils literal notranslate"><span class="pre">float</span></code></a>, optional) – nonnegative real number used to dampen
+or increase the rate of change in x. <code class="docutils literal notranslate"><span class="pre">gamma</span></code> is added to the
+numerator and denominator of the <code class="docutils literal notranslate"><span class="pre">y</span> <span class="pre">/</span> <span class="pre">target</span></code> ratio. Larger values
+of <code class="docutils literal notranslate"><span class="pre">gamma</span></code> lead to smaller changes while a <code class="docutils literal notranslate"><span class="pre">gamma</span></code> of 0 leads to
+scaling x by exactly the <code class="docutils literal notranslate"><span class="pre">y</span> <span class="pre">/</span> <span class="pre">target</span></code> ratio.</p></li>
+<li><p><strong>correlation</strong> (<a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.11)"><code class="xref any docutils literal notranslate"><span class="pre">str</span></code></a>, optional) – Defines whether the relationship
+between x and y is of a positive or negative correlation, defaults
+to ‘positive’. This determines which direction to scale x in for a
+given y.</p></li>
+<li><p><strong>tol</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#float" title="(in Python v3.11)"><code class="xref any docutils literal notranslate"><span class="pre">float</span></code></a>, optional) – The absolute tolerance for convergence of
+y, defaults to 1e-5.</p></li>
+</ul>
+</dd>
+</dl>
+<div class="admonition note">
+<p class="admonition-title">Note</p>
+<p>This solver is only usable when quantities are strictly positive.</p>
+</div>
+<dl class="py method">
+<dt class="sig sig-object py" id="hoomd.tune.ScaleSolver.__eq__">
+<span class="sig-name descname"><span class="pre">__eq__</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">other</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#hoomd.tune.ScaleSolver.__eq__" title="Permalink to this definition">#</a></dt>
+<dd><p>Test for equality.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="hoomd.tune.ScaleSolver.reset">
+<span class="sig-name descname"><span class="pre">reset</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#hoomd.tune.ScaleSolver.reset" title="Permalink to this definition">#</a></dt>
+<dd><p>Reset all solving internals.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="hoomd.tune.ScaleSolver.solve_one">
+<span class="sig-name descname"><span class="pre">solve_one</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">tunable</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#hoomd.tune.ScaleSolver.solve_one" title="Permalink to this definition">#</a></dt>
+<dd><p>Solve one step.</p>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="py class">
+<dt class="sig sig-object py" id="hoomd.tune.SecantSolver">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">hoomd.tune.</span></span><span class="sig-name descname"><span class="pre">SecantSolver</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">gamma</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">0.9</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">tol</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">1e-05</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#hoomd.tune.SecantSolver" title="Permalink to this definition">#</a></dt>
+<dd><p>Bases: <a class="reference internal" href="#hoomd.tune.RootSolver" title="hoomd.tune.solve.RootSolver"><code class="xref py py-class docutils literal notranslate"><span class="pre">RootSolver</span></code></a></p>
+<p>Solves equations of f(x) = y using the secant method.</p>
+<p>The solver updates <code class="docutils literal notranslate"><span class="pre">x</span></code> each step via,</p>
+<div class="math-wrapper docutils container">
+<div class="math notranslate nohighlight">
+\[x_n = x - \gamma \cdot (y - t) \cdot \frac{x - x_{o}}{y - y_{old}}\]</div>
+</div>
+<p>where <span class="math notranslate nohighlight">\(o\)</span> represent the old values, <span class="math notranslate nohighlight">\(n\)</span> the new, and <span class="math notranslate nohighlight">\(t\)</span>
+the target. Due to the need for a previous value, then first time this is
+called it makes a slight jump higher or lower to start the method.</p>
+<p>The solver will stop updating when <span class="math notranslate nohighlight">\(\lvert y - t \rvert \le tol\)</span>.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>gamma</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#float" title="(in Python v3.11)"><code class="xref any docutils literal notranslate"><span class="pre">float</span></code></a>, optional) – real number between 0 and 1 used to
+dampen the rate of change in x. <code class="docutils literal notranslate"><span class="pre">gamma</span></code> scales the corrections to
+x each iteration.  Larger values of <code class="docutils literal notranslate"><span class="pre">gamma</span></code> lead to larger changes
+while a <code class="docutils literal notranslate"><span class="pre">gamma</span></code> of 0 leads to no change in x at all.</p></li>
+<li><p><strong>tol</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#float" title="(in Python v3.11)"><code class="xref any docutils literal notranslate"><span class="pre">float</span></code></a>, optional) – The absolute tolerance for convergence of
+y, defaults to 1e-5.</p></li>
+</ul>
+</dd>
+</dl>
+<div class="admonition note">
+<p class="admonition-title">Note</p>
+<p>Tempering the solver with a smaller than 1 <code class="docutils literal notranslate"><span class="pre">gamma</span></code> value is crucial
+for numeric stability. If instability is found, then lowering <code class="docutils literal notranslate"><span class="pre">gamma</span></code>
+accordingly should help.</p>
+</div>
+<dl class="py method">
+<dt class="sig sig-object py" id="hoomd.tune.SecantSolver.__eq__">
+<span class="sig-name descname"><span class="pre">__eq__</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">other</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#hoomd.tune.SecantSolver.__eq__" title="Permalink to this definition">#</a></dt>
+<dd><p>Test for equality.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="hoomd.tune.SecantSolver.reset">
+<span class="sig-name descname"><span class="pre">reset</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#hoomd.tune.SecantSolver.reset" title="Permalink to this definition">#</a></dt>
+<dd><p>Reset all solving internals.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="hoomd.tune.SecantSolver.solve_one">
+<span class="sig-name descname"><span class="pre">solve_one</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">tunable</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#hoomd.tune.SecantSolver.solve_one" title="Permalink to this definition">#</a></dt>
+<dd><p>Solve one step.</p>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="py class">
+<dt class="sig sig-object py" id="hoomd.tune.SolverStep">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">hoomd.tune.</span></span><span class="sig-name descname"><span class="pre">SolverStep</span></span><a class="headerlink" href="#hoomd.tune.SolverStep" title="Permalink to this definition">#</a></dt>
+<dd><p>Bases: <a class="reference external" href="https://docs.python.org/3/library/functions.html#object" title="(in Python v3.11)"><code class="xref py py-class docutils literal notranslate"><span class="pre">object</span></code></a></p>
+<p>Abstract base class various solver types.</p>
+<p>Requires a single method <a class="reference internal" href="#hoomd.tune.SolverStep.solve_one" title="hoomd.tune.SolverStep.solve_one"><code class="xref any py py-meth docutils literal notranslate"><span class="pre">solve_one</span></code></a> that steps forward one iteration in
+solving the given variable relationship. Users can use subclasses of this
+with <a class="reference internal" href="#hoomd.tune.ManualTuneDefinition" title="hoomd.tune.ManualTuneDefinition"><code class="xref any py py-class docutils literal notranslate"><span class="pre">hoomd.tune.ManualTuneDefinition</span></code></a> to tune attributes with a functional
+relation.</p>
+<div class="admonition note">
+<p class="admonition-title">Note</p>
+<p>A <a class="reference internal" href="#hoomd.tune.SolverStep" title="hoomd.tune.SolverStep"><code class="xref any py py-class docutils literal notranslate"><span class="pre">SolverStep</span></code></a> object requires manual iteration to converge. This is to
+support the use case of measuring quantities that require running the
+simulation for some amount of time after one iteration before
+remeasuring the dependent variable (i.e. the y). <a class="reference internal" href="#hoomd.tune.SolverStep" title="hoomd.tune.SolverStep"><code class="xref any py py-class docutils literal notranslate"><span class="pre">SolverStep</span></code></a> object can
+be used in <a class="reference internal" href="module-hoomd-custom.html#hoomd.custom.Action" title="hoomd.custom.Action"><code class="xref any py py-class docutils literal notranslate"><span class="pre">hoomd.custom.Action</span></code></a> subclasses for user defined tuners and
+updaters.</p>
+</div>
+<dl class="py method">
+<dt class="sig sig-object py" id="hoomd.tune.SolverStep.reset">
+<em class="property"><span class="pre">abstract</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">reset</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#hoomd.tune.SolverStep.reset" title="Permalink to this definition">#</a></dt>
+<dd><p>Reset all solving internals.</p>
+<p>This should put the solver in its initial state as if it has not seen
+any tunables or done any solving yet.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="hoomd.tune.SolverStep.solve">
+<span class="sig-name descname"><span class="pre">solve</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">tunables</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#hoomd.tune.SolverStep.solve" title="Permalink to this definition">#</a></dt>
+<dd><p>Iterates towards a solution for a list of tunables.</p>
+<p>If a y for one of the <code class="docutils literal notranslate"><span class="pre">tunables</span></code> is <code class="docutils literal notranslate"><span class="pre">None</span></code> then we skip that
+<code class="docutils literal notranslate"><span class="pre">tunable</span></code>. Skipping implies that the quantity is not tuned and <a class="reference internal" href="#hoomd.tune.SolverStep.solve" title="hoomd.tune.SolverStep.solve"><code class="xref any py py-meth docutils literal notranslate"><span class="pre">solve</span></code></a>
+will return <a class="reference external" href="https://docs.python.org/3/library/constants.html#False" title="(in Python v3.11)"><code class="xref any docutils literal notranslate"><span class="pre">False</span></code></a>.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>tunables</strong> (list[<a class="reference internal" href="#hoomd.tune.ManualTuneDefinition" title="hoomd.tune.ManualTuneDefinition"><code class="xref any py py-class docutils literal notranslate"><span class="pre">hoomd.tune.ManualTuneDefinition</span></code></a>]) – A list of
+tunable objects that represent a relationship f(x) = y.</p>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>Returns whether or not all tunables were considered tuned by
+the object.</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p><a class="reference external" href="https://docs.python.org/3/library/functions.html#bool" title="(in Python v3.11)">bool</a></p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="hoomd.tune.SolverStep.solve_one">
+<em class="property"><span class="pre">abstract</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">solve_one</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">tunable</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#hoomd.tune.SolverStep.solve_one" title="Permalink to this definition">#</a></dt>
+<dd><p>Takes in a tunable object and attempts to solve x for a specified y.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>tunable</strong> (<a class="reference internal" href="#hoomd.tune.ManualTuneDefinition" title="hoomd.tune.ManualTuneDefinition"><code class="xref any py py-class docutils literal notranslate"><span class="pre">hoomd.tune.ManualTuneDefinition</span></code></a>) – A tunable object that
+represents a relationship of f(x) = y.</p>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>Whether or not the tunable converged to the target.</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p><a class="reference external" href="https://docs.python.org/3/library/functions.html#bool" title="(in Python v3.11)">bool</a></p>
+</dd>
+</dl>
+</dd></dl>
+
+</dd></dl>
+
+</section>
+
+        </article>
+      </div>
+      <footer>
+        
+<div class="related-pages">
+<a class="next-page" href="module-hoomd-update.html">
+    <div class="page-info">
+        <div class="context">
+        <span>Next</span>
+        </div>
+        <div class="title">hoomd.update</div>
+    </div>
+    <svg class="furo-related-icon"><use href="#svg-arrow-right"></use></svg>
+    </a>
+<a class="prev-page" href="module-hoomd-triggers.html">
+    <svg class="furo-related-icon"><use href="#svg-arrow-right"></use></svg>
+    <div class="page-info">
+        <div class="context">
+        <span>Previous</span>
+        </div>
+        
+        <div class="title">hoomd.trigger</div>
+        
+    </div>
+    </a>
+</div>
+<div class="bottom-of-page">
+<div class="left-details">
+    <p>Development of HOOMD-blue is led by the <a href="https://glotzerlab.engin.umich.edu">Glotzer Group</a> at the <a href="https://umich.edu">University of Michigan</a> (supported by NSF DMR 1808342) with many <a href="credits.html">external contributions</a>.
+    </p>
+    <div class="copyright">
+        Copyright &#169; 2009-2023 The Regents of the University of Michigan
+    </div>
+    Made with <a href="https://www.sphinx-doc.org/">Sphinx</a> and <a class="muted-link" href="https://pradyunsg.me">@pradyunsg</a>'s
+    
+    <a href="https://github.com/pradyunsg/furo">Furo</a>
+    
+</div>
+<div class="right-details">
+    <a class="muted-link" href="http://umich.edu">
+    <img src="_static/umich-block-M.svg" alt="University of Michigan logo" style="width: 84px; float: right;" />
+    </a>
+</div>
+</div>
+
+      </footer>
+    </div>
+    <aside class="toc-drawer no-toc">
+      
+      
+      
+    </aside>
+  </div>
+</div><script data-url_root="./" id="documentation_options" src="_static/documentation_options.js"></script>
+    <script src="_static/jquery.js"></script>
+    <script src="_static/underscore.js"></script>
+    <script src="_static/_sphinx_javascript_frameworks_compat.js"></script>
+    <script src="_static/doctools.js"></script>
+    <script src="_static/scripts/furo.js"></script>
+    <script crossorigin="anonymous" integrity="sha256-Ae2Vz/4ePdIu6ZyI/5ZGsYnb+m0JlOmKPjt6XZ9JJkA=" src="https://cdnjs.cloudflare.com/ajax/libs/require.js/2.3.4/require.min.js"></script>
+    <script>window.MathJax = {"tex": {"inlineMath": [["$", "$"], ["\\(", "\\)"]], "processEscapes": true}, "options": {"ignoreHtmlClass": "tex2jax_ignore|mathjax_ignore|document", "processHtmlClass": "tex2jax_process|mathjax_process|math|output_area"}}</script>
+    <script defer="defer" src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
+    </body>
+</html>
