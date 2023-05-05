@@ -69,7 +69,7 @@ BoxDim BoxResizeUpdater::getCurrentBox(uint64_t timestep)
     {
     Scalar min = m_variant->min();
     Scalar max = m_variant->max();
-    Scalar cur_value = (*m_variant)(timestep);
+    Scalar cur_value = (*m_variant.x)(timestep);
     Scalar scale = 0;
     if (cur_value == max)
         {

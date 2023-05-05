@@ -173,92 +173,92 @@ class Ramp(_hoomd.VariantRamp, Variant):
 #     __eq__ = Variant._private_eq
 
 
-class Cycle(_hoomd.VariantCycle, Variant):
-    """A cycle of linear ramps.
+# class Cycle(_hoomd.VariantCycle, Variant):
+#     """A cycle of linear ramps.
 
-    Args:
-        A (float): The first value.
-        B (float): The second value.
-        t_start (int): The start time step.
-        t_A (int): The hold time at the first value.
-        t_AB (int): The time spent ramping from A to B.
-        t_B (int): The hold time at the second value.
-        t_BA (int): The time spent ramping from B to A.
+#     Args:
+#         A (float): The first value.
+#         B (float): The second value.
+#         t_start (int): The start time step.
+#         t_A (int): The hold time at the first value.
+#         t_AB (int): The time spent ramping from A to B.
+#         t_B (int): The hold time at the second value.
+#         t_BA (int): The time spent ramping from B to A.
 
-    `Cycle` holds the value *A* until time *t_start*. It continues holding that
-    value until *t_start + t_A*. Then it ramps linearly from *A* to *B* over
-    *t_AB* steps and holds the value *B* for *t_B* steps. After this, it ramps
-    back from *B* to *A* over *t_BA* steps and repeats the cycle starting with
-    *t_A*. `Cycle` repeats this cycle indefinitely.
+#     `Cycle` holds the value *A* until time *t_start*. It continues holding that
+#     value until *t_start + t_A*. Then it ramps linearly from *A* to *B* over
+#     *t_AB* steps and holds the value *B* for *t_B* steps. After this, it ramps
+#     back from *B* to *A* over *t_BA* steps and repeats the cycle starting with
+#     *t_A*. `Cycle` repeats this cycle indefinitely.
 
-    .. image:: variant-cycle.svg
-       :alt: Example plot of a cycle variant.
+#     .. image:: variant-cycle.svg
+#        :alt: Example plot of a cycle variant.
 
-    Attributes:
-        A (float): The first value.
-        B (float): The second value.
-        t_start (int): The start time step.
-        t_A (int): The holding time at A.
-        t_AB (int): The time spent ramping from A to B.
-        t_B (int): The holding time at B.
-        t_BA (int): The time spent ramping from B to A.
-    """
-    _eq_attrs = ("A", "B", "t_start", "t_A", "t_AB", "t_B", "t_BA")
+#     Attributes:
+#         A (float): The first value.
+#         B (float): The second value.
+#         t_start (int): The start time step.
+#         t_A (int): The holding time at A.
+#         t_AB (int): The time spent ramping from A to B.
+#         t_B (int): The holding time at B.
+#         t_BA (int): The time spent ramping from B to A.
+#     """
+#     _eq_attrs = ("A", "B", "t_start", "t_A", "t_AB", "t_B", "t_BA")
 
-    def __init__(self, A, B, t_start, t_A, t_AB, t_B, t_BA):
-        Variant.__init__(self)
-        _hoomd.VariantCycle.__init__(self, A, B, t_start, t_A, t_AB, t_B, t_BA)
+#     def __init__(self, A, B, t_start, t_A, t_AB, t_B, t_BA):
+#         Variant.__init__(self)
+#         _hoomd.VariantCycle.__init__(self, A, B, t_start, t_A, t_AB, t_B, t_BA)
 
-    __eq__ = Variant._private_eq
-
-
-class Power(_hoomd.VariantPower, Variant):
-    """An approach from initial to final value following ``t**power``.
-
-    Args:
-        A (float): The start value.
-        B (float): The end value.
-        power (float): The power of the approach to ``B``.
-        t_start (int): The start time step.
-        t_ramp (int): The length of the ramp.
-
-    `Power` holds the value *A* until time *t_start*. Then it progresses at
-    :math:`t^{\\mathrm{power}}` from *A* to *B* over *t_ramp* steps and holds
-    the value *B* after that.
-
-    .. code-block:: python
-
-        p = Power(A=2, B-8, power=1 / 10, t_start=10, t_ramp=20)
-
-    .. image:: variant-power.svg
-       :alt: Example plot of a power variant.
-
-    Attributes:
-        A (float): The start value.
-        B (float): The end value.
-        power (float): The power of the approach to ``B``.
-        t_start (int): The start time step.
-        t_ramp (int): The length of the ramp.
-    """
-    _eq_attrs = ("A", "B", "power", "t_start", "t_ramp")
-
-    def __init__(self, A, B, power, t_start, t_ramp):
-        Variant.__init__(self)
-        _hoomd.VariantPower.__init__(self, A, B, power, t_start, t_ramp)
-
-    __eq__ = Variant._private_eq
+#     __eq__ = Variant._private_eq
 
 
-variant_like = typing.Union[Variant, float]
-"""
-Objects that are like a variant.
+# class Power(_hoomd.VariantPower, Variant):
+#     """An approach from initial to final value following ``t**power``.
 
-Any subclass of `Variant` is accepted along with float instances and objects
-convertible to float. They are internally converted to variants of type
-`Constant` via ``Constant(float(a))`` where ``a`` is the float or float
-convertible object.
+#     Args:
+#         A (float): The start value.
+#         B (float): The end value.
+#         power (float): The power of the approach to ``B``.
+#         t_start (int): The start time step.
+#         t_ramp (int): The length of the ramp.
 
-Note:
-    Attributes that are `Variant` objects can be set via a `variant_like`
-    object.
-"""
+#     `Power` holds the value *A* until time *t_start*. Then it progresses at
+#     :math:`t^{\\mathrm{power}}` from *A* to *B* over *t_ramp* steps and holds
+#     the value *B* after that.
+
+#     .. code-block:: python
+
+#         p = Power(A=2, B-8, power=1 / 10, t_start=10, t_ramp=20)
+
+#     .. image:: variant-power.svg
+#        :alt: Example plot of a power variant.
+
+#     Attributes:
+#         A (float): The start value.
+#         B (float): The end value.
+#         power (float): The power of the approach to ``B``.
+#         t_start (int): The start time step.
+#         t_ramp (int): The length of the ramp.
+#     """
+#     _eq_attrs = ("A", "B", "power", "t_start", "t_ramp")
+
+#     def __init__(self, A, B, power, t_start, t_ramp):
+#         Variant.__init__(self)
+#         _hoomd.VariantPower.__init__(self, A, B, power, t_start, t_ramp)
+
+#     __eq__ = Variant._private_eq
+
+
+# variant_like = typing.Union[Variant, float]
+# """
+# Objects that are like a variant.
+
+# Any subclass of `Variant` is accepted along with float instances and objects
+# convertible to float. They are internally converted to variants of type
+# `Constant` via ``Constant(float(a))`` where ``a`` is the float or float
+# convertible object.
+
+# Note:
+#     Attributes that are `Variant` objects can be set via a `variant_like`
+#     object.
+# """
