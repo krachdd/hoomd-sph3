@@ -6,6 +6,7 @@
 #include <cstdint>
 #include <pybind11/pybind11.h>
 #include <utility>
+#include <map>
 
 #include "HOOMDMath.h"
 
@@ -96,6 +97,250 @@ class PYBIND11_EXPORT VariantConstant : public Variant
     Scalar m_value;
     };
 
+
+
+// /** Ramp variant.
+
+//     Variant that ramps linearly from A to B over a given number of steps.
+// */
+// class PYBIND11_EXPORT VariantRamp : public Variant
+//     {
+//     public:
+//     /** Construct a VariantRamp.
+
+//         @param A The starting value.
+//         @param B The ending value.
+//         @param t_start The starting time step.
+//         @param t_ramp The length of the ramp.
+//     */
+//     VariantRamp(Scalar A, Scalar B, uint64_t t_start, uint64_t t_ramp)
+//         {
+//         setA(A);
+//         setB(B);
+//         setTStart(t_start);
+//         setTRamp(t_ramp);
+//         }
+
+//     /// Evaluate the ramp.
+//     Scalar operator()(uint64_t timestep)
+//         {
+//         if (timestep < m_t_start)
+//             {
+//             return m_A;
+//             }
+//         else if (timestep < m_t_start + m_t_ramp)
+//             {
+//             // interpolate between A and B
+//             double s = double(timestep - m_t_start) / double(m_t_ramp);
+//             return m_B * s + m_A * (1.0 - s);
+//             }
+//         else
+//             {
+//             return m_B;
+//             }
+//         }
+
+//     /// Set the starting value.
+//     void setA(Scalar A)
+//         {
+//         m_A = A;
+//         }
+
+//     /// Get the starting value.
+//     Scalar getA() const
+//         {
+//         return m_A;
+//         }
+
+//     /// Set the ending value.
+//     void setB(Scalar B)
+//         {
+//         m_B = B;
+//         }
+
+//     /// Get the ending value.
+//     Scalar getB() const
+//         {
+//         return m_B;
+//         }
+
+//     /// Set the starting time step.
+//     void setTStart(uint64_t t_start)
+//         {
+//         m_t_start = t_start;
+//         }
+
+//     /// Get the starting time step.
+//     uint64_t getTStart() const
+//         {
+//         return m_t_start;
+//         }
+
+//     /// Set the length of the ramp.
+//     void setTRamp(uint64_t t_ramp)
+//         {
+//         // doubles can only represent integers accuracy up to 2**53.
+//         if (t_ramp >= 9007199254740992ull)
+//             {
+//             throw std::invalid_argument("t_ramp must be less than 2**53");
+//             }
+//         m_t_ramp = t_ramp;
+//         }
+
+//     /// Get the length of the ramp.
+//     uint64_t getTRamp() const
+//         {
+//         return m_t_ramp;
+//         }
+
+//     /// Return min
+//     Scalar min()
+//         {
+//         return m_A > m_B ? m_B : m_A;
+//         }
+
+//     /// Return max
+//     Scalar max()
+//         {
+//         return m_A > m_B ? m_A : m_B;
+//         }
+
+//     protected:
+//     /// The starting value.
+//     Scalar m_A;
+
+//     /// The ending value.
+//     Scalar m_B;
+
+//     /// The starting time step.
+//     uint64_t m_t_start;
+
+//     /// The length of the ramp.
+//     uint64_t m_t_ramp;
+//     };
+
+// /** Linear interpolation variant.
+//     Variant that ramps linearly over the given points.
+// */
+// class PYBIND11_EXPORT VariantLinear : public Variant
+//     {
+//     public:
+//     /** Construct a VariantRamp.
+
+//         @param A The starting value.
+//         @param B The ending value.
+//         @param t_start The starting time step.
+//         @param t_ramp The length of the ramp.
+//     */
+//     VariantLinear(Scalar A, Scalar B, uint64_t t_start, uint64_t t_ramp)
+//         {
+//         setA(A);
+//         setB(B);
+//         setTStart(t_start);
+//         setTRamp(t_ramp);
+//         }
+
+//     /// Evaluate the ramp.
+//     Scalar operator()(uint64_t timestep)
+//         {
+//         if (timestep < m_t_start)
+//             {
+//             return m_A;
+//             }
+//         else if (timestep < m_t_start + m_t_ramp)
+//             {
+//             // interpolate between A and B
+//             double s = double(timestep - m_t_start) / double(m_t_ramp);
+//             return m_B * s + m_A * (1.0 - s);
+//             }
+//         else
+//             {
+//             return m_B;
+//             }
+//         }
+
+//     /// Set the starting value.
+//     void setA(Scalar A)
+//         {
+//         m_A = A;
+//         }
+
+//     /// Get the starting value.
+//     Scalar getA() const
+//         {
+//         return m_A;
+//         }
+
+//     /// Set the ending value.
+//     void setB(Scalar B)
+//         {
+//         m_B = B;
+//         }
+
+//     /// Get the ending value.
+//     Scalar getB() const
+//         {
+//         return m_B;
+//         }
+
+//     /// Set the starting time step.
+//     void setTStart(uint64_t t_start)
+//         {
+//         m_t_start = t_start;
+//         }
+
+//     /// Get the starting time step.
+//     uint64_t getTStart() const
+//         {
+//         return m_t_start;
+//         }
+
+//     /// Set the length of the ramp.
+//     void setTRamp(uint64_t t_ramp)
+//         {
+//         // doubles can only represent integers accuracy up to 2**53.
+//         if (t_ramp >= 9007199254740992ull)
+//             {
+//             throw std::invalid_argument("t_ramp must be less than 2**53");
+//             }
+//         m_t_ramp = t_ramp;
+//         }
+
+//     /// Get the length of the ramp.
+//     uint64_t getTRamp() const
+//         {
+//         return m_t_ramp;
+//         }
+
+//     /// Return min
+//     Scalar min()
+//         {
+//         return m_A > m_B ? m_B : m_A;
+//         }
+
+//     /// Return max
+//     Scalar max()
+//         {
+//         return m_A > m_B ? m_A : m_B;
+//         }
+
+//     protected:
+//     /// Values to interpolate (timestep, value)
+//     std::map<unsigned int, double> m_values;
+
+//     /// The starting value.
+//     Scalar m_A;
+
+//     /// The ending value.
+//     Scalar m_B;
+
+//     /// The starting time step.
+//     uint64_t m_t_start;
+
+//     /// The length of the ramp.
+//     uint64_t m_t_ramp;
+//     };
+
 /** Ramp variant.
 
     Variant that ramps linearly from A to B over a given number of steps.
@@ -119,21 +364,22 @@ class PYBIND11_EXPORT VariantRamp : public Variant
         }
 
     /// Evaluate the ramp.
-    Scalar operator()(uint64_t timestep)
+    Scalar2 operator()(uint64_t timestep)
         {
         if (timestep < m_t_start)
             {
-            return m_A;
+            return makeScalar2(m_A, 0.0);
             }
         else if (timestep < m_t_start + m_t_ramp)
             {
             // interpolate between A and B
             double s = double(timestep - m_t_start) / double(m_t_ramp);
-            return m_B * s + m_A * (1.0 - s);
+
+            return makeScalar2(m_B * s + m_A * (1.0 - s),(M_b - M_a)/(B - A) );
             }
         else
             {
-            return m_B;
+            return makeScalar2(m_B, 0.0);
             }
         }
 

@@ -128,6 +128,50 @@ class Ramp(_hoomd.VariantRamp, Variant):
 
     __eq__ = Variant._private_eq
 
+# class Linear(_hoomd.VariantLinear, Variant):
+#     """A linear interpolation.
+
+#     Args:
+#         A (float): The start value.
+#         B (float): The end value.
+#         t_start (int): The start time step.
+#         t_ramp (int): The length of the ramp.
+
+#     `Ramp` holds the value *A* until time *t_start*. Then it ramps linearly from
+#     *A* to *B* over *t_ramp* steps and holds the value *B*.
+
+#     .. image:: variant-ramp.svg
+#        :alt: Example plot of a ramp variant.
+
+#     Attributes:
+#         A (float): The start value.
+#         B (float): The end value.
+#         t_start (int): The start time step.
+#         t_ramp (int): The length of the ramp.
+#     """
+#     _eq_attrs = ("points")
+
+#     def __init__(self, points):
+#         Variant.__init__(self)
+#         _hoomd.VariantLinear.__init__(self, points)
+
+#     # set the points
+#     if len(points) == 0:
+#         hoosph.context.msg.error("Cannot create a linear_interp variant with 0 points\n");
+#         raise RuntimeError('Error creating variant');
+
+#     for (t, v) in points:
+#         if t < 0:
+#             hoosph.context.msg.error("Negative times are not allowed in variant.linear_interp\n");
+#             raise RuntimeError('Error creating variant');
+
+#         self._cpp_obj.setPoint(self.int(t), self.v);
+
+#     # # store metadata
+#     # self.points = points
+
+#     __eq__ = Variant._private_eq
+
 
 class Cycle(_hoomd.VariantCycle, Variant):
     """A cycle of linear ramps.

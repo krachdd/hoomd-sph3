@@ -83,6 +83,32 @@ void export_Variant(pybind11::module& m)
             [](const VariantConstant& variant) { return pybind11::make_tuple(variant.getValue()); },
             [](pybind11::tuple params) { return VariantConstant(params[0].cast<Scalar>()); }));
 
+    // pybind11::class_<VariantRamp, Variant, std::shared_ptr<VariantRamp>>(m, "VariantRamp")
+    //     .def(pybind11::init<Scalar, Scalar, uint64_t, uint64_t>(),
+    //          pybind11::arg("A"),
+    //          pybind11::arg("B"),
+    //          pybind11::arg("t_start"),
+    //          pybind11::arg("t_ramp"))
+    //     .def_property("A", &VariantRamp::getA, &VariantRamp::setA)
+    //     .def_property("B", &VariantRamp::getB, &VariantRamp::setB)
+    //     .def_property("t_start", &VariantRamp::getTStart, &VariantRamp::setTStart)
+    //     .def_property("t_ramp", &VariantRamp::getTRamp, &VariantRamp::setTRamp)
+    //     .def(pybind11::pickle(
+    //         [](const VariantRamp& variant)
+    //         {
+    //             return pybind11::make_tuple(variant.getA(),
+    //                                         variant.getB(),
+    //                                         variant.getTStart(),
+    //                                         variant.getTRamp());
+    //         },
+    //         [](pybind11::tuple params)
+    //         {
+    //             return VariantRamp(params[0].cast<Scalar>(),
+    //                                params[1].cast<Scalar>(),
+    //                                params[2].cast<uint64_t>(),
+    //                                params[3].cast<uint64_t>());
+    //         }));
+
     pybind11::class_<VariantRamp, Variant, std::shared_ptr<VariantRamp>>(m, "VariantRamp")
         .def(pybind11::init<Scalar, Scalar, uint64_t, uint64_t>(),
              pybind11::arg("A"),
@@ -108,6 +134,27 @@ void export_Variant(pybind11::module& m)
                                    params[2].cast<uint64_t>(),
                                    params[3].cast<uint64_t>());
             }));
+
+
+    // pybind11::class_<VariantLinear, Variant, std::shared_ptr<VariantLinear>>(m, "VariantLinear")
+    //     .def(pybind11::init<Scalar, Scalar, uint64_t, uint64_t>(),
+    //          pybind11::arg("points"),
+    //     .def_property("A", &VariantRamp::getA, &VariantRamp::setA)
+    //     .def(pybind11::pickle(
+    //         [](const VariantRamp& variant)
+    //         {
+    //             return pybind11::make_tuple(variant.getA(),
+    //                                         variant.getB(),
+    //                                         variant.getTStart(),
+    //                                         variant.getTRamp());
+    //         },
+    //         [](pybind11::tuple params)
+    //         {
+    //             return VariantRamp(params[0].cast<Scalar>(),
+    //                                params[1].cast<Scalar>(),
+    //                                params[2].cast<uint64_t>(),
+    //                                params[3].cast<uint64_t>());
+    //         }));
 
     pybind11::class_<VariantCycle, Variant, std::shared_ptr<VariantCycle>>(m, "VariantCycle")
         .def(pybind11::init<Scalar, Scalar, uint64_t, uint64_t, uint64_t, uint64_t, uint64_t>(),
