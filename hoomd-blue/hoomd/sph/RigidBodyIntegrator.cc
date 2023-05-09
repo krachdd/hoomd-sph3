@@ -12,8 +12,8 @@ The Velocity Verlet algorithm originally used in Rakulans old code
 
 using namespace std;
 
-/*! \file VelocityVerlet.h
-    \brief Contains code for the VelocityVerlet class
+/*! \file RigidBodyIntegrator.h
+    \brief Contains code for the RigidBodyIntegrator class
 */
 
 namespace hoomd
@@ -34,7 +34,7 @@ RigidBodyIntegrator::RigidBodyIntegrator(std::shared_ptr<SystemDefinition> sysde
                                          Scalar pivotpnt_z,
                                          Scalar rotaxis_x,
                                          Scalar rotaxis_y,
-                                         Scalar rotaxis_z,)
+                                         Scalar rotaxis_z)
     : SPHIntegrationMethodTwoStep(sysdef, group), m_transvel_x(transvel_x), m_transvel_y(transvel_y), m_transvel_z(transvel_z), m_rotatvel(rotatvel)
     {
     m_exec_conf->msg->notice(5) << "Constructing RigidBodyIntegrator" << endl;
@@ -81,14 +81,14 @@ void RigidBodyIntegrator::integrateStepOne(uint64_t timestep)
     // Scalar transvel_y_dt = m_transvel_y->getRate(timestep);
     // Scalar transvel_z_dt = m_transvel_z->getRate(timestep);
     // Scalar rotatvel_dt   = m_rotatvel->getRate(timestep);
-    Scalar transvel_x    = (*m_transvel_x.x)(timestep);
-    Scalar transvel_y    = (*m_transvel_y.x)(timestep);
-    Scalar transvel_z    = (*m_transvel_z.x)(timestep);
-    Scalar rotatvel      = (*m_rotatvel.x)(timestep);
-    Scalar transvel_x_dt = (*m_transvel_x.y)(timestep);
-    Scalar transvel_y_dt = (*m_transvel_y.y)(timestep);
-    Scalar transvel_z_dt = (*m_transvel_z.y)(timestep);
-    Scalar rotatvel_dt   = (*m_rotatvel.y)(timestep);
+    Scalar transvel_x    = (*m_transvel_x)(timestep).x;
+    Scalar transvel_y    = (*m_transvel_y)(timestep).x;
+    Scalar transvel_z    = (*m_transvel_z)(timestep).x;
+    Scalar rotatvel      = (*m_rotatvel)(timestep).x;
+    Scalar transvel_x_dt = (*m_transvel_x)(timestep).y;
+    Scalar transvel_y_dt = (*m_transvel_y)(timestep).y;
+    Scalar transvel_z_dt = (*m_transvel_z)(timestep).y;
+    Scalar rotatvel_dt   = (*m_rotatvel)(timestep).y;
     vec3<Scalar> angularvel(rotatvel*m_rotaxis.x, rotatvel*m_rotaxis.y, rotatvel*m_rotaxis.z);
     vec3<Scalar> angularaccel(rotatvel_dt*m_rotaxis.x, rotatvel_dt*m_rotaxis.y, rotatvel_dt*m_rotaxis.z);
 
@@ -177,7 +177,7 @@ void export_RigidBodyIntegrator(pybind11::module& m)
                             Scalar,
                             Scalar,
                             Scalar,
-                            Scalar>());
+                            Scalar>())
         .def("setRotationSpeed",&RigidBodyIntegrator::setRotationSpeed)
         .def("setPivotPoint",&RigidBodyIntegrator::setPivotPoint)
         .def("setRotationAxis",&RigidBodyIntegrator::setRotationAxis)

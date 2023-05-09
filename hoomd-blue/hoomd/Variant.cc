@@ -13,7 +13,7 @@ class VariantPy : public Variant
     using Variant::Variant;
 
     // trampoline method
-    Scalar operator()(uint64_t timestep) override
+    Scalar2 operator()(uint64_t timestep) override
         {
         PYBIND11_OVERLOAD_NAME(Scalar2,     // Return type
                                Variant,    // Parent class
@@ -51,7 +51,7 @@ namespace detail
 /// Method to enable unit testing of C++ variant calls from pytest
 Scalar testVariantCall(std::shared_ptr<Variant> t, uint64_t step)
     {
-    return (*t)(step);
+    return ((*t)(step)).x;
     }
 
 /// Method to enable unit testing of C++ variant min class from pytest

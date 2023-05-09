@@ -33,7 +33,7 @@ class PYBIND11_EXPORT Variant
     */
     virtual Scalar2 operator()(uint64_t timestep)
         {
-        return make_scalar2(0.0, 0.0);
+        return make_scalar2(0, 0);
         }
 
     /// Returns the minimum of the variant
@@ -65,7 +65,7 @@ class PYBIND11_EXPORT VariantConstant : public Variant
     /// Return the value.
     Scalar2 operator()(uint64_t timestep)
         {
-        return make_scalar2(m_value, 0.0);
+        return make_scalar2(m_value, 0);
         }
 
     /// Set the value.
@@ -375,11 +375,12 @@ class PYBIND11_EXPORT VariantRamp : public Variant
             // interpolate between A and B
             double s = double(timestep - m_t_start) / double(m_t_ramp);
             // First value, second rate (check for plausability)
-            return make_scalar2(m_B * s + m_A * (1.0 - s),(m_B - m_A)/ double(m_t_ramp) );
+            //return std::pair<Scalar, Scalar>(m_B * s + m_A * (1.0 - s), (m_B - m_A)/ double(m_t_ramp));
+            return make_scalar2(m_B * s + m_A * (1.0 - s),(m_B - m_A)/ double(m_t_ramp));
             }
         else
             {
-            return make_scalar2(m_B, 0.0);
+            make_scalar2(m_B, 0.0);
             }
         }
 

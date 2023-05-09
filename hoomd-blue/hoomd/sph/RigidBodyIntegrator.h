@@ -4,7 +4,7 @@ maintainer: drostan, daniel.rostan@mib.uni-stuttgart.de
 
 #include "SPHIntegrationMethodTwoStep.h"
 #include "EvaluationMethodDefinition.h"
-#include <hoomd/HOOSPHMath.h>
+#include <hoomd/HOOMDMath.h>
 #include <hoomd/VectorMath.h>
 #include <hoomd/Variant.h>
 
@@ -34,7 +34,7 @@ class PYBIND11_EXPORT RigidBodyIntegrator : public SPHIntegrationMethodTwoStep
     {
     public:
     //! Constructs the integration method and associates it with the system
-    VelocityVerlet(std::shared_ptr<SystemDefinition> sysdef, 
+    RigidBodyIntegrator(std::shared_ptr<SystemDefinition> sysdef, 
                    std::shared_ptr<ParticleGroup> group,
                    std::shared_ptr<Variant> transvel_x,
                    std::shared_ptr<Variant> transvel_y,
@@ -45,13 +45,13 @@ class PYBIND11_EXPORT RigidBodyIntegrator : public SPHIntegrationMethodTwoStep
                    Scalar pivotpnt_z,
                    Scalar rotaxis_x,
                    Scalar rotaxis_y,
-                   Scalar rotaxis_z,);
+                   Scalar rotaxis_z);
     virtual ~RigidBodyIntegrator();
 
     //! Update the angular velocity
     /*! \param angvel New angular velocity to set
     */
-    virtual void setRotationSpeed(st::shared_ptr<Variant> rotatvel)
+    virtual void setRotationSpeed(std::shared_ptr<Variant> rotatvel)
         {
         m_rotatvel = rotatvel;
         }
@@ -85,9 +85,9 @@ class PYBIND11_EXPORT RigidBodyIntegrator : public SPHIntegrationMethodTwoStep
     //! Update the angular velocity
     /*! \param angvel New angular velocity to set
     */
-    virtual void setTranslationalVelocity(boost::shared_ptr<Variant> transvel_x,
-                                          boost::shared_ptr<Variant> transvel_y,
-                                          boost::shared_ptr<Variant> transvel_z)
+    virtual void setTranslationalVelocity(std::shared_ptr<Variant> transvel_x,
+                                          std::shared_ptr<Variant> transvel_y,
+                                          std::shared_ptr<Variant> transvel_z)
         {
         m_transvel_x = transvel_x;
         m_transvel_y = transvel_y;
