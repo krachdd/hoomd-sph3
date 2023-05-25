@@ -61,6 +61,7 @@ RigidBodyIntegrator::~RigidBodyIntegrator()
 void RigidBodyIntegrator::integrateStepOne(uint64_t timestep)
     {
     unsigned int group_size = m_group->getNumMembers();
+    //std::cout << "group_size_rigid:" << group_size << std::endl;
 
     m_exec_conf->msg->notice(9) << "RigidBodyIntegrator: Integrate Step one" << endl;
 
@@ -71,16 +72,7 @@ void RigidBodyIntegrator::integrateStepOne(uint64_t timestep)
     ArrayHandle<Scalar3> h_accel(m_pdata->getAccelerations(), access_location::host, access_mode::overwrite);
     ArrayHandle<Scalar4> h_pos(m_pdata->getPositions(), access_location::host, access_mode::readwrite);
 
-    // Hier gucken ob es passt, eventuell variant ändern (linearinterpolation alte Version, evtl Variant.h modifizieren)
     // Evaluate variant expressions
-    // Scalar transvel_x    = (*m_transvel_x)(timestep);
-    // Scalar transvel_y    = m_transvel_y->getValue(timestep);
-    // Scalar transvel_z    = m_transvel_z->getValue(timestep);
-    // Scalar rotatvel      = m_rotatvel->getValue(timestep);
-    // Scalar transvel_x_dt = m_transvel_x->getRate(timestep);
-    // Scalar transvel_y_dt = m_transvel_y->getRate(timestep);
-    // Scalar transvel_z_dt = m_transvel_z->getRate(timestep);
-    // Scalar rotatvel_dt   = m_rotatvel->getRate(timestep);
     Scalar transvel_x    = (*m_transvel_x)(timestep).x;
     Scalar transvel_y    = (*m_transvel_y)(timestep).x;
     Scalar transvel_z    = (*m_transvel_z)(timestep).x;
@@ -91,6 +83,14 @@ void RigidBodyIntegrator::integrateStepOne(uint64_t timestep)
     Scalar rotatvel_dt   = (*m_rotatvel)(timestep).y;
     vec3<Scalar> angularvel(rotatvel*m_rotaxis.x, rotatvel*m_rotaxis.y, rotatvel*m_rotaxis.z);
     vec3<Scalar> angularaccel(rotatvel_dt*m_rotaxis.x, rotatvel_dt*m_rotaxis.y, rotatvel_dt*m_rotaxis.z);
+
+    // std::cout << "transvel_x:" << transvel_x << std::endl;
+    // std::cout << "rotatvel:" << rotatvel << std::endl;
+    // std::cout << "transvel_x_dt:" << transvel_x_dt << std::endl;
+    // std::cout << "rotatvel_dt:" << rotatvel_dt << std::endl;
+
+    // std::cout << "angularvel_z:" << angularvel.z << std::endl;
+    // std::cout << "angularaccel_z:" << angularaccel.z << std::endl;
 
     // perform the first half step of the integration
     for (unsigned int group_idx = 0; group_idx < group_size; group_idx++)

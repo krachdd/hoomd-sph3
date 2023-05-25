@@ -26,30 +26,25 @@ sim = hoomd.Simulation(device=device)
 
 # Fluid and particle properties
 num_length          = int(sys.argv[1])
+height              = 0.1                 # [m]
+voxelsize           = height/float(num_length)
+dx                  = voxelsize
+specific_volume     = dx * dx * dx
+rho0                = 1000.0              # [kg / m^3]
+mass                = rho0 * specific_volume
+viscosity           = 1.0                # [Pa s]
 
-# Inner diameter of cylinder
-innerD = 0.1                              # [m]
-innerR = 0.5*innerD
-
-# Mix features
-fw  = innerR*0.1                          # [m]
-fh  = innerR*0.9                          # [m]
+# Ellipsoid
+radx               = 0.25*height
+rady               = 0.125*height
 
 # Angular velocity in rad/s and 1/s
 angvel_s = 1.0                           # 1/s
 angvel   = angvel_s*(2*np.pi)            # rad/s
 
 # Characteristic length and velocity
-LREF = innerR - fh                        # [m]
-UREF = angvel*innerD
-
-# Discretization parameters
-voxelsize           = innerD/float(num_length)
-dx                  = voxelsize
-specific_volume     = dx * dx * dx
-rho0                = 971.0              # [kg / m^3]
-mass                = rho0 * specific_volume
-viscosity           = 0.00971            # [Pa s]
+lref = (height/2) - radx                # [m]
+refvel = angvel*radx
 
 # get kernel properties
 kernel  = 'WendlandC4'
@@ -63,12 +58,10 @@ rcut    = hoomd.sph.kernel.Kappa[kernel]*slength     # m
 
 # particles per Kernel Radius
 part_rcut  = math.ceil(rcut/dx) 
-
-# Water free surface
-frsurf = 0.5*(innerD + 3 * part_rcut)      # m
+part_depth = math.ceil(2.5 * hoomd.sph.kernel.Kappa[kernel] * rcut/dx) 
 
 # get simulation box sizes etc.
-nx, ny, nz = int(num_length + (3*part_rcut)), int(num_length + (3*part_rcut)), int(0.2*num_length + (3*part_rcut))
+nx, ny, nz = int(num_length), int(num_length), int(part_depth)
 lx, ly, lz = float(nx) * voxelsize, float(ny) * voxelsize, float(nz) * voxelsize
 # box dimensions
 box_lx, box_ly, box_lz = lx, ly, lz
@@ -94,7 +87,8 @@ snapshot.configuration.box     = [box_lx, box_ly, box_lz] + [0, 0, 0]
 snapshot.particles.N           = n_particles
 snapshot.particles.position    = positions
 snapshot.particles.typeid      = [0] * n_particles
-snapshot.particles.types       = ['F', 'S', 'R']
+snapshot.particles.types       = ['F', 'S']
+#snapshot.particles.types       = ['F', 'S']
 snapshot.particles.velocity    = velocities
 snapshot.particles.mass        = masses
 snapshot.particles.slength     = slengths
@@ -107,23 +101,25 @@ vels = snapshot.particles.velocity[:]
 for i in range(len(x)):
     xi,yi,zi  = x[i][0], x[i][1], x[i][2]
     tid[i]    = 0
-    # solid walls 
-    if (np.sqrt((xi)**2 + (yi)**2) > innerR):
-        tid[i] = 1
+    # # solid walls 
+    # if ( yi < -0.5 * height or yi > 0.5 * height):
+    #     tid[i] = 1
     # inner mixer
-    if (xi**2/fh**2 + yi**2/(0.4*fh)**2 < 1):
-        tid[i] = 2
+    if (xi**2/radx**2 + yi**2/rady**2 < 1):
+        tid[i] = 1
+        #tid[i] = 2
+
 
 snapshot.particles.typeid[:]     = tid
 snapshot.particles.velocity[:]   = vels
 
 sim.create_state_from_snapshot(snapshot)
 
-init_filename = f'mixer_{nx}_{ny}_{nz}_vs_{voxelsize}_init.gsd'
+init_filename = f'test_ellipsoid_{nx}_{ny}_{nz}_vs_{voxelsize}_init.gsd'
 # hoomd.write.GSD.write(state = sim.state, mode = 'wb', filename = init_filename)
 
 with gsd.hoomd.open(name = init_filename, mode = 'wb') as f:
     f.append(snapshot)
 
-# if device.communicator.rank == 0:
-#     export_gsd2vtu.export_spf(init_filename)
+if device.communicator.rank == 0:
+    export_gsd2vtu.export_spf(init_filename)

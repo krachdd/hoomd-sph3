@@ -66,9 +66,13 @@ SinglePhaseFlow<KT_, SET_>::SinglePhaseFlow(std::shared_ptr<SystemDefinition> sy
             // no need to parallelize this as there should only be a few particle types
             for (unsigned int i = 0; i < m_fluidtypes.size(); i++) {
                 h_type_property_map.data[m_fluidtypes[i]] |= SolidFluidTypeBit::FLUID;
+                std::cout << "m_fluidtypes:" << m_fluidtypes[i] << std::endl;
+                std::cout << "SolidFluidTypeBit::FLUID:" << SolidFluidTypeBit::FLUID << std::endl;
             }
             for (unsigned int i = 0; i < m_solidtypes.size(); i++) {
                 h_type_property_map.data[m_solidtypes[i]] |= SolidFluidTypeBit::SOLID;
+                std::cout << "m_solidtypes:" << m_solidtypes[i] << std::endl;
+                std::cout << "SolidFluidTypeBit::SOLID:" << SolidFluidTypeBit::SOLID << std::endl;
             }
         }
 
@@ -539,10 +543,19 @@ void SinglePhaseFlow<KT_, SET_>::compute_noslip(uint64_t timestep)
 
     // For all solid particles
     unsigned int group_size = this->m_solidgroup->getNumMembers();
+
+    // std::cout << "group_size" << group_size << std::endl;
+    // std::cout << "h_type_property_map:" << h_type_property_map.data << std::endl;
+
+    //std::cout << "group_size_solids:" << group_size << std::endl;
     for (unsigned int group_idx = 0; group_idx < group_size; group_idx++)
         {
         // Read particle index
         unsigned int i = this->m_solidgroup->getMemberIndex(group_idx);
+
+        // unsigned int group_member_tag = this->m_solidgroup->getMemberTag(i);
+        // std::cout << "group_member_tag" << group_member_tag << std::endl;
+
 
         // Access the particle's position, velocity, mass and type
         Scalar3 pi;
@@ -579,6 +592,8 @@ void SinglePhaseFlow<KT_, SET_>::compute_noslip(uint64_t timestep)
         // Loop over all of the neighbors of this particle
         // Count fluid neighbors before setting solid particle properties
         unsigned int fluidneighbors = 0;
+
+        // std::cout << "h_pos.data[i].w" << __scalar_as_int(h_pos.data[i].w) << std::endl;
 
         // Skip neighbor loop if this solid particle does not have fluid neighbors
         bool solid_w_fluid_neigh = false;
@@ -971,6 +986,41 @@ void SinglePhaseFlow<KT_, SET_>::forcecomputation(uint64_t timestep)
         // // Total velocity of particle
         Scalar vi_total = sqrt((vi.x * vi.x) + (vi.y * vi.y) + (vi.z * vi.z));
 
+        // if (i == 2802)
+        //     {
+        //     std::cout << "pi.x:" << pi.x << std::endl;
+        //     std::cout << "pi.y:" << pi.y << std::endl;
+        //     std::cout << "pi.z:" << pi.z << std::endl;
+        //     std::cout << "vi.x:" << vi.x << std::endl;
+        //     std::cout << "vi.y:" << vi.y << std::endl;
+        //     std::cout << "vi.z:" << vi.z << std::endl;
+        //     std::cout << "mi:" << mi << std::endl;
+        //     std::cout << "Pi:" << Pi << std::endl;
+        //     std::cout << "rhoi:" << rhoi << std::endl;
+        //     std::cout << "Vi:" << Vi << std::endl;
+        //     std::cout << "vi_total:" << vi_total << std::endl;
+        //     }
+
+        // if (i == 18204)
+        //     {
+        //     std::cout << "pi.x:" << pi.x << std::endl;
+        //     std::cout << "pi.y:" << pi.y << std::endl;
+        //     std::cout << "pi.z:" << pi.z << std::endl;
+        //     }
+
+        // Scalar pjx;
+        // Scalar pjy;
+        // Scalar pjz;
+        // Scalar vjx;
+        // Scalar vjy;
+        // Scalar vjz;
+        // Scalar mj_;
+        // Scalar Pj_;
+        // Scalar rhoj_;
+        // Scalar Vj_;
+        // Scalar r_;
+
+
         // Properties needed for adaptive timestep
         if (i == 0) { max_vel = vi_total; }
         else if (vi_total > max_vel) { max_vel = vi_total; }
@@ -996,6 +1046,7 @@ void SinglePhaseFlow<KT_, SET_>::forcecomputation(uint64_t timestep)
             // Determine neighbor type
             bool issolid = checksolid(h_type_property_map.data, h_pos.data[k].w);
 
+
             // Compute distance vector (FLOPS: 3)
             // Scalar3 dx = pi - pj;
             Scalar3 dx;
@@ -1012,6 +1063,23 @@ void SinglePhaseFlow<KT_, SET_>::forcecomputation(uint64_t timestep)
             // If particle distance is too large, skip this loop
             if ( m_const_slength && rsq > m_rcutsq )
                 continue;
+
+            // if (i == 24250)
+            //      {
+            //      std::cout << "Neighbor_" << j << ":" << k << std::endl;
+
+            //      }
+
+            // if (i == 18204)
+            //      {
+            //      std::cout << "Neighbor_" << j << ":" << k << std::endl;
+
+            //      }
+
+            // if (i == 18204 && issolid)
+            // {
+            //     std::cout << "Issolid is true:" << k << std::endl;
+            // }
 
             // Access neighbor velocity; depends on fluid or fictitious solid particle
             Scalar3 vj  = make_scalar3(0.0, 0.0, 0.0);
@@ -1042,6 +1110,37 @@ void SinglePhaseFlow<KT_, SET_>::forcecomputation(uint64_t timestep)
 
             // Calculate absolute and normalized distance
             Scalar r = sqrt(rsq);
+
+            // if (i == 2477)
+            //     {
+            //     std::cout << "pj.x:" << pj.x << std::endl;
+            //     std::cout << "pj.y:" << pj.y << std::endl;
+            //     std::cout << "pj.z:" << pj.z << std::endl;
+            //     std::cout << "vj.x:" << vj.x << std::endl;
+            //     std::cout << "vj.y:" << vj.y << std::endl;
+            //     std::cout << "vj.z:" << vj.z << std::endl;
+            //     std::cout << "mj:" << mj << std::endl;
+            //     std::cout << "Pj:" << Pj << std::endl;
+            //     std::cout << "rhoj:" << rhoj << std::endl;
+            //     std::cout << "Vj:" << Vj << std::endl;
+            //     std::cout << "r:" << r << std::endl;
+            //     }
+
+            // if (i == 2477)
+            //     {
+            //     pjx += pj.x;
+            //     pjy += pj.y;
+            //     pjz += pj.z;
+            //     vjx += vj.x;
+            //     vjy += vj.y;
+            //     vjz += vj.z;
+            //     mj_ += mj;
+            //     Pj_ += Pj;
+            //     rhoj_ += rhoj;
+            //     Vj_ += Vj;
+            //     r_ += r;
+            //     }
+
 
             // Mean smoothing length and denominator modifier
             Scalar meanh  = m_const_slength ? m_ch : Scalar(0.5)*(h_h.data[i]+h_h.data[k]);
@@ -1140,6 +1239,25 @@ void SinglePhaseFlow<KT_, SET_>::forcecomputation(uint64_t timestep)
                 }
 
             } // Closing Neighbor Loop
+
+            // if (i == 2802)
+            //     {
+            //     // std::cout << "pjx:" << pjx << std::endl;
+            //     // std::cout << "pjy:" << pjy << std::endl;
+            //     // std::cout << "pjz:" << pjz << std::endl;
+            //     // std::cout << "vjx:" << vjx << std::endl;
+            //     // std::cout << "vjy:" << vjy << std::endl;
+            //     // std::cout << "vjz:" << vjz << std::endl;
+            //     // std::cout << "mj_:" << mj_ << std::endl;
+            //     // std::cout << "Pj_:" << Pj_ << std::endl;
+            //     // std::cout << "rhoj_:" << rhoj_ << std::endl;
+            //     // std::cout << "Vj_:" << Vj_ << std::endl;
+            //     // std::cout << "r_:" << r_ << std::endl;
+            //     std::cout << "force_x:" << h_force.data[i].x << std::endl;
+            //     std::cout << "force_y:" << h_force.data[i].y << std::endl;
+            //     std::cout << "force_z:" << h_force.data[i].z << std::endl;
+
+            //     }
 
         } // Closing Fluid Particle Loop
 

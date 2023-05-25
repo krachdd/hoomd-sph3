@@ -98,6 +98,7 @@ void VelocityVerlet::integrateStepOne(uint64_t timestep)
     //     }
     // }
 
+    std::cout << "group size" << group_size << std::endl;
 
     ArrayHandle<Scalar4> h_vel(m_pdata->getVelocities(), access_location::host, access_mode::readwrite);
     // ArrayHandle<Scalar3> h_dpe(m_pdata->getDPEs(), access_location::host, access_mode::readwrite);
@@ -154,6 +155,22 @@ void VelocityVerlet::integrateStepOne(uint64_t timestep)
         h_pos.data[j].x += Scalar(1.0/2.0)*h_vel.data[j].x*m_deltaT;
         h_pos.data[j].y += Scalar(1.0/2.0)*h_vel.data[j].y*m_deltaT;
         h_pos.data[j].z += Scalar(1.0/2.0)*h_vel.data[j].z*m_deltaT;
+
+        if (j == 2477)
+        {
+            std::cout << "Integrate step one:" << std::endl;
+            std::cout << "density:" << h_density.data[j] << std::endl;
+            std::cout << "pressure:" << h_pressure.data[j] << std::endl;
+
+            std::cout << "vel_x:" << h_vel.data[j].x << std::endl;
+            std::cout << "vel_y:" << h_vel.data[j].y << std::endl;
+            std::cout << "vel_z:" << h_vel.data[j].z << std::endl;
+
+            std::cout << "pos_x:" << h_pos.data[j].x << std::endl;
+            std::cout << "pos_y:" << h_pos.data[j].y << std::endl;
+            std::cout << "pos_z:" << h_pos.data[j].z << std::endl;
+        }
+
         }
 
     // particles may have been moved slightly outside the box by the above steps, wrap them back
@@ -236,6 +253,27 @@ void VelocityVerlet::integrateStepTwo(uint64_t timestep)
         h_vel.data[j].x += Scalar(1.0 / 2.0) * h_accel.data[j].x * m_deltaT;
         h_vel.data[j].y += Scalar(1.0 / 2.0) * h_accel.data[j].y * m_deltaT;
         h_vel.data[j].z += Scalar(1.0 / 2.0) * h_accel.data[j].z * m_deltaT;
+
+
+        if (j == 2477)
+        {
+            std::cout << "Integrate step two:" << std::endl;
+            std::cout << "density:" << h_density.data[j] << std::endl;
+            std::cout << "pressure:" << h_pressure.data[j] << std::endl;
+
+            std::cout << "accel_x:" << h_accel.data[j].x << std::endl;
+            std::cout << "accel_y:" << h_accel.data[j].y << std::endl;
+            std::cout << "accel_z:" << h_accel.data[j].z << std::endl;
+
+            std::cout << "vel_x:" << h_vel.data[j].x << std::endl;
+            std::cout << "vel_y:" << h_vel.data[j].y << std::endl;
+            std::cout << "vel_z:" << h_vel.data[j].z << std::endl;
+
+            std::cout << "pos_x:" << h_pos.data[j].x << std::endl;
+            std::cout << "pos_y:" << h_pos.data[j].y << std::endl;
+            std::cout << "pos_z:" << h_pos.data[j].z << std::endl;
+        }
+
 
         // std::cout << "step 2 vel " << h_vel.data[j].x << std::endl;
 

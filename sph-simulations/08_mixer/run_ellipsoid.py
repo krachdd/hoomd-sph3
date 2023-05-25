@@ -88,7 +88,7 @@ backp              = 0.15
 #backp              = 0.01
 
 # get kernel properties
-kernel  = 'WendlandC2'
+kernel  = 'WendlandC4'
 slength = hoomd.sph.kernel.OptimalH[kernel]*dx       # m
 rcut    = hoomd.sph.kernel.Kappa[kernel]*slength     # m
 
@@ -133,7 +133,7 @@ if device.communicator.rank == 0:
 model.mu = viscosity
 model.densitymethod = densitymethod
 model.gz = gz
-model.damp = 5000
+model.damp = 1000
 # model.artificialviscosity = True
 model.artificialviscosity = True 
 model.alpha = 0.2
@@ -157,15 +157,15 @@ dt = model.compute_dt(lref, refvel, dx, drho)
 
 integrator = hoomd.sph.Integrator(dt=dt)
 
-# VelocityVerlet = hoomd.sph.methods.VelocityVerlet(filter=filterFLUID, densitymethod = densitymethod)
-velocityverlet = hoomd.sph.methods.VelocityVerletBasic(filter=filterfluid, densitymethod = densitymethod)
+VelocityVerlet = hoomd.sph.methods.VelocityVerlet(filter=filterFLUID, densitymethod = densitymethod)
+#velocityverlet = hoomd.sph.methods.VelocityVerletBasic(filter=filterfluid, densitymethod = densitymethod)
 # rigidbodyintegrator = hoomd.sph.methods.RigidBodyIntegrator(filter=filterrigid, transvel = [0.0,0.0,0.0],
 #                                          rotvel   = variant.Ramp(0.0, angvel_s, 0, 1000),
 #                                          pivotpnt = [0.0,0.0,0.0],
 #                                          rotaxis  = [0.0,0.0,1.0])
 
 rigidbodyintegrator = hoomd.sph.methods.RigidBodyIntegrator(filter=filterrigid, transvel_x = 0.0, transvel_y = 0.0, transvel_z = 0.0,
-                                          rotvel   = variant.Ramp(0.0, angvel_s, 0, 2000),
+                                          rotvel   = variant.Ramp(0.0, angvel_s, 0, 1000),
                                           pivotpnt = [0.0,0.0,0.0],
                                           rotaxis  = [0.0,0.0,1.0])
 
@@ -184,7 +184,7 @@ if device.communicator.rank == 0:
     print(f'Integrator Methods: {integrator.methods[:]}')
     print(f'Simulation Computes: {sim.operations.computes[:]}')
 
-gsd_trigger = hoomd.trigger.Periodic(1)
+gsd_trigger = hoomd.trigger.Periodic(100)
 gsd_writer = hoomd.write.GSD(filename=dumpname,
                              trigger=gsd_trigger,
                              mode='wb',
@@ -192,7 +192,7 @@ gsd_writer = hoomd.write.GSD(filename=dumpname,
                              )
 sim.operations.writers.append(gsd_writer)
 
-log_trigger = hoomd.trigger.Periodic(1)
+log_trigger = hoomd.trigger.Periodic(100)
 logger = hoomd.logging.Logger(categories=['scalar', 'string'])
 logger.add(sim, quantities=['timestep', 'tps', 'walltime'])
 logger.add(spf_properties, quantities=['abs_velocity', 'num_particles', 'fluid_vel_x_sum', 'mean_density'])

@@ -149,6 +149,22 @@ void VelocityVerletBasic::integrateStepOne(uint64_t timestep)
         h_pos.data[j].x += h_vel.data[j].x*m_deltaT;
         h_pos.data[j].y += h_vel.data[j].y*m_deltaT;
         h_pos.data[j].z += h_vel.data[j].z*m_deltaT;
+
+        // if (j == 2477)
+        // {
+        //     std::cout << "Integrate step one:" << std::endl;
+        //     std::cout << "density:" << h_density.data[j] << std::endl;
+        //     std::cout << "pressure:" << h_pressure.data[j] << std::endl;
+
+        //     std::cout << "vel_x:" << h_vel.data[j].x << std::endl;
+        //     std::cout << "vel_y:" << h_vel.data[j].y << std::endl;
+        //     std::cout << "vel_z:" << h_vel.data[j].z << std::endl;
+
+        //     std::cout << "pos_x:" << h_pos.data[j].x << std::endl;
+        //     std::cout << "pos_y:" << h_pos.data[j].y << std::endl;
+        //     std::cout << "pos_z:" << h_pos.data[j].z << std::endl;
+        // }
+
         }
 
     // particles may have been moved slightly outside the box by the above steps, wrap them back
@@ -246,6 +262,26 @@ void VelocityVerletBasic::integrateStepTwo(uint64_t timestep)
         //         h_vel.data[j].z = h_vel.data[j].z / vel * m_limit_val / m_deltaT;
         //         }
         //     }
+
+        // if (j == 2802)
+        // {
+        //     std::cout << "Integrate step two:" << std::endl;
+        //     std::cout << "density:" << h_density.data[j] << std::endl;
+        //     std::cout << "pressure:" << h_pressure.data[j] << std::endl;
+
+        //     std::cout << "accel_x:" << h_accel.data[j].x << std::endl;
+        //     std::cout << "accel_y:" << h_accel.data[j].y << std::endl;
+        //     std::cout << "accel_z:" << h_accel.data[j].z << std::endl;
+
+        //     std::cout << "vel_x:" << h_vel.data[j].x << std::endl;
+        //     std::cout << "vel_y:" << h_vel.data[j].y << std::endl;
+        //     std::cout << "vel_z:" << h_vel.data[j].z << std::endl;
+
+        //     // std::cout << "pos_x:" << h_pos.data[j].x << std::endl;
+        //     // std::cout << "pos_y:" << h_pos.data[j].y << std::endl;
+        //     // std::cout << "pos_z:" << h_pos.data[j].z << std::endl;
+        // }
+
         }
     }
 

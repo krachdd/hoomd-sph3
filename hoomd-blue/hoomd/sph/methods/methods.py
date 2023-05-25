@@ -844,10 +844,16 @@ class RigidBodyIntegrator(Method):
     #     else:
     #         raise ValueError("Using undefined DensityMethod.")
 
-    def __init__(self, filter, transvel, rotvel, pivotpnt, rotaxis):
+    # def __init__(self, filter, transvel, rotvel, pivotpnt, rotaxis):
+    #     # store metadata
+    #     param_dict = ParameterDict(filter=ParticleFilter,  transvel=transvel, rotvel=rotvel, pivotpnt=pivotpnt, rotaxis=rotaxis)
+    #     param_dict.update(dict(filter=filter, transvel=transvel, rotvel=rotvel, pivotpnt=pivotpnt, rotaxis=rotaxis))
+
+    def __init__(self, filter, transvel_x, transvel_y, transvel_z, rotvel, pivotpnt, rotaxis):
         # store metadata
-        param_dict = ParameterDict(filter=ParticleFilter)
-        param_dict.update(dict(filter=filter, transvel=transvel, rotvel=rotvel, pivotpnt=pivotpnt, rotaxis=rotaxis))
+        param_dict = ParameterDict(filter=ParticleFilter, transvel_x=Variant, transvel_y=Variant, transvel_z=Variant, rotvel=Variant, pivotpnt=pivotpnt, rotaxis=rotaxis)
+        param_dict.update(dict(filter=filter, transvel_x=transvel_x, transvel_y=transvel_y, transvel_z=transvel_z, rotvel=rotvel, pivotpnt=pivotpnt, rotaxis=rotaxis))
+
 
         # set defaults
         self._param_dict.update(param_dict)
@@ -861,28 +867,43 @@ class RigidBodyIntegrator(Method):
         # else:
         #     raise ValueError("Using undefined DensityMethod.")
 
-        # check input sanity
-        if len(transvel) != 3:
-            raise ValueError("transvel need to be a list of 3 hoosph.variants or floats.")
-        if len(rotvel) != 1:
-            raise ValueError("rotvel need to be a value of 1 hoosph.variant or float.")
-        if len(pivotpnt) != 3:
-            raise ValueError("pivotpnt need to be a list of 3 hoosph.variants or floats.")
-        if len(rotaxis) != 3:
-            raise ValueError("rotaxis need to be a list of 3 hoosph.variants or floats.")
+        # # check input sanity
+        # if len(transvel) != 3:
+        #     raise ValueError("transvel need to be a list of 3 hoosph.variants or floats.")
+        # if len(rotvel) != 1:
+        #     raise ValueError("rotvel need to be a value of 1 hoosph.variant or float.")
+        # if len(pivotpnt) != 3:
+        #     raise ValueError("pivotpnt need to be a list of 3 hoosph.variants or floats.")
+        # if len(rotaxis) != 3:
+        #     raise ValueError("rotaxis need to be a list of 3 hoosph.variants or floats.")
 
-        # setup the variant inputs
-        transvel_x = hoomd.variant._setup_variant_input(transvel[0]);
-        transvel_y = hoomd.variant._setup_variant_input(transvel[1]);
-        transvel_z = hoomd.variant._setup_variant_input(transvel[2]);
-        rotvel = hoomd.variant._setup_variant_input(rotvel);
+        # # setup the variant inputs
+        # transvel_x = hoomd.variant._setup_variant_input(transvel[0]);
+        # transvel_y = hoomd.variant._setup_variant_input(transvel[1]);
+        # transvel_z = hoomd.variant._setup_variant_input(transvel[2]);
+        # rotvel = hoomd.variant._setup_variant_input(rotvel);
 
+
+        # Store metadata
+        self.transvel_x = transvel_x
+        self.transvel_y = transvel_y
+        self.transvel_z = transvel_z
+        self.rotvel     = rotvel
+        self.pivotpnt_x = pivotpnt[0]
+        self.pivotpnt_y = pivotpnt[1]
+        self.pivotpnt_z = pivotpnt[2]
+        self.rotaxis_x  = rotaxis[0]
+        self.rotaxis_y  = rotaxis[1]
+        self.rotaxis_z  = rotaxis[2]
 
     def _attach_hook(self):
         sim = self._simulation
         # initialize the reflected c++ class
         self._cpp_obj = _sph.RigidBodyIntegrator(sim.state._cpp_sys_def,
-                                           sim.state._get_group(self.filter))
+                                           sim.state._get_group(self.filter), 
+                                           self.transvel_x, self.transvel_y, self.transvel_z, self.rotvel,
+                                           self.pivotpnt_x, self.pivotpnt_y, self.pivotpnt_z,
+                                           self.rotaxis_x, self.rotaxis_y, self.rotaxis_z)
 
         # # Reload density and viscosity methods from __dict__
         # self.str_densitymethod = self._param_dict._dict["densitymethod"]

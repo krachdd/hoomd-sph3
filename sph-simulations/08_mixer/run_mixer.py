@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 
 """----------------------------------------------------------
-maintainer: dkrach, david.krach@mib.uni-stuttgart.de
+maintainer: drostan, daniel.rostan@mib.uni-stuttgart.de
 -----------------------------------------------------------"""
 # ----- HEADER -----------------------------------------------
 import hoomd
@@ -56,18 +56,36 @@ with sim.state.cpu_local_snapshot as snap:
 
 # Fluid and particle properties
 num_length          = int(sys.argv[1])
-lref                = 0.001               # [m]
-voxelsize           = lref/num_length
+
+# Inner diameterand radius of cylinder
+innerD = 0.1                              # [m]
+innerR = 0.5*innerD                       # [m]
+
+# Mix features
+fw  = innerR*0.1                          # [m]
+fh  = innerR*0.9                          # [m]
+
+# Angular velocity in rad/s and 1/s
+angvel_s = 1.0                           # 1/s
+angvel   = angvel_s*(2*np.pi)            # rad/s
+
+# Characteristic length and velocity
+lref = innerR - fh                       # [m]
+refvel = angvel*innerD
+
+# Discretization parameters
+voxelsize           = innerD/float(num_length)
 dx                  = voxelsize
 specific_volume     = dx * dx * dx
-rho0                = 1000.0
+rho0                = 971.0              # [kg / m^3]
+#rho0                = 1000.0              # [kg / m^3]
 mass                = rho0 * specific_volume
-fx                  = 0.0                # [m/s]
-viscosity           = 0.01               # [Pa s]
-lidvel              = 0.01
-
-refvel = lidvel * lref * lref * 0.25 / (viscosity/rho0)
-
+viscosity           = 0.00971            # [Pa s]
+#viscosity           = 0.1            # [Pa s]
+#gz                  = -0.981             # [m/s**2]
+gz = 0.0
+backp              = 0.15
+#backp              = 0.01
 
 # get kernel properties
 kernel  = 'WendlandC4'
@@ -88,29 +106,33 @@ nlist = hoomd.nsearch.nlist.Cell(buffer = rcut*0.05, rebuild_check_delay = 1, ka
 
 # Equation of State
 eos = hoomd.sph.eos.Tait()
-eos.set_params(rho0,0.01)
+eos.set_params(rho0,backp)
 
 # Define groups/filters
 filterfluid  = hoomd.filter.Type(['F']) # is zero
-filtersolid  = hoomd.filter.Type(['S']) # is one
+filtersolid  = hoomd.filter.Type(['S','R']) # is one
+filterrigid  = hoomd.filter.Type(['R']) # is two
 filterall    = hoomd.filter.All()
 
 with sim.state.cpu_local_snapshot as snap:
     print(f'{np.count_nonzero(snap.particles.typeid == 0)} fluid particles on rank {device.communicator.rank}')
     print(f'{np.count_nonzero(snap.particles.typeid == 1)} solid particles on rank {device.communicator.rank}')
+    print(f'{np.count_nonzero(snap.particles.typeid == 2)} solid particles on rank {device.communicator.rank}')
+
 
 # Set up SPH solver
 model = hoomd.sph.sphmodel.SinglePhaseFlow(kernel = kernel_obj,
                                            eos    = eos,
                                            nlist  = nlist,
                                            fluidgroup_filter = filterfluid,
-                                           solidgroup_filter = filtersolid)
+                                           solidgroup_filter = filtersolid,
+                                           )
 if device.communicator.rank == 0:
     print("SetModelParameter on all ranks")
 
 model.mu = viscosity
 model.densitymethod = densitymethod
-model.gx = fx
+model.gz = gz
 model.damp = 1000
 # model.artificialviscosity = True
 model.artificialviscosity = True 
@@ -135,10 +157,20 @@ dt = model.compute_dt(lref, refvel, dx, drho)
 
 integrator = hoomd.sph.Integrator(dt=dt)
 
-# VelocityVerlet = hoomd.sph.methods.VelocityVerlet(filter=filterFLUID, densitymethod = densitymethod)
-velocityverlet = hoomd.sph.methods.VelocityVerletBasic(filter=filterfluid, densitymethod = densitymethod)
+VelocityVerlet = hoomd.sph.methods.VelocityVerlet(filter=filterFLUID, densitymethod = densitymethod)
+#velocityverlet = hoomd.sph.methods.VelocityVerletBasic(filter=filterfluid, densitymethod = densitymethod)
+# rigidbodyintegrator = hoomd.sph.methods.RigidBodyIntegrator(filter=filterrigid, transvel = [0.0,0.0,0.0],
+#                                          rotvel   = variant.Ramp(0.0, angvel_s, 0, 1000),
+#                                          pivotpnt = [0.0,0.0,0.0],
+#                                          rotaxis  = [0.0,0.0,1.0])
+
+rigidbodyintegrator = hoomd.sph.methods.RigidBodyIntegrator(filter=filterrigid, transvel_x = 0.0, transvel_y = 0.0, transvel_z = 0.0,
+                                          rotvel   = variant.Ramp(0.0, angvel_s, 0, 1000),
+                                          pivotpnt = [0.0,0.0,0.0],
+                                          rotaxis  = [0.0,0.0,1.0])
 
 integrator.methods.append(velocityverlet)
+integrator.methods.append(rigidbodyintegrator)
 integrator.forces.append(model)
 
 compute_filter_all = hoomd.filter.All()
