@@ -1,0 +1,1 @@
+/usr/bin/c++ -fPIC  -Wall -Wconversion -Wno-sign-conversion -Wno-unknown-pragmas -Wno-deprecated-declarations -Wno-unused-result -fdiagnostics-color=always -O3 -DNDEBUG -shared -Wl,-soname,libquickhull.so -o libquickhull.so CMakeFiles/quickhull.dir/extern/quickhull/QuickHull.cpp.o 

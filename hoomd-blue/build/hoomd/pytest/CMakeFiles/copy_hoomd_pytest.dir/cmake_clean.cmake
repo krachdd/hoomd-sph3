@@ -1,0 +1,41 @@
+file(REMOVE_RECURSE
+  "CMakeFiles/copy_hoomd_pytest"
+  "__init__.py"
+  "dummy.py"
+  "test_attr_tuner.py"
+  "test_balance.py"
+  "test_box.py"
+  "test_box_resize.py"
+  "test_collections.py"
+  "test_communicator.py"
+  "test_custom_tuner.py"
+  "test_custom_updater.py"
+  "test_custom_writer.py"
+  "test_dcd.py"
+  "test_device.py"
+  "test_filter.py"
+  "test_filter_updater.py"
+  "test_local_snapshot.py"
+  "test_logging.py"
+  "test_mesh.py"
+  "test_operation.py"
+  "test_operations.py"
+  "test_parameter_dict.py"
+  "test_remove_drift.py"
+  "test_simulation.py"
+  "test_snapshot.py"
+  "test_sorter.py"
+  "test_state.py"
+  "test_syncedlist.py"
+  "test_table.py"
+  "test_trigger.py"
+  "test_tune_solve.py"
+  "test_type_parameter_dict.py"
+  "test_typeparam.py"
+  "test_variant.py"
+)
+
+# Per-language clean rules from dependency scanning.
+foreach(lang )
+  include(CMakeFiles/copy_hoomd_pytest.dir/cmake_clean_${lang}.cmake OPTIONAL)
+endforeach()

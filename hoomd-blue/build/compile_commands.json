@@ -1,0 +1,332 @@
+[
+{
+  "directory": "/home/USADR/ac130084/HOOMD-SPH/hoomd-sph3/hoomd-blue/build/hoomd",
+  "command": "/usr/bin/c++ -Dquickhull_EXPORTS   -Wall -Wconversion -Wno-sign-conversion -Wno-unknown-pragmas -Wno-deprecated-declarations -Wno-unused-result -fdiagnostics-color=always -O3 -DNDEBUG -fPIC -Wno-conversion -Wno-pessimizing-move -std=gnu++17 -o CMakeFiles/quickhull.dir/extern/quickhull/QuickHull.cpp.o -c /home/USADR/ac130084/HOOMD-SPH/hoomd-sph3/hoomd-blue/hoomd/extern/quickhull/QuickHull.cpp",
+  "file": "/home/USADR/ac130084/HOOMD-SPH/hoomd-sph3/hoomd-blue/hoomd/extern/quickhull/QuickHull.cpp"
+},
+{
+  "directory": "/home/USADR/ac130084/HOOMD-SPH/hoomd-sph3/hoomd-blue/build/hoomd",
+  "command": "/usr/bin/c++ -DEIGEN_MPL2_ONLY -DENABLE_HPMC_MIXED_PRECISION -DENABLE_MPI -D_REENTRANT -D_hoomd_EXPORTS -I/home/USADR/ac130084/HOOMD-SPH/hoomd-sph3/hoomd-blue -I/home/USADR/ac130084/HOOMD-SPH/hoomd-sph3/hoomd-blue/build/hoomd/include -isystem /home/USADR/ac130084/anaconda3/envs/sph3/include -isystem /home/USADR/ac130084/anaconda3/envs/sph3/include/python3.10 -isystem /usr/include/eigen3 -isystem /usr/lib/x86_64-linux-gnu/openmpi/include -isystem /usr/lib/x86_64-linux-gnu/openmpi/include/openmpi  -Wall -Wconversion -Wno-sign-conversion -Wno-unknown-pragmas -Wno-deprecated-declarations -Wno-unused-result -fdiagnostics-color=always -O3 -DNDEBUG -fPIC -fvisibility=hidden -std=gnu++17 -o CMakeFiles/_hoomd.dir/module.cc.o -c /home/USADR/ac130084/HOOMD-SPH/hoomd-sph3/hoomd-blue/hoomd/module.cc",
+  "file": "/home/USADR/ac130084/HOOMD-SPH/hoomd-sph3/hoomd-blue/hoomd/module.cc"
+},
+{
+  "directory": "/home/USADR/ac130084/HOOMD-SPH/hoomd-sph3/hoomd-blue/build/hoomd",
+  "command": "/usr/bin/c++ -DEIGEN_MPL2_ONLY -DENABLE_HPMC_MIXED_PRECISION -DENABLE_MPI -D_REENTRANT -D_hoomd_EXPORTS -I/home/USADR/ac130084/HOOMD-SPH/hoomd-sph3/hoomd-blue -I/home/USADR/ac130084/HOOMD-SPH/hoomd-sph3/hoomd-blue/build/hoomd/include -isystem /home/USADR/ac130084/anaconda3/envs/sph3/include -isystem /home/USADR/ac130084/anaconda3/envs/sph3/include/python3.10 -isystem /usr/include/eigen3 -isystem /usr/lib/x86_64-linux-gnu/openmpi/include -isystem /usr/lib/x86_64-linux-gnu/openmpi/include/openmpi  -Wall -Wconversion -Wno-sign-conversion -Wno-unknown-pragmas -Wno-deprecated-declarations -Wno-unused-result -fdiagnostics-color=always -O3 -DNDEBUG -fPIC -fvisibility=hidden -std=gnu++17 -o CMakeFiles/_hoomd.dir/Action.cc.o -c /home/USADR/ac130084/HOOMD-SPH/hoomd-sph3/hoomd-blue/hoomd/Action.cc",
+  "file": "/home/USADR/ac130084/HOOMD-SPH/hoomd-sph3/hoomd-blue/hoomd/Action.cc"
+},
+{
+  "directory": "/home/USADR/ac130084/HOOMD-SPH/hoomd-sph3/hoomd-blue/build/hoomd",
+  "command": "/usr/bin/c++ -DEIGEN_MPL2_ONLY -DENABLE_HPMC_MIXED_PRECISION -DENABLE_MPI -D_REENTRANT -D_hoomd_EXPORTS -I/home/USADR/ac130084/HOOMD-SPH/hoomd-sph3/hoomd-blue -I/home/USADR/ac130084/HOOMD-SPH/hoomd-sph3/hoomd-blue/build/hoomd/include -isystem /home/USADR/ac130084/anaconda3/envs/sph3/include -isystem /home/USADR/ac130084/anaconda3/envs/sph3/include/python3.10 -isystem /usr/include/eigen3 -isystem /usr/lib/x86_64-linux-gnu/openmpi/include -isystem /usr/lib/x86_64-linux-gnu/openmpi/include/openmpi  -Wall -Wconversion -Wno-sign-conversion -Wno-unknown-pragmas -Wno-deprecated-declarations -Wno-unused-result -fdiagnostics-color=always -O3 -DNDEBUG -fPIC -fvisibility=hidden -std=gnu++17 -o CMakeFiles/_hoomd.dir/Autotuned.cc.o -c /home/USADR/ac130084/HOOMD-SPH/hoomd-sph3/hoomd-blue/hoomd/Autotuned.cc",
+  "file": "/home/USADR/ac130084/HOOMD-SPH/hoomd-sph3/hoomd-blue/hoomd/Autotuned.cc"
+},
+{
+  "directory": "/home/USADR/ac130084/HOOMD-SPH/hoomd-sph3/hoomd-blue/build/hoomd",
+  "command": "/usr/bin/c++ -DEIGEN_MPL2_ONLY -DENABLE_HPMC_MIXED_PRECISION -DENABLE_MPI -D_REENTRANT -D_hoomd_EXPORTS -I/home/USADR/ac130084/HOOMD-SPH/hoomd-sph3/hoomd-blue -I/home/USADR/ac130084/HOOMD-SPH/hoomd-sph3/hoomd-blue/build/hoomd/include -isystem /home/USADR/ac130084/anaconda3/envs/sph3/include -isystem /home/USADR/ac130084/anaconda3/envs/sph3/include/python3.10 -isystem /usr/include/eigen3 -isystem /usr/lib/x86_64-linux-gnu/openmpi/include -isystem /usr/lib/x86_64-linux-gnu/openmpi/include/openmpi  -Wall -Wconversion -Wno-sign-conversion -Wno-unknown-pragmas -Wno-deprecated-declarations -Wno-unused-result -fdiagnostics-color=always -O3 -DNDEBUG -fPIC -fvisibility=hidden -std=gnu++17 -o CMakeFiles/_hoomd.dir/Analyzer.cc.o -c /home/USADR/ac130084/HOOMD-SPH/hoomd-sph3/hoomd-blue/hoomd/Analyzer.cc",
+  "file": "/home/USADR/ac130084/HOOMD-SPH/hoomd-sph3/hoomd-blue/hoomd/Analyzer.cc"
+},
+{
+  "directory": "/home/USADR/ac130084/HOOMD-SPH/hoomd-sph3/hoomd-blue/build/hoomd",
+  "command": "/usr/bin/c++ -DEIGEN_MPL2_ONLY -DENABLE_HPMC_MIXED_PRECISION -DENABLE_MPI -D_REENTRANT -D_hoomd_EXPORTS -I/home/USADR/ac130084/HOOMD-SPH/hoomd-sph3/hoomd-blue -I/home/USADR/ac130084/HOOMD-SPH/hoomd-sph3/hoomd-blue/build/hoomd/include -isystem /home/USADR/ac130084/anaconda3/envs/sph3/include -isystem /home/USADR/ac130084/anaconda3/envs/sph3/include/python3.10 -isystem /usr/include/eigen3 -isystem /usr/lib/x86_64-linux-gnu/openmpi/include -isystem /usr/lib/x86_64-linux-gnu/openmpi/include/openmpi  -Wall -Wconversion -Wno-sign-conversion -Wno-unknown-pragmas -Wno-deprecated-declarations -Wno-unused-result -fdiagnostics-color=always -O3 -DNDEBUG -fPIC -fvisibility=hidden -std=gnu++17 -o CMakeFiles/_hoomd.dir/BondedGroupData.cc.o -c /home/USADR/ac130084/HOOMD-SPH/hoomd-sph3/hoomd-blue/hoomd/BondedGroupData.cc",
+  "file": "/home/USADR/ac130084/HOOMD-SPH/hoomd-sph3/hoomd-blue/hoomd/BondedGroupData.cc"
+},
+{
+  "directory": "/home/USADR/ac130084/HOOMD-SPH/hoomd-sph3/hoomd-blue/build/hoomd",
+  "command": "/usr/bin/c++ -DEIGEN_MPL2_ONLY -DENABLE_HPMC_MIXED_PRECISION -DENABLE_MPI -D_REENTRANT -D_hoomd_EXPORTS -I/home/USADR/ac130084/HOOMD-SPH/hoomd-sph3/hoomd-blue -I/home/USADR/ac130084/HOOMD-SPH/hoomd-sph3/hoomd-blue/build/hoomd/include -isystem /home/USADR/ac130084/anaconda3/envs/sph3/include -isystem /home/USADR/ac130084/anaconda3/envs/sph3/include/python3.10 -isystem /usr/include/eigen3 -isystem /usr/lib/x86_64-linux-gnu/openmpi/include -isystem /usr/lib/x86_64-linux-gnu/openmpi/include/openmpi  -Wall -Wconversion -Wno-sign-conversion -Wno-unknown-pragmas -Wno-deprecated-declarations -Wno-unused-result -fdiagnostics-color=always -O3 -DNDEBUG -fPIC -fvisibility=hidden -std=gnu++17 -o CMakeFiles/_hoomd.dir/BoxResizeUpdater.cc.o -c /home/USADR/ac130084/HOOMD-SPH/hoomd-sph3/hoomd-blue/hoomd/BoxResizeUpdater.cc",
+  "file": "/home/USADR/ac130084/HOOMD-SPH/hoomd-sph3/hoomd-blue/hoomd/BoxResizeUpdater.cc"
+},
+{
+  "directory": "/home/USADR/ac130084/HOOMD-SPH/hoomd-sph3/hoomd-blue/build/hoomd",
+  "command": "/usr/bin/c++ -DEIGEN_MPL2_ONLY -DENABLE_HPMC_MIXED_PRECISION -DENABLE_MPI -D_REENTRANT -D_hoomd_EXPORTS -I/home/USADR/ac130084/HOOMD-SPH/hoomd-sph3/hoomd-blue -I/home/USADR/ac130084/HOOMD-SPH/hoomd-sph3/hoomd-blue/build/hoomd/include -isystem /home/USADR/ac130084/anaconda3/envs/sph3/include -isystem /home/USADR/ac130084/anaconda3/envs/sph3/include/python3.10 -isystem /usr/include/eigen3 -isystem /usr/lib/x86_64-linux-gnu/openmpi/include -isystem /usr/lib/x86_64-linux-gnu/openmpi/include/openmpi  -Wall -Wconversion -Wno-sign-conversion -Wno-unknown-pragmas -Wno-deprecated-declarations -Wno-unused-result -fdiagnostics-color=always -O3 -DNDEBUG -fPIC -fvisibility=hidden -std=gnu++17 -o CMakeFiles/_hoomd.dir/CellList.cc.o -c /home/USADR/ac130084/HOOMD-SPH/hoomd-sph3/hoomd-blue/hoomd/CellList.cc",
+  "file": "/home/USADR/ac130084/HOOMD-SPH/hoomd-sph3/hoomd-blue/hoomd/CellList.cc"
+},
+{
+  "directory": "/home/USADR/ac130084/HOOMD-SPH/hoomd-sph3/hoomd-blue/build/hoomd",
+  "command": "/usr/bin/c++ -DEIGEN_MPL2_ONLY -DENABLE_HPMC_MIXED_PRECISION -DENABLE_MPI -D_REENTRANT -D_hoomd_EXPORTS -I/home/USADR/ac130084/HOOMD-SPH/hoomd-sph3/hoomd-blue -I/home/USADR/ac130084/HOOMD-SPH/hoomd-sph3/hoomd-blue/build/hoomd/include -isystem /home/USADR/ac130084/anaconda3/envs/sph3/include -isystem /home/USADR/ac130084/anaconda3/envs/sph3/include/python3.10 -isystem /usr/include/eigen3 -isystem /usr/lib/x86_64-linux-gnu/openmpi/include -isystem /usr/lib/x86_64-linux-gnu/openmpi/include/openmpi  -Wall -Wconversion -Wno-sign-conversion -Wno-unknown-pragmas -Wno-deprecated-declarations -Wno-unused-result -fdiagnostics-color=always -O3 -DNDEBUG -fPIC -fvisibility=hidden -std=gnu++17 -o CMakeFiles/_hoomd.dir/CellListStencil.cc.o -c /home/USADR/ac130084/HOOMD-SPH/hoomd-sph3/hoomd-blue/hoomd/CellListStencil.cc",
+  "file": "/home/USADR/ac130084/HOOMD-SPH/hoomd-sph3/hoomd-blue/hoomd/CellListStencil.cc"
+},
+{
+  "directory": "/home/USADR/ac130084/HOOMD-SPH/hoomd-sph3/hoomd-blue/build/hoomd",
+  "command": "/usr/bin/c++ -DEIGEN_MPL2_ONLY -DENABLE_HPMC_MIXED_PRECISION -DENABLE_MPI -D_REENTRANT -D_hoomd_EXPORTS -I/home/USADR/ac130084/HOOMD-SPH/hoomd-sph3/hoomd-blue -I/home/USADR/ac130084/HOOMD-SPH/hoomd-sph3/hoomd-blue/build/hoomd/include -isystem /home/USADR/ac130084/anaconda3/envs/sph3/include -isystem /home/USADR/ac130084/anaconda3/envs/sph3/include/python3.10 -isystem /usr/include/eigen3 -isystem /usr/lib/x86_64-linux-gnu/openmpi/include -isystem /usr/lib/x86_64-linux-gnu/openmpi/include/openmpi  -Wall -Wconversion -Wno-sign-conversion -Wno-unknown-pragmas -Wno-deprecated-declarations -Wno-unused-result -fdiagnostics-color=always -O3 -DNDEBUG -fPIC -fvisibility=hidden -std=gnu++17 -o CMakeFiles/_hoomd.dir/ClockSource.cc.o -c /home/USADR/ac130084/HOOMD-SPH/hoomd-sph3/hoomd-blue/hoomd/ClockSource.cc",
+  "file": "/home/USADR/ac130084/HOOMD-SPH/hoomd-sph3/hoomd-blue/hoomd/ClockSource.cc"
+},
+{
+  "directory": "/home/USADR/ac130084/HOOMD-SPH/hoomd-sph3/hoomd-blue/build/hoomd",
+  "command": "/usr/bin/c++ -DEIGEN_MPL2_ONLY -DENABLE_HPMC_MIXED_PRECISION -DENABLE_MPI -D_REENTRANT -D_hoomd_EXPORTS -I/home/USADR/ac130084/HOOMD-SPH/hoomd-sph3/hoomd-blue -I/home/USADR/ac130084/HOOMD-SPH/hoomd-sph3/hoomd-blue/build/hoomd/include -isystem /home/USADR/ac130084/anaconda3/envs/sph3/include -isystem /home/USADR/ac130084/anaconda3/envs/sph3/include/python3.10 -isystem /usr/include/eigen3 -isystem /usr/lib/x86_64-linux-gnu/openmpi/include -isystem /usr/lib/x86_64-linux-gnu/openmpi/include/openmpi  -Wall -Wconversion -Wno-sign-conversion -Wno-unknown-pragmas -Wno-deprecated-declarations -Wno-unused-result -fdiagnostics-color=always -O3 -DNDEBUG -fPIC -fvisibility=hidden -std=gnu++17 -o CMakeFiles/_hoomd.dir/Communicator.cc.o -c /home/USADR/ac130084/HOOMD-SPH/hoomd-sph3/hoomd-blue/hoomd/Communicator.cc",
+  "file": "/home/USADR/ac130084/HOOMD-SPH/hoomd-sph3/hoomd-blue/hoomd/Communicator.cc"
+},
+{
+  "directory": "/home/USADR/ac130084/HOOMD-SPH/hoomd-sph3/hoomd-blue/build/hoomd",
+  "command": "/usr/bin/c++ -DEIGEN_MPL2_ONLY -DENABLE_HPMC_MIXED_PRECISION -DENABLE_MPI -D_REENTRANT -D_hoomd_EXPORTS -I/home/USADR/ac130084/HOOMD-SPH/hoomd-sph3/hoomd-blue -I/home/USADR/ac130084/HOOMD-SPH/hoomd-sph3/hoomd-blue/build/hoomd/include -isystem /home/USADR/ac130084/anaconda3/envs/sph3/include -isystem /home/USADR/ac130084/anaconda3/envs/sph3/include/python3.10 -isystem /usr/include/eigen3 -isystem /usr/lib/x86_64-linux-gnu/openmpi/include -isystem /usr/lib/x86_64-linux-gnu/openmpi/include/openmpi  -Wall -Wconversion -Wno-sign-conversion -Wno-unknown-pragmas -Wno-deprecated-declarations -Wno-unused-result -fdiagnostics-color=always -O3 -DNDEBUG -fPIC -fvisibility=hidden -std=gnu++17 -o CMakeFiles/_hoomd.dir/CommunicatorGPU.cc.o -c /home/USADR/ac130084/HOOMD-SPH/hoomd-sph3/hoomd-blue/hoomd/CommunicatorGPU.cc",
+  "file": "/home/USADR/ac130084/HOOMD-SPH/hoomd-sph3/hoomd-blue/hoomd/CommunicatorGPU.cc"
+},
+{
+  "directory": "/home/USADR/ac130084/HOOMD-SPH/hoomd-sph3/hoomd-blue/build/hoomd",
+  "command": "/usr/bin/c++ -DEIGEN_MPL2_ONLY -DENABLE_HPMC_MIXED_PRECISION -DENABLE_MPI -D_REENTRANT -D_hoomd_EXPORTS -I/home/USADR/ac130084/HOOMD-SPH/hoomd-sph3/hoomd-blue -I/home/USADR/ac130084/HOOMD-SPH/hoomd-sph3/hoomd-blue/build/hoomd/include -isystem /home/USADR/ac130084/anaconda3/envs/sph3/include -isystem /home/USADR/ac130084/anaconda3/envs/sph3/include/python3.10 -isystem /usr/include/eigen3 -isystem /usr/lib/x86_64-linux-gnu/openmpi/include -isystem /usr/lib/x86_64-linux-gnu/openmpi/include/openmpi  -Wall -Wconversion -Wno-sign-conversion -Wno-unknown-pragmas -Wno-deprecated-declarations -Wno-unused-result -fdiagnostics-color=always -O3 -DNDEBUG -fPIC -fvisibility=hidden -std=gnu++17 -o CMakeFiles/_hoomd.dir/Compute.cc.o -c /home/USADR/ac130084/HOOMD-SPH/hoomd-sph3/hoomd-blue/hoomd/Compute.cc",
+  "file": "/home/USADR/ac130084/HOOMD-SPH/hoomd-sph3/hoomd-blue/hoomd/Compute.cc"
+},
+{
+  "directory": "/home/USADR/ac130084/HOOMD-SPH/hoomd-sph3/hoomd-blue/build/hoomd",
+  "command": "/usr/bin/c++ -DEIGEN_MPL2_ONLY -DENABLE_HPMC_MIXED_PRECISION -DENABLE_MPI -D_REENTRANT -D_hoomd_EXPORTS -I/home/USADR/ac130084/HOOMD-SPH/hoomd-sph3/hoomd-blue -I/home/USADR/ac130084/HOOMD-SPH/hoomd-sph3/hoomd-blue/build/hoomd/include -isystem /home/USADR/ac130084/anaconda3/envs/sph3/include -isystem /home/USADR/ac130084/anaconda3/envs/sph3/include/python3.10 -isystem /usr/include/eigen3 -isystem /usr/lib/x86_64-linux-gnu/openmpi/include -isystem /usr/lib/x86_64-linux-gnu/openmpi/include/openmpi  -Wall -Wconversion -Wno-sign-conversion -Wno-unknown-pragmas -Wno-deprecated-declarations -Wno-unused-result -fdiagnostics-color=always -O3 -DNDEBUG -fPIC -fvisibility=hidden -std=gnu++17 -o CMakeFiles/_hoomd.dir/DomainDecomposition.cc.o -c /home/USADR/ac130084/HOOMD-SPH/hoomd-sph3/hoomd-blue/hoomd/DomainDecomposition.cc",
+  "file": "/home/USADR/ac130084/HOOMD-SPH/hoomd-sph3/hoomd-blue/hoomd/DomainDecomposition.cc"
+},
+{
+  "directory": "/home/USADR/ac130084/HOOMD-SPH/hoomd-sph3/hoomd-blue/build/hoomd",
+  "command": "/usr/bin/c++ -DEIGEN_MPL2_ONLY -DENABLE_HPMC_MIXED_PRECISION -DENABLE_MPI -D_REENTRANT -D_hoomd_EXPORTS -I/home/USADR/ac130084/HOOMD-SPH/hoomd-sph3/hoomd-blue -I/home/USADR/ac130084/HOOMD-SPH/hoomd-sph3/hoomd-blue/build/hoomd/include -isystem /home/USADR/ac130084/anaconda3/envs/sph3/include -isystem /home/USADR/ac130084/anaconda3/envs/sph3/include/python3.10 -isystem /usr/include/eigen3 -isystem /usr/lib/x86_64-linux-gnu/openmpi/include -isystem /usr/lib/x86_64-linux-gnu/openmpi/include/openmpi  -Wall -Wconversion -Wno-sign-conversion -Wno-unknown-pragmas -Wno-deprecated-declarations -Wno-unused-result -fdiagnostics-color=always -O3 -DNDEBUG -fPIC -fvisibility=hidden -std=gnu++17 -o CMakeFiles/_hoomd.dir/ExecutionConfiguration.cc.o -c /home/USADR/ac130084/HOOMD-SPH/hoomd-sph3/hoomd-blue/hoomd/ExecutionConfiguration.cc",
+  "file": "/home/USADR/ac130084/HOOMD-SPH/hoomd-sph3/hoomd-blue/hoomd/ExecutionConfiguration.cc"
+},
+{
+  "directory": "/home/USADR/ac130084/HOOMD-SPH/hoomd-sph3/hoomd-blue/build/hoomd",
+  "command": "/usr/bin/c++ -DEIGEN_MPL2_ONLY -DENABLE_HPMC_MIXED_PRECISION -DENABLE_MPI -D_REENTRANT -D_hoomd_EXPORTS -I/home/USADR/ac130084/HOOMD-SPH/hoomd-sph3/hoomd-blue -I/home/USADR/ac130084/HOOMD-SPH/hoomd-sph3/hoomd-blue/build/hoomd/include -isystem /home/USADR/ac130084/anaconda3/envs/sph3/include -isystem /home/USADR/ac130084/anaconda3/envs/sph3/include/python3.10 -isystem /usr/include/eigen3 -isystem /usr/lib/x86_64-linux-gnu/openmpi/include -isystem /usr/lib/x86_64-linux-gnu/openmpi/include/openmpi  -Wall -Wconversion -Wno-sign-conversion -Wno-unknown-pragmas -Wno-deprecated-declarations -Wno-unused-result -fdiagnostics-color=always -O3 -DNDEBUG -fPIC -fvisibility=hidden -std=gnu++17 -o CMakeFiles/_hoomd.dir/ForceCompute.cc.o -c /home/USADR/ac130084/HOOMD-SPH/hoomd-sph3/hoomd-blue/hoomd/ForceCompute.cc",
+  "file": "/home/USADR/ac130084/HOOMD-SPH/hoomd-sph3/hoomd-blue/hoomd/ForceCompute.cc"
+},
+{
+  "directory": "/home/USADR/ac130084/HOOMD-SPH/hoomd-sph3/hoomd-blue/build/hoomd",
+  "command": "/usr/bin/c++ -DEIGEN_MPL2_ONLY -DENABLE_HPMC_MIXED_PRECISION -DENABLE_MPI -D_REENTRANT -D_hoomd_EXPORTS -I/home/USADR/ac130084/HOOMD-SPH/hoomd-sph3/hoomd-blue -I/home/USADR/ac130084/HOOMD-SPH/hoomd-sph3/hoomd-blue/build/hoomd/include -isystem /home/USADR/ac130084/anaconda3/envs/sph3/include -isystem /home/USADR/ac130084/anaconda3/envs/sph3/include/python3.10 -isystem /usr/include/eigen3 -isystem /usr/lib/x86_64-linux-gnu/openmpi/include -isystem /usr/lib/x86_64-linux-gnu/openmpi/include/openmpi  -Wall -Wconversion -Wno-sign-conversion -Wno-unknown-pragmas -Wno-deprecated-declarations -Wno-unused-result -fdiagnostics-color=always -O3 -DNDEBUG -fPIC -fvisibility=hidden -std=gnu++17 -o CMakeFiles/_hoomd.dir/ForceConstraint.cc.o -c /home/USADR/ac130084/HOOMD-SPH/hoomd-sph3/hoomd-blue/hoomd/ForceConstraint.cc",
+  "file": "/home/USADR/ac130084/HOOMD-SPH/hoomd-sph3/hoomd-blue/hoomd/ForceConstraint.cc"
+},
+{
+  "directory": "/home/USADR/ac130084/HOOMD-SPH/hoomd-sph3/hoomd-blue/build/hoomd",
+  "command": "/usr/bin/c++ -DEIGEN_MPL2_ONLY -DENABLE_HPMC_MIXED_PRECISION -DENABLE_MPI -D_REENTRANT -D_hoomd_EXPORTS -I/home/USADR/ac130084/HOOMD-SPH/hoomd-sph3/hoomd-blue -I/home/USADR/ac130084/HOOMD-SPH/hoomd-sph3/hoomd-blue/build/hoomd/include -isystem /home/USADR/ac130084/anaconda3/envs/sph3/include -isystem /home/USADR/ac130084/anaconda3/envs/sph3/include/python3.10 -isystem /usr/include/eigen3 -isystem /usr/lib/x86_64-linux-gnu/openmpi/include -isystem /usr/lib/x86_64-linux-gnu/openmpi/include/openmpi  -Wall -Wconversion -Wno-sign-conversion -Wno-unknown-pragmas -Wno-deprecated-declarations -Wno-unused-result -fdiagnostics-color=always -O3 -DNDEBUG -fPIC -fvisibility=hidden -std=gnu++17 -o CMakeFiles/_hoomd.dir/GSDDumpWriter.cc.o -c /home/USADR/ac130084/HOOMD-SPH/hoomd-sph3/hoomd-blue/hoomd/GSDDumpWriter.cc",
+  "file": "/home/USADR/ac130084/HOOMD-SPH/hoomd-sph3/hoomd-blue/hoomd/GSDDumpWriter.cc"
+},
+{
+  "directory": "/home/USADR/ac130084/HOOMD-SPH/hoomd-sph3/hoomd-blue/build/hoomd",
+  "command": "/usr/bin/c++ -DEIGEN_MPL2_ONLY -DENABLE_HPMC_MIXED_PRECISION -DENABLE_MPI -D_REENTRANT -D_hoomd_EXPORTS -I/home/USADR/ac130084/HOOMD-SPH/hoomd-sph3/hoomd-blue -I/home/USADR/ac130084/HOOMD-SPH/hoomd-sph3/hoomd-blue/build/hoomd/include -isystem /home/USADR/ac130084/anaconda3/envs/sph3/include -isystem /home/USADR/ac130084/anaconda3/envs/sph3/include/python3.10 -isystem /usr/include/eigen3 -isystem /usr/lib/x86_64-linux-gnu/openmpi/include -isystem /usr/lib/x86_64-linux-gnu/openmpi/include/openmpi  -Wall -Wconversion -Wno-sign-conversion -Wno-unknown-pragmas -Wno-deprecated-declarations -Wno-unused-result -fdiagnostics-color=always -O3 -DNDEBUG -fPIC -fvisibility=hidden -std=gnu++17 -o CMakeFiles/_hoomd.dir/GSDReader.cc.o -c /home/USADR/ac130084/HOOMD-SPH/hoomd-sph3/hoomd-blue/hoomd/GSDReader.cc",
+  "file": "/home/USADR/ac130084/HOOMD-SPH/hoomd-sph3/hoomd-blue/hoomd/GSDReader.cc"
+},
+{
+  "directory": "/home/USADR/ac130084/HOOMD-SPH/hoomd-sph3/hoomd-blue/build/hoomd",
+  "command": "/usr/bin/c++ -DEIGEN_MPL2_ONLY -DENABLE_HPMC_MIXED_PRECISION -DENABLE_MPI -D_REENTRANT -D_hoomd_EXPORTS -I/home/USADR/ac130084/HOOMD-SPH/hoomd-sph3/hoomd-blue -I/home/USADR/ac130084/HOOMD-SPH/hoomd-sph3/hoomd-blue/build/hoomd/include -isystem /home/USADR/ac130084/anaconda3/envs/sph3/include -isystem /home/USADR/ac130084/anaconda3/envs/sph3/include/python3.10 -isystem /usr/include/eigen3 -isystem /usr/lib/x86_64-linux-gnu/openmpi/include -isystem /usr/lib/x86_64-linux-gnu/openmpi/include/openmpi  -Wall -Wconversion -Wno-sign-conversion -Wno-unknown-pragmas -Wno-deprecated-declarations -Wno-unused-result -fdiagnostics-color=always -O3 -DNDEBUG -fPIC -fvisibility=hidden -std=gnu++17 -o CMakeFiles/_hoomd.dir/HOOMDMath.cc.o -c /home/USADR/ac130084/HOOMD-SPH/hoomd-sph3/hoomd-blue/hoomd/HOOMDMath.cc",
+  "file": "/home/USADR/ac130084/HOOMD-SPH/hoomd-sph3/hoomd-blue/hoomd/HOOMDMath.cc"
+},
+{
+  "directory": "/home/USADR/ac130084/HOOMD-SPH/hoomd-sph3/hoomd-blue/build/hoomd",
+  "command": "/usr/bin/c++ -DEIGEN_MPL2_ONLY -DENABLE_HPMC_MIXED_PRECISION -DENABLE_MPI -D_REENTRANT -D_hoomd_EXPORTS -I/home/USADR/ac130084/HOOMD-SPH/hoomd-sph3/hoomd-blue -I/home/USADR/ac130084/HOOMD-SPH/hoomd-sph3/hoomd-blue/build/hoomd/include -isystem /home/USADR/ac130084/anaconda3/envs/sph3/include -isystem /home/USADR/ac130084/anaconda3/envs/sph3/include/python3.10 -isystem /usr/include/eigen3 -isystem /usr/lib/x86_64-linux-gnu/openmpi/include -isystem /usr/lib/x86_64-linux-gnu/openmpi/include/openmpi  -Wall -Wconversion -Wno-sign-conversion -Wno-unknown-pragmas -Wno-deprecated-declarations -Wno-unused-result -fdiagnostics-color=always -O3 -DNDEBUG -fPIC -fvisibility=hidden -std=gnu++17 -o CMakeFiles/_hoomd.dir/HOOMDVersion.cc.o -c /home/USADR/ac130084/HOOMD-SPH/hoomd-sph3/hoomd-blue/hoomd/HOOMDVersion.cc",
+  "file": "/home/USADR/ac130084/HOOMD-SPH/hoomd-sph3/hoomd-blue/hoomd/HOOMDVersion.cc"
+},
+{
+  "directory": "/home/USADR/ac130084/HOOMD-SPH/hoomd-sph3/hoomd-blue/build/hoomd",
+  "command": "/usr/bin/c++ -DEIGEN_MPL2_ONLY -DENABLE_HPMC_MIXED_PRECISION -DENABLE_MPI -D_REENTRANT -D_hoomd_EXPORTS -I/home/USADR/ac130084/HOOMD-SPH/hoomd-sph3/hoomd-blue -I/home/USADR/ac130084/HOOMD-SPH/hoomd-sph3/hoomd-blue/build/hoomd/include -isystem /home/USADR/ac130084/anaconda3/envs/sph3/include -isystem /home/USADR/ac130084/anaconda3/envs/sph3/include/python3.10 -isystem /usr/include/eigen3 -isystem /usr/lib/x86_64-linux-gnu/openmpi/include -isystem /usr/lib/x86_64-linux-gnu/openmpi/include/openmpi  -Wall -Wconversion -Wno-sign-conversion -Wno-unknown-pragmas -Wno-deprecated-declarations -Wno-unused-result -fdiagnostics-color=always -O3 -DNDEBUG -fPIC -fvisibility=hidden -std=gnu++17 -o CMakeFiles/_hoomd.dir/Initializers.cc.o -c /home/USADR/ac130084/HOOMD-SPH/hoomd-sph3/hoomd-blue/hoomd/Initializers.cc",
+  "file": "/home/USADR/ac130084/HOOMD-SPH/hoomd-sph3/hoomd-blue/hoomd/Initializers.cc"
+},
+{
+  "directory": "/home/USADR/ac130084/HOOMD-SPH/hoomd-sph3/hoomd-blue/build/hoomd",
+  "command": "/usr/bin/c++ -DEIGEN_MPL2_ONLY -DENABLE_HPMC_MIXED_PRECISION -DENABLE_MPI -D_REENTRANT -D_hoomd_EXPORTS -I/home/USADR/ac130084/HOOMD-SPH/hoomd-sph3/hoomd-blue -I/home/USADR/ac130084/HOOMD-SPH/hoomd-sph3/hoomd-blue/build/hoomd/include -isystem /home/USADR/ac130084/anaconda3/envs/sph3/include -isystem /home/USADR/ac130084/anaconda3/envs/sph3/include/python3.10 -isystem /usr/include/eigen3 -isystem /usr/lib/x86_64-linux-gnu/openmpi/include -isystem /usr/lib/x86_64-linux-gnu/openmpi/include/openmpi  -Wall -Wconversion -Wno-sign-conversion -Wno-unknown-pragmas -Wno-deprecated-declarations -Wno-unused-result -fdiagnostics-color=always -O3 -DNDEBUG -fPIC -fvisibility=hidden -std=gnu++17 -o CMakeFiles/_hoomd.dir/Integrator.cc.o -c /home/USADR/ac130084/HOOMD-SPH/hoomd-sph3/hoomd-blue/hoomd/Integrator.cc",
+  "file": "/home/USADR/ac130084/HOOMD-SPH/hoomd-sph3/hoomd-blue/hoomd/Integrator.cc"
+},
+{
+  "directory": "/home/USADR/ac130084/HOOMD-SPH/hoomd-sph3/hoomd-blue/build/hoomd",
+  "command": "/usr/bin/c++ -DEIGEN_MPL2_ONLY -DENABLE_HPMC_MIXED_PRECISION -DENABLE_MPI -D_REENTRANT -D_hoomd_EXPORTS -I/home/USADR/ac130084/HOOMD-SPH/hoomd-sph3/hoomd-blue -I/home/USADR/ac130084/HOOMD-SPH/hoomd-sph3/hoomd-blue/build/hoomd/include -isystem /home/USADR/ac130084/anaconda3/envs/sph3/include -isystem /home/USADR/ac130084/anaconda3/envs/sph3/include/python3.10 -isystem /usr/include/eigen3 -isystem /usr/lib/x86_64-linux-gnu/openmpi/include -isystem /usr/lib/x86_64-linux-gnu/openmpi/include/openmpi  -Wall -Wconversion -Wno-sign-conversion -Wno-unknown-pragmas -Wno-deprecated-declarations -Wno-unused-result -fdiagnostics-color=always -O3 -DNDEBUG -fPIC -fvisibility=hidden -std=gnu++17 -o CMakeFiles/_hoomd.dir/LoadBalancer.cc.o -c /home/USADR/ac130084/HOOMD-SPH/hoomd-sph3/hoomd-blue/hoomd/LoadBalancer.cc",
+  "file": "/home/USADR/ac130084/HOOMD-SPH/hoomd-sph3/hoomd-blue/hoomd/LoadBalancer.cc"
+},
+{
+  "directory": "/home/USADR/ac130084/HOOMD-SPH/hoomd-sph3/hoomd-blue/build/hoomd",
+  "command": "/usr/bin/c++ -DEIGEN_MPL2_ONLY -DENABLE_HPMC_MIXED_PRECISION -DENABLE_MPI -D_REENTRANT -D_hoomd_EXPORTS -I/home/USADR/ac130084/HOOMD-SPH/hoomd-sph3/hoomd-blue -I/home/USADR/ac130084/HOOMD-SPH/hoomd-sph3/hoomd-blue/build/hoomd/include -isystem /home/USADR/ac130084/anaconda3/envs/sph3/include -isystem /home/USADR/ac130084/anaconda3/envs/sph3/include/python3.10 -isystem /usr/include/eigen3 -isystem /usr/lib/x86_64-linux-gnu/openmpi/include -isystem /usr/lib/x86_64-linux-gnu/openmpi/include/openmpi  -Wall -Wconversion -Wno-sign-conversion -Wno-unknown-pragmas -Wno-deprecated-declarations -Wno-unused-result -fdiagnostics-color=always -O3 -DNDEBUG -fPIC -fvisibility=hidden -std=gnu++17 -o CMakeFiles/_hoomd.dir/Messenger.cc.o -c /home/USADR/ac130084/HOOMD-SPH/hoomd-sph3/hoomd-blue/hoomd/Messenger.cc",
+  "file": "/home/USADR/ac130084/HOOMD-SPH/hoomd-sph3/hoomd-blue/hoomd/Messenger.cc"
+},
+{
+  "directory": "/home/USADR/ac130084/HOOMD-SPH/hoomd-sph3/hoomd-blue/build/hoomd",
+  "command": "/usr/bin/c++ -DEIGEN_MPL2_ONLY -DENABLE_HPMC_MIXED_PRECISION -DENABLE_MPI -D_REENTRANT -D_hoomd_EXPORTS -I/home/USADR/ac130084/HOOMD-SPH/hoomd-sph3/hoomd-blue -I/home/USADR/ac130084/HOOMD-SPH/hoomd-sph3/hoomd-blue/build/hoomd/include -isystem /home/USADR/ac130084/anaconda3/envs/sph3/include -isystem /home/USADR/ac130084/anaconda3/envs/sph3/include/python3.10 -isystem /usr/include/eigen3 -isystem /usr/lib/x86_64-linux-gnu/openmpi/include -isystem /usr/lib/x86_64-linux-gnu/openmpi/include/openmpi  -Wall -Wconversion -Wno-sign-conversion -Wno-unknown-pragmas -Wno-deprecated-declarations -Wno-unused-result -fdiagnostics-color=always -O3 -DNDEBUG -fPIC -fvisibility=hidden -std=gnu++17 -o CMakeFiles/_hoomd.dir/MPIConfiguration.cc.o -c /home/USADR/ac130084/HOOMD-SPH/hoomd-sph3/hoomd-blue/hoomd/MPIConfiguration.cc",
+  "file": "/home/USADR/ac130084/HOOMD-SPH/hoomd-sph3/hoomd-blue/hoomd/MPIConfiguration.cc"
+},
+{
+  "directory": "/home/USADR/ac130084/HOOMD-SPH/hoomd-sph3/hoomd-blue/build/hoomd",
+  "command": "/usr/bin/c++ -DEIGEN_MPL2_ONLY -DENABLE_HPMC_MIXED_PRECISION -DENABLE_MPI -D_REENTRANT -D_hoomd_EXPORTS -I/home/USADR/ac130084/HOOMD-SPH/hoomd-sph3/hoomd-blue -I/home/USADR/ac130084/HOOMD-SPH/hoomd-sph3/hoomd-blue/build/hoomd/include -isystem /home/USADR/ac130084/anaconda3/envs/sph3/include -isystem /home/USADR/ac130084/anaconda3/envs/sph3/include/python3.10 -isystem /usr/include/eigen3 -isystem /usr/lib/x86_64-linux-gnu/openmpi/include -isystem /usr/lib/x86_64-linux-gnu/openmpi/include/openmpi  -Wall -Wconversion -Wno-sign-conversion -Wno-unknown-pragmas -Wno-deprecated-declarations -Wno-unused-result -fdiagnostics-color=always -O3 -DNDEBUG -fPIC -fvisibility=hidden -std=gnu++17 -o CMakeFiles/_hoomd.dir/ParticleData.cc.o -c /home/USADR/ac130084/HOOMD-SPH/hoomd-sph3/hoomd-blue/hoomd/ParticleData.cc",
+  "file": "/home/USADR/ac130084/HOOMD-SPH/hoomd-sph3/hoomd-blue/hoomd/ParticleData.cc"
+},
+{
+  "directory": "/home/USADR/ac130084/HOOMD-SPH/hoomd-sph3/hoomd-blue/build/hoomd",
+  "command": "/usr/bin/c++ -DEIGEN_MPL2_ONLY -DENABLE_HPMC_MIXED_PRECISION -DENABLE_MPI -D_REENTRANT -D_hoomd_EXPORTS -I/home/USADR/ac130084/HOOMD-SPH/hoomd-sph3/hoomd-blue -I/home/USADR/ac130084/HOOMD-SPH/hoomd-sph3/hoomd-blue/build/hoomd/include -isystem /home/USADR/ac130084/anaconda3/envs/sph3/include -isystem /home/USADR/ac130084/anaconda3/envs/sph3/include/python3.10 -isystem /usr/include/eigen3 -isystem /usr/lib/x86_64-linux-gnu/openmpi/include -isystem /usr/lib/x86_64-linux-gnu/openmpi/include/openmpi  -Wall -Wconversion -Wno-sign-conversion -Wno-unknown-pragmas -Wno-deprecated-declarations -Wno-unused-result -fdiagnostics-color=always -O3 -DNDEBUG -fPIC -fvisibility=hidden -std=gnu++17 -o CMakeFiles/_hoomd.dir/ParticleGroup.cc.o -c /home/USADR/ac130084/HOOMD-SPH/hoomd-sph3/hoomd-blue/hoomd/ParticleGroup.cc",
+  "file": "/home/USADR/ac130084/HOOMD-SPH/hoomd-sph3/hoomd-blue/hoomd/ParticleGroup.cc"
+},
+{
+  "directory": "/home/USADR/ac130084/HOOMD-SPH/hoomd-sph3/hoomd-blue/build/hoomd",
+  "command": "/usr/bin/c++ -DEIGEN_MPL2_ONLY -DENABLE_HPMC_MIXED_PRECISION -DENABLE_MPI -D_REENTRANT -D_hoomd_EXPORTS -I/home/USADR/ac130084/HOOMD-SPH/hoomd-sph3/hoomd-blue -I/home/USADR/ac130084/HOOMD-SPH/hoomd-sph3/hoomd-blue/build/hoomd/include -isystem /home/USADR/ac130084/anaconda3/envs/sph3/include -isystem /home/USADR/ac130084/anaconda3/envs/sph3/include/python3.10 -isystem /usr/include/eigen3 -isystem /usr/lib/x86_64-linux-gnu/openmpi/include -isystem /usr/lib/x86_64-linux-gnu/openmpi/include/openmpi  -Wall -Wconversion -Wno-sign-conversion -Wno-unknown-pragmas -Wno-deprecated-declarations -Wno-unused-result -fdiagnostics-color=always -O3 -DNDEBUG -fPIC -fvisibility=hidden -std=gnu++17 -o CMakeFiles/_hoomd.dir/ParticleFilterUpdater.cc.o -c /home/USADR/ac130084/HOOMD-SPH/hoomd-sph3/hoomd-blue/hoomd/ParticleFilterUpdater.cc",
+  "file": "/home/USADR/ac130084/HOOMD-SPH/hoomd-sph3/hoomd-blue/hoomd/ParticleFilterUpdater.cc"
+},
+{
+  "directory": "/home/USADR/ac130084/HOOMD-SPH/hoomd-sph3/hoomd-blue/build/hoomd",
+  "command": "/usr/bin/c++ -DEIGEN_MPL2_ONLY -DENABLE_HPMC_MIXED_PRECISION -DENABLE_MPI -D_REENTRANT -D_hoomd_EXPORTS -I/home/USADR/ac130084/HOOMD-SPH/hoomd-sph3/hoomd-blue -I/home/USADR/ac130084/HOOMD-SPH/hoomd-sph3/hoomd-blue/build/hoomd/include -isystem /home/USADR/ac130084/anaconda3/envs/sph3/include -isystem /home/USADR/ac130084/anaconda3/envs/sph3/include/python3.10 -isystem /usr/include/eigen3 -isystem /usr/lib/x86_64-linux-gnu/openmpi/include -isystem /usr/lib/x86_64-linux-gnu/openmpi/include/openmpi  -Wall -Wconversion -Wno-sign-conversion -Wno-unknown-pragmas -Wno-deprecated-declarations -Wno-unused-result -fdiagnostics-color=always -O3 -DNDEBUG -fPIC -fvisibility=hidden -std=gnu++17 -o CMakeFiles/_hoomd.dir/PythonLocalDataAccess.cc.o -c /home/USADR/ac130084/HOOMD-SPH/hoomd-sph3/hoomd-blue/hoomd/PythonLocalDataAccess.cc",
+  "file": "/home/USADR/ac130084/HOOMD-SPH/hoomd-sph3/hoomd-blue/hoomd/PythonLocalDataAccess.cc"
+},
+{
+  "directory": "/home/USADR/ac130084/HOOMD-SPH/hoomd-sph3/hoomd-blue/build/hoomd",
+  "command": "/usr/bin/c++ -DEIGEN_MPL2_ONLY -DENABLE_HPMC_MIXED_PRECISION -DENABLE_MPI -D_REENTRANT -D_hoomd_EXPORTS -I/home/USADR/ac130084/HOOMD-SPH/hoomd-sph3/hoomd-blue -I/home/USADR/ac130084/HOOMD-SPH/hoomd-sph3/hoomd-blue/build/hoomd/include -isystem /home/USADR/ac130084/anaconda3/envs/sph3/include -isystem /home/USADR/ac130084/anaconda3/envs/sph3/include/python3.10 -isystem /usr/include/eigen3 -isystem /usr/lib/x86_64-linux-gnu/openmpi/include -isystem /usr/lib/x86_64-linux-gnu/openmpi/include/openmpi  -Wall -Wconversion -Wno-sign-conversion -Wno-unknown-pragmas -Wno-deprecated-declarations -Wno-unused-result -fdiagnostics-color=always -O3 -DNDEBUG -fPIC -fvisibility=hidden -std=gnu++17 -o CMakeFiles/_hoomd.dir/PythonAnalyzer.cc.o -c /home/USADR/ac130084/HOOMD-SPH/hoomd-sph3/hoomd-blue/hoomd/PythonAnalyzer.cc",
+  "file": "/home/USADR/ac130084/HOOMD-SPH/hoomd-sph3/hoomd-blue/hoomd/PythonAnalyzer.cc"
+},
+{
+  "directory": "/home/USADR/ac130084/HOOMD-SPH/hoomd-sph3/hoomd-blue/build/hoomd",
+  "command": "/usr/bin/c++ -DEIGEN_MPL2_ONLY -DENABLE_HPMC_MIXED_PRECISION -DENABLE_MPI -D_REENTRANT -D_hoomd_EXPORTS -I/home/USADR/ac130084/HOOMD-SPH/hoomd-sph3/hoomd-blue -I/home/USADR/ac130084/HOOMD-SPH/hoomd-sph3/hoomd-blue/build/hoomd/include -isystem /home/USADR/ac130084/anaconda3/envs/sph3/include -isystem /home/USADR/ac130084/anaconda3/envs/sph3/include/python3.10 -isystem /usr/include/eigen3 -isystem /usr/lib/x86_64-linux-gnu/openmpi/include -isystem /usr/lib/x86_64-linux-gnu/openmpi/include/openmpi  -Wall -Wconversion -Wno-sign-conversion -Wno-unknown-pragmas -Wno-deprecated-declarations -Wno-unused-result -fdiagnostics-color=always -O3 -DNDEBUG -fPIC -fvisibility=hidden -std=gnu++17 -o CMakeFiles/_hoomd.dir/PythonTuner.cc.o -c /home/USADR/ac130084/HOOMD-SPH/hoomd-sph3/hoomd-blue/hoomd/PythonTuner.cc",
+  "file": "/home/USADR/ac130084/HOOMD-SPH/hoomd-sph3/hoomd-blue/hoomd/PythonTuner.cc"
+},
+{
+  "directory": "/home/USADR/ac130084/HOOMD-SPH/hoomd-sph3/hoomd-blue/build/hoomd",
+  "command": "/usr/bin/c++ -DEIGEN_MPL2_ONLY -DENABLE_HPMC_MIXED_PRECISION -DENABLE_MPI -D_REENTRANT -D_hoomd_EXPORTS -I/home/USADR/ac130084/HOOMD-SPH/hoomd-sph3/hoomd-blue -I/home/USADR/ac130084/HOOMD-SPH/hoomd-sph3/hoomd-blue/build/hoomd/include -isystem /home/USADR/ac130084/anaconda3/envs/sph3/include -isystem /home/USADR/ac130084/anaconda3/envs/sph3/include/python3.10 -isystem /usr/include/eigen3 -isystem /usr/lib/x86_64-linux-gnu/openmpi/include -isystem /usr/lib/x86_64-linux-gnu/openmpi/include/openmpi  -Wall -Wconversion -Wno-sign-conversion -Wno-unknown-pragmas -Wno-deprecated-declarations -Wno-unused-result -fdiagnostics-color=always -O3 -DNDEBUG -fPIC -fvisibility=hidden -std=gnu++17 -o CMakeFiles/_hoomd.dir/PythonUpdater.cc.o -c /home/USADR/ac130084/HOOMD-SPH/hoomd-sph3/hoomd-blue/hoomd/PythonUpdater.cc",
+  "file": "/home/USADR/ac130084/HOOMD-SPH/hoomd-sph3/hoomd-blue/hoomd/PythonUpdater.cc"
+},
+{
+  "directory": "/home/USADR/ac130084/HOOMD-SPH/hoomd-sph3/hoomd-blue/build/hoomd",
+  "command": "/usr/bin/c++ -DEIGEN_MPL2_ONLY -DENABLE_HPMC_MIXED_PRECISION -DENABLE_MPI -D_REENTRANT -D_hoomd_EXPORTS -I/home/USADR/ac130084/HOOMD-SPH/hoomd-sph3/hoomd-blue -I/home/USADR/ac130084/HOOMD-SPH/hoomd-sph3/hoomd-blue/build/hoomd/include -isystem /home/USADR/ac130084/anaconda3/envs/sph3/include -isystem /home/USADR/ac130084/anaconda3/envs/sph3/include/python3.10 -isystem /usr/include/eigen3 -isystem /usr/lib/x86_64-linux-gnu/openmpi/include -isystem /usr/lib/x86_64-linux-gnu/openmpi/include/openmpi  -Wall -Wconversion -Wno-sign-conversion -Wno-unknown-pragmas -Wno-deprecated-declarations -Wno-unused-result -fdiagnostics-color=always -O3 -DNDEBUG -fPIC -fvisibility=hidden -std=gnu++17 -o CMakeFiles/_hoomd.dir/SFCPackTuner.cc.o -c /home/USADR/ac130084/HOOMD-SPH/hoomd-sph3/hoomd-blue/hoomd/SFCPackTuner.cc",
+  "file": "/home/USADR/ac130084/HOOMD-SPH/hoomd-sph3/hoomd-blue/hoomd/SFCPackTuner.cc"
+},
+{
+  "directory": "/home/USADR/ac130084/HOOMD-SPH/hoomd-sph3/hoomd-blue/build/hoomd",
+  "command": "/usr/bin/c++ -DEIGEN_MPL2_ONLY -DENABLE_HPMC_MIXED_PRECISION -DENABLE_MPI -D_REENTRANT -D_hoomd_EXPORTS -I/home/USADR/ac130084/HOOMD-SPH/hoomd-sph3/hoomd-blue -I/home/USADR/ac130084/HOOMD-SPH/hoomd-sph3/hoomd-blue/build/hoomd/include -isystem /home/USADR/ac130084/anaconda3/envs/sph3/include -isystem /home/USADR/ac130084/anaconda3/envs/sph3/include/python3.10 -isystem /usr/include/eigen3 -isystem /usr/lib/x86_64-linux-gnu/openmpi/include -isystem /usr/lib/x86_64-linux-gnu/openmpi/include/openmpi  -Wall -Wconversion -Wno-sign-conversion -Wno-unknown-pragmas -Wno-deprecated-declarations -Wno-unused-result -fdiagnostics-color=always -O3 -DNDEBUG -fPIC -fvisibility=hidden -std=gnu++17 -o CMakeFiles/_hoomd.dir/SnapshotSystemData.cc.o -c /home/USADR/ac130084/HOOMD-SPH/hoomd-sph3/hoomd-blue/hoomd/SnapshotSystemData.cc",
+  "file": "/home/USADR/ac130084/HOOMD-SPH/hoomd-sph3/hoomd-blue/hoomd/SnapshotSystemData.cc"
+},
+{
+  "directory": "/home/USADR/ac130084/HOOMD-SPH/hoomd-sph3/hoomd-blue/build/hoomd",
+  "command": "/usr/bin/c++ -DEIGEN_MPL2_ONLY -DENABLE_HPMC_MIXED_PRECISION -DENABLE_MPI -D_REENTRANT -D_hoomd_EXPORTS -I/home/USADR/ac130084/HOOMD-SPH/hoomd-sph3/hoomd-blue -I/home/USADR/ac130084/HOOMD-SPH/hoomd-sph3/hoomd-blue/build/hoomd/include -isystem /home/USADR/ac130084/anaconda3/envs/sph3/include -isystem /home/USADR/ac130084/anaconda3/envs/sph3/include/python3.10 -isystem /usr/include/eigen3 -isystem /usr/lib/x86_64-linux-gnu/openmpi/include -isystem /usr/lib/x86_64-linux-gnu/openmpi/include/openmpi  -Wall -Wconversion -Wno-sign-conversion -Wno-unknown-pragmas -Wno-deprecated-declarations -Wno-unused-result -fdiagnostics-color=always -O3 -DNDEBUG -fPIC -fvisibility=hidden -std=gnu++17 -o CMakeFiles/_hoomd.dir/System.cc.o -c /home/USADR/ac130084/HOOMD-SPH/hoomd-sph3/hoomd-blue/hoomd/System.cc",
+  "file": "/home/USADR/ac130084/HOOMD-SPH/hoomd-sph3/hoomd-blue/hoomd/System.cc"
+},
+{
+  "directory": "/home/USADR/ac130084/HOOMD-SPH/hoomd-sph3/hoomd-blue/build/hoomd",
+  "command": "/usr/bin/c++ -DEIGEN_MPL2_ONLY -DENABLE_HPMC_MIXED_PRECISION -DENABLE_MPI -D_REENTRANT -D_hoomd_EXPORTS -I/home/USADR/ac130084/HOOMD-SPH/hoomd-sph3/hoomd-blue -I/home/USADR/ac130084/HOOMD-SPH/hoomd-sph3/hoomd-blue/build/hoomd/include -isystem /home/USADR/ac130084/anaconda3/envs/sph3/include -isystem /home/USADR/ac130084/anaconda3/envs/sph3/include/python3.10 -isystem /usr/include/eigen3 -isystem /usr/lib/x86_64-linux-gnu/openmpi/include -isystem /usr/lib/x86_64-linux-gnu/openmpi/include/openmpi  -Wall -Wconversion -Wno-sign-conversion -Wno-unknown-pragmas -Wno-deprecated-declarations -Wno-unused-result -fdiagnostics-color=always -O3 -DNDEBUG -fPIC -fvisibility=hidden -std=gnu++17 -o CMakeFiles/_hoomd.dir/SystemDefinition.cc.o -c /home/USADR/ac130084/HOOMD-SPH/hoomd-sph3/hoomd-blue/hoomd/SystemDefinition.cc",
+  "file": "/home/USADR/ac130084/HOOMD-SPH/hoomd-sph3/hoomd-blue/hoomd/SystemDefinition.cc"
+},
+{
+  "directory": "/home/USADR/ac130084/HOOMD-SPH/hoomd-sph3/hoomd-blue/build/hoomd",
+  "command": "/usr/bin/c++ -DEIGEN_MPL2_ONLY -DENABLE_HPMC_MIXED_PRECISION -DENABLE_MPI -D_REENTRANT -D_hoomd_EXPORTS -I/home/USADR/ac130084/HOOMD-SPH/hoomd-sph3/hoomd-blue -I/home/USADR/ac130084/HOOMD-SPH/hoomd-sph3/hoomd-blue/build/hoomd/include -isystem /home/USADR/ac130084/anaconda3/envs/sph3/include -isystem /home/USADR/ac130084/anaconda3/envs/sph3/include/python3.10 -isystem /usr/include/eigen3 -isystem /usr/lib/x86_64-linux-gnu/openmpi/include -isystem /usr/lib/x86_64-linux-gnu/openmpi/include/openmpi  -Wall -Wconversion -Wno-sign-conversion -Wno-unknown-pragmas -Wno-deprecated-declarations -Wno-unused-result -fdiagnostics-color=always -O3 -DNDEBUG -fPIC -fvisibility=hidden -std=gnu++17 -o CMakeFiles/_hoomd.dir/Trigger.cc.o -c /home/USADR/ac130084/HOOMD-SPH/hoomd-sph3/hoomd-blue/hoomd/Trigger.cc",
+  "file": "/home/USADR/ac130084/HOOMD-SPH/hoomd-sph3/hoomd-blue/hoomd/Trigger.cc"
+},
+{
+  "directory": "/home/USADR/ac130084/HOOMD-SPH/hoomd-sph3/hoomd-blue/build/hoomd",
+  "command": "/usr/bin/c++ -DEIGEN_MPL2_ONLY -DENABLE_HPMC_MIXED_PRECISION -DENABLE_MPI -D_REENTRANT -D_hoomd_EXPORTS -I/home/USADR/ac130084/HOOMD-SPH/hoomd-sph3/hoomd-blue -I/home/USADR/ac130084/HOOMD-SPH/hoomd-sph3/hoomd-blue/build/hoomd/include -isystem /home/USADR/ac130084/anaconda3/envs/sph3/include -isystem /home/USADR/ac130084/anaconda3/envs/sph3/include/python3.10 -isystem /usr/include/eigen3 -isystem /usr/lib/x86_64-linux-gnu/openmpi/include -isystem /usr/lib/x86_64-linux-gnu/openmpi/include/openmpi  -Wall -Wconversion -Wno-sign-conversion -Wno-unknown-pragmas -Wno-deprecated-declarations -Wno-unused-result -fdiagnostics-color=always -O3 -DNDEBUG -fPIC -fvisibility=hidden -std=gnu++17 -o CMakeFiles/_hoomd.dir/Tuner.cc.o -c /home/USADR/ac130084/HOOMD-SPH/hoomd-sph3/hoomd-blue/hoomd/Tuner.cc",
+  "file": "/home/USADR/ac130084/HOOMD-SPH/hoomd-sph3/hoomd-blue/hoomd/Tuner.cc"
+},
+{
+  "directory": "/home/USADR/ac130084/HOOMD-SPH/hoomd-sph3/hoomd-blue/build/hoomd",
+  "command": "/usr/bin/c++ -DEIGEN_MPL2_ONLY -DENABLE_HPMC_MIXED_PRECISION -DENABLE_MPI -D_REENTRANT -D_hoomd_EXPORTS -I/home/USADR/ac130084/HOOMD-SPH/hoomd-sph3/hoomd-blue -I/home/USADR/ac130084/HOOMD-SPH/hoomd-sph3/hoomd-blue/build/hoomd/include -isystem /home/USADR/ac130084/anaconda3/envs/sph3/include -isystem /home/USADR/ac130084/anaconda3/envs/sph3/include/python3.10 -isystem /usr/include/eigen3 -isystem /usr/lib/x86_64-linux-gnu/openmpi/include -isystem /usr/lib/x86_64-linux-gnu/openmpi/include/openmpi  -Wall -Wconversion -Wno-sign-conversion -Wno-unknown-pragmas -Wno-deprecated-declarations -Wno-unused-result -fdiagnostics-color=always -O3 -DNDEBUG -fPIC -fvisibility=hidden -std=gnu++17 -o CMakeFiles/_hoomd.dir/Updater.cc.o -c /home/USADR/ac130084/HOOMD-SPH/hoomd-sph3/hoomd-blue/hoomd/Updater.cc",
+  "file": "/home/USADR/ac130084/HOOMD-SPH/hoomd-sph3/hoomd-blue/hoomd/Updater.cc"
+},
+{
+  "directory": "/home/USADR/ac130084/HOOMD-SPH/hoomd-sph3/hoomd-blue/build/hoomd",
+  "command": "/usr/bin/c++ -DEIGEN_MPL2_ONLY -DENABLE_HPMC_MIXED_PRECISION -DENABLE_MPI -D_REENTRANT -D_hoomd_EXPORTS -I/home/USADR/ac130084/HOOMD-SPH/hoomd-sph3/hoomd-blue -I/home/USADR/ac130084/HOOMD-SPH/hoomd-sph3/hoomd-blue/build/hoomd/include -isystem /home/USADR/ac130084/anaconda3/envs/sph3/include -isystem /home/USADR/ac130084/anaconda3/envs/sph3/include/python3.10 -isystem /usr/include/eigen3 -isystem /usr/lib/x86_64-linux-gnu/openmpi/include -isystem /usr/lib/x86_64-linux-gnu/openmpi/include/openmpi  -Wall -Wconversion -Wno-sign-conversion -Wno-unknown-pragmas -Wno-deprecated-declarations -Wno-unused-result -fdiagnostics-color=always -O3 -DNDEBUG -fPIC -fvisibility=hidden -std=gnu++17 -o CMakeFiles/_hoomd.dir/Variant.cc.o -c /home/USADR/ac130084/HOOMD-SPH/hoomd-sph3/hoomd-blue/hoomd/Variant.cc",
+  "file": "/home/USADR/ac130084/HOOMD-SPH/hoomd-sph3/hoomd-blue/hoomd/Variant.cc"
+},
+{
+  "directory": "/home/USADR/ac130084/HOOMD-SPH/hoomd-sph3/hoomd-blue/build/hoomd",
+  "command": "/usr/bin/c++ -DEIGEN_MPL2_ONLY -DENABLE_HPMC_MIXED_PRECISION -DENABLE_MPI -D_REENTRANT -D_hoomd_EXPORTS -I/home/USADR/ac130084/HOOMD-SPH/hoomd-sph3/hoomd-blue -I/home/USADR/ac130084/HOOMD-SPH/hoomd-sph3/hoomd-blue/build/hoomd/include -isystem /home/USADR/ac130084/anaconda3/envs/sph3/include -isystem /home/USADR/ac130084/anaconda3/envs/sph3/include/python3.10 -isystem /usr/include/eigen3 -isystem /usr/lib/x86_64-linux-gnu/openmpi/include -isystem /usr/lib/x86_64-linux-gnu/openmpi/include/openmpi  -Wall -Wconversion -Wno-sign-conversion -Wno-unknown-pragmas -Wno-deprecated-declarations -Wno-unused-result -fdiagnostics-color=always -O3 -DNDEBUG -fPIC -fvisibility=hidden -std=gnu++17 -o CMakeFiles/_hoomd.dir/extern/BVLSSolver.cc.o -c /home/USADR/ac130084/HOOMD-SPH/hoomd-sph3/hoomd-blue/hoomd/extern/BVLSSolver.cc",
+  "file": "/home/USADR/ac130084/HOOMD-SPH/hoomd-sph3/hoomd-blue/hoomd/extern/BVLSSolver.cc"
+},
+{
+  "directory": "/home/USADR/ac130084/HOOMD-SPH/hoomd-sph3/hoomd-blue/build/hoomd",
+  "command": "/usr/bin/cc -DEIGEN_MPL2_ONLY -DENABLE_HPMC_MIXED_PRECISION -DENABLE_MPI -D_REENTRANT -D_hoomd_EXPORTS -I/home/USADR/ac130084/HOOMD-SPH/hoomd-sph3/hoomd-blue -I/home/USADR/ac130084/HOOMD-SPH/hoomd-sph3/hoomd-blue/build/hoomd/include -isystem /home/USADR/ac130084/anaconda3/envs/sph3/include -isystem /home/USADR/ac130084/anaconda3/envs/sph3/include/python3.10 -isystem /usr/include/eigen3 -isystem /usr/lib/x86_64-linux-gnu/openmpi/include -isystem /usr/lib/x86_64-linux-gnu/openmpi/include/openmpi  -Wall -fdiagnostics-color=always -O3 -DNDEBUG -fPIC -o CMakeFiles/_hoomd.dir/extern/gsd.c.o -c /home/USADR/ac130084/HOOMD-SPH/hoomd-sph3/hoomd-blue/hoomd/extern/gsd.c",
+  "file": "/home/USADR/ac130084/HOOMD-SPH/hoomd-sph3/hoomd-blue/hoomd/extern/gsd.c"
+},
+{
+  "directory": "/home/USADR/ac130084/HOOMD-SPH/hoomd-sph3/hoomd-blue/build/hoomd",
+  "command": "/usr/bin/c++ -DEIGEN_MPL2_ONLY -DENABLE_HPMC_MIXED_PRECISION -DENABLE_MPI -D_REENTRANT -D_hoomd_EXPORTS -I/home/USADR/ac130084/HOOMD-SPH/hoomd-sph3/hoomd-blue -I/home/USADR/ac130084/HOOMD-SPH/hoomd-sph3/hoomd-blue/build/hoomd/include -isystem /home/USADR/ac130084/anaconda3/envs/sph3/include -isystem /home/USADR/ac130084/anaconda3/envs/sph3/include/python3.10 -isystem /usr/include/eigen3 -isystem /usr/lib/x86_64-linux-gnu/openmpi/include -isystem /usr/lib/x86_64-linux-gnu/openmpi/include/openmpi  -Wall -Wconversion -Wno-sign-conversion -Wno-unknown-pragmas -Wno-deprecated-declarations -Wno-unused-result -fdiagnostics-color=always -O3 -DNDEBUG -fPIC -fvisibility=hidden -std=gnu++17 -Wno-conversion -o CMakeFiles/_hoomd.dir/extern/imd.cc.o -c /home/USADR/ac130084/HOOMD-SPH/hoomd-sph3/hoomd-blue/hoomd/extern/imd.cc",
+  "file": "/home/USADR/ac130084/HOOMD-SPH/hoomd-sph3/hoomd-blue/hoomd/extern/imd.cc"
+},
+{
+  "directory": "/home/USADR/ac130084/HOOMD-SPH/hoomd-sph3/hoomd-blue/build/hoomd",
+  "command": "/usr/bin/c++ -DEIGEN_MPL2_ONLY -DENABLE_HPMC_MIXED_PRECISION -DENABLE_MPI -D_REENTRANT -D_hoomd_EXPORTS -I/home/USADR/ac130084/HOOMD-SPH/hoomd-sph3/hoomd-blue -I/home/USADR/ac130084/HOOMD-SPH/hoomd-sph3/hoomd-blue/build/hoomd/include -isystem /home/USADR/ac130084/anaconda3/envs/sph3/include -isystem /home/USADR/ac130084/anaconda3/envs/sph3/include/python3.10 -isystem /usr/include/eigen3 -isystem /usr/lib/x86_64-linux-gnu/openmpi/include -isystem /usr/lib/x86_64-linux-gnu/openmpi/include/openmpi  -Wall -Wconversion -Wno-sign-conversion -Wno-unknown-pragmas -Wno-deprecated-declarations -Wno-unused-result -fdiagnostics-color=always -O3 -DNDEBUG -fPIC -fvisibility=hidden -std=gnu++17 -Wno-conversion -Wno-float-conversion -o CMakeFiles/_hoomd.dir/extern/kiss_fft.cc.o -c /home/USADR/ac130084/HOOMD-SPH/hoomd-sph3/hoomd-blue/hoomd/extern/kiss_fft.cc",
+  "file": "/home/USADR/ac130084/HOOMD-SPH/hoomd-sph3/hoomd-blue/hoomd/extern/kiss_fft.cc"
+},
+{
+  "directory": "/home/USADR/ac130084/HOOMD-SPH/hoomd-sph3/hoomd-blue/build/hoomd",
+  "command": "/usr/bin/c++ -DEIGEN_MPL2_ONLY -DENABLE_HPMC_MIXED_PRECISION -DENABLE_MPI -D_REENTRANT -D_hoomd_EXPORTS -I/home/USADR/ac130084/HOOMD-SPH/hoomd-sph3/hoomd-blue -I/home/USADR/ac130084/HOOMD-SPH/hoomd-sph3/hoomd-blue/build/hoomd/include -isystem /home/USADR/ac130084/anaconda3/envs/sph3/include -isystem /home/USADR/ac130084/anaconda3/envs/sph3/include/python3.10 -isystem /usr/include/eigen3 -isystem /usr/lib/x86_64-linux-gnu/openmpi/include -isystem /usr/lib/x86_64-linux-gnu/openmpi/include/openmpi  -Wall -Wconversion -Wno-sign-conversion -Wno-unknown-pragmas -Wno-deprecated-declarations -Wno-unused-result -fdiagnostics-color=always -O3 -DNDEBUG -fPIC -fvisibility=hidden -std=gnu++17 -o CMakeFiles/_hoomd.dir/extern/kiss_fftnd.cc.o -c /home/USADR/ac130084/HOOMD-SPH/hoomd-sph3/hoomd-blue/hoomd/extern/kiss_fftnd.cc",
+  "file": "/home/USADR/ac130084/HOOMD-SPH/hoomd-sph3/hoomd-blue/hoomd/extern/kiss_fftnd.cc"
+},
+{
+  "directory": "/home/USADR/ac130084/HOOMD-SPH/hoomd-sph3/hoomd-blue/build/hoomd",
+  "command": "/usr/bin/c++ -DEIGEN_MPL2_ONLY -DENABLE_HPMC_MIXED_PRECISION -DENABLE_MPI -D_REENTRANT -D_hoomd_EXPORTS -I/home/USADR/ac130084/HOOMD-SPH/hoomd-sph3/hoomd-blue -I/home/USADR/ac130084/HOOMD-SPH/hoomd-sph3/hoomd-blue/build/hoomd/include -isystem /home/USADR/ac130084/anaconda3/envs/sph3/include -isystem /home/USADR/ac130084/anaconda3/envs/sph3/include/python3.10 -isystem /usr/include/eigen3 -isystem /usr/lib/x86_64-linux-gnu/openmpi/include -isystem /usr/lib/x86_64-linux-gnu/openmpi/include/openmpi  -Wall -Wconversion -Wno-sign-conversion -Wno-unknown-pragmas -Wno-deprecated-declarations -Wno-unused-result -fdiagnostics-color=always -O3 -DNDEBUG -fPIC -fvisibility=hidden -std=gnu++17 -Wno-conversion -o CMakeFiles/_hoomd.dir/extern/vmdsock.cc.o -c /home/USADR/ac130084/HOOMD-SPH/hoomd-sph3/hoomd-blue/hoomd/extern/vmdsock.cc",
+  "file": "/home/USADR/ac130084/HOOMD-SPH/hoomd-sph3/hoomd-blue/hoomd/extern/vmdsock.cc"
+},
+{
+  "directory": "/home/USADR/ac130084/HOOMD-SPH/hoomd-sph3/hoomd-blue/build/hoomd",
+  "command": "/usr/bin/c++ -DEIGEN_MPL2_ONLY -DENABLE_HPMC_MIXED_PRECISION -DENABLE_MPI -D_REENTRANT -D_hoomd_EXPORTS -I/home/USADR/ac130084/HOOMD-SPH/hoomd-sph3/hoomd-blue -I/home/USADR/ac130084/HOOMD-SPH/hoomd-sph3/hoomd-blue/build/hoomd/include -isystem /home/USADR/ac130084/anaconda3/envs/sph3/include -isystem /home/USADR/ac130084/anaconda3/envs/sph3/include/python3.10 -isystem /usr/include/eigen3 -isystem /usr/lib/x86_64-linux-gnu/openmpi/include -isystem /usr/lib/x86_64-linux-gnu/openmpi/include/openmpi  -Wall -Wconversion -Wno-sign-conversion -Wno-unknown-pragmas -Wno-deprecated-declarations -Wno-unused-result -fdiagnostics-color=always -O3 -DNDEBUG -fPIC -fvisibility=hidden -std=gnu++17 -o CMakeFiles/_hoomd.dir/filter/export_filters.cc.o -c /home/USADR/ac130084/HOOMD-SPH/hoomd-sph3/hoomd-blue/hoomd/filter/export_filters.cc",
+  "file": "/home/USADR/ac130084/HOOMD-SPH/hoomd-sph3/hoomd-blue/hoomd/filter/export_filters.cc"
+},
+{
+  "directory": "/home/USADR/ac130084/HOOMD-SPH/hoomd-sph3/hoomd-blue/build/hoomd/nsearch",
+  "command": "/usr/bin/c++ -DEIGEN_MPL2_ONLY -DENABLE_HPMC_MIXED_PRECISION -DENABLE_MPI -D_REENTRANT -D_nsearch_EXPORTS -I/home/USADR/ac130084/HOOMD-SPH/hoomd-sph3/hoomd-blue -I/home/USADR/ac130084/HOOMD-SPH/hoomd-sph3/hoomd-blue/build/hoomd/include -isystem /home/USADR/ac130084/anaconda3/envs/sph3/include -isystem /home/USADR/ac130084/anaconda3/envs/sph3/include/python3.10 -isystem /usr/include/eigen3 -isystem /usr/lib/x86_64-linux-gnu/openmpi/include -isystem /usr/lib/x86_64-linux-gnu/openmpi/include/openmpi  -Wall -Wconversion -Wno-sign-conversion -Wno-unknown-pragmas -Wno-deprecated-declarations -Wno-unused-result -fdiagnostics-color=always -O3 -DNDEBUG -fPIC -fvisibility=hidden -std=gnu++17 -o CMakeFiles/_nsearch.dir/module-nsearch.cc.o -c /home/USADR/ac130084/HOOMD-SPH/hoomd-sph3/hoomd-blue/hoomd/nsearch/module-nsearch.cc",
+  "file": "/home/USADR/ac130084/HOOMD-SPH/hoomd-sph3/hoomd-blue/hoomd/nsearch/module-nsearch.cc"
+},
+{
+  "directory": "/home/USADR/ac130084/HOOMD-SPH/hoomd-sph3/hoomd-blue/build/hoomd/nsearch",
+  "command": "/usr/bin/c++ -DEIGEN_MPL2_ONLY -DENABLE_HPMC_MIXED_PRECISION -DENABLE_MPI -D_REENTRANT -D_nsearch_EXPORTS -I/home/USADR/ac130084/HOOMD-SPH/hoomd-sph3/hoomd-blue -I/home/USADR/ac130084/HOOMD-SPH/hoomd-sph3/hoomd-blue/build/hoomd/include -isystem /home/USADR/ac130084/anaconda3/envs/sph3/include -isystem /home/USADR/ac130084/anaconda3/envs/sph3/include/python3.10 -isystem /usr/include/eigen3 -isystem /usr/lib/x86_64-linux-gnu/openmpi/include -isystem /usr/lib/x86_64-linux-gnu/openmpi/include/openmpi  -Wall -Wconversion -Wno-sign-conversion -Wno-unknown-pragmas -Wno-deprecated-declarations -Wno-unused-result -fdiagnostics-color=always -O3 -DNDEBUG -fPIC -fvisibility=hidden -std=gnu++17 -o CMakeFiles/_nsearch.dir/NeighborListBinned.cc.o -c /home/USADR/ac130084/HOOMD-SPH/hoomd-sph3/hoomd-blue/hoomd/nsearch/NeighborListBinned.cc",
+  "file": "/home/USADR/ac130084/HOOMD-SPH/hoomd-sph3/hoomd-blue/hoomd/nsearch/NeighborListBinned.cc"
+},
+{
+  "directory": "/home/USADR/ac130084/HOOMD-SPH/hoomd-sph3/hoomd-blue/build/hoomd/nsearch",
+  "command": "/usr/bin/c++ -DEIGEN_MPL2_ONLY -DENABLE_HPMC_MIXED_PRECISION -DENABLE_MPI -D_REENTRANT -D_nsearch_EXPORTS -I/home/USADR/ac130084/HOOMD-SPH/hoomd-sph3/hoomd-blue -I/home/USADR/ac130084/HOOMD-SPH/hoomd-sph3/hoomd-blue/build/hoomd/include -isystem /home/USADR/ac130084/anaconda3/envs/sph3/include -isystem /home/USADR/ac130084/anaconda3/envs/sph3/include/python3.10 -isystem /usr/include/eigen3 -isystem /usr/lib/x86_64-linux-gnu/openmpi/include -isystem /usr/lib/x86_64-linux-gnu/openmpi/include/openmpi  -Wall -Wconversion -Wno-sign-conversion -Wno-unknown-pragmas -Wno-deprecated-declarations -Wno-unused-result -fdiagnostics-color=always -O3 -DNDEBUG -fPIC -fvisibility=hidden -std=gnu++17 -o CMakeFiles/_nsearch.dir/NeighborList.cc.o -c /home/USADR/ac130084/HOOMD-SPH/hoomd-sph3/hoomd-blue/hoomd/nsearch/NeighborList.cc",
+  "file": "/home/USADR/ac130084/HOOMD-SPH/hoomd-sph3/hoomd-blue/hoomd/nsearch/NeighborList.cc"
+},
+{
+  "directory": "/home/USADR/ac130084/HOOMD-SPH/hoomd-sph3/hoomd-blue/build/hoomd/nsearch",
+  "command": "/usr/bin/c++ -DEIGEN_MPL2_ONLY -DENABLE_HPMC_MIXED_PRECISION -DENABLE_MPI -D_REENTRANT -D_nsearch_EXPORTS -I/home/USADR/ac130084/HOOMD-SPH/hoomd-sph3/hoomd-blue -I/home/USADR/ac130084/HOOMD-SPH/hoomd-sph3/hoomd-blue/build/hoomd/include -isystem /home/USADR/ac130084/anaconda3/envs/sph3/include -isystem /home/USADR/ac130084/anaconda3/envs/sph3/include/python3.10 -isystem /usr/include/eigen3 -isystem /usr/lib/x86_64-linux-gnu/openmpi/include -isystem /usr/lib/x86_64-linux-gnu/openmpi/include/openmpi  -Wall -Wconversion -Wno-sign-conversion -Wno-unknown-pragmas -Wno-deprecated-declarations -Wno-unused-result -fdiagnostics-color=always -O3 -DNDEBUG -fPIC -fvisibility=hidden -std=gnu++17 -o CMakeFiles/_nsearch.dir/NeighborListStencil.cc.o -c /home/USADR/ac130084/HOOMD-SPH/hoomd-sph3/hoomd-blue/hoomd/nsearch/NeighborListStencil.cc",
+  "file": "/home/USADR/ac130084/HOOMD-SPH/hoomd-sph3/hoomd-blue/hoomd/nsearch/NeighborListStencil.cc"
+},
+{
+  "directory": "/home/USADR/ac130084/HOOMD-SPH/hoomd-sph3/hoomd-blue/build/hoomd/nsearch",
+  "command": "/usr/bin/c++ -DEIGEN_MPL2_ONLY -DENABLE_HPMC_MIXED_PRECISION -DENABLE_MPI -D_REENTRANT -D_nsearch_EXPORTS -I/home/USADR/ac130084/HOOMD-SPH/hoomd-sph3/hoomd-blue -I/home/USADR/ac130084/HOOMD-SPH/hoomd-sph3/hoomd-blue/build/hoomd/include -isystem /home/USADR/ac130084/anaconda3/envs/sph3/include -isystem /home/USADR/ac130084/anaconda3/envs/sph3/include/python3.10 -isystem /usr/include/eigen3 -isystem /usr/lib/x86_64-linux-gnu/openmpi/include -isystem /usr/lib/x86_64-linux-gnu/openmpi/include/openmpi  -Wall -Wconversion -Wno-sign-conversion -Wno-unknown-pragmas -Wno-deprecated-declarations -Wno-unused-result -fdiagnostics-color=always -O3 -DNDEBUG -fPIC -fvisibility=hidden -std=gnu++17 -o CMakeFiles/_nsearch.dir/NeighborListTree.cc.o -c /home/USADR/ac130084/HOOMD-SPH/hoomd-sph3/hoomd-blue/hoomd/nsearch/NeighborListTree.cc",
+  "file": "/home/USADR/ac130084/HOOMD-SPH/hoomd-sph3/hoomd-blue/hoomd/nsearch/NeighborListTree.cc"
+},
+{
+  "directory": "/home/USADR/ac130084/HOOMD-SPH/hoomd-sph3/hoomd-blue/build/hoomd/sph",
+  "command": "/usr/bin/c++ -DEIGEN_MPL2_ONLY -DENABLE_HPMC_MIXED_PRECISION -DENABLE_MPI -D_REENTRANT -D_sph_EXPORTS -I/home/USADR/ac130084/HOOMD-SPH/hoomd-sph3/hoomd-blue -I/home/USADR/ac130084/HOOMD-SPH/hoomd-sph3/hoomd-blue/build/hoomd/include -isystem /home/USADR/ac130084/anaconda3/envs/sph3/include -isystem /home/USADR/ac130084/anaconda3/envs/sph3/include/python3.10 -isystem /usr/include/eigen3 -isystem /usr/lib/x86_64-linux-gnu/openmpi/include -isystem /usr/lib/x86_64-linux-gnu/openmpi/include/openmpi  -Wall -Wconversion -Wno-sign-conversion -Wno-unknown-pragmas -Wno-deprecated-declarations -Wno-unused-result -fdiagnostics-color=always -O3 -DNDEBUG -fPIC -fvisibility=hidden -std=gnu++17 -o CMakeFiles/_sph.dir/module-sph.cc.o -c /home/USADR/ac130084/HOOMD-SPH/hoomd-sph3/hoomd-blue/hoomd/sph/module-sph.cc",
+  "file": "/home/USADR/ac130084/HOOMD-SPH/hoomd-sph3/hoomd-blue/hoomd/sph/module-sph.cc"
+},
+{
+  "directory": "/home/USADR/ac130084/HOOMD-SPH/hoomd-sph3/hoomd-blue/build/hoomd/sph",
+  "command": "/usr/bin/c++ -DEIGEN_MPL2_ONLY -DENABLE_HPMC_MIXED_PRECISION -DENABLE_MPI -D_REENTRANT -D_sph_EXPORTS -I/home/USADR/ac130084/HOOMD-SPH/hoomd-sph3/hoomd-blue -I/home/USADR/ac130084/HOOMD-SPH/hoomd-sph3/hoomd-blue/build/hoomd/include -isystem /home/USADR/ac130084/anaconda3/envs/sph3/include -isystem /home/USADR/ac130084/anaconda3/envs/sph3/include/python3.10 -isystem /usr/include/eigen3 -isystem /usr/lib/x86_64-linux-gnu/openmpi/include -isystem /usr/lib/x86_64-linux-gnu/openmpi/include/openmpi  -Wall -Wconversion -Wno-sign-conversion -Wno-unknown-pragmas -Wno-deprecated-declarations -Wno-unused-result -fdiagnostics-color=always -O3 -DNDEBUG -fPIC -fvisibility=hidden -std=gnu++17 -o CMakeFiles/_sph.dir/SPHIntegratorTwoStep.cc.o -c /home/USADR/ac130084/HOOMD-SPH/hoomd-sph3/hoomd-blue/hoomd/sph/SPHIntegratorTwoStep.cc",
+  "file": "/home/USADR/ac130084/HOOMD-SPH/hoomd-sph3/hoomd-blue/hoomd/sph/SPHIntegratorTwoStep.cc"
+},
+{
+  "directory": "/home/USADR/ac130084/HOOMD-SPH/hoomd-sph3/hoomd-blue/build/hoomd/sph",
+  "command": "/usr/bin/c++ -DEIGEN_MPL2_ONLY -DENABLE_HPMC_MIXED_PRECISION -DENABLE_MPI -D_REENTRANT -D_sph_EXPORTS -I/home/USADR/ac130084/HOOMD-SPH/hoomd-sph3/hoomd-blue -I/home/USADR/ac130084/HOOMD-SPH/hoomd-sph3/hoomd-blue/build/hoomd/include -isystem /home/USADR/ac130084/anaconda3/envs/sph3/include -isystem /home/USADR/ac130084/anaconda3/envs/sph3/include/python3.10 -isystem /usr/include/eigen3 -isystem /usr/lib/x86_64-linux-gnu/openmpi/include -isystem /usr/lib/x86_64-linux-gnu/openmpi/include/openmpi  -Wall -Wconversion -Wno-sign-conversion -Wno-unknown-pragmas -Wno-deprecated-declarations -Wno-unused-result -fdiagnostics-color=always -O3 -DNDEBUG -fPIC -fvisibility=hidden -std=gnu++17 -o CMakeFiles/_sph.dir/SPHIntegrationMethodTwoStep.cc.o -c /home/USADR/ac130084/HOOMD-SPH/hoomd-sph3/hoomd-blue/hoomd/sph/SPHIntegrationMethodTwoStep.cc",
+  "file": "/home/USADR/ac130084/HOOMD-SPH/hoomd-sph3/hoomd-blue/hoomd/sph/SPHIntegrationMethodTwoStep.cc"
+},
+{
+  "directory": "/home/USADR/ac130084/HOOMD-SPH/hoomd-sph3/hoomd-blue/build/hoomd/sph",
+  "command": "/usr/bin/c++ -DEIGEN_MPL2_ONLY -DENABLE_HPMC_MIXED_PRECISION -DENABLE_MPI -D_REENTRANT -D_sph_EXPORTS -I/home/USADR/ac130084/HOOMD-SPH/hoomd-sph3/hoomd-blue -I/home/USADR/ac130084/HOOMD-SPH/hoomd-sph3/hoomd-blue/build/hoomd/include -isystem /home/USADR/ac130084/anaconda3/envs/sph3/include -isystem /home/USADR/ac130084/anaconda3/envs/sph3/include/python3.10 -isystem /usr/include/eigen3 -isystem /usr/lib/x86_64-linux-gnu/openmpi/include -isystem /usr/lib/x86_64-linux-gnu/openmpi/include/openmpi  -Wall -Wconversion -Wno-sign-conversion -Wno-unknown-pragmas -Wno-deprecated-declarations -Wno-unused-result -fdiagnostics-color=always -O3 -DNDEBUG -fPIC -fvisibility=hidden -std=gnu++17 -o CMakeFiles/_sph.dir/VelocityVerlet.cc.o -c /home/USADR/ac130084/HOOMD-SPH/hoomd-sph3/hoomd-blue/hoomd/sph/VelocityVerlet.cc",
+  "file": "/home/USADR/ac130084/HOOMD-SPH/hoomd-sph3/hoomd-blue/hoomd/sph/VelocityVerlet.cc"
+},
+{
+  "directory": "/home/USADR/ac130084/HOOMD-SPH/hoomd-sph3/hoomd-blue/build/hoomd/sph",
+  "command": "/usr/bin/c++ -DEIGEN_MPL2_ONLY -DENABLE_HPMC_MIXED_PRECISION -DENABLE_MPI -D_REENTRANT -D_sph_EXPORTS -I/home/USADR/ac130084/HOOMD-SPH/hoomd-sph3/hoomd-blue -I/home/USADR/ac130084/HOOMD-SPH/hoomd-sph3/hoomd-blue/build/hoomd/include -isystem /home/USADR/ac130084/anaconda3/envs/sph3/include -isystem /home/USADR/ac130084/anaconda3/envs/sph3/include/python3.10 -isystem /usr/include/eigen3 -isystem /usr/lib/x86_64-linux-gnu/openmpi/include -isystem /usr/lib/x86_64-linux-gnu/openmpi/include/openmpi  -Wall -Wconversion -Wno-sign-conversion -Wno-unknown-pragmas -Wno-deprecated-declarations -Wno-unused-result -fdiagnostics-color=always -O3 -DNDEBUG -fPIC -fvisibility=hidden -std=gnu++17 -o CMakeFiles/_sph.dir/VelocityVerletBasic.cc.o -c /home/USADR/ac130084/HOOMD-SPH/hoomd-sph3/hoomd-blue/hoomd/sph/VelocityVerletBasic.cc",
+  "file": "/home/USADR/ac130084/HOOMD-SPH/hoomd-sph3/hoomd-blue/hoomd/sph/VelocityVerletBasic.cc"
+},
+{
+  "directory": "/home/USADR/ac130084/HOOMD-SPH/hoomd-sph3/hoomd-blue/build/hoomd/sph",
+  "command": "/usr/bin/c++ -DEIGEN_MPL2_ONLY -DENABLE_HPMC_MIXED_PRECISION -DENABLE_MPI -D_REENTRANT -D_sph_EXPORTS -I/home/USADR/ac130084/HOOMD-SPH/hoomd-sph3/hoomd-blue -I/home/USADR/ac130084/HOOMD-SPH/hoomd-sph3/hoomd-blue/build/hoomd/include -isystem /home/USADR/ac130084/anaconda3/envs/sph3/include -isystem /home/USADR/ac130084/anaconda3/envs/sph3/include/python3.10 -isystem /usr/include/eigen3 -isystem /usr/lib/x86_64-linux-gnu/openmpi/include -isystem /usr/lib/x86_64-linux-gnu/openmpi/include/openmpi  -Wall -Wconversion -Wno-sign-conversion -Wno-unknown-pragmas -Wno-deprecated-declarations -Wno-unused-result -fdiagnostics-color=always -O3 -DNDEBUG -fPIC -fvisibility=hidden -std=gnu++17 -o CMakeFiles/_sph.dir/StateEquations.cc.o -c /home/USADR/ac130084/HOOMD-SPH/hoomd-sph3/hoomd-blue/hoomd/sph/StateEquations.cc",
+  "file": "/home/USADR/ac130084/HOOMD-SPH/hoomd-sph3/hoomd-blue/hoomd/sph/StateEquations.cc"
+},
+{
+  "directory": "/home/USADR/ac130084/HOOMD-SPH/hoomd-sph3/hoomd-blue/build/hoomd/sph",
+  "command": "/usr/bin/c++ -DEIGEN_MPL2_ONLY -DENABLE_HPMC_MIXED_PRECISION -DENABLE_MPI -D_REENTRANT -D_sph_EXPORTS -I/home/USADR/ac130084/HOOMD-SPH/hoomd-sph3/hoomd-blue -I/home/USADR/ac130084/HOOMD-SPH/hoomd-sph3/hoomd-blue/build/hoomd/include -isystem /home/USADR/ac130084/anaconda3/envs/sph3/include -isystem /home/USADR/ac130084/anaconda3/envs/sph3/include/python3.10 -isystem /usr/include/eigen3 -isystem /usr/lib/x86_64-linux-gnu/openmpi/include -isystem /usr/lib/x86_64-linux-gnu/openmpi/include/openmpi  -Wall -Wconversion -Wno-sign-conversion -Wno-unknown-pragmas -Wno-deprecated-declarations -Wno-unused-result -fdiagnostics-color=always -O3 -DNDEBUG -fPIC -fvisibility=hidden -std=gnu++17 -o CMakeFiles/_sph.dir/SPHBaseClass.cc.o -c /home/USADR/ac130084/HOOMD-SPH/hoomd-sph3/hoomd-blue/hoomd/sph/SPHBaseClass.cc",
+  "file": "/home/USADR/ac130084/HOOMD-SPH/hoomd-sph3/hoomd-blue/hoomd/sph/SPHBaseClass.cc"
+},
+{
+  "directory": "/home/USADR/ac130084/HOOMD-SPH/hoomd-sph3/hoomd-blue/build/hoomd/sph",
+  "command": "/usr/bin/c++ -DEIGEN_MPL2_ONLY -DENABLE_HPMC_MIXED_PRECISION -DENABLE_MPI -D_REENTRANT -D_sph_EXPORTS -I/home/USADR/ac130084/HOOMD-SPH/hoomd-sph3/hoomd-blue -I/home/USADR/ac130084/HOOMD-SPH/hoomd-sph3/hoomd-blue/build/hoomd/include -isystem /home/USADR/ac130084/anaconda3/envs/sph3/include -isystem /home/USADR/ac130084/anaconda3/envs/sph3/include/python3.10 -isystem /usr/include/eigen3 -isystem /usr/lib/x86_64-linux-gnu/openmpi/include -isystem /usr/lib/x86_64-linux-gnu/openmpi/include/openmpi  -Wall -Wconversion -Wno-sign-conversion -Wno-unknown-pragmas -Wno-deprecated-declarations -Wno-unused-result -fdiagnostics-color=always -O3 -DNDEBUG -fPIC -fvisibility=hidden -std=gnu++17 -o CMakeFiles/_sph.dir/SinglePhaseFlow.cc.o -c /home/USADR/ac130084/HOOMD-SPH/hoomd-sph3/hoomd-blue/hoomd/sph/SinglePhaseFlow.cc",
+  "file": "/home/USADR/ac130084/HOOMD-SPH/hoomd-sph3/hoomd-blue/hoomd/sph/SinglePhaseFlow.cc"
+},
+{
+  "directory": "/home/USADR/ac130084/HOOMD-SPH/hoomd-sph3/hoomd-blue/build/hoomd/sph",
+  "command": "/usr/bin/c++ -DEIGEN_MPL2_ONLY -DENABLE_HPMC_MIXED_PRECISION -DENABLE_MPI -D_REENTRANT -D_sph_EXPORTS -I/home/USADR/ac130084/HOOMD-SPH/hoomd-sph3/hoomd-blue -I/home/USADR/ac130084/HOOMD-SPH/hoomd-sph3/hoomd-blue/build/hoomd/include -isystem /home/USADR/ac130084/anaconda3/envs/sph3/include -isystem /home/USADR/ac130084/anaconda3/envs/sph3/include/python3.10 -isystem /usr/include/eigen3 -isystem /usr/lib/x86_64-linux-gnu/openmpi/include -isystem /usr/lib/x86_64-linux-gnu/openmpi/include/openmpi  -Wall -Wconversion -Wno-sign-conversion -Wno-unknown-pragmas -Wno-deprecated-declarations -Wno-unused-result -fdiagnostics-color=always -O3 -DNDEBUG -fPIC -fvisibility=hidden -std=gnu++17 -o CMakeFiles/_sph.dir/SmoothingKernel.cc.o -c /home/USADR/ac130084/HOOMD-SPH/hoomd-sph3/hoomd-blue/hoomd/sph/SmoothingKernel.cc",
+  "file": "/home/USADR/ac130084/HOOMD-SPH/hoomd-sph3/hoomd-blue/hoomd/sph/SmoothingKernel.cc"
+},
+{
+  "directory": "/home/USADR/ac130084/HOOMD-SPH/hoomd-sph3/hoomd-blue/build/hoomd/sph",
+  "command": "/usr/bin/c++ -DEIGEN_MPL2_ONLY -DENABLE_HPMC_MIXED_PRECISION -DENABLE_MPI -D_REENTRANT -D_sph_EXPORTS -I/home/USADR/ac130084/HOOMD-SPH/hoomd-sph3/hoomd-blue -I/home/USADR/ac130084/HOOMD-SPH/hoomd-sph3/hoomd-blue/build/hoomd/include -isystem /home/USADR/ac130084/anaconda3/envs/sph3/include -isystem /home/USADR/ac130084/anaconda3/envs/sph3/include/python3.10 -isystem /usr/include/eigen3 -isystem /usr/lib/x86_64-linux-gnu/openmpi/include -isystem /usr/lib/x86_64-linux-gnu/openmpi/include/openmpi  -Wall -Wconversion -Wno-sign-conversion -Wno-unknown-pragmas -Wno-deprecated-declarations -Wno-unused-result -fdiagnostics-color=always -O3 -DNDEBUG -fPIC -fvisibility=hidden -std=gnu++17 -o CMakeFiles/_sph.dir/CustomForceCompute.cc.o -c /home/USADR/ac130084/HOOMD-SPH/hoomd-sph3/hoomd-blue/hoomd/sph/CustomForceCompute.cc",
+  "file": "/home/USADR/ac130084/HOOMD-SPH/hoomd-sph3/hoomd-blue/hoomd/sph/CustomForceCompute.cc"
+},
+{
+  "directory": "/home/USADR/ac130084/HOOMD-SPH/hoomd-sph3/hoomd-blue/build/hoomd/sph",
+  "command": "/usr/bin/c++ -DEIGEN_MPL2_ONLY -DENABLE_HPMC_MIXED_PRECISION -DENABLE_MPI -D_REENTRANT -D_sph_EXPORTS -I/home/USADR/ac130084/HOOMD-SPH/hoomd-sph3/hoomd-blue -I/home/USADR/ac130084/HOOMD-SPH/hoomd-sph3/hoomd-blue/build/hoomd/include -isystem /home/USADR/ac130084/anaconda3/envs/sph3/include -isystem /home/USADR/ac130084/anaconda3/envs/sph3/include/python3.10 -isystem /usr/include/eigen3 -isystem /usr/lib/x86_64-linux-gnu/openmpi/include -isystem /usr/lib/x86_64-linux-gnu/openmpi/include/openmpi  -Wall -Wconversion -Wno-sign-conversion -Wno-unknown-pragmas -Wno-deprecated-declarations -Wno-unused-result -fdiagnostics-color=always -O3 -DNDEBUG -fPIC -fvisibility=hidden -std=gnu++17 -o CMakeFiles/_sph.dir/ComputeSPFBasicProperties.cc.o -c /home/USADR/ac130084/HOOMD-SPH/hoomd-sph3/hoomd-blue/hoomd/sph/ComputeSPFBasicProperties.cc",
+  "file": "/home/USADR/ac130084/HOOMD-SPH/hoomd-sph3/hoomd-blue/hoomd/sph/ComputeSPFBasicProperties.cc"
+},
+{
+  "directory": "/home/USADR/ac130084/HOOMD-SPH/hoomd-sph3/hoomd-blue/build/hoomd/sph",
+  "command": "/usr/bin/c++ -DEIGEN_MPL2_ONLY -DENABLE_HPMC_MIXED_PRECISION -DENABLE_MPI -D_REENTRANT -D_sph_EXPORTS -I/home/USADR/ac130084/HOOMD-SPH/hoomd-sph3/hoomd-blue -I/home/USADR/ac130084/HOOMD-SPH/hoomd-sph3/hoomd-blue/build/hoomd/include -isystem /home/USADR/ac130084/anaconda3/envs/sph3/include -isystem /home/USADR/ac130084/anaconda3/envs/sph3/include/python3.10 -isystem /usr/include/eigen3 -isystem /usr/lib/x86_64-linux-gnu/openmpi/include -isystem /usr/lib/x86_64-linux-gnu/openmpi/include/openmpi  -Wall -Wconversion -Wno-sign-conversion -Wno-unknown-pragmas -Wno-deprecated-declarations -Wno-unused-result -fdiagnostics-color=always -O3 -DNDEBUG -fPIC -fvisibility=hidden -std=gnu++17 -o CMakeFiles/_sph.dir/HalfStepHook.cc.o -c /home/USADR/ac130084/HOOMD-SPH/hoomd-sph3/hoomd-blue/hoomd/sph/HalfStepHook.cc",
+  "file": "/home/USADR/ac130084/HOOMD-SPH/hoomd-sph3/hoomd-blue/hoomd/sph/HalfStepHook.cc"
+},
+{
+  "directory": "/home/USADR/ac130084/HOOMD-SPH/hoomd-sph3/hoomd-blue/build/hoomd/sph",
+  "command": "/usr/bin/c++ -DEIGEN_MPL2_ONLY -DENABLE_HPMC_MIXED_PRECISION -DENABLE_MPI -D_REENTRANT -D_sph_EXPORTS -I/home/USADR/ac130084/HOOMD-SPH/hoomd-sph3/hoomd-blue -I/home/USADR/ac130084/HOOMD-SPH/hoomd-sph3/hoomd-blue/build/hoomd/include -isystem /home/USADR/ac130084/anaconda3/envs/sph3/include -isystem /home/USADR/ac130084/anaconda3/envs/sph3/include/python3.10 -isystem /usr/include/eigen3 -isystem /usr/lib/x86_64-linux-gnu/openmpi/include -isystem /usr/lib/x86_64-linux-gnu/openmpi/include/openmpi  -Wall -Wconversion -Wno-sign-conversion -Wno-unknown-pragmas -Wno-deprecated-declarations -Wno-unused-result -fdiagnostics-color=always -O3 -DNDEBUG -fPIC -fvisibility=hidden -std=gnu++17 -o CMakeFiles/_sph.dir/ConstantForceCompute.cc.o -c /home/USADR/ac130084/HOOMD-SPH/hoomd-sph3/hoomd-blue/hoomd/sph/ConstantForceCompute.cc",
+  "file": "/home/USADR/ac130084/HOOMD-SPH/hoomd-sph3/hoomd-blue/hoomd/sph/ConstantForceCompute.cc"
+}
+]
