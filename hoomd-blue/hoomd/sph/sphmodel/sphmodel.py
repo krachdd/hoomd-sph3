@@ -216,6 +216,7 @@ class SinglePhaseFlow(SPHModel):
                  nlist,
                  fluidgroup_filter = None,
                  solidgroup_filter = None,
+                 initialfluidgroup_filter = None,
                  densitymethod='SUMMATION',
                  viscositymethod='HARMONICAVERAGE'):
 
@@ -243,6 +244,7 @@ class SinglePhaseFlow(SPHModel):
         self._cpp_SPFclass_name = 'SinglePF' '_' + Kernel[self.kernel.name] + '_' + EOS[self.eos.name]
         self.fluidgroup_filter = fluidgroup_filter
         self.solidgroup_filter = solidgroup_filter
+        self.initialfluidgroup_filter = initialfluidgroup_filter
         self.str_densitymethod = self._param_dict._dict["densitymethod"]
         self.str_viscositymethod = self._param_dict._dict["viscositymethod"]
         self.accel_set = False
@@ -328,6 +330,7 @@ class SinglePhaseFlow(SPHModel):
         cpp_sys_def = self._simulation.state._cpp_sys_def
         cpp_fluidgroup  = self._simulation.state._get_group(self.fluidgroup_filter)
         cpp_solidgroup  = self._simulation.state._get_group(self.solidgroup_filter)
+        cpp_initialfluidgroup = self._simulation.state._get_group(self.initialfluidgroup_filter)
         cpp_kernel = self.kernel.cpp_smoothingkernel
         cpp_eos = self.eos.cpp_stateequation
         cpp_nlist =  self.nlist._cpp_obj
@@ -336,7 +339,7 @@ class SinglePhaseFlow(SPHModel):
         self.kernel.setNeighborList(self.nlist)
 
         self._cpp_obj = spf_cls(cpp_sys_def, cpp_kernel, cpp_eos, cpp_nlist, cpp_fluidgroup, 
-                                cpp_solidgroup, self.cpp_densitymethod, self.cpp_viscositymethod)
+                                cpp_solidgroup, cpp_initialfluidgroup, self.cpp_densitymethod, self.cpp_viscositymethod)
 
         # Set kernel parameters
         kappa = self.kernel.Kappa()
@@ -438,6 +441,10 @@ class SinglePhaseFlow(SPHModel):
         self._cpp_obj.setRCut(('F', 'S'), rcut)
         self._cpp_obj.setRCut(('S', 'S'), rcut)
         self._cpp_obj.setRCut(('F', 'F'), rcut)
+        self._cpp_obj.setRCut(('I', 'F'), rcut)
+        # self._cpp_obj.setRCut(('I', 'S'), rcut)
+
+
 
     # @property
     def densitymethod(self):

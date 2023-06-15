@@ -67,6 +67,7 @@ class PYBIND11_EXPORT SinglePhaseFlow : public SPHBaseClass<KT_, SET_>
                         std::shared_ptr<nsearch::NeighborList> nlist,
                         std::shared_ptr<ParticleGroup> fluidgroup,
                         std::shared_ptr<ParticleGroup> solidgroup,
+                        std::shared_ptr<ParticleGroup> initialfluidgroup,
                         DensityMethod   mdensitymethod=DENSITYSUMMATION,
                         ViscosityMethod mviscositymethod=HARMONICAVERAGE);
 
@@ -215,6 +216,8 @@ class PYBIND11_EXPORT SinglePhaseFlow : public SPHBaseClass<KT_, SET_>
         // Shared pointers
         std::shared_ptr<ParticleGroup> m_fluidgroup; //!< Group of fluid particles
         std::shared_ptr<ParticleGroup> m_solidgroup; //!< Group of fluid particles
+        std::shared_ptr<ParticleGroup> m_initialfluidgroup; //!< Group of fluid particles
+
 
         /// r_cut (not squared) given to the neighbor list
         std::shared_ptr<GlobalArray<Scalar>> m_r_cut_nlist;
@@ -245,6 +248,7 @@ class PYBIND11_EXPORT SinglePhaseFlow : public SPHBaseClass<KT_, SET_>
         // Auxiliary variables
         std::vector<unsigned int> m_fluidtypes; //!< Fluid type numbers
         std::vector<unsigned int> m_solidtypes; //!< Solid type numbers
+        std::vector<unsigned int> m_initialfluidtypes; //!< Solid type numbers
         GPUArray<unsigned int> m_type_property_map; //!< to check if a particle type is solid or fluid
 
         // Flags
@@ -313,6 +317,9 @@ class PYBIND11_EXPORT SinglePhaseFlow : public SPHBaseClass<KT_, SET_>
         * \post Ghost particle auxiliary array 1 is up-to-date
         */
         void update_ghost_aux1(uint64_t timestep);
+
+        //! Map values to initital state particles that do not move
+        void initialstatemapping(uint64_t timestep);
 
     private:
 
