@@ -37,30 +37,41 @@ mass                = rho0 * specific_volume
 # refvel              = 10
 fx                  = 0.1                # [m/s]
 viscosity           = 0.01               # [Pa s]
+print('dx:', dx)
+
 
 
 # get kernel properties
 kernel  = 'WendlandC4'
 slength = hoomd.sph.kernel.OptimalH[kernel]*dx       # m
 rcut    = hoomd.sph.kernel.Kappa[kernel]*slength     # m
+print('slength:', slength)
+print('rcut:', rcut)
+
 
 # particles per Kernel Radius
 part_rcut  = math.ceil(rcut/dx) 
 part_depth = math.ceil(2.5 * hoomd.sph.kernel.Kappa[kernel] * rcut/dx) 
+print('part_rcut:', part_rcut)
+print('part_depth:', part_depth)
 
 # get simulation box sizes etc.
 nx, ny, nz = int(num_length), int(num_length + (3*part_rcut)), int(part_depth)
 lx, ly, lz = float(nx) * voxelsize, float(ny) * voxelsize, float(nz) * voxelsize
 # box dimensions
 box_lx, box_ly, box_lz = lx, ly, lz
+print('box_lx:', box_lx)
+print('box_ly:', box_ly)
+print('box_lz:', box_lz)
+
 
 # Number of Particles
 n_particles = nx * ny * nz 
 
 # define meshgrid and add properties
-x, y, z = np.meshgrid(*(np.linspace(-box_lx / 2, box_lx / 2, nx, endpoint=True),),
-                      *(np.linspace(-box_ly / 2, box_ly / 2, ny, endpoint=True),),
-                      *(np.linspace(-box_lz / 2, box_lz / 2, nz, endpoint=True),))
+x, y, z = np.meshgrid(*(np.linspace(-box_lx / 2 + dx/2, box_lx / 2 - dx/2, nx, endpoint=True),),
+                      *(np.linspace(-box_ly / 2 + dx/2, box_ly / 2 - dx/2, ny, endpoint=True),),
+                      *(np.linspace(-box_lz / 2 + dx/2, box_lz / 2 - dx/2, nz, endpoint=True),))
 
 positions = np.array((x.ravel(), y.ravel(), z.ravel())).T
 
@@ -93,6 +104,8 @@ for i in range(len(x)):
         tid[i] = 1
 
 
+print('Particles:', len(x))
+
 snapshot.particles.typeid[:]     = tid
 snapshot.particles.velocity[:]   = vels
 
@@ -104,5 +117,5 @@ init_filename = f'parallel_plates_{nx}_{ny}_{nz}_vs_{voxelsize}_init.gsd'
 with gsd.hoomd.open(name = init_filename, mode = 'wb') as f:
     f.append(snapshot)
 
-# if device.communicator.rank == 0:
-#     export_gsd2vtu.export_spf(init_filename)
+if device.communicator.rank == 0:
+    export_gsd2vtu.export_spf(init_filename)

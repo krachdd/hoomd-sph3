@@ -61,9 +61,9 @@ porosity = np.sum(tids)/(NX * NY * NZ)
 
 
 # define meshgrid and add properties
-x, y, z = np.meshgrid(*(np.linspace(-box_Lx / 2, box_Lx / 2, NX, endpoint=False),),
-                      *(np.linspace(-box_Ly / 2, box_Ly / 2, NY, endpoint=False),),
-                      *(np.linspace(-box_Lz / 2, box_Lz / 2, NZ, endpoint=False),))
+x, y, z = np.meshgrid(*(np.linspace(-box_Lx / 2 + dx/2, box_Lx / 2 - dx/2, NX, endpoint=False),),
+                      *(np.linspace(-box_Ly / 2 + dx/2, box_Ly / 2 - dx/2, NY, endpoint=False),),
+                      *(np.linspace(-box_Lz / 2 + dx/2, box_Lz / 2 - dx/2, NZ, endpoint=False),))
 
 positions = np.array((x.ravel(), y.ravel(), z.ravel())).T
 
