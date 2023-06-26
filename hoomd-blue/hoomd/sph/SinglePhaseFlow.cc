@@ -426,8 +426,6 @@ void SinglePhaseFlow<KT_, SET_>::compute_ndensity(uint64_t timestep)
         
         // set temp variable to zero 
         ni = w0;
-        // // set temp variable to zero 
-        // ni = 0;
 
         // Access the particle's position
         Scalar3 pi;
@@ -435,28 +433,12 @@ void SinglePhaseFlow<KT_, SET_>::compute_ndensity(uint64_t timestep)
         pi.y = h_pos.data[i].y;
         pi.z = h_pos.data[i].z;
 
-
-        // //if (timestep == 0 && i == 1020)
-        // if (timestep == 0)
-        //     {
-        //     std::cout << "pi.x:" << pi.x << std::endl;
-        //     std::cout << "pi.y:" << pi.y << std::endl;
-        //     std::cout << "pi.z:" << pi.z << std::endl;
-        //     }
-
         // Loop over all of the neighbors of this particle
         myHead = h_head_list.data[i];
         size = (unsigned int)h_n_neigh.data[i];
 
         Scalar rhoi =  h_density.data[i];
 
-        // //if (timestep == 0 && i == 1020)
-        // if (timestep == 0)
-        //     {
-        //     std::cout << "w0:" << ni << std::endl;
-        //     std::cout << "rhoi:" << rhoi << std::endl;
-        //     }
-        
         Scalar w_sum = 0;
         Scalar neighbors = 0;
 
@@ -487,75 +469,20 @@ void SinglePhaseFlow<KT_, SET_>::compute_ndensity(uint64_t timestep)
             // Calculate squared distance
             Scalar rsq = dot(dx, dx);
 
-            // // If particle distance is too large, continue with next neighbor in loop
-            // if ( this->m_const_slength && rsq > m_rcutsq )
-            //     continue;
-
             // Calculate distance
             Scalar r = sqrt(rsq);
-            Scalar mrcut = sqrt(m_rcutsq);
-            //std::cout << "mrcut:" << mrcut << std::endl;
-
-
-            // if (timestep == 0 && i == 1020)
-            //     {
-            //     std::cout << "partcile_j_bef:" << k << " radius:" << r << std::endl;
-            //     }
-
-            // // If particle distance is too large, continue with next neighbor in loop
-            // if ( this->m_const_slength && r > mrcut )
-            //     continue;
 
             // If particle distance is too large, continue with next neighbor in loop
             if ( this->m_const_slength && rsq > m_rcutsq )
                 continue;
 
-
-            // if (r < 1e-12)
-            //     continue;
-
-            // if (timestep == 0 && i == 1020)
-            //     {
-            //     std::cout << "partcile_j_aft:" << k << " radius:" << r << std::endl;
-            //     }
-
             ni += this->m_const_slength ? this->m_skernel->wij(m_ch,r) : this->m_skernel->wij(Scalar(0.5)*(h_h.data[i]+h_h.data[k]),r);
-
-            Scalar ni_ =  this->m_const_slength ? this->m_skernel->wij(m_ch,r) : this->m_skernel->wij(Scalar(0.5)*(h_h.data[i]+h_h.data[k]),r);
-
-
-            // ni += this->m_const_slength ? this->m_skernel->wij(m_ch,r) : this->m_skernel->wij(Scalar(1.7),r);
-
-            // Scalar ni_ =  this->m_const_slength ? this->m_skernel->wij(m_ch,r) : this->m_skernel->wij(Scalar(1.7),r);
-
-
-            Scalar rhoj =  h_density.data[k];
-            Scalar mj   = h_velocity.data[k].w;
-            Scalar Vj = mj/rhoj;
-            w_sum += ni_ * Vj;
-            neighbors += 1;
-            // std::cout << "MeanH:" << Scalar(0.5)*(h_h.data[i]+h_h.data[k]) << std::endl;
 
         } // End neighbour loop
 
         // Compute mass density from number density if particle i is a fluid particle
         // rho_i = m_i * \sum_j wij
-        //std::cout << "neighbors:" << neighbors << std::endl;
-
         h_density.data[i] = ni * h_velocity.data[i].w;
-
-        // //if (timestep == 0 && i == 1020)
-        // if (timestep == 0)
-        //     {
-        //     std::cout << "particle_number:" << i << std::endl;
-        //     std::cout << "w_sum:" << w_sum << std::endl;
-        //     std::cout << "neighbors:" << neighbors << std::endl;
-        //     std::cout << "density:" << h_density.data[i] << std::endl;
-
-
-        //     //std::cout << "ni:" << ni << std::endl;
-        //     std::cout << std::endl;
-        //     }
 
     } // End fluid group loop
 
@@ -1036,13 +963,6 @@ void SinglePhaseFlow<KT_, SET_>::forcecomputation(uint64_t timestep)
         pi.y = h_pos.data[i].y;
         pi.z = h_pos.data[i].z;
 
-        if(timestep > 26900 && i == 128931)
-            {
-            std::cout << "pi.x" << pi.x << std::endl;
-            std::cout << "pi.y" << pi.y << std::endl;
-            std::cout << "pi.z" << pi.z << std::endl;
-            }
-
         Scalar3 vi;
         vi.x = h_velocity.data[i].x;
         vi.y = h_velocity.data[i].y;
@@ -1257,15 +1177,15 @@ void SinglePhaseFlow<KT_, SET_>::computeForces(uint64_t timestep)
         throw std::runtime_error("Error computing SinglePhaseFlow forces");
         }
 
-    // // m_solid_removed flag is set to False initially, so this 
-    // // only executes at timestep 0
-    // if (!m_solid_removed)
-    //     {
-    //     this->m_nlist->forceUpdate();
-    //     this->m_nlist->compute(timestep);
-    //     mark_solid_particles_toremove(timestep);
-    //     m_solid_removed = true;
-    //     }
+    // m_solid_removed flag is set to False initially, so this 
+    // only executes at timestep 0
+    if (!m_solid_removed)
+        {
+        this->m_nlist->forceUpdate();
+        this->m_nlist->compute(timestep);
+        mark_solid_particles_toremove(timestep);
+        m_solid_removed = true;
+        }
 
     // Apply density renormalization if requested
     if ( m_shepard_renormalization && timestep % m_shepardfreq == 0 )
