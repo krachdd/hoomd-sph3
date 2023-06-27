@@ -445,14 +445,14 @@ void SinglePhaseFlow<KT_, SET_>::compute_ndensity(uint64_t timestep)
 
         Scalar rhoi =  h_density.data[i];
 
-        if (timestep == 0 && i == 3847)
-            {
-            std::cout << "w0:" << ni << std::endl;
-            std::cout << "rhoi:" << rhoi << std::endl;
-            }
+        // if (timestep == 0 && i == 3847)
+        //     {
+        //     std::cout << "w0:" << ni << std::endl;
+        //     std::cout << "rhoi:" << rhoi << std::endl;
+        //     }
         
-        Scalar w_sum = 0;
-        Scalar neighbors = 0;
+        // Scalar w_sum = 0;
+        // Scalar neighbors = 0;
 
         for (unsigned int j = 0; j < size; j++)
         {
@@ -491,10 +491,10 @@ void SinglePhaseFlow<KT_, SET_>::compute_ndensity(uint64_t timestep)
             //std::cout << "mrcut:" << mrcut << std::endl;
 
 
-            if (timestep == 0 && i == 3847)
-                {
-                std::cout << "partcile_j:" << k << " radius:" << r << std::endl;
-                }
+            // if (timestep == 0 && i == 3847)
+            //     {
+            //     std::cout << "partcile_j:" << k << " radius:" << r << std::endl;
+            //     }
 
             // If particle distance is too large, continue with next neighbor in loop
             if ( this->m_const_slength && r > mrcut )
@@ -510,27 +510,27 @@ void SinglePhaseFlow<KT_, SET_>::compute_ndensity(uint64_t timestep)
             // Scalar ni_ =  this->m_const_slength ? this->m_skernel->wij(m_ch,r) : this->m_skernel->wij(Scalar(1.7),r);
 
 
-            Scalar rhoj =  h_density.data[k];
-            Scalar mj   = h_velocity.data[k].w;
-            Scalar Vj = mj/rhoj;
-            w_sum += ni_ * Vj;
-            neighbors += 1;
+            // Scalar rhoj =  h_density.data[k];
+            // Scalar mj   = h_velocity.data[k].w;
+            // Scalar Vj = mj/rhoj;
+            // w_sum += ni_ * Vj;
+            // neighbors += 1;
             // std::cout << "MeanH:" << Scalar(0.5)*(h_h.data[i]+h_h.data[k]) << std::endl;
 
         } // End neighbour loop
 
-        // Compute mass density from number density if particle i is a fluid particle
-        // rho_i = m_i * \sum_j wij
-        //std::cout << "neighbors:" << neighbors << std::endl;
-        if (timestep == 0 && i == 3847)
-            {
-            std::cout << "particle_number:" << i << std::endl;
-            std::cout << "w_sum:" << w_sum << std::endl;
-            std::cout << "neighbors:" << neighbors << std::endl;
+        // // Compute mass density from number density if particle i is a fluid particle
+        // // rho_i = m_i * \sum_j wij
+        // //std::cout << "neighbors:" << neighbors << std::endl;
+        // if (timestep == 0 && i == 3847)
+        //     {
+        //     std::cout << "particle_number:" << i << std::endl;
+        //     std::cout << "w_sum:" << w_sum << std::endl;
+        //     std::cout << "neighbors:" << neighbors << std::endl;
 
-            //std::cout << "ni:" << ni << std::endl;
-            std::cout << std::endl;
-            }
+        //     //std::cout << "ni:" << ni << std::endl;
+        //     std::cout << std::endl;
+        //     }
         h_density.data[i] = ni * h_velocity.data[i].w;
 
     } // End fluid group loop

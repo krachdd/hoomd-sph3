@@ -70,16 +70,21 @@ n_initialparticles = nxin * nyin * nzin
 box_lxin, box_lyin, box_lzin = lxin, lyin, lzin
 
 # define meshgrid and add properties
-x, y, z = np.meshgrid(*(np.linspace(-box_lx / 2, box_lx / 2, nx, endpoint=True),),
-                      *(np.linspace(-box_ly / 2, box_ly / 2, ny, endpoint=True),),
-                      *(np.linspace(-box_lz / 2, box_lz / 2, nz, endpoint=True),))
+x, y, z = np.meshgrid(*(np.linspace(-box_lx / 2 + dx/2, box_lx / 2 - dx/2, nx, endpoint=True),),
+                      *(np.linspace(-box_ly / 2 + dx/2, box_ly / 2 - dx/2, ny, endpoint=True),),
+                      *(np.linspace(-box_lz / 2 + dx/2, box_lz / 2 - dx/2, nz, endpoint=True),))
 
 positions = np.array((x.ravel(), y.ravel(), z.ravel())).T
 
+# # define meshgrid and add properties
+# xin, yin, zin = np.meshgrid(*(np.linspace(-box_lxin / 2  + dx/2, box_lxin / 2 - dx/2 - dx/2, nxin, endpoint=True),),
+#                       *(np.linspace(-box_lyin / 2  + dx/2, box_lyin / 2 - dx/2, nyin, endpoint=True),),
+#                       *(np.linspace(-box_lzin / 2  + dx/2, box_lzin / 2 - dx/2, nzin, endpoint=True),))
+
 # define meshgrid and add properties
-xin, yin, zin = np.meshgrid(*(np.linspace(-box_lxin / 2, box_lxin / 2, nxin, endpoint=True),),
-                      *(np.linspace(-box_lyin / 2, box_lyin / 2, nyin, endpoint=True),),
-                      *(np.linspace(-box_lzin / 2, box_lzin / 2, nzin, endpoint=True),))
+xin, yin, zin = np.meshgrid(*(np.linspace(-box_lxin / 2 + dx/2, box_lxin / 2 - dx/2, nxin, endpoint=True),),
+                      *(np.linspace(-box_lyin / 2 + dx/2, box_lyin / 2 - dx/2, nyin, endpoint=True),),
+                      *(np.linspace(-box_lzin / 2 + dx/2, box_lzin / 2 - dx/2, nzin, endpoint=True),))
 
 positionsin = np.array((xin.ravel(), yin.ravel(), zin.ravel())).T
 
