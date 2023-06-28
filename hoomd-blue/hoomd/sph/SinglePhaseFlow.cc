@@ -46,6 +46,8 @@ SinglePhaseFlow<KT_, SET_>::SinglePhaseFlow(std::shared_ptr<SystemDefinition> sy
         m_shepardfreq = 1;
 
         m_solid_removed = false;
+        m_initial_removed = false;
+
 
         // Sanity checks
         assert(this->m_pdata);
@@ -348,6 +350,110 @@ void SinglePhaseFlow<KT_, SET_>::mark_solid_particles_toremove(uint64_t timestep
         } // End solid particle loop
 
     } // End mark solid particles to remove
+
+/*! Mark solid particles to remove
+    set mass of a particle to -999.0
+
+ */
+
+template<SmoothingKernelType KT_,StateEquationType SET_>
+void SinglePhaseFlow<KT_, SET_>::mark_initial_particles_toremove(uint64_t timestep)
+    {
+    this->m_exec_conf->msg->notice(7) << "Computing SinglePhaseFlow::Mark initial fluid Particles to remove at timestep " << timestep << std::endl;
+
+    // Grab handles for particle and neighbor data
+    ArrayHandle<Scalar4> h_pos(this->m_pdata->getPositions(), access_location::host, access_mode::read);
+    ArrayHandle<Scalar4> h_velocity(this->m_pdata->getVelocities(), access_location::host, access_mode::read);
+
+    // Grab handles for neighbor data
+    ArrayHandle<unsigned int> h_n_neigh(this->m_nlist->getNNeighArray(), access_location::host, access_mode::read);
+    ArrayHandle<unsigned int> h_nlist(this->m_nlist->getNListArray(), access_location::host, access_mode::read);
+    ArrayHandle<size_t> h_head_list(this->m_nlist->getHeadList(), access_location::host, access_mode::read);
+    ArrayHandle<unsigned int> h_type_property_map(this->m_type_property_map, access_location::host, access_mode::read);
+
+    // Local copy of the simulation box
+    const BoxDim& box = this->m_pdata->getGlobalBox();
+
+    unsigned int size;
+    size_t myHead; 
+
+    // For all initial fluid particles
+    unsigned int group_size = this->m_initialfluidgroup->getNumMembers();
+    for (unsigned int group_idx = 0; group_idx < group_size; group_idx++)
+        {
+        // Read particle index
+        unsigned int i = this->m_initialfluidgroup->getMemberIndex(group_idx);
+
+        bool solid_w_fluid_partner = false;
+
+        // Access the particle's position
+        Scalar3 pi;
+        pi.x = h_pos.data[i].x;
+        pi.y = h_pos.data[i].y;
+        pi.z = h_pos.data[i].z;
+
+        // check if initial fluid particle has any fluid partner
+        myHead = h_head_list.data[i];
+        size = (unsigned int)h_n_neigh.data[i];
+        for (unsigned int j = 0; j < size; j++)
+            {
+            unsigned int k = h_nlist.data[myHead + j];
+
+            if ( checkfluid1(h_type_property_map.data, h_pos.data[k].w))
+                continue;
+
+            // Access neighbor position
+            Scalar3 pj;
+            pj.x = h_pos.data[k].x;
+            pj.y = h_pos.data[k].y;
+            pj.z = h_pos.data[k].z;
+
+            // Compute distance vector
+            // Scalar3 dx = pj - pi;
+            Scalar3 dx;
+            dx.x = pi.x - pj.x;
+            dx.y = pi.y - pj.y;
+            dx.z = pi.z - pj.z;
+
+            // Apply periodic boundary conditions
+            dx = box.minImage(dx);
+
+            // Calculate squared distance
+            Scalar rsq = dot(dx, dx);
+
+            // Calculate distance
+            Scalar r = sqrt(rsq);
+
+            if ( checkfluid(h_type_property_map.data, h_pos.data[k].w) && r == 0.0)
+                {
+                solid_w_fluid_partner = true;
+                // std::cout << "r:" << r << std::endl;
+                // std::cout << "True:" << solid_w_fluid_partner << std::endl;
+                // std::cout << std::endl;
+                break;
+                }
+            }
+            // if ( !(solid_w_fluid_partner) )
+            //     {
+            //     // Solid particles which do not have fluid neighbors are marked
+            //     // using mass=-999 so that they can be deleted during simulation
+            //     h_velocity.data[i].w = Scalar(-999.0);
+            //     std::cout << "False:" << h_velocity.data[i].w << std::endl;
+            //     std::cout << std::endl;
+            //     }
+
+        if ( !(solid_w_fluid_partner) )
+            {
+            // Solid particles which do not have fluid neighbors are marked
+            // using mass=-999 so that they can be deleted during simulation
+            h_velocity.data[i].w = Scalar(-999.0);
+            // std::cout << "False:" << h_velocity.data[i].w << std::endl;
+            // std::cout << std::endl;
+            }
+        } // End fluid particle loop
+
+
+    } // End mark initial fluid particles to remove
 
 /*! Perform number density computation
  * This method computes and stores
@@ -1398,7 +1504,7 @@ void SinglePhaseFlow<KT_, SET_>::computeForces(uint64_t timestep)
     this->m_nlist->compute(timestep);
 
 
-    if (timestep > 0)
+    if (timestep > 1)
         {
         initialstatemapping(timestep);
         }
@@ -1420,6 +1526,17 @@ void SinglePhaseFlow<KT_, SET_>::computeForces(uint64_t timestep)
         mark_solid_particles_toremove(timestep);
         m_solid_removed = true;
         }
+
+    // m_solid_removed flag is set to False initially, so this 
+    // only executes at timestep 0
+    if (!m_initial_removed)
+        {
+        this->m_nlist->forceUpdate();
+        this->m_nlist->compute(timestep);
+        mark_initial_particles_toremove(timestep);
+        m_initial_removed = true;
+        }
+
 
     // Apply density renormalization if requested
     if ( m_shepard_renormalization && timestep % m_shepardfreq == 0 )
