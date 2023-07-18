@@ -8,6 +8,12 @@ maintainer: drostan, daniel.rostan@mib.uni-stuttgart.de
 #include <pybind11/stl_bind.h>
 #include <pybind11/numpy.h>
 
+#include "hoomd/VectorMath.h"
+
+#include <map>
+#include <sstream>
+#include <string.h>
+
 using namespace std;
 
 namespace hoomd 
@@ -25,10 +31,14 @@ SuspensionFlow<KT_, SET_>::SuspensionFlow(std::shared_ptr<SystemDefinition> sysd
                                  std::shared_ptr<ParticleGroup> solidgroup,
                                  std::shared_ptr<ParticleGroup> aggregategroup,
                                  DensityMethod mdensitymethod,
-                                 ViscosityMethod mviscositymethod)
-    : SPHBaseClass<KT_, SET_>(sysdef,skernel,equationofstate,nlist), m_fluidgroup(fluidgroup), m_solidgroup(solidgroup), m_aggregategroup(aggregategroup), m_typpair_idx(this->m_pdata->getNTypes())
+                                 ViscosityMethod mviscositymethod,
+                                 )
+    : SPHBaseClass<KT_, SET_>(sysdef,skernel,equationofstate,nlist), m_fluidgroup(fluidgroup), m_solidgroup(solidgroup), m_aggregategroup(aggregategroup), m_typpair_idx(this->m_pdata->getNTypes()), _bodies_changed(false), m_particles_added_removed(false)
       {
         this->m_exec_conf->msg->notice(5) << "Constructing SuspensionFlow" << std::endl;
+
+        m_pdata->getGlobalParticleNumberChangeSignal()
+        .connect<SuspensionFlow, &SuspensionFlow::slotPtlsAddedRemoved>(this);
 
         // Set private attributes to default values
         m_const_slength = false;
@@ -102,6 +112,48 @@ SuspensionFlow<KT_, SET_>::SuspensionFlow(std::shared_ptr<SystemDefinition> sysd
 
         m_r_cut_nlist = std::make_shared<GlobalArray<Scalar>>(m_typpair_idx.getNumElements(), this->m_exec_conf);
         this->m_nlist->addRCutMatrix(m_r_cut_nlist);
+
+        GlobalArray<unsigned int> body_types(m_pdata->getNTypes(), 1, m_exec_conf);
+        m_body_types.swap(body_types);
+        TAG_ALLOCATION(m_body_types);
+
+        GlobalArray<Scalar3> body_pos(m_pdata->getNTypes(), 1, m_exec_conf);
+        m_body_pos.swap(body_pos);
+        TAG_ALLOCATION(m_body_pos);
+
+        // GlobalArray<Scalar4> body_orientation(m_pdata->getNTypes(), 1, m_exec_conf);
+        // m_body_orientation.swap(body_orientation);
+        // TAG_ALLOCATION(m_body_orientation);
+
+        GlobalArray<unsigned int> body_len(m_pdata->getNTypes(), m_exec_conf);
+        m_body_len.swap(body_len);
+        TAG_ALLOCATION(m_body_len);
+
+        // reset elements to zero
+        ArrayHandle<unsigned int> h_body_len(m_body_len, access_location::host, access_mode::readwrite);
+        for (unsigned int i = 0; i < this->m_pdata->getNTypes(); ++i)
+            {
+            h_body_len.data[i] = 0;
+            }
+
+        // m_body_charge.resize(m_pdata->getNTypes());
+        // m_body_diameter.resize(m_pdata->getNTypes());
+
+        // m_d_max.resize(m_pdata->getNTypes(), Scalar(0.0));
+        // m_d_max_changed.resize(m_pdata->getNTypes(), false);
+
+    #ifdef ENABLE_MPI
+        if (m_sysdef->isDomainDecomposed())
+            {
+            auto comm_weak = m_sysdef->getCommunicator();
+            assert(comm_weak.lock());
+            m_comm = comm_weak.lock();
+
+            // register this class with the communicator
+            m_comm->getBodyGhostLayerWidthRequestSignal()
+                .connect<ForceComposite, &ForceComposite::requestBodyGhostLayerWidth>(this);
+            }
+    #endif
 
       }
 
@@ -1162,7 +1214,7 @@ void SuspensionFlow<KT_, SET_>::forcecomputation(uint64_t timestep)
             h_force.data[i].z += temp0*dwdr_r*dx.z;
 
             // Add contribution to solid particle
-            if ( issolid && m_compute_solid_forces )
+            if ( isaggregate && m_compute_solid_forces )
                 {
                 h_force.data[k].x -= (mj/mi)*temp0*dwdr_r*dx.x;
                 h_force.data[k].y -= (mj/mi)*temp0*dwdr_r*dx.y;
@@ -1176,7 +1228,7 @@ void SuspensionFlow<KT_, SET_>::forcecomputation(uint64_t timestep)
             h_force.data[i].z  += temp0*dv.z;
 
             // Add contribution to solid particle
-            if ( issolid && m_compute_solid_forces )
+            if ( isaggregate && m_compute_solid_forces )
                 {
                 h_force.data[k].x -= (mj/mi)*temp0*dv.x;
                 h_force.data[k].y -= (mj/mi)*temp0*dv.y;
@@ -1210,7 +1262,7 @@ void SuspensionFlow<KT_, SET_>::forcecomputation(uint64_t timestep)
 
                 // Add density diffusion if requested
                 // Molteni and Colagrossi, Computer Physics Communications 180 (2009) 861–872
-                if ( !issolid && m_density_diffusion )
+                if ( !issolid && !isaggregate && m_density_diffusion )
                     h_ratedpe.data[i].x -= (Scalar(2)*m_ddiff*meanh*m_c*mj*(rhoi/rhoj-Scalar(1))*dot(dx,dwdr_r*dx))/(rsq+epssqr);
                 }
 
@@ -1222,7 +1274,7 @@ void SuspensionFlow<KT_, SET_>::forcecomputation(uint64_t timestep)
     // Add volumetric force (gravity)
     this->applyBodyForce(timestep, m_fluidgroup);
     if ( m_compute_solid_forces )
-        this->applyBodyForce(timestep, m_solidgroup);
+        this->applyBodyForce(timestep, m_aggregategroup);
 
     }
 
@@ -1289,6 +1341,12 @@ void SuspensionFlow<KT_, SET_>::computeForces(uint64_t timestep)
     update_ghost_aux1(timestep);
 #endif
 
+#ifdef ENABLE_MPI
+    // Update ghost particles
+    update_ghost_aux2(timestep);
+#endif
+
+
     // Execute the force computation
     // This includes the computation of the density if 
     // DENSITYCONTINUITY method is used
@@ -1301,11 +1359,12 @@ namespace detail
 template<SmoothingKernelType KT_, StateEquationType SET_>
 void export_SuspensionFlow(pybind11::module& m, std::string name)
 {
-    pybind11::class_<SuspensionFlow<KT_, SET_>, SPHBaseClass<KT_, SET_> , std::shared_ptr<SuspensionFlow<KT_, SET_>>>(m, name.c_str()) 
+    pybind11::class_<SuspensionFlow<KT_, SET_>, SPHBaseClassConstraint<KT_, SET_> , std::shared_ptr<SuspensionFlow<KT_, SET_>>>(m, name.c_str()) 
         .def(pybind11::init< std::shared_ptr<SystemDefinition>,
                              std::shared_ptr<SmoothingKernel<KT_> >,
                              std::shared_ptr<StateEquation<SET_> >,
                              std::shared_ptr<nsearch::NeighborList>,
+                             std::shared_ptr<ParticleGroup>,
                              std::shared_ptr<ParticleGroup>,
                              std::shared_ptr<ParticleGroup>,
                              DensityMethod,
@@ -1347,16 +1406,16 @@ template class PYBIND11_EXPORT SuspensionFlow<cubicspline, tait>;
 namespace detail
 {
 
-    template void export_SuspensionFlow<wendlandc2, linear>(pybind11::module& m, std::string name = "SinglePF_WC2_L");
-    template void export_SuspensionFlow<wendlandc2, tait>(pybind11::module& m, std::string name = "SinglePF_WC2_T");
-    template void export_SuspensionFlow<wendlandc4, linear>(pybind11::module& m, std::string name = "SinglePF_WC4_L");
-    template void export_SuspensionFlow<wendlandc4, tait>(pybind11::module& m, std::string name = "SinglePF_WC4_T");
-    template void export_SuspensionFlow<wendlandc6, linear>(pybind11::module& m, std::string name = "SinglePF_WC6_L");
-    template void export_SuspensionFlow<wendlandc6, tait>(pybind11::module& m, std::string name = "SinglePF_WC6_T");
-    template void export_SuspensionFlow<quintic, linear>(pybind11::module& m, std::string name = "SinglePF_Q_L");
-    template void export_SuspensionFlow<quintic, tait>(pybind11::module& m, std::string name = "SinglePF_Q_T");
-    template void export_SuspensionFlow<cubicspline, linear>(pybind11::module& m, std::string name = "SinglePF_CS_L");
-    template void export_SuspensionFlow<cubicspline, tait>(pybind11::module& m, std::string name = "SinglePF_CS_T");
+    template void export_SuspensionFlow<wendlandc2, linear>(pybind11::module& m, std::string name = "SuspensionF_WC2_L");
+    template void export_SuspensionFlow<wendlandc2, tait>(pybind11::module& m, std::string name = "SuspensionF_WC2_T");
+    template void export_SuspensionFlow<wendlandc4, linear>(pybind11::module& m, std::string name = "SuspensionF_WC4_L");
+    template void export_SuspensionFlow<wendlandc4, tait>(pybind11::module& m, std::string name = "SuspensionF_WC4_T");
+    template void export_SuspensionFlow<wendlandc6, linear>(pybind11::module& m, std::string name = "SuspensionF_WC6_L");
+    template void export_SuspensionFlow<wendlandc6, tait>(pybind11::module& m, std::string name = "SuspensionF_WC6_T");
+    template void export_SuspensionFlow<quintic, linear>(pybind11::module& m, std::string name = "SuspensionF_Q_L");
+    template void export_SuspensionFlow<quintic, tait>(pybind11::module& m, std::string name = "SuspensionF_Q_T");
+    template void export_SuspensionFlow<cubicspline, linear>(pybind11::module& m, std::string name = "SuspensionF_CS_L");
+    template void export_SuspensionFlow<cubicspline, tait>(pybind11::module& m, std::string name = "SuspensionF_CS_T");
 
 } // end namespace detail
 } // end namespace sph

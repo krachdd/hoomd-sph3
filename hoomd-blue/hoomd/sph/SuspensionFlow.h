@@ -21,6 +21,9 @@ maintainer: dkrach, david.krach@mib.uni-stuttgart.de
 #include <set>
 #include <algorithm>
 
+#ifdef ENABLE_HIP
+#include "hoomd/GPUPartition.cuh"
+#endif
 
 #include <pybind11/pybind11.h>
 #include <pybind11/stl_bind.h>
@@ -120,7 +123,6 @@ class PYBIND11_EXPORT SuspensionFlow : public SPHBaseClassConstraint<KT_, SET_>
             m_rcut = m_kappa * m_ch;
             // squared cutoff radius to compare with distance dot(dx, dx)
             m_rcutsq = m_rcut * m_rcut;  
-
             }
 
         /*! Set compute solid forces option to true. This is necessary if suspended object
@@ -187,6 +189,155 @@ class PYBIND11_EXPORT SuspensionFlow : public SPHBaseClassConstraint<KT_, SET_>
 
         //! Computes forces
         void computeForces(uint64_t timestep);
+
+        //! Set the coordinates for the template for a rigid body of type typeid
+        /*! \param body_type The type of rigid body
+         * \param type Types of the constituent particles
+         * \param pos Relative positions of the constituent particles
+         * \param orientation Orientations of the constituent particles
+         */
+        virtual void setParam(unsigned int body_typeid,
+                              std::vector<unsigned int>& type,
+                              std::vector<Scalar3>& pos);
+                              // std::vector<Scalar4>& orientation,
+                              // std::vector<Scalar>& charge,
+                              // std::vector<Scalar>& diameter);
+
+        // TODO: Keine Ahnung ob noetig
+        // //! Returns true because we compute the torque on the central particle
+        // virtual bool isAnisotropic()
+        //     {
+        //     return true;
+        //     }
+
+        /// Update the constituent particles of a composite particle using the position, velocity
+        /// and orientation of the central particle.
+        virtual void updateCompositeParticles(uint64_t timestep);
+
+        /// Validate rigid body constituent particles. The method purposely does not check
+        /// positions or orientation.
+        virtual void validateRigidBodies();
+
+        //! Create rigid body constituent particles
+        virtual void createRigidBodies();
+
+        /// Construct from a Python dictionary
+        void setBody(std::string typ, pybind11::object v)
+            {
+            if (v.is_none())
+                {
+                return;
+                }
+            pybind11::list types = v["constituent_types"];
+            pybind11::list positions = v["positions"];
+            // pybind11::list orientations = v["orientations"];
+            // pybind11::list charges = v["charges"];
+            // pybind11::list diameters = v["diameters"];
+            auto N = pybind11::len(positions);
+            // Ensure proper list lengths
+            // for (const auto& list : {types, orientations, charges, diameters})
+            //     {
+            //     if (pybind11::len(list) != N)
+            //         {
+            //         throw std::runtime_error("All attributes of a rigid body must be the same length.");
+            //         }
+            //     }
+            for (const auto& list : {types})
+                {
+                if (pybind11::len(list) != N)
+                    {
+                    throw std::runtime_error("All attributes of a rigid body must be the same length.");
+                    }
+                }
+
+            // extract the data from the python lists
+            std::vector<Scalar3> pos_vector;
+            // std::vector<Scalar4> orientation_vector;
+            // std::vector<Scalar> charge_vector;
+            // std::vector<Scalar> diameter_vector;
+            std::vector<unsigned int> type_vector;
+
+            for (size_t i(0); i < N; ++i)
+                {
+                pybind11::tuple position_i(positions[i]);
+                pos_vector.emplace_back(make_scalar3(position_i[0].cast<Scalar>(),
+                                                     position_i[1].cast<Scalar>(),
+                                                     position_i[2].cast<Scalar>()));
+
+                // pybind11::tuple orientation_i(orientations[i]);
+                // orientation_vector.emplace_back(make_scalar4(orientation_i[0].cast<Scalar>(),
+                //                                              orientation_i[1].cast<Scalar>(),
+                //                                              orientation_i[2].cast<Scalar>(),
+                //                                              orientation_i[3].cast<Scalar>()));
+
+                // charge_vector.emplace_back(charges[i].cast<Scalar>());
+                // diameter_vector.emplace_back(diameters[i].cast<Scalar>());
+                type_vector.emplace_back(m_pdata->getTypeByName(types[i].cast<std::string>()));
+                }
+
+            setParam(m_pdata->getTypeByName(typ),
+                     type_vector,
+                     pos_vector);
+                     // orientation_vector,
+                     // charge_vector,
+                     // diameter_vector);
+            }
+
+        /// Convert parameters to a python dictionary
+        pybind11::object getBody(std::string body_type)
+            {
+            auto body_type_id = m_pdata->getTypeByName(body_type);
+            ArrayHandle<unsigned int> h_body_len(m_body_len,
+                                                 access_location::host,
+                                                 access_mode::readwrite);
+            unsigned int N = h_body_len.data[body_type_id];
+            if (N == 0)
+                {
+                return pybind11::none();
+                }
+            ArrayHandle<Scalar3> h_body_pos(m_body_pos, access_location::host, access_mode::read);
+            // ArrayHandle<Scalar4> h_body_orientation(m_body_orientation,
+            //                                         access_location::host,
+            //                                         access_mode::read);
+            ArrayHandle<unsigned int> h_body_types(m_body_types,
+                                                   access_location::host,
+                                                   access_mode::read);
+
+            pybind11::list positions;
+            // pybind11::list orientations;
+            pybind11::list types;
+            // pybind11::list charges;
+            // pybind11::list diameters;
+
+            for (unsigned int i = 0; i < N; i++)
+                {
+                auto index = m_body_idx(body_type_id, i);
+                positions.append(pybind11::make_tuple(static_cast<Scalar>(h_body_pos.data[index].x),
+                                                      static_cast<Scalar>(h_body_pos.data[index].y),
+                                                      static_cast<Scalar>(h_body_pos.data[index].z)));
+                // orientations.append(
+                //     pybind11::make_tuple(static_cast<Scalar>(h_body_orientation.data[index].x),
+                //                          static_cast<Scalar>(h_body_orientation.data[index].y),
+                //                          static_cast<Scalar>(h_body_orientation.data[index].z),
+                //                          static_cast<Scalar>(h_body_orientation.data[index].w)));
+                types.append(m_pdata->getNameByType(h_body_types.data[index]));
+                // charges.append(m_body_charge[body_type_id][i]);
+                // diameters.append(m_body_diameter[body_type_id][i]);
+                }
+            pybind11::dict v;
+            v["constituent_types"] = types;
+            v["positions"] = positions;
+            // v["orientations"] = orientations;
+            // v["charges"] = charges;
+            // v["diameters"] = diameters;
+            return std::move(v);
+            }
+
+        /// Get the number of free particles (global)
+        unsigned int getNFreeParticlesGlobal()
+            {
+            return m_n_free_particles_global;
+            }
 
     #ifdef ENABLE_MPI
         /// The system's communicator.
@@ -271,6 +422,24 @@ class PYBIND11_EXPORT SuspensionFlow : public SPHBaseClassConstraint<KT_, SET_>
         bool m_params_set; //!< True if parameters are set
         bool m_solid_removed; //!< True if solid Particles have been marked to remove 
 
+        bool m_bodies_changed;          //!< True if constituent particles have changed
+        bool m_particles_added_removed; //!< True if particles have been added or removed
+
+        /// The number of free particles in the simulation box.
+        unsigned int m_n_free_particles_global;
+
+        GlobalArray<unsigned int> m_body_types;  //!< Constituent particle types per type id (2D)
+        GlobalArray<Scalar3> m_body_pos;         //!< Constituent particle offsets per type id (2D)
+        // GlobalArray<Scalar4> m_body_orientation; //!< Constituent particle orientations per type id (2D)
+        GlobalArray<unsigned int> m_body_len;    //!< Length of body per type id
+
+        // std::vector<std::vector<Scalar>> m_body_charge;   //!< Constituent particle charges
+        // std::vector<std::vector<Scalar>> m_body_diameter; //!< Constituent particle diameters
+        Index2D m_body_idx;                               //!< Indexer for body parameters
+
+        // std::vector<Scalar> m_d_max;       //!< Maximum body diameter per constituent particle type
+        // std::vector<bool> m_d_max_changed; //!< True if maximum body diameter changed (per type)
+
         // Log parameters
         uint64_t m_log_computed_last_timestep; //!< Last time step where log quantities were computed
 
@@ -337,6 +506,15 @@ class PYBIND11_EXPORT SuspensionFlow : public SPHBaseClassConstraint<KT_, SET_>
         // eventually add:
         /* - equivalentradii - lubrication -centerofmasses - repulsiveforce -contactforce
         */
+
+        //! Method to be called when particles are added or removed
+        void slotPtlsAddedRemoved()
+            {
+            m_particles_added_removed = true;
+            }
+
+        /// Return the requested minimum ghost layer width for a body's central particle.
+        virtual Scalar requestBodyGhostLayerWidth(unsigned int type, Scalar* h_r_ghost);
 
     private:
 
