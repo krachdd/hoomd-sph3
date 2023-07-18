@@ -110,7 +110,7 @@ class Distance(Constraint):
         self._param_dict.update(ParameterDict(tolerance=float(tolerance)))
 
 
-# class Rigid(Constraint):
+class Rigid(Constraint):
 #     r"""Constrain particles in rigid bodies.
 
 #     .. rubric:: Overview
@@ -302,44 +302,44 @@ class Distance(Constraint):
 #         Type: `TypeParameter` [``particle_type``, `dict`]
 #     """
 
-#     _cpp_class_name = "ForceComposite"
+    _cpp_class_name = "ForceComposite"
 
-#     def __init__(self):
-#         body = TypeParameter(
-#             "body", "particle_types",
-#             TypeParameterDict(OnlyIf(to_type_converter({
-#                 'constituent_types': [str],
-#                 'positions': [(float,) * 3],
-#                 'orientations': [(float,) * 4],
-#                 'charges': [float],
-#                 'diameters': [float]
-#             }),
-#                                      allow_none=True),
-#                               len_keys=1))
-#         self._add_typeparam(body)
-#         self.body.default = None
+    def __init__(self):
+        body = TypeParameter(
+            "body", "particle_types",
+            TypeParameterDict(OnlyIf(to_type_converter({
+                'constituent_types': [str],
+                'positions': [(float,) * 3]
+                # 'orientations': [(float,) * 4],
+                # 'charges': [float],
+                # 'diameters': [float]
+            }),
+                                     allow_none=True),
+                              len_keys=1))
+        self._add_typeparam(body)
+        self.body.default = None
 
-#     def create_bodies(self, state):
-#         r"""Create rigid bodies from central particles in state.
+    def create_bodies(self, state):
+        r"""Create rigid bodies from central particles in state.
 
-#         Args:
-#             state (hoomd.State): The state in which to create rigid bodies.
+        Args:
+            state (hoomd.State): The state in which to create rigid bodies.
 
-#         `create_bodies` removes any existing constituent particles and adds new
-#         ones based on the body definitions in `body`. It overwrites all existing
-#         particle ``body`` tags in the state.
-#         """
-#         if self._attached:
-#             raise RuntimeError(
-#                 "Cannot call create_bodies after running simulation.")
-#         super()._attach(state._simulation)
-#         self._cpp_obj.createRigidBodies()
-#         # Restore previous state
-#         self._detach()
+        `create_bodies` removes any existing constituent particles and adds new
+        ones based on the body definitions in `body`. It overwrites all existing
+        particle ``body`` tags in the state.
+        """
+        if self._attached:
+            raise RuntimeError(
+                "Cannot call create_bodies after running simulation.")
+        super()._attach(state._simulation)
+        self._cpp_obj.createRigidBodies()
+        # Restore previous state
+        self._detach()
 
-#     def _attach_hook(self):
-#         super()._attach_hook()
-#         # Need to ensure body tags and molecule sizes are correct and that the
-#         # positions and orientations are accurate before integration.
-#         self._cpp_obj.validateRigidBodies()
-#         self._cpp_obj.updateCompositeParticles(0)
+    def _attach_hook(self):
+        super()._attach_hook()
+        # Need to ensure body tags and molecule sizes are correct and that the
+        # positions and orientations are accurate before integration.
+        self._cpp_obj.validateRigidBodies()
+        self._cpp_obj.updateCompositeParticles(0)

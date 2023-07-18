@@ -73,9 +73,25 @@ SuspensionFlow<KT_, SET_>::SuspensionFlow(std::shared_ptr<SystemDefinition> sysd
             for (unsigned int i = 0; i < m_solidtypes.size(); i++) {
                 h_type_property_map.data[m_solidtypes[i]] |= SolidFluidTypeBit::SOLID;
             }
+            for (unsigned int i = 0; i < m_aggregatetypes.size(); i++) {
+                h_type_property_map.data[m_aggregatetypes[i]] |= SolidFluidTypeBit::FLUID1;
+            }
         }
 
-        // Set simulations methods
+        this->m_exec_conf->msg->notice(2) << "Computing SuspensionFlow::number of aggregates in m_aggregatetypes " << m_aggregatetypes.size() << std::endl;
+
+        // // Init vectors for suspension model
+        // Scalar3 zeros3 = make_scalar3(0.0,0.0,0.0);
+        // Scalar4 zeros4 = make_scalar4(0.0,0.0,0.0,0.0);
+        // for (unsigned int i = 0; i < m_solidtypes.size(); ++i)
+        //     {
+        //     m_centerofmasses.push_back(zeros4);
+        //     m_repulsiveforces.push_back(zeros3);
+        //     m_velocities.push_back(zeros3);
+        //     m_radii.push_back(0.0);
+        //     }
+
+        //'Set simulations methods
         m_density_method = mdensitymethod;
         m_viscosity_method = mviscositymethod;
 
@@ -134,13 +150,21 @@ void  SuspensionFlow<KT_, SET_>::activateShepardRenormalization(unsigned int she
 /*! \post Set model parameters
  */
 
+// not sure if rho0S needed
 template<SmoothingKernelType KT_,StateEquationType SET_>
-void SuspensionFlow<KT_, SET_>::setParams(Scalar mu)
+void SuspensionFlow<KT_, SET_>::setParams(Scalar mu, Scalar rho0S)
     {
     m_mu   = mu;
     if (m_mu <= 0)
          {
          this->m_exec_conf->msg->error() << "sph.models.SuspensionFlow: Dynamic viscosity has to be a positive real number" << std::endl;
+         throw std::runtime_error("Error initializing SuspensionFlow.");
+         }
+
+    m_rhoS = rho0S;
+    if (m_rhoS <= 0)
+         {
+         this->m_exec_conf->msg->error() << "sph.models.SuspensionFlow: Solid density has to be a positive real number" << std::endl;
          throw std::runtime_error("Error initializing SuspensionFlow.");
          }
 
@@ -229,6 +253,37 @@ void SuspensionFlow<KT_, SET_>::update_ghost_aux1(uint64_t timestep)
         flags[comm_flag::energy] = 0;
         flags[comm_flag::auxiliary1] = 1; // ficticios velocity
         flags[comm_flag::auxiliary2] = 0;
+        flags[comm_flag::auxiliary3] = 0;
+        flags[comm_flag::auxiliary4] = 0;
+        flags[comm_flag::body] = 0;
+        flags[comm_flag::image] = 0;
+        flags[comm_flag::net_force] = 0;
+        flags[comm_flag::net_ratedpe] = 0;
+        this->m_comm->setFlags(flags);
+        this->m_comm->beginUpdateGhosts(timestep);
+        this->m_comm->finishUpdateGhosts(timestep);
+        }
+#endif
+    }
+
+template<SmoothingKernelType KT_,StateEquationType SET_>
+void SuspensionFlow<KT_, SET_>::update_ghost_aux2(uint64_t timestep)
+    {
+    this->m_exec_conf->msg->notice(7) << "Computing SuspensionFlow::Update Ghost aux2" << std::endl;
+
+#ifdef ENABLE_MPI
+    if (this->m_comm)
+        {
+        CommFlags flags(0);
+        flags[comm_flag::tag] = 0;
+        flags[comm_flag::position] = 0;
+        flags[comm_flag::velocity] = 0;
+        // flags[comm_flag::dpe] = 1;
+        flags[comm_flag::density] = 1;
+        flags[comm_flag::pressure] = 1;
+        flags[comm_flag::energy] = 0;
+        flags[comm_flag::auxiliary1] = 0; // ficticios velocity
+        flags[comm_flag::auxiliary2] = 1;
         flags[comm_flag::auxiliary3] = 0;
         flags[comm_flag::auxiliary4] = 0;
         flags[comm_flag::body] = 0;
@@ -521,6 +576,7 @@ void SuspensionFlow<KT_, SET_>::compute_pressure(uint64_t timestep)
     This method updates fictitious solid particle pressures and velocities to account for
     no-slip boundary conditions. Method follows Adami et. al. (2012).
  */
+// TODO: Muss angepasst werden zwecks Aggregate - Wall Interaktion
 
 template<SmoothingKernelType KT_,StateEquationType SET_>
 void SuspensionFlow<KT_, SET_>::compute_noslip(uint64_t timestep)
@@ -898,6 +954,10 @@ void SuspensionFlow<KT_, SET_>::renormalize_density(uint64_t timestep)
         } // End of particle loop
     } // End renormalize density
 
+// TODO: Compute equivalentRadii
+
+// TODO: Compute repulsiveForce
+
 /*! Perform force computation
  */
 
@@ -1006,6 +1066,7 @@ void SuspensionFlow<KT_, SET_>::forcecomputation(uint64_t timestep)
 
             // Determine neighbor type
             bool issolid = checksolid(h_type_property_map.data, h_pos.data[k].w);
+            bool isaggregate = checkfluid1(h_type_property_map.data, h_pos.data[k].w);
 
             // Compute distance vector (FLOPS: 3)
             // Scalar3 dx = pi - pj;
@@ -1039,10 +1100,12 @@ void SuspensionFlow<KT_, SET_>::forcecomputation(uint64_t timestep)
                 vj.y = h_velocity.data[k].y;
                 vj.z = h_velocity.data[k].z;
                 }
+            // TODO: Hier checken ob Berechnung mit Soliddichte oder Noslip-Dichte für Aggregates
             Scalar rhoj = h_density.data[k];
             Scalar Vj   = mj / rhoj;
 
             // Read particle k pressure
+            // TODO: Hier checken ob Berechnung mit NoslipDruck --> Wahrscheinlich ja
             Scalar Pj = h_pressure.data[k];
 
             // Compute velocity difference
@@ -1071,7 +1134,8 @@ void SuspensionFlow<KT_, SET_>::forcecomputation(uint64_t timestep)
             if ( m_density_method == DENSITYSUMMATION )
             {
                 // Transport formulation proposed by Adami 2013
-                temp0 = -(Vi*Vi+Vj*Vj)*((rhoj*Pi+rhoi*Pj)/(rhoi+rhoj)); 
+                temp0 = -(Pi*Vi*Vi+Pj*Vj*Vj); // TODO: Aus Twophaseflow alt, keine Dichte enthalten
+                //temp0 = -(Vi*Vi+Vj*Vj)*((rhoj*Pi+rhoi*Pj)/(rhoi+rhoj)); 
             }
             else if ( m_density_method == DENSITYCONTINUITY) 
             { 

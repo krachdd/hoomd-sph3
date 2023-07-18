@@ -322,12 +322,21 @@ class PYBIND11_EXPORT SuspensionFlow : public SPHBaseClassConstraint<KT_, SET_>
         */
         void update_ghost_density_pressure(uint64_t timestep);
 
-
         /*! Helper function to set communication flags and update ghosts auxiliary array 1
         * \param timestep The time step
         * \post Ghost particle auxiliary array 1 is up-to-date
         */
         void update_ghost_aux1(uint64_t timestep);
+
+        /*! Helper function to set communication flags and update ghosts auxiliary array 1
+        * \param timestep The time step
+        * \post Ghost particle auxiliary array 1 is up-to-date
+        */
+        void update_ghost_aux2(uint64_t timestep);
+
+        // eventually add:
+        /* - equivalentradii - lubrication -centerofmasses - repulsiveforce -contactforce
+        */
 
     private:
 
