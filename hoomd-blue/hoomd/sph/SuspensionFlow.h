@@ -133,13 +133,13 @@ class PYBIND11_EXPORT SuspensionFlow : public SPHBaseClassConstraint<KT_, SET_>
             m_compute_solid_forces = true;
             }
 
-        /*! Set compute wall forces option to true. This is necessary if 
-         *  if there are walls (BC) defined, then solid body IDs start with 1 instead of 0
-         */
-        void computeWallForces()
-            {
-            m_walls = true;
-            }
+        // /*! Set compute wall forces option to true. This is necessary if 
+        //  *  if there are walls (BC) defined, then solid body IDs start with 1 instead of 0
+        //  */
+        // void computeWallForces()
+        //     {
+        //     m_walls = true;
+        //     }
 
         /*! Turn Monaghan type artificial viscosity option on.
          * \param alpha Volumetric diffusion coefficient for artificial viscosity operator
@@ -196,7 +196,7 @@ class PYBIND11_EXPORT SuspensionFlow : public SPHBaseClassConstraint<KT_, SET_>
          * \param pos Relative positions of the constituent particles
          * \param orientation Orientations of the constituent particles
          */
-        virtual void setParam(unsigned int body_typeid,
+        virtual void setRigidParams(unsigned int body_typeid,
                               std::vector<unsigned int>& type,
                               std::vector<Scalar3>& pos);
                               // std::vector<Scalar4>& orientation,
@@ -242,13 +242,13 @@ class PYBIND11_EXPORT SuspensionFlow : public SPHBaseClassConstraint<KT_, SET_>
             //         throw std::runtime_error("All attributes of a rigid body must be the same length.");
             //         }
             //     }
-            for (const auto& list : {types})
-                {
-                if (pybind11::len(list) != N)
-                    {
-                    throw std::runtime_error("All attributes of a rigid body must be the same length.");
-                    }
-                }
+            // for (const auto& list : {types})
+            //     {
+            //     if (pybind11::len(list) != N)
+            //         {
+            //         throw std::runtime_error("All attributes of a rigid body must be the same length.");
+            //         }
+            //     }
 
             // extract the data from the python lists
             std::vector<Scalar3> pos_vector;
@@ -275,7 +275,7 @@ class PYBIND11_EXPORT SuspensionFlow : public SPHBaseClassConstraint<KT_, SET_>
                 type_vector.emplace_back(m_pdata->getTypeByName(types[i].cast<std::string>()));
                 }
 
-            setParam(m_pdata->getTypeByName(typ),
+            setRigidParams(m_pdata->getTypeByName(typ),
                      type_vector,
                      pos_vector);
                      // orientation_vector,
@@ -421,6 +421,8 @@ class PYBIND11_EXPORT SuspensionFlow : public SPHBaseClassConstraint<KT_, SET_>
         bool m_shepard_renormalization; //!< Set to true if Shepard type density reinitialization is to be used
         bool m_params_set; //!< True if parameters are set
         bool m_solid_removed; //!< True if solid Particles have been marked to remove 
+        bool m_walls; //!< True if there are walls defined, solid body IDs start with 1 instead of 0
+
 
         bool m_bodies_changed;          //!< True if constituent particles have changed
         bool m_particles_added_removed; //!< True if particles have been added or removed

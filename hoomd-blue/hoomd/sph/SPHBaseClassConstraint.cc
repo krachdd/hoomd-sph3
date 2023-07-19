@@ -38,10 +38,19 @@ SPHBaseClassConstraint<KT_, SET_>::SPHBaseClassConstraint(std::shared_ptr<System
                            std::shared_ptr<SmoothingKernel<KT_> > skernel,
                            std::shared_ptr<StateEquation<SET_> > eos,
                            std::shared_ptr<nsearch::NeighborList> nlist)
-    : ForceConstraint(sysdef), m_skernel(skernel), m_eos(eos), m_nlist(nlist), m_typpair_idx(m_pdata->getNTypes()), m_aggregate_tag(m_exec_conf), m_n_aggregates_global(0),
-      m_rebuild_aggregates(true), m_aggregate_list(m_exec_conf), m_aggregate_length(m_exec_conf),
-      m_aggregate_order(m_exec_conf), m_aggregate_idx(m_exec_conf)
-      {
+    : ForceConstraint(sysdef), m_skernel(skernel), m_eos(eos), m_nlist(nlist), m_typpair_idx(m_pdata->getNTypes()), m_aggregate_tag(m_exec_conf), m_n_aggregates_global(0), m_rebuild_aggregates(true), m_aggregate_list(m_exec_conf), m_aggregate_length(m_exec_conf), m_aggregate_order(m_exec_conf), m_aggregate_idx(m_exec_conf)
+        {
+
+        // connect to the ParticleData to receive notifications when particles change order in memory
+        m_pdata->getParticleSortSignal()
+            .connect<SPHBaseClassConstraint, &SPHBaseClassConstraint::setRebuildAggregates>(this);
+
+        TAG_ALLOCATION(m_aggregate_tag);
+        TAG_ALLOCATION(m_aggregate_list);
+        TAG_ALLOCATION(m_aggregate_length);
+        TAG_ALLOCATION(m_aggregate_order);
+        TAG_ALLOCATION(m_aggregate_idx);
+
         m_exec_conf->msg->notice(5) << "Constructing SPHBaseClassConstraint" << std::endl;
 
         // Sanity checks
@@ -54,16 +63,6 @@ SPHBaseClassConstraint<KT_, SET_>::SPHBaseClassConstraint(std::shared_ptr<System
         m_bodyforce = make_scalar3(Scalar(0), Scalar(0), Scalar(0));
         m_damptime = 0;
         m_body_acceleration = false;
-
-    // connect to the ParticleData to receive notifications when particles change order in memory
-    m_pdata->getParticleSortSignal()
-        .connect<SPHBaseClassConstraint, &SPHBaseClassConstraint::setRebuildAggregates>(this);
-
-    TAG_ALLOCATION(m_aggregate_tag);
-    TAG_ALLOCATION(m_aggregate_list);
-    TAG_ALLOCATION(m_aggregate_length);
-    TAG_ALLOCATION(m_aggregate_order);
-    TAG_ALLOCATION(m_aggregate_idx);
 
 #ifdef ENABLE_HIP
     if (m_exec_conf->isCUDAEnabled())
@@ -93,7 +92,8 @@ SPHBaseClassConstraint<KT_, SET_>::~SPHBaseClassConstraint()
     }
 
 #ifdef ENABLE_HIP
-void SPHBaseClassConstraint::initAggregatesGPU()
+template<SmoothingKernelType KT_, StateEquationType SET_>
+void SPHBaseClassConstraint<KT_, SET_>::initAggregatesGPU()
     {
     unsigned int nptl_local = m_pdata->getN() + m_pdata->getNGhosts();
 
@@ -283,7 +283,8 @@ void SPHBaseClassConstraint::initAggregatesGPU()
     }
 #endif
 
-void SPHBaseClassConstraint::initAggregates()
+template<SmoothingKernelType KT_, StateEquationType SET_>
+void SPHBaseClassConstraint<KT_, SET_>::initAggregates()
     {
     // return early if no aggregates are defined
     if (!m_n_aggregates_global)
@@ -314,7 +315,7 @@ void SPHBaseClassConstraint::initAggregates()
 
     unsigned int n_local_aggregates = 0;
 
-    std::vector<unsigned int> local_aggregate_idx(nptl_local, NO_MOLECULE);
+    std::vector<unsigned int> local_aggregate_idx(nptl_local, NO_AGGREGATE);
 
     // keep track of particle with lowest tag within a aggregate. This is assumed/required to be the
     // central particle for the aggregate.
@@ -326,7 +327,7 @@ void SPHBaseClassConstraint::initAggregates()
         assert(tag < m_aggregate_tag.getNumElements());
 
         unsigned int mol_tag = h_aggregate_tag.data[tag];
-        if (mol_tag == NO_MOLECULE)
+        if (mol_tag == NO_AGGREGATE)
             {
             continue;
             }
@@ -351,7 +352,7 @@ void SPHBaseClassConstraint::initAggregates()
         assert(tag < m_aggregate_tag.getNumElements());
 
         unsigned int mol_tag = h_aggregate_tag.data[tag];
-        if (mol_tag == NO_MOLECULE)
+        if (mol_tag == NO_AGGREGATE)
             {
             continue;
             }
