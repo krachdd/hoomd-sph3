@@ -14,9 +14,9 @@ from hoomd.sph import force
 from hoomd.data.parameterdicts import ParameterDict, TypeParameterDict
 from hoomd.data.typeparam import TypeParameter
 import numpy as np
-from hoomd.data.typeconverter import OnlyFrom, nonnegative_real
+from hoomd.data.typeconverter import OnlyFrom, nonnegative_real, OnlyIf, to_type_converter
 
-
+# TODO: SPHmodel auch für SPHBaseClassConstraint
 class SPHModel(force.Force):
     r""" Base class for all SPH Models
 
@@ -197,10 +197,6 @@ class SPHModel(force.Force):
                 r_cut_dict.set_pair(type_list[i],type_list[j],self.rcut);
 
         return r_cut_dict;
-
-
-
-
 
 class SinglePhaseFlow(SPHModel):
     R""" SinglePhaseFlow solver
@@ -553,7 +549,316 @@ class SinglePhaseFlow(SPHModel):
         else:
             return COURANT*np.min([DT_1,DT_2])
 
-class SuspensionFlow(SPHModel):
+# # TODO: SPHmodel auch für SPHBaseClassConstraint
+# class SPHModelConstraint(SPHModel):
+#     r""" Base class for all SPH Models
+
+#     """
+
+#     # Module where the C++ class is defined. Reassign this when developing an
+#     # external plugin.
+#     # TODO hier eventuell _sphcontraint? oder auch ableiten von SPHModel?
+#     _ext_module = _sph
+#     _ext_module_nlist = _nsearch
+
+#     def __init__(self, kernel, eos, nlist):
+#         super().__init__()
+
+
+
+#         # default exclusions
+#         params = ParameterDict(accel_set = bool(False),
+#                                params_set = bool(False),
+#                                gx=float(0.0),
+#                                gy=float(0.0),
+#                                gz=float(0.0),
+#                                damp=int(0))
+#         # params["exclusions"] = exclusions
+#         self._param_dict.update(params)
+
+#         self.kernel     = kernel
+#         # print(kernel)
+#         self.eos        = eos
+#         # self.nlist      = nlist
+#         # self.accel_set  = False
+#         # self.params_set = False
+#         # self.gx         = 0.0
+#         # self.gy         = 0.0
+#         # self.gz         = 0.0
+
+#         # # Detect maximum cut-off radius for nlist parameterization
+#         # kappa = self.kernel.Kappa()
+#         # print(dir(self))
+#         # pdata = self.state._cpp_sys_def.getParticleData()
+#         # globalN   = pdata.getNGlobal()
+
+#         # maxh      = pdata.getMaxSmoothingLength()
+#         # self.rcut = kappa * maxh
+
+#         # # Neighbor list
+#         # self.nlist.subscribe(lambda:self.get_rcut())
+#         # self.nlist.update_rcut()
+#         # # self.nlist.cpp_nlist.setStorageMode(_nsearch.NeighborList.storageMode.full);
+
+#         # # Set neighbor list in kernel class
+#         # self.kernel.setNeighborList(self.nlist)
+
+#         # print(self._simulation.device)
+
+#         type_params = []
+#         self._extend_typeparam(type_params)
+#         self._param_dict.update(
+#             ParameterDict(nlist=hoomd.nsearch.nlist.NeighborList))
+#         self.nlist = nlist
+
+#     def _attach_hook(self):
+#         # check that some Particles are defined
+#         if self._simulation.state._cpp_sys_def.getParticleData().getNGlobal() == 0:
+#             self._simulation.device._cpp_msg.warning("No particles are defined.\n")
+
+#         if self.nlist._attached and self._simulation != self.nlist._simulation:
+#             warnings.warn(
+#                 f"{self} object is creating a new equivalent neighbor list."
+#                 f" This is happending since the force is moving to a new "
+#                 f"simulation. Set a new nlist to suppress this warning.",
+#                 RuntimeWarning)
+#             self.nlist = copy.deepcopy(self.nlist)
+#         self.nlist._attach(self._simulation)
+#         if isinstance(self._simulation.device, hoomd.device.CPU):
+#             # cls = getattr(self._ext_module_nlist, self._cpp_class_name)
+#             self.nlist._cpp_obj.setStorageMode(_nsearch.NeighborList.storageMode.full)
+#         else:
+#             # cls = getattr(self._ext_module_nlist, self._cpp_class_name + "GPU")
+#             self.nlist._cpp_obj.setStorageMode(_nsearch.NeighborList.storageMode.full)
+#         # self._cpp_obj = cls(self._simulation.state._cpp_sys_def,
+#         #                     self.nlist._cpp_obj)
+
+#         self._cpp_baseclass_name = 'SPHBaseClassConstraint' + '_' + Kernel[self.kernel.name] + '_' + EOS[self.eos.name]
+#         base_cls = getattr(_sph, self._cpp_baseclass_name)
+#         self._cpp_base_obj = base_cls(self._simulation.state._cpp_sys_def, self.kernel.cpp_smoothingkernel,
+#                                  self.eos.cpp_stateequation, self.nlist._cpp_obj)
+
+#     # def _detach_hook(self):
+#     #     self.nlist._detach()
+
+#     def _setattr_param(self, attr, value):
+#         if attr == "nlist":
+#             self._nlist_setter(value)
+#             return
+#         super()._setattr_param(attr, value)
+
+#     def _nlist_setter(self, new_nlist):
+#         if new_nlist is self.nlist:
+#             return
+#         if self._attached:
+#             raise RuntimeError("nlist cannot be set after scheduling.")
+#         # old_nlist = self.nlist
+#         self._param_dict._dict["nlist"] = new_nlist
+#         # if self._added:
+#         #     self._add_nlist()
+#         #     old_nlist._remove_dependent(self)
+
+#     def get_rcut(self):
+
+#         # Go through the list of only the active particle types in the simulation
+#         # ntypes = hoomd.context.current.system_definition.getParticleData().getNTypes();
+#         ntypes = self._simulation.state._cpp_sys_def.getParticleData().getNTypes();
+#         type_list = [];
+#         for i in range(0,ntypes):
+#             type_list.append(self._simulation.state._cpp_sys_def.getParticleData().getNameByType(i));
+
+#         # update the rcut by pair type
+#         r_cut_dict = hoomd.nsearch.nlist.rcut();
+#         for i in range(0,ntypes):
+#             for j in range(i,ntypes):
+#                 r_cut_dict.set_pair(type_list[i],type_list[j],self.rcut);
+
+#         return r_cut_dict;
+
+# TODO: SPHmodel auch für SPHBaseClassConstraint
+class SPHModelConstraint(force.Force):
+    r""" Base class for all SPH Models
+
+    """
+
+    # Module where the C++ class is defined. Reassign this when developing an
+    # external plugin.
+    # TODO hier eventuell _sphcontraint? oder auch ableiten von SPHModel?
+    _ext_module = _sph
+    _ext_module_nlist = _nsearch
+
+    def __init__(self, kernel, eos, nlist):
+        super().__init__()
+
+
+
+        # default exclusions
+        params = ParameterDict(accel_set = bool(False),
+                               params_set = bool(False),
+                               gx=float(0.0),
+                               gy=float(0.0),
+                               gz=float(0.0),
+                               damp=int(0))
+        # params["exclusions"] = exclusions
+        self._param_dict.update(params)
+
+        self.kernel     = kernel
+        # print(kernel)
+        self.eos        = eos
+        # self.nlist      = nlist
+        # self.accel_set  = False
+        # self.params_set = False
+        # self.gx         = 0.0
+        # self.gy         = 0.0
+        # self.gz         = 0.0
+
+        # # Detect maximum cut-off radius for nlist parameterization
+        # kappa = self.kernel.Kappa()
+        # print(dir(self))
+        # pdata = self.state._cpp_sys_def.getParticleData()
+        # globalN   = pdata.getNGlobal()
+
+        # maxh      = pdata.getMaxSmoothingLength()
+        # self.rcut = kappa * maxh
+
+        # # Neighbor list
+        # self.nlist.subscribe(lambda:self.get_rcut())
+        # self.nlist.update_rcut()
+        # # self.nlist.cpp_nlist.setStorageMode(_nsearch.NeighborList.storageMode.full);
+
+        # # Set neighbor list in kernel class
+        # self.kernel.setNeighborList(self.nlist)
+
+        # print(self._simulation.device)
+
+        type_params = []
+        self._extend_typeparam(type_params)
+        self._param_dict.update(
+            ParameterDict(nlist=hoomd.nsearch.nlist.NeighborList))
+        self.nlist = nlist
+
+
+    # def _add(self, simulation):
+    #     super()._add(simulation)
+    #     self._add_nlist()
+
+    # def _add_nlist(self):
+    #     nlist = self.nlist
+    #     deepcopy = False
+    #     if not isinstance(self._simulation, hoomd.Simulation):
+    #         if nlist._added:
+    #             deepcopy = True
+    #         else:
+    #             return
+    #     # We need to check if the force is added since if it is not then this is
+    #     # being called by a SyncedList object and a disagreement between the
+    #     # simulation and nlist._simulation is an error. If the force is added
+    #     # then the nlist is compatible. We cannot just check the nlist's _added
+    #     # property because _add is also called when the SyncedList is synced.
+    #     if deepcopy or nlist._added and nlist._simulation != self._simulation:
+    #         warnings.warn(
+    #             f"{self} object is creating a new equivalent neighbor list."
+    #             f" This is happending since the force is moving to a new "
+    #             f"simulation. Set a new nlist to suppress this warning.",
+    #             RuntimeWarning)
+    #         self.nlist = copy.deepcopy(nlist)
+    #     self.nlist._add(self._simulation)
+    #     # This is ideopotent, but we need to ensure that if we change
+    #     # neighbor list when not attached we handle correctly.
+    #     self._add_dependency(self.nlist)
+
+    # def _attach_hook(self):
+    #     # check that some Particles are defined
+    #     if self._simulation.state._cpp_sys_def.getParticleData().getNGlobal() == 0:
+    #         self._simulation.device._cpp_msg.warning("No particles are defined.\n")
+        
+    #     # This should never happen, but leaving it in case the logic for adding
+    #     # missed some edge case.
+    #     if self.nlist._attached and self._simulation != self.nlist._simulation:
+    #         raise RuntimeError("{} object's neighbor list is used in a "
+    #                            "different simulation.".format(type(self)))
+    #     self.nlist._attach()
+    #     if isinstance(self._simulation.device, hoomd.device.CPU):
+    #         self.nlist._cpp_obj.setStorageMode(_nsearch.NeighborList.storageMode.full)
+    #         # self.nlist._cpp_obj.setStorageMode(_nsearch.NeighborList.storageMode.half)
+    #     else:
+    #         self.nlist._cpp_obj.setStorageMode(_nsearch.NeighborList.storageMode.full)
+    #     # self._cpp_obj = cls(self._simulation.state._cpp_sys_def,
+    #     #                      self.nlist._cpp_obj)
+
+    #     self._cpp_baseclass_name = 'SPHBaseClass' + '_' + Kernel[self.kernel.name] + '_' + EOS[self.eos.name]
+    #     base_cls = getattr(_sph, self._cpp_baseclass_name)
+    #     self._cpp_base_obj = base_cls(self._simulation.state._cpp_sys_def, self.kernel.cpp_smoothingkernel,
+    #                              self.eos.cpp_stateequation, self.nlist._cpp_obj)
+    #     super()._attach_hook()
+
+    def _attach_hook(self):
+        # check that some Particles are defined
+        if self._simulation.state._cpp_sys_def.getParticleData().getNGlobal() == 0:
+            self._simulation.device._cpp_msg.warning("No particles are defined.\n")
+
+        if self.nlist._attached and self._simulation != self.nlist._simulation:
+            warnings.warn(
+                f"{self} object is creating a new equivalent neighbor list."
+                f" This is happending since the force is moving to a new "
+                f"simulation. Set a new nlist to suppress this warning.",
+                RuntimeWarning)
+            self.nlist = copy.deepcopy(self.nlist)
+        self.nlist._attach(self._simulation)
+        if isinstance(self._simulation.device, hoomd.device.CPU):
+            # cls = getattr(self._ext_module_nlist, self._cpp_class_name)
+            self.nlist._cpp_obj.setStorageMode(_nsearch.NeighborList.storageMode.full)
+        else:
+            # cls = getattr(self._ext_module_nlist, self._cpp_class_name + "GPU")
+            self.nlist._cpp_obj.setStorageMode(_nsearch.NeighborList.storageMode.full)
+        # self._cpp_obj = cls(self._simulation.state._cpp_sys_def,
+        #                     self.nlist._cpp_obj)
+
+        self._cpp_baseclass_name = 'SPHBaseClassConstraint' + '_' + Kernel[self.kernel.name] + '_' + EOS[self.eos.name]
+        base_cls = getattr(_sph, self._cpp_baseclass_name)
+        self._cpp_base_obj = base_cls(self._simulation.state._cpp_sys_def, self.kernel.cpp_smoothingkernel,
+                                 self.eos.cpp_stateequation, self.nlist._cpp_obj)
+
+
+
+    # def _detach_hook(self):
+    #     self.nlist._detach()
+
+    def _setattr_param(self, attr, value):
+        if attr == "nlist":
+            self._nlist_setter(value)
+            return
+        super()._setattr_param(attr, value)
+
+    def _nlist_setter(self, new_nlist):
+        if new_nlist is self.nlist:
+            return
+        if self._attached:
+            raise RuntimeError("nlist cannot be set after scheduling.")
+        # old_nlist = self.nlist
+        self._param_dict._dict["nlist"] = new_nlist
+        # if self._added:
+        #     self._add_nlist()
+        #     old_nlist._remove_dependent(self)
+
+    def get_rcut(self):
+
+        # Go through the list of only the active particle types in the simulation
+        # ntypes = hoomd.context.current.system_definition.getParticleData().getNTypes();
+        ntypes = self._simulation.state._cpp_sys_def.getParticleData().getNTypes();
+        type_list = [];
+        for i in range(0,ntypes):
+            type_list.append(self._simulation.state._cpp_sys_def.getParticleData().getNameByType(i));
+
+        # update the rcut by pair type
+        r_cut_dict = hoomd.nsearch.nlist.rcut();
+        for i in range(0,ntypes):
+            for j in range(i,ntypes):
+                r_cut_dict.set_pair(type_list[i],type_list[j],self.rcut);
+
+        return r_cut_dict;
+
+class SuspensionFlow(SPHModelConstraint):
     R""" SinglePhaseFlow solver
     """
     DENSITYMETHODS = {'SUMMATION':_sph.PhaseFlowDensityMethod.DENSITYSUMMATION,
@@ -567,15 +872,31 @@ class SuspensionFlow(SPHModel):
                  nlist,
                  fluidgroup_filter = None,
                  solidgroup_filter = None,
+                 aggregategroup_filter = None,
+                 comgroup_filter = None,
                  densitymethod='SUMMATION',
                  viscositymethod='HARMONICAVERAGE'):
+        body = TypeParameter(
+            "body", "particle_types",
+            TypeParameterDict(OnlyIf(to_type_converter({
+                'constituent_types': [str],
+                'positions': [(float,) * 3]
+                # 'orientations': [(float,) * 4],
+                # 'charges': [float],
+                # 'diameters': [float]
+            }),
+                                     allow_none=True),
+                              len_keys=1))
+        self._add_typeparam(body)
+        self.body.default = None
 
         super().__init__(kernel, eos, nlist)
 
         self._param_dict.update(ParameterDict(
                           densitymethod = str('SUMMATION'),
                           viscositymethod = str('HARMONICAVERAGE'), 
-                          mu = float(0.0), 
+                          mu = float(0.0),
+                          rhoS0 = float(0.0), 
                           artificialviscosity = bool(True), 
                           alpha = float(0.2),
                           beta = float(0.0),
@@ -587,13 +908,12 @@ class SuspensionFlow(SPHModel):
                           max_sl = float(0.0)
                           ))
 
-
-
-
         # self._state = self._simulation.state
         self._cpp_SPFclass_name = 'SuspensionF' '_' + Kernel[self.kernel.name] + '_' + EOS[self.eos.name]
         self.fluidgroup_filter = fluidgroup_filter
         self.solidgroup_filter = solidgroup_filter
+        self.aggregategroup_filter = aggregategroup_filter
+        self.comgroup_filter = comgroup_filter
         self.str_densitymethod = self._param_dict._dict["densitymethod"]
         self.str_viscositymethod = self._param_dict._dict["viscositymethod"]
         self.accel_set = False
@@ -648,6 +968,25 @@ class SuspensionFlow(SPHModel):
     # def _add(self, simulation):
     #     super()._add(simulation)
 
+    # # TODO: Davor oder dahinter?
+    # def create_bodies(self, state):
+    #     r"""Create rigid bodies from central particles in state.
+
+    #     Args:
+    #         state (hoomd.State): The state in which to create rigid bodies.
+
+    #     `create_bodies` removes any existing constituent particles and adds new
+    #     ones based on the body definitions in `body`. It overwrites all existing
+    #     particle ``body`` tags in the state.
+    #     """
+    #     if self._attached:
+    #         raise RuntimeError(
+    #             "Cannot call create_bodies after running simulation.")
+    #     super()._attach(state._simulation)
+    #     self._cpp_obj.createRigidBodies()
+    #     # Restore previous state
+    #     self._detach()
+
     def _attach_hook(self):
         if isinstance(self._simulation.device, hoomd.device.CPU):
             spf_cls = getattr(_sph, self._cpp_SPFclass_name)
@@ -679,6 +1018,8 @@ class SuspensionFlow(SPHModel):
         cpp_sys_def = self._simulation.state._cpp_sys_def
         cpp_fluidgroup  = self._simulation.state._get_group(self.fluidgroup_filter)
         cpp_solidgroup  = self._simulation.state._get_group(self.solidgroup_filter)
+        cpp_aggregategroup  = self._simulation.state._get_group(self.aggregategroup_filter)
+        cpp_comgroup  = self._simulation.state._get_group(self.comgroup_filter)
         cpp_kernel = self.kernel.cpp_smoothingkernel
         cpp_eos = self.eos.cpp_stateequation
         cpp_nlist =  self.nlist._cpp_obj
@@ -687,7 +1028,7 @@ class SuspensionFlow(SPHModel):
         self.kernel.setNeighborList(self.nlist)
 
         self._cpp_obj = spf_cls(cpp_sys_def, cpp_kernel, cpp_eos, cpp_nlist, cpp_fluidgroup, 
-                                cpp_solidgroup, self.cpp_densitymethod, self.cpp_viscositymethod)
+                                cpp_solidgroup, cpp_aggregategroup, cpp_solidgroup, self.cpp_densitymethod, self.cpp_viscositymethod)
 
         # Set kernel parameters
         kappa = self.kernel.Kappa()
@@ -735,6 +1076,7 @@ class SuspensionFlow(SPHModel):
 
         # get all params in line
         self.mu = self._param_dict['mu']
+        self.rhoS0 = self._param_dict['rhoS0']
         self.artificialviscosity = self._param_dict['artificialviscosity']
         self.alpha = self._param_dict['alpha']
         self.beta = self._param_dict['beta']
@@ -744,7 +1086,7 @@ class SuspensionFlow(SPHModel):
         self.shepardfreq = self._param_dict['shepardfreq']
         self.compute_solid_forces = self._param_dict['compute_solid_forces']
 
-        self.set_params(self.mu)
+        self.set_params(self.mu, self.rhoS0)
         self.setdensitymethod(self.str_densitymethod)
         self.setviscositymethod(self.str_viscositymethod)
         
@@ -770,15 +1112,29 @@ class SuspensionFlow(SPHModel):
 
         self.setBodyAcceleration(self.gx, self.gy, self.gz, self.damp)
 
+        # TODO: eventuell vor attach_hook?
+        # Need to ensure body tags and molecule sizes are correct and that the
+        # positions and orientations are accurate before integration.
+        self._cpp_obj.validateRigidBodies()
+        self._cpp_obj.updateCompositeParticles(0)
+
+
         # Attach param_dict and typeparam_dict
         super()._attach_hook()
+
+        # # TODO: eventuell vor attach_hook?
+        # # Need to ensure body tags and molecule sizes are correct and that the
+        # # positions and orientations are accurate before integration.
+        # self._cpp_obj.validateRigidBodies()
+        # self._cpp_obj.updateCompositeParticles(0)
 
     def _detach_hook(self):
         self.nlist._detach()
 
-    def set_params(self,mu):
+    def set_params(self, mu, rhoS0):
         # self.mu   = mu.item()   if isinstance(mu, np.generic)   else mu
-        self._cpp_obj.setParams(self.mu)
+        self._cpp_obj.setParams(self.mu, self.rhoS0)
+        #self._cpp_obj.setParams(self.rho0S)
         self.params_set = True
         self._param_dict.__setattr__('params_set', True)
 
@@ -789,6 +1145,8 @@ class SuspensionFlow(SPHModel):
         self._cpp_obj.setRCut(('F', 'S'), rcut)
         self._cpp_obj.setRCut(('S', 'S'), rcut)
         self._cpp_obj.setRCut(('F', 'F'), rcut)
+        self._cpp_obj.setRCut(('A', 'F'), rcut)
+        # TODO: Hier eventuell mehr nötig
 
     # @property
     def densitymethod(self):
@@ -857,6 +1215,8 @@ class SuspensionFlow(SPHModel):
         # self.cpp_force.setAcceleration(self.gx,self.gy,self.gz,self.damp)
         self._cpp_obj.setAcceleration(self.gx,self.gy,self.gz,self.damp)
 
+
+    # TODO: Hier eventuell auch anpassen
     def compute_dt(self, LREF, UREF, DX, DRHO=0.01, COURANT=0.25):
         # Input sanity
         if LREF == 0.0:
@@ -903,6 +1263,25 @@ class SuspensionFlow(SPHModel):
             return COURANT*np.min([DT_1,DT_2,DT_3])
         else:
             return COURANT*np.min([DT_1,DT_2])
+
+    # TODO: Davor oder dahinter?
+    def create_bodies(self, state):
+        r"""Create rigid bodies from central particles in state.
+
+        Args:
+            state (hoomd.State): The state in which to create rigid bodies.
+
+        `create_bodies` removes any existing constituent particles and adds new
+        ones based on the body definitions in `body`. It overwrites all existing
+        particle ``body`` tags in the state.
+        """
+        if self._attached:
+            raise RuntimeError(
+                "Cannot call create_bodies after running simulation.")
+        super()._attach(state._simulation)
+        self._cpp_obj.createRigidBodies()
+        # Restore previous state
+        self._detach()
 
 # Dicts
 Kernel = {'_WendlandC2':'WC2','_WendlandC4':'WC4','_WendlandC6':'WC6','_Quintic':'Q','_CubicSpline':'CS'}

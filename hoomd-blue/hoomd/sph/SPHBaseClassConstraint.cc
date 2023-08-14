@@ -38,7 +38,10 @@ SPHBaseClassConstraint<KT_, SET_>::SPHBaseClassConstraint(std::shared_ptr<System
                            std::shared_ptr<SmoothingKernel<KT_> > skernel,
                            std::shared_ptr<StateEquation<SET_> > eos,
                            std::shared_ptr<nsearch::NeighborList> nlist)
-    : ForceConstraint(sysdef), m_skernel(skernel), m_eos(eos), m_nlist(nlist), m_typpair_idx(m_pdata->getNTypes()), m_aggregate_tag(m_exec_conf), m_n_aggregates_global(0), m_rebuild_aggregates(true), m_aggregate_list(m_exec_conf), m_aggregate_length(m_exec_conf), m_aggregate_order(m_exec_conf), m_aggregate_idx(m_exec_conf)
+    : ForceConstraint(sysdef), m_skernel(skernel), m_eos(eos), m_nlist(nlist),
+      m_typpair_idx(m_pdata->getNTypes()), m_aggregate_tag(m_exec_conf),
+      m_n_aggregates_global(0), m_rebuild_aggregates(true), m_aggregate_list(m_exec_conf),
+      m_aggregate_length(m_exec_conf), m_aggregate_order(m_exec_conf), m_aggregate_idx(m_exec_conf)
         {
 
         // connect to the ParticleData to receive notifications when particles change order in memory
@@ -457,6 +460,7 @@ void SPHBaseClassConstraint<KT_, SET_>::initAggregates()
         }
     }
 
+
 /*! \post Returns a vector of type IDs associated with a particle group
 */
 template<SmoothingKernelType KT_, StateEquationType SET_>
@@ -692,20 +696,20 @@ void export_SPHBaseClassConstraint(pybind11::module& m, std::string name)
 }
 
 
-void export_DensityMethod(pybind11::module& m)
-{
-    pybind11::enum_<DensityMethod>(m, "PhaseFlowDensityMethod")
-        .value("DENSITYSUMMATION", DensityMethod::DENSITYSUMMATION)
-        .value("DENSITYCONTINUITY", DensityMethod::DENSITYCONTINUITY)
-        ;
-}
+// void export_DensityMethodConstraint(pybind11::module& m)
+// {
+//     pybind11::enum_<DensityMethodConstraint>(m, "PhaseFlowDensityMethod")
+//         .value("DENSITYSUMMATION", DensityMethod::DENSITYSUMMATION)
+//         .value("DENSITYCONTINUITY", DensityMethod::DENSITYCONTINUITY)
+//         ;
+// }
 
-void export_ViscosityMethod(pybind11::module& m)
-{
-    pybind11::enum_<ViscosityMethod>(m, "PhaseFlowViscosityMethod")
-        .value("HARMONICAVERAGE", ViscosityMethod::HARMONICAVERAGE)
-        ;
-}
+// void export_ViscosityMethodConstraint(pybind11::module& m)
+// {
+//     pybind11::enum_<ViscosityMethodConstraint>(m, "PhaseFlowViscosityMethod")
+//         .value("HARMONICAVERAGE", ViscosityMethod::HARMONICAVERAGE)
+//         ;
+// }
 
 
 

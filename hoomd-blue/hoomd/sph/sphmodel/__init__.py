@@ -5,4 +5,4 @@ maintainer: dkrach, david.krach@mib.uni-stuttgart.de
 
 """
 
-from .sphmodel import (SPHModel, SinglePhaseFlow)
+from .sphmodel import (SPHModel, SinglePhaseFlow, SPHModelConstraint, SuspensionFlow)

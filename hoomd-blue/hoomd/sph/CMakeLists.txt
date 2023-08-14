@@ -34,6 +34,7 @@ set(_${COMPONENT_NAME}_headers
 #     TwoPhaseFlowGPU.cuh
 #     GeneralGPUFunctions.cuh
     SinglePhaseFlow.h
+    SPHBaseClassConstraint.h       
     SuspensionFlow.h     
     SPHIntegratorTwoStep.h            
 #     TwoPhaseFlowGPU.h
@@ -51,7 +52,7 @@ set(_${COMPONENT_NAME}_headers
 #     VelocityVerletGPU.h
 #     SinglePhaseFlowGPU.cuh         
     SPHBaseClass.h 
-    SPHBaseClassConstraint.h       
+#    SPHBaseClassConstraint.h       
 #     SuspendedObjectIntegrator.h       
     VelocityVerlet.h
     VelocityVerletBasic.h

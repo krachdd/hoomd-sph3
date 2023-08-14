@@ -30,14 +30,20 @@ SuspensionFlow<KT_, SET_>::SuspensionFlow(std::shared_ptr<SystemDefinition> sysd
                                  std::shared_ptr<ParticleGroup> fluidgroup,
                                  std::shared_ptr<ParticleGroup> solidgroup,
                                  std::shared_ptr<ParticleGroup> aggregategroup,
+                                 std::shared_ptr<ParticleGroup> comgroup,
                                  DensityMethod mdensitymethod,
                                  ViscosityMethod mviscositymethod)
-    : SPHBaseClassConstraint<KT_, SET_>(sysdef,skernel,equationofstate,nlist), m_fluidgroup(fluidgroup), m_solidgroup(solidgroup), m_aggregategroup(aggregategroup), m_typpair_idx(this->m_pdata->getNTypes()), m_bodies_changed(false), m_particles_added_removed(false)
+    : SPHBaseClassConstraint<KT_, SET_>(sysdef,skernel,equationofstate,nlist), m_fluidgroup(fluidgroup),
+      m_solidgroup(solidgroup), m_aggregategroup(aggregategroup), m_comgroup(comgroup), m_typpair_idx(this->m_pdata->getNTypes()),
+      m_bodies_changed(false), m_particles_added_removed(false)
       {
-        m_pdata->getGlobalParticleNumberChangeSignal()
-        .connect<SuspensionFlow, &SuspensionFlow::slotPtlsAddedRemoved>(this);
+        // this->m_pdata->getGlobalParticleNumberChangeSignal()
+        // .connect<SuspensionFlow<KT_, SET_>, &SuspensionFlow<KT_, SET_>::slotPtlsAddedRemoved>(this);
 
+        // this->m_exec_conf->msg->notice(5) << "Constructing SuspensionFlow" << std::endl;
         this->m_exec_conf->msg->notice(5) << "Constructing SuspensionFlow" << std::endl;
+
+        //std::cout << "Types:" << this->m_pdata->getNTypes() << std::endl;
 
         // Set private attributes to default values
         m_const_slength = false;
@@ -67,6 +73,8 @@ SuspensionFlow<KT_, SET_>::SuspensionFlow(std::shared_ptr<SystemDefinition> sysd
         this->constructTypeVectors(fluidgroup,&m_fluidtypes);
         this->constructTypeVectors(solidgroup,&m_solidtypes);
         this->constructTypeVectors(aggregategroup,&m_aggregatetypes);
+        this->constructTypeVectors(comgroup,&m_comtypes);
+
 
         // all particle groups are based on the same particle data
         unsigned int num_types = this->m_sysdef->getParticleData()->getNTypes();
@@ -84,6 +92,9 @@ SuspensionFlow<KT_, SET_>::SuspensionFlow(std::shared_ptr<SystemDefinition> sysd
             }
             for (unsigned int i = 0; i < m_aggregatetypes.size(); i++) {
                 h_type_property_map.data[m_aggregatetypes[i]] |= SolidFluidTypeBit::FLUID1;
+            }
+            for (unsigned int i = 0; i < m_comtypes.size(); i++) {
+                h_type_property_map.data[m_comtypes[i]] |= SolidFluidTypeBit::FLUID2;
             }
         }
 
@@ -112,17 +123,12 @@ SuspensionFlow<KT_, SET_>::SuspensionFlow(std::shared_ptr<SystemDefinition> sysd
         m_r_cut_nlist = std::make_shared<GlobalArray<Scalar>>(m_typpair_idx.getNumElements(), this->m_exec_conf);
         this->m_nlist->addRCutMatrix(m_r_cut_nlist);
 
-        // m_pdata->getGlobalParticleNumberChangeSignal()
-        //     .connect<ForceComposite, &ForceComposite::slotPtlsAddedRemoved>(this);
 
-        // m_exec_conf->msg->notice(7) << "SuspensionFlow initialize memory" << std::endl;
-
-
-        GlobalArray<unsigned int> body_types(m_pdata->getNTypes(), 1, m_exec_conf);
+        GlobalArray<unsigned int> body_types(this->m_pdata->getNTypes(), 1, this->m_exec_conf);
         m_body_types.swap(body_types);
         TAG_ALLOCATION(m_body_types);
 
-        GlobalArray<Scalar3> body_pos(m_pdata->getNTypes(), 1, m_exec_conf);
+        GlobalArray<Scalar3> body_pos(this->m_pdata->getNTypes(), 1, this->m_exec_conf);
         m_body_pos.swap(body_pos);
         TAG_ALLOCATION(m_body_pos);
 
@@ -130,9 +136,16 @@ SuspensionFlow<KT_, SET_>::SuspensionFlow(std::shared_ptr<SystemDefinition> sysd
         // m_body_orientation.swap(body_orientation);
         // TAG_ALLOCATION(m_body_orientation);
 
-        GlobalArray<unsigned int> body_len(m_pdata->getNTypes(), m_exec_conf);
+        GlobalArray<unsigned int> body_len(this->m_pdata->getNTypes(), this->m_exec_conf);
         m_body_len.swap(body_len);
         TAG_ALLOCATION(m_body_len);
+
+        // After the constructor is called
+        // Count the number of elements in m_body_types array
+        unsigned int numBodyTypes = m_body_types.getNumElements();
+
+        // Count the number of elements in m_body_len array
+        unsigned int numBodyLen = m_body_len.getNumElements();
 
         // reset elements to zero
         ArrayHandle<unsigned int> h_body_len(m_body_len, access_location::host, access_mode::readwrite);
@@ -144,13 +157,13 @@ SuspensionFlow<KT_, SET_>::SuspensionFlow(std::shared_ptr<SystemDefinition> sysd
         // m_body_charge.resize(m_pdata->getNTypes());
         // m_body_diameter.resize(m_pdata->getNTypes());
 
-        m_d_max.resize(m_pdata->getNTypes(), Scalar(0.0));
-        m_d_max_changed.resize(m_pdata->getNTypes(), false);
+        m_d_max.resize(this->m_pdata->getNTypes(), Scalar(0.0));
+        m_d_max_changed.resize(this->m_pdata->getNTypes(), false);
 
     #ifdef ENABLE_MPI
-        if (m_sysdef->isDomainDecomposed())
+        if (this->m_sysdef->isDomainDecomposed())
             {
-            auto comm_weak = m_sysdef->getCommunicator();
+            auto comm_weak = this->m_sysdef->getCommunicator();
             assert(comm_weak.lock());
             m_comm = comm_weak.lock();
 
@@ -169,16 +182,16 @@ SuspensionFlow<KT_, SET_>::~SuspensionFlow()
     {
     this->m_exec_conf->msg->notice(5) << "Destroying SuspensionFlow" << std::endl;
 
-    // disconnect from signal in ParticleData;
-    m_pdata->getGlobalParticleNumberChangeSignal()
-        .disconnect<SuspensionFlow, &SuspensionFlow::slotPtlsAddedRemoved>(this);
-    #ifdef ENABLE_MPI
-        if (m_sysdef->isDomainDecomposed())
-            {
-            m_comm->getBodyGhostLayerWidthRequestSignal()
-                .disconnect<SuspensionFlow, &SuspensionFlow::requestBodyGhostLayerWidth>(this);
-            }
-    #endif
+    // // disconnect from signal in ParticleData;
+    // this->m_pdata->getGlobalParticleNumberChangeSignal()
+    //     .disconnect<SuspensionFlow, &SuspensionFlow::slotPtlsAddedRemoved>(this);
+    // #ifdef ENABLE_MPI
+    //     if (this->m_sysdef->isDomainDecomposed())
+    //         {
+    //         m_comm->getBodyGhostLayerWidthRequestSignal()
+    //             .disconnect<SuspensionFlow, &SuspensionFlow::requestBodyGhostLayerWidth>(this);
+    //         }
+    // #endif
     }
 
 
@@ -220,16 +233,17 @@ void  SuspensionFlow<KT_, SET_>::activateShepardRenormalization(unsigned int she
 
 // not sure if rho0S needed
 template<SmoothingKernelType KT_,StateEquationType SET_>
-void SuspensionFlow<KT_, SET_>::setParams(Scalar mu, Scalar rho0S)
+void SuspensionFlow<KT_, SET_>::setParams(Scalar mu, Scalar rhoS0)
     {
     m_mu   = mu;
+    m_rhoS = rhoS0;
+
     if (m_mu <= 0)
          {
          this->m_exec_conf->msg->error() << "sph.models.SuspensionFlow: Dynamic viscosity has to be a positive real number" << std::endl;
          throw std::runtime_error("Error initializing SuspensionFlow.");
          }
 
-    m_rhoS = rho0S;
     if (m_rhoS <= 0)
          {
          this->m_exec_conf->msg->error() << "sph.models.SuspensionFlow: Solid density has to be a positive real number" << std::endl;
@@ -1026,25 +1040,26 @@ void SuspensionFlow<KT_, SET_>::renormalize_density(uint64_t timestep)
 
 // TODO: Compute repulsiveForce
 template<SmoothingKernelType KT_, StateEquationType SET_>
-void SuspensionFlow::setRigidParams(unsigned int body_typeid,
+void SuspensionFlow<KT_, SET_>::setRigidParams(unsigned int body_typeid,
                               std::vector<unsigned int>& type,
                               std::vector<Scalar3>& pos)
                               // std::vector<Scalar4>& orientation,
                               // std::vector<Scalar>& charge,
                               // std::vector<Scalar>& diameter)
     {
-    assert(m_body_types.getPitch() >= m_pdata->getNTypes());
-    assert(m_body_pos.getPitch() >= m_pdata->getNTypes());
-    // assert(m_body_orientation.getPitch() >= m_pdata->getNTypes());
-    // assert(m_body_charge.size() >= m_pdata->getNTypes());
-    // assert(m_body_diameter.size() >= m_pdata->getNTypes());
+    assert(m_body_types.getPitch() >= this->m_pdata->getNTypes());
+    assert(m_body_pos.getPitch() >= this->m_pdata->getNTypes());
+    // assert(m_body_orientation.getPitch() >= this->m_pdata->getNTypes());
+    // assert(m_body_charge.size() >= this->m_pdata->getNTypes());
+    // assert(m_body_diameter.size() >= this->m_pdata->getNTypes());
 
-    if (body_typeid >= m_pdata->getNTypes())
+    if (body_typeid >= this->m_pdata->getNTypes())
         {
         throw std::runtime_error("Error initializing SuspensionFlow: Invalid rigid body type.");
         }
 
-    if (type.size() != pos.size() || orientation.size() != pos.size())
+    //if (type.size() != pos.size() || orientation.size() != pos.size())
+    if (type.size() != pos.size())
         {
         std::ostringstream error_msg;
         error_msg << "Error initializing SuspensionFlow: Constituent particle lists"
@@ -1116,9 +1131,9 @@ void SuspensionFlow::setRigidParams(unsigned int body_typeid,
         if (type.size() > m_body_types.getHeight())
             {
             // resize per-type arrays
-            m_body_types.resize(m_pdata->getNTypes(), type.size());
-            m_body_pos.resize(m_pdata->getNTypes(), type.size());
-            // m_body_orientation.resize(m_pdata->getNTypes(), type.size());
+            m_body_types.resize(this->m_pdata->getNTypes(), type.size());
+            m_body_pos.resize(this->m_pdata->getNTypes(), type.size());
+            // m_body_orientation.resize(this->m_pdata->getNTypes(), type.size());
 
             m_body_idx = Index2D((unsigned int)m_body_types.getPitch(),
                                  (unsigned int)m_body_types.getHeight());
@@ -1181,7 +1196,7 @@ void SuspensionFlow::setRigidParams(unsigned int body_typeid,
     r_ghost_i], allowing for enough distance to communicate another particle placed at -r_i.
 */
 template<SmoothingKernelType KT_, StateEquationType SET_>
-Scalar SuspensionFlow::requestBodyGhostLayerWidth(unsigned int type, Scalar* h_r_ghost)
+Scalar SuspensionFlow<KT_, SET_>::requestBodyGhostLayerWidth(unsigned int type, Scalar* h_r_ghost)
     {
     assert(m_body_len.getNumElements() > type);
     ArrayHandle<unsigned int> h_body_len(m_body_len, access_location::host, access_mode::read);
@@ -1209,7 +1224,7 @@ Scalar SuspensionFlow::requestBodyGhostLayerWidth(unsigned int type, Scalar* h_r
         else
             {
             // constituent particles
-            for (unsigned int body_type = 0; body_type < m_pdata->getNTypes(); body_type++)
+            for (unsigned int body_type = 0; body_type < this->m_pdata->getNTypes(); body_type++)
                 {
                 if (h_body_len.data[body_type] == 0)
                     {
@@ -1236,15 +1251,15 @@ Scalar SuspensionFlow::requestBodyGhostLayerWidth(unsigned int type, Scalar* h_r
         }
 
     m_d_max_changed[type] = false;
-    m_exec_conf->msg->notice(7) << "SuspensionFlow: requesting ghost layer for type "
-                                << m_pdata->getNameByType(type) << ": " << m_d_max[type]
+    this->m_exec_conf->msg->notice(7) << "SuspensionFlow: requesting ghost layer for type "
+                                << this->m_pdata->getNameByType(type) << ": " << m_d_max[type]
                                 << std::endl;
 
     return m_d_max[type];
     }
 
 template<SmoothingKernelType KT_, StateEquationType SET_>
-void SuspensionFlow::validateRigidBodies()
+void SuspensionFlow<KT_, SET_>::validateRigidBodies()
     {
     if (!(m_bodies_changed || m_particles_added_removed))
         {
@@ -1252,7 +1267,7 @@ void SuspensionFlow::validateRigidBodies()
         }
 
     // check validity of rigid body types: no nested rigid bodies
-    unsigned int ntypes = m_pdata->getNTypes();
+    unsigned int ntypes = this->m_pdata->getNTypes();
     assert(m_body_types.getPitch() >= ntypes);
         {
         ArrayHandle<unsigned int> h_body_type(m_body_types,
@@ -1277,7 +1292,7 @@ void SuspensionFlow::validateRigidBodies()
     SnapshotParticleData<Scalar> snap;
 
     // take a snapshot on rank 0
-    m_pdata->takeSnapshot(snap);
+    this->m_pdata->takeSnapshot(snap);
 
     std::vector<unsigned int> aggregate_tag;
 
@@ -1288,7 +1303,7 @@ void SuspensionFlow::validateRigidBodies()
     m_n_free_particles_global = 0;
 
     // Validate the body tags in the system and assign aggregates into aggregate tag
-    if (m_exec_conf->getRank() == 0)
+    if (this->m_exec_conf->getRank() == 0)
         {
         // access body data
         ArrayHandle<unsigned int> h_body_len(m_body_len, access_location::host, access_mode::read);
@@ -1300,7 +1315,7 @@ void SuspensionFlow::validateRigidBodies()
         // This will count the length of all aggregates (realized rigid bodies) in the system.
         map_t body_particle_count;
 
-        aggregate_tag.resize(snap.size, NO_MOLECULE);
+        aggregate_tag.resize(snap.size, NO_AGGREGATE);
 
         // count number of constituent particles to add
         for (unsigned i = 0; i < snap.size; ++i)
@@ -1394,25 +1409,25 @@ void SuspensionFlow::validateRigidBodies()
         }
 
 #ifdef ENABLE_MPI
-    if (m_pdata->getDomainDecomposition())
+    if (this->m_pdata->getDomainDecomposition())
         {
-        bcast(aggregate_tag, 0, m_exec_conf->getMPICommunicator());
-        bcast(nbodies, 0, m_exec_conf->getMPICommunicator());
-        bcast(m_n_free_particles_global, 0, m_exec_conf->getMPICommunicator());
+        bcast(aggregate_tag, 0, this->m_exec_conf->getMPICommunicator());
+        bcast(nbodies, 0, this->m_exec_conf->getMPICommunicator());
+        bcast(m_n_free_particles_global, 0, this->m_exec_conf->getMPICommunicator());
         }
 #endif
 
     // resize Molecular tag member array
-    m_aggregate_tag.resize(aggregate_tag.size());
+    this->m_aggregate_tag.resize(aggregate_tag.size());
         {
-        ArrayHandle<unsigned int> h_aggregate_tag(m_aggregate_tag,
+        ArrayHandle<unsigned int> h_aggregate_tag(this->m_aggregate_tag,
                                                  access_location::host,
                                                  access_mode::overwrite);
         std::copy(aggregate_tag.begin(), aggregate_tag.end(), h_aggregate_tag.data);
         }
 
     // store number of aggregates in all ranks
-    m_n_aggregates_global = nbodies;
+    this->m_n_aggregates_global = nbodies;
 
     // reset flags
     m_bodies_changed = false;
@@ -1420,18 +1435,18 @@ void SuspensionFlow::validateRigidBodies()
     }
 
 template<SmoothingKernelType KT_, StateEquationType SET_>
-void SuspensionFlow::createRigidBodies()
+void SuspensionFlow<KT_, SET_>::createRigidBodies()
     {
     SnapshotParticleData<Scalar> snap;
-    const BoxDim& global_box = m_pdata->getGlobalBox();
+    const BoxDim& global_box = this->m_pdata->getGlobalBox();
 
     // take a snapshot on rank 0
-    m_pdata->takeSnapshot(snap);
+    this->m_pdata->takeSnapshot(snap);
     bool remove_existing_constituents = false;
     unsigned int n_constituent_particles_to_add = 0;
     unsigned int n_free_particles = 0;
 
-    if (m_exec_conf->getRank() == 0)
+    if (this->m_exec_conf->getRank() == 0)
         {
         ArrayHandle<unsigned int> h_body_len(m_body_len, access_location::host, access_mode::read);
         for (unsigned int particle_tag = 0; particle_tag < snap.size; ++particle_tag)
@@ -1439,6 +1454,12 @@ void SuspensionFlow::createRigidBodies()
             // Determine whether each particle is rigid or free based on the particle type and the
             // rigid body definition.
             // TODO: Hier eventuell auch noch 1 für Wall Boundarys einführen
+
+            // // Print the value of h_body_len.data for each particle_tag
+            // std::cout << "h_body_len.data[" << snap.type[particle_tag] << "] = "
+            //           << h_body_len.data[snap.type[particle_tag]] << std::endl;
+
+
             if (h_body_len.data[snap.type[particle_tag]] == 0)
                 {
                 n_free_particles++;
@@ -1460,25 +1481,26 @@ void SuspensionFlow::createRigidBodies()
         }
 
 #ifdef ENABLE_MPI
-    if (m_pdata->getDomainDecomposition())
+    if (this->m_pdata->getDomainDecomposition())
         {
-        bcast(remove_existing_constituents, 0, m_exec_conf->getMPICommunicator());
-        bcast(n_free_particles, 0, m_exec_conf->getMPICommunicator());
+        bcast(remove_existing_constituents, 0, this->m_exec_conf->getMPICommunicator());
+        bcast(n_free_particles, 0, this->m_exec_conf->getMPICommunicator());
         }
 #endif
 
     if (remove_existing_constituents)
         {
-        m_exec_conf->msg->notice(7)
+        this->m_exec_conf->msg->notice(7)
             << "SuspensionFlow reinitialize particle data without rigid bodies" << std::endl;
-        m_pdata->initializeFromSnapshot(snap, true);
-        m_pdata->takeSnapshot(snap);
+        this->m_pdata->initializeFromSnapshot(snap, true);
+        this->m_pdata->takeSnapshot(snap);
         }
 
     std::vector<unsigned int> aggregate_tag;
+
     unsigned int n_central_particles = snap.size - n_free_particles;
 
-    if (m_exec_conf->getRank() == 0)
+    if (this->m_exec_conf->getRank() == 0)
         {
         unsigned int initial_snapshot_size = snap.size;
         snap.insert(snap.size, n_constituent_particles_to_add);
@@ -1491,12 +1513,12 @@ void SuspensionFlow::createRigidBodies()
         ArrayHandle<unsigned int> h_body_type(m_body_types,
                                               access_location::host,
                                               access_mode::read);
-        aggregate_tag.resize(snap.size, NO_MOLECULE);
+        aggregate_tag.resize(snap.size, NO_AGGREGATE);
 
         unsigned int constituent_particle_tag = initial_snapshot_size;
         for (unsigned int particle_tag = 0; particle_tag < initial_snapshot_size; ++particle_tag)
             {
-            assert(snap.type[particle_tag] < m_pdata->getNTypes());
+            assert(snap.type[particle_tag] < this->m_pdata->getNTypes());
 
             // If the length of the body definition is zero it must be a free particle because all
             // constituent particles have been removed.
@@ -1511,6 +1533,9 @@ void SuspensionFlow::createRigidBodies()
             unsigned int body_type = snap.type[particle_tag];
             unsigned int n_body_particles = h_body_len.data[body_type];
 
+            std::cout << "body_type" << body_type << std::endl;
+            std::cout << "n_body_particles" << n_body_particles << std::endl;
+
             for (unsigned int current_body_index = 0; current_body_index < n_body_particles;
                  ++current_body_index)
                 {
@@ -1519,22 +1544,28 @@ void SuspensionFlow::createRigidBodies()
                 // Update constituent particle snapshot properties from default.
                 snap.type[constituent_particle_tag] = h_body_type.data[body_idx];
                 snap.body[constituent_particle_tag] = particle_tag;
-                snap.charge[constituent_particle_tag]
-                    = m_body_charge[body_type][current_body_index];
-                snap.diameter[constituent_particle_tag]
-                    = m_body_diameter[body_type][current_body_index];
+                // snap.charge[constituent_particle_tag]
+                //     = m_body_charge[body_type][current_body_index];
+                // snap.diameter[constituent_particle_tag]
+                //     = m_body_diameter[body_type][current_body_index];
 
                 // Set position and orientation of constituents
-                //vec3<Scalar> body_position(snap.pos[particle_tag]);
+                vec3<Scalar> body_position(snap.pos[particle_tag]);
                 //quat<Scalar> body_orientation(snap.orientation[particle_tag]);
-                //vec3<Scalar> local_position(h_body_pos.data[body_idx]);
+                vec3<Scalar> local_position(h_body_pos.data[body_idx]);
                 //quat<Scalar> local_orientation(h_body_orientation.data[body_idx]);
 
-                // vec3<Scalar> constituent_position
-                //     = body_position + rotate(body_orientation, local_position);
+                std::cout << "local_position.x: " << local_position.x << "local_position.y: " << local_position.y << "local_position.z: " << local_position.z << std::endl;
+
+
+                // vec3<Scalar> constituent_position = body_position + rotate(body_orientation, local_position);
+                vec3<Scalar> constituent_position = body_position + local_position;
+
                 //quat<Scalar> constituent_orientation = body_orientation * local_orientation;
 
-                vec3<Scalar> constituent_position(snap.pos[particle_tag]);
+                //vec3<Scalar> constituent_position(snap.pos[particle_tag]);
+
+                std::cout << "constituent_position.x: " << constituent_position.x << "constituent_position.y: " << constituent_position.y << "constituent_position.z: " << constituent_position.z << std::endl;
 
                 snap.pos[constituent_particle_tag] = constituent_position;
                 snap.image[constituent_particle_tag] = snap.image[particle_tag];
@@ -1554,59 +1585,64 @@ void SuspensionFlow::createRigidBodies()
         }
 
     // Keep rigid bodies this time when initializing.
-    m_pdata->initializeFromSnapshot(snap, false);
+    this->m_pdata->initializeFromSnapshot(snap, false);
 
 #ifdef ENABLE_MPI
-    if (m_pdata->getDomainDecomposition())
+    if (this->m_pdata->getDomainDecomposition())
         {
-        bcast(aggregate_tag, 0, m_exec_conf->getMPICommunicator());
+        bcast(aggregate_tag, 0, this->m_exec_conf->getMPICommunicator());
         }
 #endif
 
-    m_aggregate_tag.resize(aggregate_tag.size());
+    this->m_aggregate_tag.resize(aggregate_tag.size());
         {
         // store global aggregate information in GlobalArray
-        ArrayHandle<unsigned int> h_aggregate_tag(m_aggregate_tag,
+        ArrayHandle<unsigned int> h_aggregate_tag(this->m_aggregate_tag,
                                                  access_location::host,
                                                  access_mode::overwrite);
         std::copy(aggregate_tag.begin(), aggregate_tag.end(), h_aggregate_tag.data);
         }
-    m_n_aggregates_global = n_central_particles;
+    this->m_n_aggregates_global = n_central_particles;
     m_n_free_particles_global = n_free_particles;
+
+    std::cout << "m_n_aggregates_global" << this->m_n_aggregates_global << std::endl;
+    std::cout << std::endl;
+    std::cout << "m_n_free_particles_global" << m_n_free_particles_global << std::endl;
+    std::cout << std::endl;
 
     m_bodies_changed = false;
     m_particles_added_removed = false;
     }
 
-#ifdef ENABLE_MPI
-/*! \param timestep Current time step
- */
-template<SmoothingKernelType KT_, StateEquationType SET_>
-CommFlags SuspensionFlow::getRequestedCommFlags(uint64_t timestep)
-    {
-    CommFlags flags = CommFlags(0);
+// #ifdef ENABLE_MPI
+// /*! \param timestep Current time step
+//  */
+// template<SmoothingKernelType KT_, StateEquationType SET_>
+// CommFlags SuspensionFlow<KT_, SET_>::getRequestedCommFlags(uint64_t timestep)
+//     {
+//     CommFlags flags = CommFlags(0);
 
-    // // request orientations
-    // flags[comm_flag::orientation] = 1;
+//     // // request orientations
+//     // flags[comm_flag::orientation] = 1;
 
-    // // only communicate net virial if needed
-    // PDataFlags pdata_flags = this->m_pdata->getFlags();
-    // if (pdata_flags[pdata_flag::pressure_tensor])
-    //     {
-    //     flags[comm_flag::net_virial] = 1;
-    //     }
+//     // // only communicate net virial if needed
+//     // PDataFlags pdata_flags = this->m_pdata->getFlags();
+//     // if (pdata_flags[pdata_flag::pressure_tensor])
+//     //     {
+//     //     flags[comm_flag::net_virial] = 1;
+//     //     }
 
-    // request body ids
-    flags[comm_flag::body] = 1;
+//     // request body ids
+//     flags[comm_flag::body] = 1;
 
-    // we need central particle images
-    flags[comm_flag::image] = 1;
+//     // we need central particle images
+//     flags[comm_flag::image] = 1;
 
-    flags |= SPHBaseClassConstraint::getRequestedCommFlags(timestep);
+//     flags |= SPHBaseClassConstraint::getRequestedCommFlags(timestep);
 
-    return flags;
-    }
-#endif
+//     return flags;
+//     }
+// #endif
 
 /* Set position and velocity of constituent particles in rigid bodies in the 1st or second half of
  * integration on the CPU based on the body center of mass and particle relative position in each
@@ -1614,41 +1650,41 @@ CommFlags SuspensionFlow::getRequestedCommFlags(uint64_t timestep)
  */
 
 template<SmoothingKernelType KT_, StateEquationType SET_>
-void SuspensionFlow::updateCompositeParticles(uint64_t timestep)
+void SuspensionFlow<KT_, SET_>::updateCompositeParticles(uint64_t timestep)
     {
     // If no rigid bodies exist return early. This also prevents accessing arrays assuming that this
     // is non-zero.
-    if (m_n_aggregates_global == 0)
+    if (this->m_n_aggregates_global == 0)
         {
         return;
         }
 
     // access aggregate order (this needs to be on top because of ArrayHandle scope) and its
     // pervasive use across this function.
-    ArrayHandle<unsigned int> h_aggregate_order(getAggregateOrder(),
+    ArrayHandle<unsigned int> h_aggregate_order(this->getAggregateOrder(),
                                                access_location::host,
                                                access_mode::read);
-    ArrayHandle<unsigned int> h_aggregate_len(getAggregateLengths(),
+    ArrayHandle<unsigned int> h_aggregate_len(this->getAggregateLengths(),
                                              access_location::host,
                                              access_mode::read);
-    ArrayHandle<unsigned int> h_aggregate_idx(getAggregateIndex(),
+    ArrayHandle<unsigned int> h_aggregate_idx(this->getAggregateIndex(),
                                              access_location::host,
                                              access_mode::read);
 
     // access the particle data arrays
-    ArrayHandle<Scalar4> h_postype(m_pdata->getPositions(),
+    ArrayHandle<Scalar4> h_postype(this->m_pdata->getPositions(),
                                    access_location::host,
                                    access_mode::readwrite);
-    // ArrayHandle<Scalar4> h_orientation(m_pdata->getOrientationArray(),
+    // ArrayHandle<Scalar4> h_orientation(this->m_pdata->getOrientationArray(),
     //                                    access_location::host,
     //                                    access_mode::readwrite);
-    ArrayHandle<int3> h_image(m_pdata->getImages(), access_location::host, access_mode::readwrite);
+    ArrayHandle<int3> h_image(this->m_pdata->getImages(), access_location::host, access_mode::readwrite);
 
-    ArrayHandle<unsigned int> h_body(m_pdata->getBodies(),
+    ArrayHandle<unsigned int> h_body(this->m_pdata->getBodies(),
                                      access_location::host,
                                      access_mode::read);
-    ArrayHandle<unsigned int> h_rtag(m_pdata->getRTags(), access_location::host, access_mode::read);
-    ArrayHandle<unsigned int> h_tag(m_pdata->getTags(), access_location::host, access_mode::read);
+    ArrayHandle<unsigned int> h_rtag(this->m_pdata->getRTags(), access_location::host, access_mode::read);
+    ArrayHandle<unsigned int> h_tag(this->m_pdata->getTags(), access_location::host, access_mode::read);
 
     // access body positions and orientations
     ArrayHandle<Scalar3> h_body_pos(m_body_pos, access_location::host, access_mode::read);
@@ -1657,11 +1693,11 @@ void SuspensionFlow::updateCompositeParticles(uint64_t timestep)
     //                                         access_mode::read);
     ArrayHandle<unsigned int> h_body_len(m_body_len, access_location::host, access_mode::read);
 
-    const BoxDim& box = m_pdata->getBox();
-    const BoxDim& global_box = m_pdata->getGlobalBox();
+    const BoxDim& box = this->m_pdata->getBox();
+    const BoxDim& global_box = this->m_pdata->getGlobalBox();
 
     // we need to update both local and ghost particles
-    unsigned int n_particles_local = m_pdata->getN() + m_pdata->getNGhosts();
+    unsigned int n_particles_local = this->m_pdata->getN() + this->m_pdata->getNGhosts();
     for (unsigned int particle_index = 0; particle_index < n_particles_local; particle_index++)
         {
         unsigned int central_tag = h_body.data[particle_index];
@@ -1674,7 +1710,7 @@ void SuspensionFlow::updateCompositeParticles(uint64_t timestep)
             }
 
         // body tag equals tag for central particle
-        assert(central_tag <= m_pdata->getMaximumTag());
+        assert(central_tag <= this->m_pdata->getMaximumTag());
         unsigned int central_idx = h_rtag.data[central_tag];
 
         // If this is a rigid body center continue, since we do not need to update its position or
@@ -1695,7 +1731,7 @@ void SuspensionFlow::updateCompositeParticles(uint64_t timestep)
             }
 
         // central particle position and orientation
-        assert(central_idx <= m_pdata->getN() + m_pdata->getNGhosts());
+        assert(central_idx <= this->m_pdata->getN() + this->m_pdata->getNGhosts());
 
         Scalar4 postype = h_postype.data[central_idx];
         vec3<Scalar> pos(postype);
@@ -1713,7 +1749,7 @@ void SuspensionFlow::updateCompositeParticles(uint64_t timestep)
         // here. At least catch this error for particles local to this rank.
         if (body_len != h_aggregate_len.data[agg_idx] - 1)
             {
-            if (particle_index < m_pdata->getN())
+            if (particle_index < this->m_pdata->getN())
                 {
                 // if the aggregate is incomplete and has local members, this is an error
                 std::ostringstream error_msg;
@@ -2034,60 +2070,63 @@ void SuspensionFlow<KT_, SET_>::rigidforcecomputation(uint64_t timestep)
     {
     // If no rigid bodies exist return early. This also prevents accessing arrays assuming that this
     // is non-zero.
-    if (m_n_aggregates_global == 0)
+    if (this->m_n_aggregates_global == 0)
         {
         return;
         }
 
+    std::cout << "Rigid Force Computation" << std::endl;
+
     // access local aggregate data
     // need to move this on top because of scoping issues
-    Index2D aggregate_indexer = getAggregateIndexer();
+    Index2D aggregate_indexer = this->getAggregateIndexer();
     unsigned int nmol = aggregate_indexer.getH();
 
-    ArrayHandle<unsigned int> h_aggregate_length(getAggregateLengths(),
+    ArrayHandle<unsigned int> h_aggregate_length(this->getAggregateLengths(),
                                                 access_location::host,
                                                 access_mode::read);
-    ArrayHandle<unsigned int> h_aggregate_list(getAggregateList(),
+    ArrayHandle<unsigned int> h_aggregate_list(this->getAggregateList(),
                                               access_location::host,
                                               access_mode::read);
 
     // access particle data
-    ArrayHandle<unsigned int> h_body(m_pdata->getBodies(),
+    ArrayHandle<unsigned int> h_body(this->m_pdata->getBodies(),
                                      access_location::host,
                                      access_mode::read);
-    ArrayHandle<unsigned int> h_rtag(m_pdata->getRTags(), access_location::host, access_mode::read);
-    ArrayHandle<unsigned int> h_tag(m_pdata->getTags(), access_location::host, access_mode::read);
-    ArrayHandle<Scalar4> h_postype(m_pdata->getPositions(),
+    ArrayHandle<unsigned int> h_rtag(this->m_pdata->getRTags(), access_location::host, access_mode::read);
+    ArrayHandle<unsigned int> h_tag(this->m_pdata->getTags(), access_location::host, access_mode::read);
+    ArrayHandle<Scalar4> h_postype(this->m_pdata->getPositions(),
                                    access_location::host,
                                    access_mode::read);
-    // ArrayHandle<Scalar4> h_orientation(m_pdata->getOrientationArray(),
+    // ArrayHandle<Scalar4> h_orientation(this->m_pdata->getOrientationArray(),
     //                                    access_location::host,
     //                                    access_mode::read);
 
     // access net force and torque acting on constituent particles
-    ArrayHandle<Scalar4> h_net_force(m_pdata->getNetForce(),
+    ArrayHandle<Scalar4> h_net_force(this->m_pdata->getNetForce(),
                                      access_location::host,
                                      access_mode::readwrite);
-    ArrayHandle<Scalar4> h_net_torque(m_pdata->getNetTorqueArray(),
-                                      access_location::host,
-                                      access_mode::readwrite);
+    // TODO: Torque in Aux
+    // ArrayHandle<Scalar4> h_net_torque(this->m_pdata->getNetTorqueArray(),
+    //                                   access_location::host,
+    //                                   access_mode::readwrite);
 
 
     // access the force and torque array for the central particle
-    ArrayHandle<Scalar4> h_force(m_force, access_location::host, access_mode::overwrite);
-    ArrayHandle<Scalar4> h_torque(m_torque, access_location::host, access_mode::overwrite);
+    ArrayHandle<Scalar4> h_force(this->m_force, access_location::host, access_mode::overwrite);
+    // ArrayHandle<Scalar4> h_torque(this->m_torque, access_location::host, access_mode::overwrite);
 
     // access rigid body definition
-    ArrayHandle<Scalar3> h_body_pos(m_body_pos, access_location::host, access_mode::read);
-    ArrayHandle<unsigned int> h_body_len(m_body_len, access_location::host, access_mode::read);
+    ArrayHandle<Scalar3> h_body_pos(this->m_body_pos, access_location::host, access_mode::read);
+    ArrayHandle<unsigned int> h_body_len(this->m_body_len, access_location::host, access_mode::read);
 
     // reset constraint forces and torques
-    memset(h_force.data, 0, sizeof(Scalar4) * m_pdata->getN());
-    memset(h_torque.data, 0, sizeof(Scalar4) * m_pdata->getN());
+    memset(h_force.data, 0, sizeof(Scalar4) * this->m_pdata->getN());
+    //memset(h_torque.data, 0, sizeof(Scalar4) * this->m_pdata->getN());
 
-    unsigned int n_particles_local = m_pdata->getN() + m_pdata->getNGhosts();
+    unsigned int n_particles_local = this->m_pdata->getN() + this->m_pdata->getNGhosts();
 
-    PDataFlags flags = m_pdata->getFlags();
+    PDataFlags flags = this->m_pdata->getFlags();
 
     // loop over all aggregates, also incomplete ones
     for (unsigned int ibody = 0; ibody < nmol; ibody++)
@@ -2096,10 +2135,10 @@ void SuspensionFlow<KT_, SET_>::rigidforcecomputation(uint64_t timestep)
         assert(h_aggregate_length.data[ibody] > 0);
         unsigned int first_idx = h_aggregate_list.data[aggregate_indexer(0, ibody)];
 
-        assert(first_idx < m_pdata->getN() + m_pdata->getNGhosts());
+        assert(first_idx < this->m_pdata->getN() + this->m_pdata->getNGhosts());
         unsigned int central_tag = h_body.data[first_idx];
 
-        assert(central_tag <= m_pdata->getMaximumTag());
+        assert(central_tag <= this->m_pdata->getMaximumTag());
         unsigned int central_idx = h_rtag.data[central_tag];
 
         if (central_idx >= n_particles_local)
@@ -2110,7 +2149,7 @@ void SuspensionFlow<KT_, SET_>::rigidforcecomputation(uint64_t timestep)
 
         // central particle position and orientation
         Scalar4 postype = h_postype.data[central_idx];
-        quat<Scalar> orientation(h_orientation.data[central_idx]);
+        // quat<Scalar> orientation(U.data[central_idx]);
 
         // body type
         unsigned int type = __scalar_as_int(postype.w);
@@ -2120,7 +2159,7 @@ void SuspensionFlow<KT_, SET_>::rigidforcecomputation(uint64_t timestep)
              ++constituent_index)
             {
             unsigned int idxj = h_aggregate_list.data[aggregate_indexer(constituent_index, ibody)];
-            assert(idxj < m_pdata->getN() + m_pdata->getNGhosts());
+            assert(idxj < this->m_pdata->getN() + this->m_pdata->getNGhosts());
 
             assert(idxj == central_idx || constituent_index > 0);
             if (idxj == central_idx)
@@ -2128,16 +2167,16 @@ void SuspensionFlow<KT_, SET_>::rigidforcecomputation(uint64_t timestep)
 
             // force and torque on particle
             Scalar4 net_force = h_net_force.data[idxj];
-            Scalar4 net_torque = h_net_torque.data[idxj];
+            // Scalar4 net_torque = h_net_torque.data[idxj];
             vec3<Scalar> f(net_force);
 
             // zero net energy on constituent particles to avoid double counting
             // also zero net force and torque for consistency
             h_net_force.data[idxj] = make_scalar4(0.0, 0.0, 0.0, 0.0);
-            h_net_torque.data[idxj] = make_scalar4(0.0, 0.0, 0.0, 0.0);
+            //h_net_torque.data[idxj] = make_scalar4(0.0, 0.0, 0.0, 0.0);
 
             // only add forces for local central particles
-            if (central_idx < m_pdata->getN())
+            if (central_idx < this->m_pdata->getN())
                 {
                 // if the central particle is local, the aggregate should be complete
                 if (h_aggregate_length.data[ibody] != h_body_len.data[type] + 1)
@@ -2160,21 +2199,21 @@ void SuspensionFlow<KT_, SET_>::rigidforcecomputation(uint64_t timestep)
                 vec3<Scalar> dr(h_body_pos.data[m_body_idx(type, constituent_index - 1)]);
 
                 // rotate into space frame
-                vec3<Scalar> dr_space = rotate(orientation, dr);
+                //vec3<Scalar> dr_space = rotate(orientation, dr);
 
-                // torque = r x f
-                vec3<Scalar> delta_torque(cross(dr_space, f));
-                h_torque.data[central_idx].x += delta_torque.x;
-                h_torque.data[central_idx].y += delta_torque.y;
-                h_torque.data[central_idx].z += delta_torque.z;
+                // // torque = r x f
+                // vec3<Scalar> delta_torque(cross(dr_space, f));
+                // h_torque.data[central_idx].x += delta_torque.x;
+                // h_torque.data[central_idx].y += delta_torque.y;
+                // h_torque.data[central_idx].z += delta_torque.z;
 
-                /* from previous rigid body implementation: Access Torque elements from a single
-                   particle. Right now I will am assuming that the particle and rigid body reference
-                   frames are the same. Probably have to rotate first.
-                 */
-                h_torque.data[central_idx].x += net_torque.x;
-                h_torque.data[central_idx].y += net_torque.y;
-                h_torque.data[central_idx].z += net_torque.z;
+                // /* from previous rigid body implementation: Access Torque elements from a single
+                //    particle. Right now I will am assuming that the particle and rigid body reference
+                //    frames are the same. Probably have to rotate first.
+                //  */
+                // h_torque.data[central_idx].x += net_torque.x;
+                // h_torque.data[central_idx].y += net_torque.y;
+                // h_torque.data[central_idx].z += net_torque.z;
 
                 }
 
@@ -2251,6 +2290,8 @@ void SuspensionFlow<KT_, SET_>::computeForces(uint64_t timestep)
     update_ghost_aux2(timestep);
 #endif
 
+    rigidforcecomputation(timestep);
+
 
     // Execute the force computation
     // This includes the computation of the density if 
@@ -2269,6 +2310,7 @@ void export_SuspensionFlow(pybind11::module& m, std::string name)
                              std::shared_ptr<SmoothingKernel<KT_> >,
                              std::shared_ptr<StateEquation<SET_> >,
                              std::shared_ptr<nsearch::NeighborList>,
+                             std::shared_ptr<ParticleGroup>,
                              std::shared_ptr<ParticleGroup>,
                              std::shared_ptr<ParticleGroup>,
                              std::shared_ptr<ParticleGroup>,

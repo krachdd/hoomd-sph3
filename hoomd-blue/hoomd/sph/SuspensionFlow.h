@@ -5,7 +5,7 @@ maintainer: dkrach, david.krach@mib.uni-stuttgart.de
 #include "hoomd/Compute.h"
 #include "hoomd/Index1D.h"
 #include "hoomd/ParticleGroup.h"
-#include "hoomd/ForceCompute.h"
+//#include "hoomd/ForceCompute.h"
 #include "hoomd/Integrator.h"
 #include "hoomd/nsearch/NeighborList.h"
 
@@ -71,11 +71,32 @@ class PYBIND11_EXPORT SuspensionFlow : public SPHBaseClassConstraint<KT_, SET_>
                         std::shared_ptr<ParticleGroup> fluidgroup,
                         std::shared_ptr<ParticleGroup> solidgroup,
                         std::shared_ptr<ParticleGroup> aggregategroup,
+                        std::shared_ptr<ParticleGroup> comgroup,
                         DensityMethod   mdensitymethod=DENSITYSUMMATION,
                         ViscosityMethod mviscositymethod=HARMONICAVERAGE);
 
         //! Destructor
         virtual ~SuspensionFlow();
+
+
+        // //! Returns true because we compute the torque on the central particle
+        // virtual bool isAnisotropic()
+        //     {
+        //     return true;
+        //     }
+
+        //! Set the coordinates for the template for a rigid body of type typeid
+        /*! \param body_type The type of rigid body
+         * \param type Types of the constituent particles
+         * \param pos Relative positions of the constituent particles
+         * \param orientation Orientations of the constituent particles
+         */
+        virtual void setRigidParams(unsigned int body_typeid,
+                              std::vector<unsigned int>& type,
+                              std::vector<Scalar3>& pos);
+                              // std::vector<Scalar4>& orientation,
+                              // std::vector<Scalar>& charge,
+                              // std::vector<Scalar>& diameter);
 
         //! Set the rcut for a single type pair
         virtual void setRcut(unsigned int typ1, unsigned int typ2, Scalar rcut);
@@ -92,7 +113,10 @@ class PYBIND11_EXPORT SuspensionFlow : public SPHBaseClassConstraint<KT_, SET_>
         /*! Set the parameters
          * \param mu Dynamic viscosity
          */
-        virtual void setParams(Scalar mu, Scalar rhoS, Scalar f0);
+        // TODO: Eventuell repulsive Force
+        // virtual void setParams(Scalar mu, Scalar rhoS, Scalar f0);
+        virtual void setParams(Scalar mu, Scalar rhoS0);
+
 
         //! Getter and Setter methods for density method
         DensityMethod getDensityMethod()
@@ -190,25 +214,43 @@ class PYBIND11_EXPORT SuspensionFlow : public SPHBaseClassConstraint<KT_, SET_>
         //! Computes forces
         void computeForces(uint64_t timestep);
 
-        //! Set the coordinates for the template for a rigid body of type typeid
-        /*! \param body_type The type of rigid body
-         * \param type Types of the constituent particles
-         * \param pos Relative positions of the constituent particles
-         * \param orientation Orientations of the constituent particles
-         */
-        virtual void setRigidParams(unsigned int body_typeid,
-                              std::vector<unsigned int>& type,
-                              std::vector<Scalar3>& pos);
-                              // std::vector<Scalar4>& orientation,
-                              // std::vector<Scalar>& charge,
-                              // std::vector<Scalar>& diameter);
-
         // TODO: Keine Ahnung ob noetig
         // //! Returns true because we compute the torque on the central particle
         // virtual bool isAnisotropic()
         //     {
         //     return true;
         //     }
+
+    #ifdef ENABLE_MPI
+        //! Get requested ghost communication flags
+        virtual CommFlags getRequestedCommFlags(uint64_t timestep)
+            {
+            // Request communication of all field required during ForceCompute
+            CommFlags flags(0);
+            flags[comm_flag::net_force] = 0;
+            flags[comm_flag::position] = 1; // Stores position and type
+            flags[comm_flag::velocity] = 1; // Stores velocity and mass
+            flags[comm_flag::density] = 1; // Stores density 
+            flags[comm_flag::pressure] = 1; // Stores pressure
+            flags[comm_flag::energy] = 0; // Stores density and pressure
+            flags[comm_flag::auxiliary1] = 1; // Stores fictitious velocity
+            flags[comm_flag::auxiliary2] = 1; // Stores orientation of center particle
+//            flags[comm_flag::auxiliary3] = 1; // Stores contact force
+            flags[comm_flag::slength] = 1; // Stores smoothing length TODO is this needed
+            // request body ids
+            flags[comm_flag::body] = 1;
+            // we need central particle images
+            flags[comm_flag::image] = 1;
+            // Add flags requested by base class
+            flags |= ForceConstraint::getRequestedCommFlags(timestep);
+            return flags;
+            }
+    #endif
+
+// #ifdef ENABLE_MPI
+//     //! Get ghost particle fields requested by this pair potential
+//     virtual CommFlags getRequestedCommFlags(uint64_t timestep);
+// #endif
 
         /// Update the constituent particles of a composite particle using the position, velocity
         /// and orientation of the central particle.
@@ -242,13 +284,13 @@ class PYBIND11_EXPORT SuspensionFlow : public SPHBaseClassConstraint<KT_, SET_>
             //         throw std::runtime_error("All attributes of a rigid body must be the same length.");
             //         }
             //     }
-            // for (const auto& list : {types})
-            //     {
-            //     if (pybind11::len(list) != N)
-            //         {
-            //         throw std::runtime_error("All attributes of a rigid body must be the same length.");
-            //         }
-            //     }
+            for (const auto& list : {types})
+                {
+                if (pybind11::len(list) != N)
+                    {
+                    throw std::runtime_error("All attributes of a rigid body must be the same length.");
+                    }
+                }
 
             // extract the data from the python lists
             std::vector<Scalar3> pos_vector;
@@ -272,10 +314,13 @@ class PYBIND11_EXPORT SuspensionFlow : public SPHBaseClassConstraint<KT_, SET_>
 
                 // charge_vector.emplace_back(charges[i].cast<Scalar>());
                 // diameter_vector.emplace_back(diameters[i].cast<Scalar>());
-                type_vector.emplace_back(m_pdata->getTypeByName(types[i].cast<std::string>()));
+                type_vector.emplace_back(this->m_pdata->getTypeByName(types[i].cast<std::string>()));
+                //std::cout << "type_vector: " << type_vector.emplace_back(this->m_pdata->getTypeByName(types[i].cast<std::string>())) << std::endl;
                 }
 
-            setRigidParams(m_pdata->getTypeByName(typ),
+            // std::cout << "type_vector: " << type_vector.emplace_back(this->m_pdata->getTypeByName(types[i].cast<std::string>())) << std::endl;
+
+            setRigidParams(this->m_pdata->getTypeByName(typ),
                      type_vector,
                      pos_vector);
                      // orientation_vector,
@@ -286,11 +331,13 @@ class PYBIND11_EXPORT SuspensionFlow : public SPHBaseClassConstraint<KT_, SET_>
         /// Convert parameters to a python dictionary
         pybind11::object getBody(std::string body_type)
             {
-            auto body_type_id = m_pdata->getTypeByName(body_type);
+            auto body_type_id = this->m_pdata->getTypeByName(body_type);
+            //std::cout << "body_type_id" << body_type_id << std::endl;
             ArrayHandle<unsigned int> h_body_len(m_body_len,
                                                  access_location::host,
                                                  access_mode::readwrite);
             unsigned int N = h_body_len.data[body_type_id];
+            //std::cout << "h_body_len.data[body_type_id]" << h_body_len.data[body_type_id] << std::endl;
             if (N == 0)
                 {
                 return pybind11::none();
@@ -320,7 +367,7 @@ class PYBIND11_EXPORT SuspensionFlow : public SPHBaseClassConstraint<KT_, SET_>
                 //                          static_cast<Scalar>(h_body_orientation.data[index].y),
                 //                          static_cast<Scalar>(h_body_orientation.data[index].z),
                 //                          static_cast<Scalar>(h_body_orientation.data[index].w)));
-                types.append(m_pdata->getNameByType(h_body_types.data[index]));
+                types.append(this->m_pdata->getNameByType(h_body_types.data[index]));
                 // charges.append(m_body_charge[body_type_id][i]);
                 // diameters.append(m_body_diameter[body_type_id][i]);
                 }
@@ -344,27 +391,27 @@ class PYBIND11_EXPORT SuspensionFlow : public SPHBaseClassConstraint<KT_, SET_>
         std::shared_ptr<Communicator> m_comm;
     #endif
 
-    #ifdef ENABLE_MPI
-        //! Get requested ghost communication flags
-        virtual CommFlags getRequestedCommFlags(uint64_t timestep)
-            {
-            // Request communication of all field required during ForceCompute
-            CommFlags flags(0);
-            flags[comm_flag::net_force] = 0;
-            flags[comm_flag::position] = 1; // Stores position and type
-            flags[comm_flag::velocity] = 1; // Stores velocity and mass
-            flags[comm_flag::density] = 1; // Stores density 
-            flags[comm_flag::pressure] = 1; // Stores pressure
-            flags[comm_flag::energy] = 0; // Stores density and pressure
-            flags[comm_flag::auxiliary1] = 1; // Stores fictitious velocity
-            flags[comm_flag::auxiliary2] = 1; // Stores orientation of center particle
-//            flags[comm_flag::auxiliary3] = 1; // Stores contact force
-            flags[comm_flag::slength] = 1; // Stores smoothing length TODO is this needed
-            // Add flags requested by base class
-            flags |= ForceCompute::getRequestedCommFlags(timestep);
-            return flags;
-            }
-    #endif
+//     #ifdef ENABLE_MPI
+//         //! Get requested ghost communication flags
+//         virtual CommFlags getRequestedCommFlags(uint64_t timestep)
+//             {
+//             // Request communication of all field required during ForceCompute
+//             CommFlags flags(0);
+//             flags[comm_flag::net_force] = 0;
+//             flags[comm_flag::position] = 1; // Stores position and type
+//             flags[comm_flag::velocity] = 1; // Stores velocity and mass
+//             flags[comm_flag::density] = 1; // Stores density 
+//             flags[comm_flag::pressure] = 1; // Stores pressure
+//             flags[comm_flag::energy] = 0; // Stores density and pressure
+//             flags[comm_flag::auxiliary1] = 1; // Stores fictitious velocity
+//             flags[comm_flag::auxiliary2] = 1; // Stores orientation of center particle
+// //            flags[comm_flag::auxiliary3] = 1; // Stores contact force
+//             flags[comm_flag::slength] = 1; // Stores smoothing length TODO is this needed
+//             // Add flags requested by base class
+//             flags |= ForceCompute::getRequestedCommFlags(timestep);
+//             return flags;
+//             }
+//     #endif
 
         //! Returns true because we compute dpe array content
         virtual bool ComputesDPE()
@@ -378,6 +425,8 @@ class PYBIND11_EXPORT SuspensionFlow : public SPHBaseClassConstraint<KT_, SET_>
         std::shared_ptr<ParticleGroup> m_fluidgroup; //!< Group of fluid particles
         std::shared_ptr<ParticleGroup> m_solidgroup; //!< Group of solid particles (BC)
         std::shared_ptr<ParticleGroup> m_aggregategroup; //!< Group of solid aggregate particles
+        std::shared_ptr<ParticleGroup> m_comgroup; //!< Group of solid aggregate center of mass particles
+
 
 
         /// r_cut (not squared) given to the neighbor list
@@ -411,6 +460,7 @@ class PYBIND11_EXPORT SuspensionFlow : public SPHBaseClassConstraint<KT_, SET_>
         std::vector<unsigned int> m_fluidtypes; //!< Fluid type numbers
         std::vector<unsigned int> m_solidtypes; //!< Solid wall type numbers
         std::vector<unsigned int> m_aggregatetypes; //!< Solid aggregate type numbers
+        std::vector<unsigned int> m_comtypes; //!< Solid aggregate type numbers
         GPUArray<unsigned int> m_type_property_map; //!< to check if a particle type is soli d or fluid
 
         // Flags
@@ -439,8 +489,8 @@ class PYBIND11_EXPORT SuspensionFlow : public SPHBaseClassConstraint<KT_, SET_>
         // std::vector<std::vector<Scalar>> m_body_diameter; //!< Constituent particle diameters
         Index2D m_body_idx;                               //!< Indexer for body parameters
 
-        // std::vector<Scalar> m_d_max;       //!< Maximum body diameter per constituent particle type
-        // std::vector<bool> m_d_max_changed; //!< True if maximum body diameter changed (per type)
+        std::vector<Scalar> m_d_max;       //!< Maximum body diameter per constituent particle type
+        std::vector<bool> m_d_max_changed; //!< True if maximum body diameter changed (per type)
 
         // Log parameters
         uint64_t m_log_computed_last_timestep; //!< Last time step where log quantities were computed
@@ -480,6 +530,10 @@ class PYBIND11_EXPORT SuspensionFlow : public SPHBaseClassConstraint<KT_, SET_>
          * \post h_force stores forces acting on fluid particles and .w component stores rate of change of density
          */
         void forcecomputation(uint64_t timestep);
+
+
+        //! Computes rigid forces
+        void rigidforcecomputation(uint64_t timestep);
 
         /*! Helper function to set communication flags and update ghosts densities
         * \param timestep The time step

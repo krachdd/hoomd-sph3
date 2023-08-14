@@ -73,6 +73,68 @@ class PYBIND11_EXPORT SinglePhaseFlow : public SPHBaseClass<KT_, SET_>
         //! Destructor
         virtual ~SinglePhaseFlow();
 
+        //         /// Construct from a Python dictionary
+        // void setBody(std::string typ, pybind11::object v)
+        //     {
+        //     if (v.is_none())
+        //         {
+        //         return;
+        //         }
+        //     pybind11::list types = v["constituent_types"];
+        //     pybind11::list positions = v["positions"];
+        //     // pybind11::list orientations = v["orientations"];
+        //     // pybind11::list charges = v["charges"];
+        //     // pybind11::list diameters = v["diameters"];
+        //     auto N = pybind11::len(positions);
+        //     // Ensure proper list lengths
+        //     // for (const auto& list : {types, orientations, charges, diameters})
+        //     //     {
+        //     //     if (pybind11::len(list) != N)
+        //     //         {
+        //     //         throw std::runtime_error("All attributes of a rigid body must be the same length.");
+        //     //         }
+        //     //     }
+        //     for (const auto& list : {types})
+        //         {
+        //         if (pybind11::len(list) != N)
+        //             {
+        //             throw std::runtime_error("All attributes of a rigid body must be the same length.");
+        //             }
+        //         }
+
+        //     // extract the data from the python lists
+        //     std::vector<Scalar3> pos_vector;
+        //     // std::vector<Scalar4> orientation_vector;
+        //     // std::vector<Scalar> charge_vector;
+        //     // std::vector<Scalar> diameter_vector;
+        //     std::vector<unsigned int> type_vector;
+
+        //     for (size_t i(0); i < N; ++i)
+        //         {
+        //         pybind11::tuple position_i(positions[i]);
+        //         pos_vector.emplace_back(make_scalar3(position_i[0].cast<Scalar>(),
+        //                                              position_i[1].cast<Scalar>(),
+        //                                              position_i[2].cast<Scalar>()));
+
+        //         // pybind11::tuple orientation_i(orientations[i]);
+        //         // orientation_vector.emplace_back(make_scalar4(orientation_i[0].cast<Scalar>(),
+        //         //                                              orientation_i[1].cast<Scalar>(),
+        //         //                                              orientation_i[2].cast<Scalar>(),
+        //         //                                              orientation_i[3].cast<Scalar>()));
+
+        //         // charge_vector.emplace_back(charges[i].cast<Scalar>());
+        //         // diameter_vector.emplace_back(diameters[i].cast<Scalar>());
+        //         type_vector.emplace_back(m_pdata->getTypeByName(types[i].cast<std::string>()));
+        //         }
+
+        //     // setRigidParams(m_pdata->getTypeByName(typ),
+        //     //          type_vector,
+        //     //          pos_vector);
+        //     //          // orientation_vector,
+        //     //          // charge_vector,
+        //     //          // diameter_vector);
+        //     }
+
         //! Set the rcut for a single type pair
         virtual void setRcut(unsigned int typ1, unsigned int typ2, Scalar rcut);
 

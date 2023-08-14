@@ -9,9 +9,14 @@ maintainer: dkrach, david.krach@mib.uni-stuttgart.de
 #include "hoomd/ForceConstraint.h"
 #include "hoomd/nsearch/NeighborList.h"
 
+#include "SPHBaseClass.h"
+
 #ifdef ENABLE_MPI
 #include "hoomd/Communicator.h"
 #include "hoomd/HOOMDMPI.h"
+#endif
+
+#ifdef ENABLE_HIP
 #include "hoomd/Autotuner.h"
 #endif
 
@@ -81,20 +86,20 @@ class PYBIND11_EXPORT SPHBaseClassConstraint : public ForceConstraint
         return 0;
         }
 
-#ifdef ENABLE_MPI
-    //! Get ghost particle fields requested by this pair potential
-    virtual CommFlags getRequestedCommFlags(uint64_t timestep)
-        {
-        CommFlags flags = CommFlags(0);
+// #ifdef ENABLE_MPI
+//     //! Get ghost particle fields requested by this pair potential
+//     virtual CommFlags getRequestedCommFlags(uint64_t timestep)
+//         {
+//         CommFlags flags = CommFlags(0);
 
-        // request communication of tags
-        flags[comm_flag::tag] = 1;
+//         // request communication of tags
+//         flags[comm_flag::tag] = 1;
 
-        flags |= ForceConstraint::getRequestedCommFlags(timestep);
+//         flags |= ForceConstraint::getRequestedCommFlags(timestep);
 
-        return flags;
-        }
-#endif
+//         return flags;
+//         }
+// #endif
 
 
     //! Return aggregate index
@@ -207,8 +212,8 @@ class PYBIND11_EXPORT SPHBaseClassConstraint : public ForceConstraint
             }
         }
 
-        DensityMethod m_densitymethod;
-        ViscosityMethod m_viscositymethod;
+        // DensityMethodConstraint m_densitymethod;
+        // ViscosityMethodConstraint m_viscositymethod;
 
         Scalar3 m_bodyforce; //!< Volumetric force
         unsigned int m_damptime; //!< Damping time
@@ -274,9 +279,9 @@ namespace detail
 template<SmoothingKernelType KT_, StateEquationType SET_>
 void export_SPHBaseClassConstraint(pybind11::module& m, std::string name);
 
-void export_DensityMethod(pybind11::module& m);
+// void export_DensityMethodConstraint(pybind11::module& m);
 
-void export_ViscosityMethod(pybind11::module& m);
+// void export_ViscosityMethodConstraint(pybind11::module& m);
 
 } // end namespace detail
 
