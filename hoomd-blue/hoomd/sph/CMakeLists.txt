@@ -10,6 +10,7 @@ set(_${COMPONENT_NAME}_sources
     SPHIntegrationMethodTwoStep.cc
     VelocityVerlet.cc
     VelocityVerletBasic.cc
+    SolidAggregateIntegrator.cc
 #     SuspendedObjectIntegrator.cc
 #     RigidBodyIntegrator.cc
 #     StateEquationsExport.cc
@@ -56,6 +57,7 @@ set(_${COMPONENT_NAME}_headers
 #     SuspendedObjectIntegrator.h       
     VelocityVerlet.h
     VelocityVerletBasic.h
+    SolidAggregateIntegrator.h
     CustomForceCompute.h
     ComputeSPFBasicProperties.h
     ComputeMechanicalProp.h

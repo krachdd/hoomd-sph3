@@ -1,0 +1,97 @@
+/* ---------------------------------------------------------
+maintainer: drostan, daniel.rostan@mib.uni-stuttgart.de
+----------------------------------------------------------*/
+
+#include "SPHIntegrationMethodTwoStep.h"
+#include "EvaluationMethodDefinition.h"
+
+#include "SmoothingKernel.h"
+#include "StateEquations.h"
+
+#ifndef __SOLID_AGGREGATE_INTEGRATOR_H__
+#define __SOLID_AGGREGATE_INTEGRATOR_H__
+
+// #include "hoomd/Variant.h"
+
+/*! \file SolidAggregateIntegrator.h
+    \brief Declares the SolidAggregateIntegrator class
+*/
+
+#ifdef __HIPCC__
+#error This header cannot be compiled by nvcc
+#endif
+
+#include <pybind11/pybind11.h>
+
+namespace hoomd
+    {
+namespace sph
+    {
+//! Integrates part of the system forward in two steps in the NVE ensemble
+/*! Implements velocity-verlet NVE integration through the IntegrationMethodTwoStep interface
+
+    \ingroup updaters
+*/
+template<SmoothingKernelType KT_,StateEquationType SET_>
+class PYBIND11_EXPORT SolidAggregateIntegrator : public SPHIntegrationMethodTwoStep<KT_, SET_>
+    {
+    public:
+    //! Constructs the integration method and associates it with the system
+    SolidAggregateIntegrator(std::shared_ptr<SystemDefinition> sysdef,
+                             std::shared_ptr<ParticleGroup> group,
+                             std::shared_ptr<SmoothingKernel<KT_> > skernel,
+                             std::shared_ptr<StateEquation<SET_> > equationofstate);
+    virtual ~SolidAggregateIntegrator();
+
+    //! Get the movement limit
+    pybind11::object getLimit();
+
+    //! Sets the movement limit
+    void setLimit(pybind11::object limit);
+
+    //! Get zero force
+    bool getZeroForce();
+
+    //! Sets the zero force option
+    /*! \param zero_force Set to true to specify that the integration with a zero net force on each
+       of the particles in the group
+    */
+    void setZeroForce(bool zero_force);
+
+    //! Performs the first step of the integration
+    virtual void integrateStepOne(uint64_t timestep);
+
+    //! Performs the second step of the integration
+    virtual void integrateStepTwo(uint64_t timestep);
+
+    //! Getter and Setter methods for density method
+    DensityMethod getDensityMethod()
+        {
+        return m_density_method;
+        }
+    void setDensityMethod(DensityMethod densitymethod)
+        {
+        m_density_method = densitymethod;
+        m_densitymethod_set = true;
+        }
+
+    protected:
+    bool m_limit;       //!< True if we should limit the distance a particle moves in one step
+    Scalar m_limit_val; //!< The maximum distance a particle is to move in one step
+    bool m_zero_force;  //!< True if the integration step should ignore computed forces
+    bool m_densitymethod_set; //!< True if method was set
+    DensityMethod m_density_method; //!< Density approach to use
+
+    };
+
+    namespace detail 
+{
+template<SmoothingKernelType KT_, StateEquationType SET_>
+void export_SolidAggregateIntegrator(pybind11::module& m);
+
+} // end namespace detail
+    } // end namespace sph
+    } // end namespace hoomd
+
+#endif // #ifndef __SOLID_AGGREGATE_INTEGRATOR_H__
+

@@ -35,7 +35,8 @@ class _DynamicIntegrator(BaseIntegrator):
 
 
         self._constraints = syncedlist.SyncedList(
-            OnlyTypes(Constraint, disallow_types=(Rigid,)),
+            OnlyTypes(Constraint, disallow_types=(Rigid,)
+                ),
             syncedlist._PartialGetAttr('_cpp_obj'),
             iterable=constraints)
 
@@ -52,16 +53,16 @@ class _DynamicIntegrator(BaseIntegrator):
         self._forces._sync(self._simulation, self._cpp_obj.forces)
         self._constraints._sync(self._simulation, self._cpp_obj.constraints)
         self._methods._sync(self._simulation, self._cpp_obj.methods)
-        if self.rigid is not None:
-            self.rigid._attach(self._simulation)
+        # if self.rigid is not None:
+        #     self.rigid._attach(self._simulation)
         super()._attach_hook()
 
     def _detach_hook(self):
         self._forces._unsync()
         self._methods._unsync()
         self._constraints._unsync()
-        if self.rigid is not None:
-            self.rigid._detach()
+        # if self.rigid is not None:
+        #     self.rigid._detach()
         super()._detach()
 
     def _remove(self):
@@ -112,9 +113,9 @@ class _DynamicIntegrator(BaseIntegrator):
         return children
 
     def _setattr_param(self, attr, value):
-        if attr == "rigid":
-            self._set_rigid(value)
-            return
+        # if attr == "rigid":
+        #     self._set_rigid(value)
+        #     return
         super()._setattr_param(attr, value)
 
     def _set_rigid(self, new_rigid):
@@ -282,22 +283,18 @@ class Integrator(_DynamicIntegrator):
             perform computations during the half-step of the integration.
 
     """
-    # TODO: Hier venetuell rigid aktivieren oder ändern
+
     def __init__(self,
-                 kernel,
-                 eos,
                  dt,
                  integrate_rotational_dof=False,
                  forces=None,
                  constraints=None,
                  methods=None,
-                 rigid=None,
+                 # rigid=None
                  half_step_hook=None
                  ):
 
-        super().__init__(forces, constraints, methods 
-            , rigid
-            )
+        super().__init__(forces, constraints, methods , rigid)
 
         self._param_dict.update(
             ParameterDict(
@@ -307,18 +304,11 @@ class Integrator(_DynamicIntegrator):
                                          allow_none=True)))
 
         self.half_step_hook = half_step_hook
-        self.kernel     = kernel.cpp_smoothingkernel
-        self.eos        = eos.cpp_stateequation
-
-
 
     def _attach_hook(self):
         # initialize the reflected c++ class
-        # initialize the reflected c++ class
-        self._cpp_baseclass_name = 'SPHIntegratorTwoStep' + '_' + Kernel[self.kernel.name] + '_' + EOS[self.eos.name]
-        base_cls = getattr(_sph, self._cpp_baseclass_name)
-        self._cpp_base_obj = base_cls(
-            self._simulation.state._cpp_sys_def, self.kernel.cpp_smoothingkernel, self.eos.cpp_stateequation, self.dt)
+        self._cpp_obj = _sph.SPHIntegratorTwoStep(
+            self._simulation.state._cpp_sys_def, self.dt)
 
         # Call attach from DynamicIntegrator which attaches forces,
         # constraint_forces, and methods, and calls super()._attach() itself.

@@ -36,6 +36,8 @@ maintainer: dkrach, david.krach@mib.uni-stuttgart.de
 
 #include "EvaluationMethodDefinition.h"
 
+//#include "SuspensionFlowNT.h"
+//#include "SPHIntegratorTwoStep.h"
 
 /*! \file SuspensionFlow.h
     \brief Contains code for the Quasi-incompressible Navier-Stokes solver
@@ -337,7 +339,7 @@ class PYBIND11_EXPORT SuspensionFlow : public SPHBaseClassConstraint<KT_, SET_>
                                                  access_location::host,
                                                  access_mode::readwrite);
             unsigned int N = h_body_len.data[body_type_id];
-            //std::cout << "h_body_len.data[body_type_id]" << h_body_len.data[body_type_id] << std::endl;
+            std::cout << "h_body_len.data[body_type_id]" << h_body_len.data[body_type_id] << std::endl;
             if (N == 0)
                 {
                 return pybind11::none();
@@ -427,6 +429,7 @@ class PYBIND11_EXPORT SuspensionFlow : public SPHBaseClassConstraint<KT_, SET_>
         std::shared_ptr<ParticleGroup> m_aggregategroup; //!< Group of solid aggregate particles
         std::shared_ptr<ParticleGroup> m_comgroup; //!< Group of solid aggregate center of mass particles
 
+        //std::shared_ptr<SPHIntegratorTwoStep> m_rigid_bodies;
 
 
         /// r_cut (not squared) given to the neighbor list
@@ -576,6 +579,43 @@ class PYBIND11_EXPORT SuspensionFlow : public SPHBaseClassConstraint<KT_, SET_>
 
     };
 
+// template<SmoothingKernelType KT_,StateEquationType SET_>
+// class PYBIND11_EXPORT SuspensionNT : public SuspensionFlow<KT_, SET_>, public SuspensionFlowNT
+//     {
+
+//     public:
+
+//     virtual void setDeltaT(Scalar dt)
+//         {
+//         m_deltaT = dt;
+//         }
+
+//     /// Get the number of aggregates (global)
+//     unsigned int getNAggregatesGlobal() const
+//         {
+//         return m_n_aggregates_global;
+//         }
+
+//     unsigned int m_n_aggregates_global;         //!< Global number of aggregates
+
+
+//     /// Update the constituent particles of a composite particle using the position, velocity
+//     /// and orientation of the central particle.
+//     virtual void updateCompositeParticles(uint64_t timestep);
+
+//     /// Validate rigid body constituent particles. The method purposely does not check
+//     /// positions or orientation.
+//     virtual void validateRigidBodies();
+
+//     protected:
+
+//     Scalar m_deltaT; //!< timestep size (required for some types of non-conservative forces)
+//     unsigned int m_n_aggregates_global;         //!< Global number of aggregates
+
+
+//     };
+
+//    }
 
 namespace detail 
 {

@@ -4,10 +4,12 @@ maintainer: dkrach, david.krach@mib.uni-stuttgart.de
 #include "SPHIntegrationMethodTwoStep.h"
 #include "hoomd/Integrator.h"
 
-#include "SuspensionFlow.h"
-
 #include "SmoothingKernel.h"
 #include "StateEquations.h"
+
+#include "SuspensionFlow.h"
+#include "SuspensionFlowFactory.h"
+
 
 #pragma once
 
@@ -38,17 +40,11 @@ namespace sph
 
     \ingroup updaters
 */
-
-template<SmoothingKernelType KT_,StateEquationType SET_>
 class PYBIND11_EXPORT SPHIntegratorTwoStep : public Integrator
     {
-
     public:
     /// Constructor
-    SPHIntegratorTwoStep(std::shared_ptr<SystemDefinition> sysdef,
-                         std::shared_ptr<SmoothingKernel<KT_> > skernel,
-                         std::shared_ptr<StateEquation<SET_> > equationofstate,
-                         Scalar deltaT);
+    SPHIntegratorTwoStep(std::shared_ptr<SystemDefinition> sysdef, Scalar deltaT);
 
     /// Destructor
     virtual ~SPHIntegratorTwoStep();
@@ -108,42 +104,45 @@ class PYBIND11_EXPORT SPHIntegratorTwoStep : public Integrator
     /// Check if autotuning is complete.
     virtual bool isAutotuningComplete();
 
-    //TODO: vermutlich nicht noetig
-    /// Getter and setter for accessing rigid body objects in Python
-    std::shared_ptr<SuspensionFlow<KT_, SET_>> getRigid()
+    // /// Getter and setter for accessing rigid body objects in Python
+    // std::shared_ptr<SuspensionFlow> getRigid()
+    //     {
+    //     return m_rigid_bodies;
+    //     }
+
+        // void setRigid(std::shared_ptr<SuspensionFlow> new_rigid)
+    //     {
+    //     m_rigid_bodies = new_rigid;
+    //     }
+
+    std::shared_ptr<SuspensionFlowNT> getRigid()
         {
         return m_rigid_bodies;
         }
 
-    void setRigid(std::shared_ptr<SuspensionFlow<KT_, SET_>>  new_rigid)
+    void setRigid(std::shared_ptr<SuspensionFlowNT> new_rigid)
         {
         m_rigid_bodies = new_rigid;
         }
 
-    protected:
-    std::vector<std::shared_ptr<SPHIntegrationMethodTwoStep>>
-        m_methods; //!< List of all the integration methods
 
-    std::shared_ptr<SuspensionFlow<KT_, SET_>> m_rigid_bodies; /// definition and updater for rigid bodies
+    protected:
+    std::vector<std::shared_ptr<SPHIntegrationMethodTwoStep>> m_methods; //!< List of all the integration methods
+
+    std::shared_ptr<SuspensionFlowNT> m_rigid_bodies; /// definition and updater for rigid bodies
 
     bool m_prepared;     //!< True if preprun has been called
     bool m_gave_warning; //!< True if a warning has been given about no methods added
 
     /// True when orientation degrees of freedom should be integrated
     // bool m_integrate_rotational_dof = false;
-
-
-    // private:
-    // std::shared_ptr<sph::SuspensionFlow<KT_Type, SET_Type>> m_rigid_bodies;
-
     };
 
-namespace detail
-    {
-// Exports the SPHIntegratorTwoStep class to python
-template<SmoothingKernelType KT_, StateEquationType SET_>
-void export_SPHIntegratorTwoStep(pybind11::module& m, std::string name);
+// namespace detail
+//     {
+// /// Exports the SPHIntegratorTwoStep class to python
+// void export_SPHIntegratorTwoStep(pybind11::module& m);
 
-    } // end namespace detail
+//     } // end namespace detail
     } // end namespace sph
     } // end namespace hoomd

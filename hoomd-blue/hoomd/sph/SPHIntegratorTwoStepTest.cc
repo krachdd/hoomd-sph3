@@ -17,10 +17,7 @@ namespace hoomd
     {
 namespace sph
     {
-
-template<SmoothingKernelType KT_,StateEquationType SET_>
-SPHIntegratorTwoStep<KT_, SET_>::SPHIntegratorTwoStep(std::shared_ptr<SystemDefinition> sysdef, std::shared_ptr<SmoothingKernel<KT_> > skernel, 
-                                           std::shared_ptr<StateEquation<SET_> > equationofstate, Scalar deltaT)
+SPHIntegratorTwoStep::SPHIntegratorTwoStep(std::shared_ptr<SystemDefinition> sysdef, Scalar deltaT)
     : Integrator(sysdef, deltaT), m_prepared(false), m_gave_warning(false)
     {
     m_exec_conf->msg->notice(5) << "Constructing SPHIntegratorTwoStep" << endl;
@@ -29,13 +26,12 @@ SPHIntegratorTwoStep<KT_, SET_>::SPHIntegratorTwoStep(std::shared_ptr<SystemDefi
     if (m_sysdef->isDomainDecomposed())
         {
         m_comm->getComputeCallbackSignal()
-            .connect<SPHIntegratorTwoStep<KT_, SET_>, &SPHIntegratorTwoStep<KT_, SET_>::updateRigidBodies>(this);
+            .connect<SPHIntegratorTwoStep, &SPHIntegratorTwoStep::updateRigidBodies>(this);
         }
 #endif
     }
 
-template<SmoothingKernelType KT_,StateEquationType SET_>
-SPHIntegratorTwoStep<KT_, SET_>::~SPHIntegratorTwoStep()
+SPHIntegratorTwoStep::~SPHIntegratorTwoStep()
     {
     m_exec_conf->msg->notice(5) << "Destroying SPHIntegratorTwoStep" << endl;
 
@@ -43,7 +39,7 @@ SPHIntegratorTwoStep<KT_, SET_>::~SPHIntegratorTwoStep()
     if (m_sysdef->isDomainDecomposed())
         {
         m_comm->getComputeCallbackSignal()
-            .disconnect<SPHIntegratorTwoStep<KT_, SET_>, &SPHIntegratorTwoStep<KT_, SET_>::updateRigidBodies>(this);
+            .disconnect<SPHIntegratorTwoStep, &SPHIntegratorTwoStep::updateRigidBodies>(this);
         }
 #endif
     }
@@ -53,8 +49,7 @@ SPHIntegratorTwoStep<KT_, SET_>::~SPHIntegratorTwoStep()
     variables forward to \a timestep+1.
     \post Internally, all forces present in the m_forces std::vector are evaluated at \a timestep+1
 */
-template<SmoothingKernelType KT_,StateEquationType SET_>
-void SPHIntegratorTwoStep<KT_, SET_>::update(uint64_t timestep)
+void SPHIntegratorTwoStep::update(uint64_t timestep)
     {
     Integrator::update(timestep);
 
@@ -149,8 +144,7 @@ void SPHIntegratorTwoStep<KT_, SET_>::update(uint64_t timestep)
 /*! \param deltaT new deltaT to set
     \post \a deltaT is also set on all contained integration methods
 */
-template<SmoothingKernelType KT_,StateEquationType SET_>
-void SPHIntegratorTwoStep<KT_, SET_>::setDeltaT(Scalar deltaT)
+void SPHIntegratorTwoStep::setDeltaT(Scalar deltaT)
     {
     Integrator::setDeltaT(deltaT);
 
@@ -176,8 +170,7 @@ void SPHIntegratorTwoStep<KT_, SET_>::setDeltaT(Scalar deltaT)
     removed DOF proportionately so that the results given by one ComputeThermo on the all group are
     consitent with the average of many ComputeThermo's on disjoint subset groups.
 */
-template<SmoothingKernelType KT_,StateEquationType SET_>
-Scalar SPHIntegratorTwoStep<KT_, SET_>::getTranslationalDOF(std::shared_ptr<ParticleGroup> group)
+Scalar SPHIntegratorTwoStep::getTranslationalDOF(std::shared_ptr<ParticleGroup> group)
     {
     Scalar periodic_dof_removed = 0;
 
@@ -248,8 +241,7 @@ Scalar SPHIntegratorTwoStep<KT_, SET_>::getTranslationalDOF(std::shared_ptr<Part
     If acceleration is available in the restart file, then just call computeNetForce so that
     net_force and net_virial are available in Python. This solves ticket #393
 */
-template<SmoothingKernelType KT_,StateEquationType SET_>
-void SPHIntegratorTwoStep<KT_, SET_>::prepRun(uint64_t timestep)
+void SPHIntegratorTwoStep::prepRun(uint64_t timestep)
     {
     Integrator::prepRun(timestep);
     // if (m_integrate_rotational_dof && !areForcesAnisotropic())
@@ -281,7 +273,7 @@ void SPHIntegratorTwoStep<KT_, SET_>::prepRun(uint64_t timestep)
 #endif
         if (m_rigid_bodies)
         {
-        m_rigid_bodies->validateRigidBodies();
+        m_rigid_bodies this->validateRigidBodies();
         updateRigidBodies(timestep);
         }
 
@@ -308,8 +300,7 @@ void SPHIntegratorTwoStep<KT_, SET_>::prepRun(uint64_t timestep)
 
 /*! Return the combined flags of all integration methods.
  */
-template<SmoothingKernelType KT_,StateEquationType SET_>
-PDataFlags SPHIntegratorTwoStep<KT_, SET_>::getRequestedPDataFlags()
+PDataFlags SPHIntegratorTwoStep::getRequestedPDataFlags()
     {
     PDataFlags flags;
 
@@ -324,8 +315,7 @@ PDataFlags SPHIntegratorTwoStep<KT_, SET_>::getRequestedPDataFlags()
     }
 
 //! Updates the rigid body constituent particles
-template<SmoothingKernelType KT_,StateEquationType SET_>
-void SPHIntegratorTwoStep<KT_, SET_>::updateRigidBodies(uint64_t timestep)
+void SPHIntegratorTwoStep::updateRigidBodies(uint64_t timestep)
     {
     // update the composite particle positions of any rigid bodies
     if (m_rigid_bodies)
@@ -334,8 +324,8 @@ void SPHIntegratorTwoStep<KT_, SET_>::updateRigidBodies(uint64_t timestep)
         }
     }
 
-template<SmoothingKernelType KT_,StateEquationType SET_>
-void SPHIntegratorTwoStep<KT_, SET_>::startAutotuning()
+
+void SPHIntegratorTwoStep::startAutotuning()
     {
     Integrator::startAutotuning();
 
@@ -345,8 +335,7 @@ void SPHIntegratorTwoStep<KT_, SET_>::startAutotuning()
     }
 
 /// Check if autotuning is complete.
-template<SmoothingKernelType KT_,StateEquationType SET_>
-bool SPHIntegratorTwoStep<KT_, SET_>::isAutotuningComplete()
+bool SPHIntegratorTwoStep::isAutotuningComplete()
     {
     bool result = Integrator::isAutotuningComplete();
     for (auto& method : m_methods)
@@ -357,8 +346,7 @@ bool SPHIntegratorTwoStep<KT_, SET_>::isAutotuningComplete()
     }
 
 /// helper function to compute net force
-template<SmoothingKernelType KT_,StateEquationType SET_>
-void SPHIntegratorTwoStep<KT_, SET_>::computeNetForce(uint64_t timestep)
+void SPHIntegratorTwoStep::computeNetForce(uint64_t timestep)
     {
     if (m_rigid_bodies)
         {
@@ -374,8 +362,7 @@ void SPHIntegratorTwoStep<KT_, SET_>::computeNetForce(uint64_t timestep)
 
 #ifdef ENABLE_HIP
 /// helper function to compute net force/virial on the GPU
-template<SmoothingKernelType KT_,StateEquationType SET_>
-void SPHIntegratorTwoStep<KT_, SET_>::computeNetForceGPU(uint64_t timestep)
+void SPHIntegratorTwoStep::computeNetForceGPU(uint64_t timestep)
     {
     if (m_rigid_bodies)
         {
@@ -392,8 +379,7 @@ void SPHIntegratorTwoStep<KT_, SET_>::computeNetForceGPU(uint64_t timestep)
 
 #ifdef ENABLE_MPI
 /// helper function to determine the ghost communication flags
-template<SmoothingKernelType KT_,StateEquationType SET_>
-CommFlags SPHIntegratorTwoStep<KT_, SET_>::determineFlags(uint64_t timestep)
+CommFlags SPHIntegratorTwoStep::determineFlags(uint64_t timestep)
     {
     auto flags = Integrator::determineFlags(timestep);
     if (m_rigid_bodies)
@@ -415,64 +401,29 @@ CommFlags SPHIntegratorTwoStep<KT_, SET_>::determineFlags(uint64_t timestep)
 //     return is_anisotropic;
 //     }
 
-// template<SmoothingKernelType KT_,StateEquationType SET_>
-// std::string SPHIntegratorTwoStep<KT_, SET_>::v()
-// {
-// return std::string("IntegrationMethodList") + typeid(KT_).name() + typeid(SET_).name();
-// }
+
+
 
 
 namespace detail
     {
-template<SmoothingKernelType KT_,StateEquationType SET_>
-void export_SPHIntegratorTwoStep(pybind11::module& m, std::string name)
+void export_SPHIntegratorTwoStep(pybind11::module& m)
     {
-        // vermutlich templateproblem. Muss wohl für jede Möglichkeit erzeugt werden
-    //pybind11::bind_vector<std::vector<std::shared_ptr<SPHIntegrationMethodTwoStep>>>( m, "IntegrationMethodList");
+    pybind11::bind_vector<std::vector<std::shared_ptr<SPHIntegrationMethodTwoStep>>>(
+        m,
+        "IntegrationMethodList");
 
-    std::string IntegrationMethodListTemplate = "IntegrationMethodList" + name;
-    //std::cout << "IML:" << IntegrationMethodListTemplate << std::endl;
-
-    pybind11::bind_vector<std::vector<std::shared_ptr<SPHIntegrationMethodTwoStep>>>( m, IntegrationMethodListTemplate, pybind11::module_local());
-
-    pybind11::class_<SPHIntegratorTwoStep<KT_, SET_>, Integrator, std::shared_ptr<SPHIntegratorTwoStep<KT_, SET_>>>(m, name.c_str())
-        .def(pybind11::init<std::shared_ptr<SystemDefinition>,
-         std::shared_ptr<SmoothingKernel<KT_> >,
-         std::shared_ptr<StateEquation<SET_> >,
-         Scalar>())
-        .def_property_readonly("methods", &SPHIntegratorTwoStep<KT_, SET_>::getIntegrationMethods)
-        .def_property("rigid", &SPHIntegratorTwoStep<KT_, SET_>::getRigid, &SPHIntegratorTwoStep<KT_, SET_>::setRigid);
+    pybind11::class_<SPHIntegratorTwoStep, Integrator, std::shared_ptr<SPHIntegratorTwoStep>>(
+        m,
+        "SPHIntegratorTwoStep")
+        .def(pybind11::init<std::shared_ptr<SystemDefinition>, Scalar>())
+        .def_property_readonly("methods", &SPHIntegratorTwoStep::getIntegrationMethods);
+        .def_property("rigid", &SPHIntegratorTwoStep::getRigid, &SPHIntegratorTwoStep::setRigid)
         // .def_property("integrate_rotational_dof",
                       // &SPHIntegratorTwoStep::getIntegrateRotationalDOF,
                       // &SPHIntegratorTwoStep::setIntegrateRotationalDOF);
     }
+
     } // end namespace detail
-
-//! Explicit template instantiations
-template class PYBIND11_EXPORT SPHIntegratorTwoStep<wendlandc2, linear>;
-template class PYBIND11_EXPORT SPHIntegratorTwoStep<wendlandc2, tait>;
-template class PYBIND11_EXPORT SPHIntegratorTwoStep<wendlandc4, linear>;
-template class PYBIND11_EXPORT SPHIntegratorTwoStep<wendlandc4, tait>;
-template class PYBIND11_EXPORT SPHIntegratorTwoStep<wendlandc6, linear>;
-template class PYBIND11_EXPORT SPHIntegratorTwoStep<wendlandc6, tait>;
-template class PYBIND11_EXPORT SPHIntegratorTwoStep<quintic, linear>;
-template class PYBIND11_EXPORT SPHIntegratorTwoStep<quintic, tait>;
-template class PYBIND11_EXPORT SPHIntegratorTwoStep<cubicspline, linear>;
-template class PYBIND11_EXPORT SPHIntegratorTwoStep<cubicspline, tait>;
-
-namespace detail
-    {
-    template void export_SPHIntegratorTwoStep<wendlandc2, linear>(pybind11::module& m, std::string name = "SPHIntegratorTwoStep_WC2_L");
-    template void export_SPHIntegratorTwoStep<wendlandc2, tait>(pybind11::module& m, std::string name = "SPHIntegratorTwoStep_WC2_T");
-    template void export_SPHIntegratorTwoStep<wendlandc4, linear>(pybind11::module& m, std::string name = "SPHIntegratorTwoStep_WC4_L");
-    template void export_SPHIntegratorTwoStep<wendlandc4, tait>(pybind11::module& m, std::string name = "SPHIntegratorTwoStep_WC4_T");
-    template void export_SPHIntegratorTwoStep<wendlandc6, linear>(pybind11::module& m, std::string name = "SPHIntegratorTwoStep_WC6_L");
-    template void export_SPHIntegratorTwoStep<wendlandc6, tait>(pybind11::module& m, std::string name = "SPHIntegratorTwoStep_WC6_T");
-    template void export_SPHIntegratorTwoStep<quintic, linear>(pybind11::module& m, std::string name = "SPHIntegratorTwoStep_Q_L");
-    template void export_SPHIntegratorTwoStep<quintic, tait>(pybind11::module& m, std::string name = "SPHIntegratorTwoStep_Q_T");
-    template void export_SPHIntegratorTwoStep<cubicspline, linear>(pybind11::module& m, std::string name = "SPHIntegratorTwoStep_CS_L");
-    template void export_SPHIntegratorTwoStep<cubicspline, tait>(pybind11::module& m, std::string name = "SPHIntegratorTwoStep_CS_T");
-    } // end namespace detail
-
     } // end namespace sph
     } // end namespace hoomd

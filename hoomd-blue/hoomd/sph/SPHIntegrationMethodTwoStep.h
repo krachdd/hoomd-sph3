@@ -182,12 +182,12 @@ class PYBIND11_EXPORT SPHIntegrationMethodTwoStep : public Autotuned
     Scalar m_deltaT; //!< The time step
     };
 
-// namespace detail
-//     {
-// //! Exports the SPHIntegrationMethodTwoStep class to python
-// void export_SPHIntegrationMethodTwoStep(pybind11::module& m);
+namespace detail
+    {
+//! Exports the SPHIntegrationMethodTwoStep class to python
+void export_SPHIntegrationMethodTwoStep(pybind11::module& m);
 
-//     } // end namespace detail
+    } // end namespace detail
     } // end namespace sph
     } // end namespace hoomd
 
