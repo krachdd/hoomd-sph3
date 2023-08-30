@@ -16,6 +16,7 @@ set(_${COMPONENT_NAME}_sources
     StateEquations.cc
     SPHBaseClass.cc
     SinglePhaseFlow.cc
+    SuspensionFlow.cc
 #     TwoPhaseFlow.cc
 #     SmoothingKernelExport.cc
     SmoothingKernel.cc
@@ -31,7 +32,8 @@ set(_${COMPONENT_NAME}_headers
     SPHIntegrationMethodTwoStep.h     
 #     TwoPhaseFlowGPU.cuh
 #     GeneralGPUFunctions.cuh
-    SinglePhaseFlow.h     
+    SinglePhaseFlow.h
+    SuspensionFlow.h     
     SPHIntegratorTwoStep.h            
 #     TwoPhaseFlowGPU.h
 #     RigidBodyIntegratorGPU.cuh     

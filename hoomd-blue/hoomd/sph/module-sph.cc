@@ -15,6 +15,7 @@ maintainer: dkrach, david.krach@mib.uni-stuttgart.de
 // // #include "SuspendedObjectIntegrator.h"
 // // #include "RigidBodyIntegrator.h"
 #include "SinglePhaseFlow.h"
+#include "SuspensionFlow.h"
 // // #include "TwoPhaseFlow.h"
 #include "CustomForceCompute.h"
 
@@ -132,6 +133,18 @@ PYBIND11_MODULE(_sph, m){
     export_SinglePhaseFlow<quintic, tait>(m, "SinglePF_Q_T");
     export_SinglePhaseFlow<cubicspline, linear>(m, "SinglePF_CS_L");
     export_SinglePhaseFlow<cubicspline, tait>(m, "SinglePF_CS_T");
+
+    export_SuspensionFlow<wendlandc2, linear>(m, "SuspensionF_WC2_L");
+    export_SuspensionFlow<wendlandc2, tait>(m, "SuspensionF_WC2_T");
+    export_SuspensionFlow<wendlandc4, linear>(m, "SuspensionF_WC4_L");
+    export_SuspensionFlow<wendlandc4, tait>(m, "SuspensionF_WC4_T");
+    export_SuspensionFlow<wendlandc6, linear>(m, "SuspensionF_WC6_L");
+    export_SuspensionFlow<wendlandc6, tait>(m, "SuspensionF_WC6_T");
+    export_SuspensionFlow<quintic, linear>(m, "SuspensionF_Q_L");
+    export_SuspensionFlow<quintic, tait>(m, "SuspensionF_Q_T");
+    export_SuspensionFlow<cubicspline, linear>(m, "SuspensionF_CS_L");
+    export_SuspensionFlow<cubicspline, tait>(m, "SuspensionF_CS_T");
+
 
     export_CustomForceCompute(m);
 
