@@ -482,7 +482,7 @@ void SuspensionFlow<KT_, SET_>::compute_ndensity(uint64_t timestep)
     this->m_exec_conf->msg->notice(7) << "Computing SuspensionFlow::Number Density" << std::endl;
 
     // Grab handles for particle data
-    ArrayHandle<Scalar> h_density(this->m_pdata->getDensities(), access_location::host, access_mode::readwrite);
+    ArrayHandle<Scalar>  h_density(this->m_pdata->getDensities(), access_location::host, access_mode::readwrite);
     ArrayHandle<Scalar4> h_pos(this->m_pdata->getPositions(), access_location::host, access_mode::read);
     ArrayHandle<Scalar4> h_velocity(this->m_pdata->getVelocities(), access_location::host, access_mode::read);
     ArrayHandle<Scalar>  h_h(this->m_pdata->getSlengths(), access_location::host, access_mode::read);
@@ -783,9 +783,9 @@ void SuspensionFlow<KT_, SET_>::compute_noslip(uint64_t timestep)
 
             //     // ehemals rakulan
 
-            //     ph_c0.x += h_dpe.data[k].x * dx.x * wij;
-            //     ph_c0.y += h_dpe.data[k].x * dx.y * wij;
-            //     ph_c0.z += h_dpe.data[k].x * dx.z * wij;
+            //     ph_c0.x += h_density.data[k] * dx.x * wij;
+            //     ph_c0.y += h_density.data[k] * dx.y * wij;
+            //     ph_c0.z += h_density.data[k] * dx.z * wij;
 
             //     }
             } // End neighbor loop
@@ -990,9 +990,7 @@ void SuspensionFlow<KT_, SET_>::renormalize_density(uint64_t timestep)
 template<SmoothingKernelType KT_,StateEquationType SET_>
 void SuspensionFlow<KT_, SET_>::compute_Centerofmasses(unsigned int timestep, bool print)
     {
-    // profile this step
-    if (this->m_prof)
-    this->m_prof->push("Suspended Object Compute Center of Mass");
+    this->m_exec_conf->msg->notice(5) << "Suspended Object Compute Center of Mass" << std::endl;
 
     // Handle data on multiple cores
     // int world_size;
@@ -1056,7 +1054,7 @@ void SuspensionFlow<KT_, SET_>::compute_Centerofmasses(unsigned int timestep, bo
         unsigned int totalgroupN = solidtype_size;
 
     #ifdef ENABLE_MPI
-        MPI_Allreduce(MPI_IN_PLACE, &angles[0], 6, MPI_HOOSPH_SCALAR, MPI_SUM, this->m_exec_conf->getMPICommunicator());
+        MPI_Allreduce(MPI_IN_PLACE, &angles[0], 6, MPI_HOOMD_SCALAR, MPI_SUM, this->m_exec_conf->getMPICommunicator());
         MPI_Allreduce(MPI_IN_PLACE, &totalgroupN, 1, MPI_UNSIGNED, MPI_SUM, this->m_exec_conf->getMPICommunicator());
     #endif
 
@@ -1091,10 +1089,10 @@ void SuspensionFlow<KT_, SET_>::compute_Centerofmasses(unsigned int timestep, bo
             }
 
     #ifdef ENABLE_MPI
-        MPI_Allreduce(MPI_IN_PLACE, &centerofmass.x, 1, MPI_HOOSPH_SCALAR, MPI_MAX, this->m_exec_conf->getMPICommunicator());
-        MPI_Allreduce(MPI_IN_PLACE, &centerofmass.y, 1, MPI_HOOSPH_SCALAR, MPI_MAX, this->m_exec_conf->getMPICommunicator());
-        MPI_Allreduce(MPI_IN_PLACE, &centerofmass.z, 1, MPI_HOOSPH_SCALAR, MPI_MAX, this->m_exec_conf->getMPICommunicator());
-        MPI_Allreduce(MPI_IN_PLACE, &centerofmass.w, 1, MPI_HOOSPH_SCALAR, MPI_MAX, this->m_exec_conf->getMPICommunicator());
+        MPI_Allreduce(MPI_IN_PLACE, &centerofmass.x, 1, MPI_HOOMD_SCALAR, MPI_MAX, this->m_exec_conf->getMPICommunicator());
+        MPI_Allreduce(MPI_IN_PLACE, &centerofmass.y, 1, MPI_HOOMD_SCALAR, MPI_MAX, this->m_exec_conf->getMPICommunicator());
+        MPI_Allreduce(MPI_IN_PLACE, &centerofmass.z, 1, MPI_HOOMD_SCALAR, MPI_MAX, this->m_exec_conf->getMPICommunicator());
+        MPI_Allreduce(MPI_IN_PLACE, &centerofmass.w, 1, MPI_HOOMD_SCALAR, MPI_MAX, this->m_exec_conf->getMPICommunicator());
     #endif
 
         // Handle data on multiple cores
@@ -1119,11 +1117,6 @@ void SuspensionFlow<KT_, SET_>::compute_Centerofmasses(unsigned int timestep, bo
             }
         }
 
-    // done profiling
-    if (this->m_prof){
-        this->m_prof->pop();
-        }
-
     }
 
 /*! Compute equivalent radi of solids in the system
@@ -1134,12 +1127,10 @@ void SuspensionFlow<KT_, SET_>::compute_Centerofmasses(unsigned int timestep, bo
 template<SmoothingKernelType KT_,StateEquationType SET_>
 void SuspensionFlow<KT_, SET_>::compute_equivalentRadii(unsigned int timestep, bool print)
     {
-    // profile this step
-    if (this->m_prof)
-    this->m_prof->push("Suspended Object Compute equivalent radi");
+    this->m_exec_conf->msg->notice(5) << "Suspended Object Compute equivalent radi" << std::endl;
 
     // Initialize fields
-    ArrayHandle<Scalar3> h_dpe(this->m_pdata->getDPEs(), access_location::host, access_mode::read);
+    // ArrayHandle<Scalar> h_density(this->m_pdata->getDensities(), access_location::host, access_mode::read);
     ArrayHandle<Scalar4> h_pos(this->m_pdata->getPositions(), access_location::host, access_mode::read);
     ArrayHandle<Scalar4> h_velocity(this->m_pdata->getVelocities(), access_location::host, access_mode::read);
     ArrayHandle<Scalar>  h_h(this->m_pdata->getSlengths(), access_location::host, access_mode::read);
@@ -1147,7 +1138,7 @@ void SuspensionFlow<KT_, SET_>::compute_equivalentRadii(unsigned int timestep, b
     // access the neighbor list
     ArrayHandle<unsigned int> h_n_neigh(this->m_nlist->getNNeighArray(), access_location::host, access_mode::read);
     ArrayHandle<unsigned int> h_nlist(this->m_nlist->getNListArray(), access_location::host, access_mode::read);
-    ArrayHandle<unsigned int> h_head_list(this->m_nlist->getHeadList(), access_location::host, access_mode::read);
+    ArrayHandle<size_t> h_head_list(this->m_nlist->getHeadList(), access_location::host, access_mode::read);
     ArrayHandle<unsigned int> h_type_property_map(this->m_type_property_map, access_location::host, access_mode::read);
      
     // Local copy of the simulation box
@@ -1262,9 +1253,9 @@ void SuspensionFlow<KT_, SET_>::compute_equivalentRadii(unsigned int timestep, b
 
     // Reduce on all processors
     #ifdef ENABLE_MPI
-        // MPI_Allreduce(MPI_IN_PLACE, &meanradi, 1, MPI_HOOSPH_SCALAR, MPI_SUM, this->m_exec_conf->getMPICommunicator());
-        // MPI_Allreduce(MPI_IN_PLACE, &minradi, 1, MPI_HOOSPH_SCALAR, MPI_MIN, this->m_exec_conf->getMPICommunicator());
-        MPI_Allreduce(MPI_IN_PLACE, &maxradi, 1, MPI_HOOSPH_SCALAR, MPI_MAX, this->m_exec_conf->getMPICommunicator());
+        // MPI_Allreduce(MPI_IN_PLACE, &meanradi, 1, MPI_HOOMD_SCALAR, MPI_SUM, this->m_exec_conf->getMPICommunicator());
+        // MPI_Allreduce(MPI_IN_PLACE, &minradi, 1, MPI_HOOMD_SCALAR, MPI_MIN, this->m_exec_conf->getMPICommunicator());
+        MPI_Allreduce(MPI_IN_PLACE, &maxradi, 1, MPI_HOOMD_SCALAR, MPI_MAX, this->m_exec_conf->getMPICommunicator());
         // MPI_Allreduce(MPI_IN_PLACE, &containing_particles, 1, MPI_UNSIGNED, MPI_SUM, this->m_exec_conf->getMPICommunicator());
     #endif
 
@@ -1280,11 +1271,6 @@ void SuspensionFlow<KT_, SET_>::compute_equivalentRadii(unsigned int timestep, b
             }
 
         }
-
-    // done profiling
-    if (this->m_prof){
-        this->m_prof->pop();
-        }
         
     }
 
@@ -1297,9 +1283,9 @@ void SuspensionFlow<KT_, SET_>::compute_equivalentRadii(unsigned int timestep, b
 template<SmoothingKernelType KT_,StateEquationType SET_>
 void SuspensionFlow<KT_, SET_>::compute_repulsiveForce(unsigned int timestep, bool print)
     {
-    // profile this step
-    if (this->m_prof)
-    this->m_prof->push("Suspended Object Compute Repulsive Forces");
+
+    this->m_exec_conf->msg->notice(5) << "Suspended Object Compute Repulsive Forces" << std::endl;
+
 
     // Check input data, can be omitted if need be
     //assert(h_conforce.data);
@@ -1312,7 +1298,7 @@ void SuspensionFlow<KT_, SET_>::compute_repulsiveForce(unsigned int timestep, bo
     // access the neighbor list
     ArrayHandle<unsigned int> h_n_neigh(this->m_nlist->getNNeighArray(), access_location::host, access_mode::read);
     ArrayHandle<unsigned int> h_nlist(this->m_nlist->getNListArray(), access_location::host, access_mode::read);
-    ArrayHandle<unsigned int> h_head_list(this->m_nlist->getHeadList(), access_location::host, access_mode::read);
+    ArrayHandle<size_t> h_head_list(this->m_nlist->getHeadList(), access_location::host, access_mode::read);
     ArrayHandle<unsigned int> h_type_property_map(this->m_type_property_map, access_location::host, access_mode::read);
 
     // Zero data before calculation
@@ -1406,7 +1392,7 @@ void SuspensionFlow<KT_, SET_>::compute_repulsiveForce(unsigned int timestep, bo
             } // end over solid bodies that might be in contact
 
     #ifdef ENABLE_MPI
-        MPI_Allreduce(&F_rep, &F_total, 3, MPI_HOOSPH_SCALAR, MPI_SUM, this->m_exec_conf->getMPICommunicator());
+        MPI_Allreduce(&F_rep, &F_total, 3, MPI_HOOMD_SCALAR, MPI_SUM, this->m_exec_conf->getMPICommunicator());
     #endif
 
         // Handle data on multiple cores
@@ -1516,11 +1502,6 @@ void SuspensionFlow<KT_, SET_>::compute_repulsiveForce(unsigned int timestep, bo
 
         } // end loop over solid bodies
 
-    // done profiling
-    if (this->m_prof){
-        this->m_prof->pop();
-        }
-
     }
 
 /*! Perform force computation
@@ -1534,10 +1515,6 @@ void SuspensionFlow<KT_, SET_>::forcecomputation(uint64_t timestep)
         this->m_exec_conf->msg->notice(7) << "Computing SuspensionFlow::Forces using SUMMATION approach " << m_density_method << endl;
     else if ( m_density_method == DENSITYCONTINUITY )
         this->m_exec_conf->msg->notice(7) << "Computing SuspensionFlow::Forces using CONTINUITY approach " << m_density_method << endl;
-
-    // Start the profile for this compute
-    if (this->m_prof)
-        this->m_prof->push("SuspensionFlowForces");
 
     // Grab handles for particle data
     // Access mode overwrite implies that data does not need to be read in
@@ -1788,12 +1765,13 @@ void SuspensionFlow<KT_, SET_>::forcecomputation(uint64_t timestep)
     // Add volumetric force (gravity)
     this->applyBodyForce(timestep, m_fluidgroup);
     if ( m_compute_solid_forces )
+        {
         this->applyBodyForce(timestep, m_solidgroup);
 
         // for each particle in solid group
         unsigned int group_size = m_solidgroup->getNumMembers();
         for (unsigned int group_idx = 0; group_idx < group_size; group_idx++)
-        {
+            {
             // Read particle index
             unsigned int j = m_solidgroup->getMemberIndex(group_idx);
 
@@ -1801,11 +1779,8 @@ void SuspensionFlow<KT_, SET_>::forcecomputation(uint64_t timestep)
             h_force.data[j].x += h_conforce.data[j].x;
             h_force.data[j].y += h_conforce.data[j].y;
             h_force.data[j].z += h_conforce.data[j].z;
+            }
         }
-
-
-    if (this->m_prof)
-        this->m_prof->pop();
 
     }
 
@@ -1815,9 +1790,6 @@ void SuspensionFlow<KT_, SET_>::forcecomputation(uint64_t timestep)
 template<SmoothingKernelType KT_,StateEquationType SET_>
 void SuspensionFlow<KT_, SET_>::computeForces(uint64_t timestep)
     {
-
-    if (this->m_prof)
-        this->m_prof->push("SuspensionFlow");s
 
     // start by updating the neighborlist
     this->m_nlist->compute(timestep);

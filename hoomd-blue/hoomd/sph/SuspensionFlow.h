@@ -372,13 +372,13 @@ class PYBIND11_EXPORT SuspensionFlow : public SPHBaseClass<KT_, SET_>
         * \param timestep The time step
         * \post particle auxiliary array 2 is up-to-date
         */
-        void update_ghost_aux2(unsigned int timestep);
+        void update_ghost_aux2(uint64_t timestep);
 
         /*! Helper function to set communication flags and update auxiliary array 3
         * \param timestep The time step
         * \post particle auxiliary array 3 is up-to-date
         */
-        void update_ghost_aux34(unsigned int timestep);
+        void update_ghost_aux34(uint64_t timestep);
 
     private:
 
