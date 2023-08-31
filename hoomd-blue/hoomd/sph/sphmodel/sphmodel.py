@@ -438,7 +438,7 @@ class SinglePhaseFlow(SPHModel):
         self._cpp_obj.setRCut(('F', 'S'), rcut)
         self._cpp_obj.setRCut(('S', 'S'), rcut)
         self._cpp_obj.setRCut(('F', 'F'), rcut)
-        self._cpp_obj.setRCut(('F', 'R'), rcut)
+        # self._cpp_obj.setRCut(('F', 'R'), rcut)
 
 
 
