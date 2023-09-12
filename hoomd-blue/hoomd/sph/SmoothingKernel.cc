@@ -39,9 +39,14 @@ m_kappa = 2.0
 m_self_density = 3.0
 see https://pysph.readthedocs.io/en/latest/reference/kernels.html
 */
+// template<>
+// SmoothingKernel<wendlandc4>::SmoothingKernel()
+//     : m_kappa(Scalar(2.0)), m_self_density(Scalar(3.0)), m_alpha(Scalar(0.6154820064881891))
+//     {
+//     }
 template<>
 SmoothingKernel<wendlandc4>::SmoothingKernel()
-    : m_kappa(Scalar(2.0)), m_self_density(Scalar(3.0)), m_alpha(Scalar(0.6154820064881891))
+    : m_kappa(Scalar(2.0)), m_self_density(Scalar(3.0)), m_alpha(Scalar(0.20516066882939635))
     {
     }
 template<>
@@ -149,15 +154,27 @@ Scalar SmoothingKernel<wendlandc2>::wij(const Scalar h, const Scalar rij)
     return w;
 }
 /* checked DK 10/2022 */
+// template<>
+// Scalar SmoothingKernel<wendlandc4>::wij(const Scalar h, const Scalar rij)
+// {
+//         Scalar q = rij / h;
+//         Scalar w = Scalar(0.0);
+//         if ( q >= 0 && q <= 2.0)
+//             {
+//             // (alpha/h^D) * (1-0.5q)^6 * (35/12*q^2 +3*q + 1)
+//             w = normalizationfactor(h)*pow(1.0-(0.5*q),6.0)*(2.9166666*q*q + 3.0*q + 1.0);
+//             }
+//         return w;
+// }
 template<>
 Scalar SmoothingKernel<wendlandc4>::wij(const Scalar h, const Scalar rij)
 {
         Scalar q = rij / h;
         Scalar w = Scalar(0.0);
-        if ( q >= 0 && q <= 2.0)
+        if ( q >= 0 && q < Scalar(2) )
             {
-            // (alpha/h^D) * (1-0.5q)^6 * (35/12*q^2 +3*q + 1)
-            w = normalizationfactor(h)*pow(1.0-(0.5*q),6.0)*(2.9166666*q*q + 3.0*q + 1.0);
+            // (alpha/h^D) * (1-0.5q)^6 * ( 8.75*q^2 + 9*q + 3 )
+            w = normalizationfactor(h)*pow(Scalar(1)-Scalar(0.5)*q,Scalar(6))*(Scalar(8.75)*q*q+Scalar(9)*q+Scalar(3));
             }
         return w;
 }
@@ -232,15 +249,27 @@ Scalar SmoothingKernel<wendlandc2>::dwijdr(const Scalar h, const Scalar rij)
 /* checked DK 10/2022 
 adapted limits, removed additional datatyping
 */
+// template<>
+// Scalar SmoothingKernel<wendlandc4>::dwijdr(const Scalar h, const Scalar rij)
+// {
+//         Scalar q = rij / h;
+//         Scalar dwdr = 0.0;
+//         if ( q >= 0 && q <=  2.0 )
+//             {
+//             // - (alpha/h^D+1) * 7./96. * (2-q)^5 *q*(5q +2)
+//             dwdr = -(normalizationfactor(h)/h)* 7./96. * (2.0-q) * (2.0-q) * (2.0-q) * (2.0-q) * (2.0-q) * q * (5.0*q +2);
+//             }
+//         return dwdr;
+// }
 template<>
 Scalar SmoothingKernel<wendlandc4>::dwijdr(const Scalar h, const Scalar rij)
 {
         Scalar q = rij / h;
-        Scalar dwdr = 0.0;
-        if ( q >= 0 && q <=  2.0 )
+        Scalar dwdr = Scalar(0.0);
+        if ( q >= 0 && q < Scalar(2) && rij > 1e-12)
             {
-            // - (alpha/h^D+1) * 7./96. * (2-q)^5 *q*(5q +2)
-            dwdr = -(normalizationfactor(h)/h)* 7./96. * (2.0-q) * (2.0-q) * (2.0-q) * (2.0-q) * (2.0-q) * q * (5.0*q +2);
+            // (alpha/h^D+1) * (1-0.5*q)^5 * q * -(35*q + 14)
+            dwdr = -(normalizationfactor(h)/h)*pow(Scalar(1)-Scalar(0.5)*q,Scalar(5))*q*(Scalar(35)*q+Scalar(14));
             }
         return dwdr;
 }
