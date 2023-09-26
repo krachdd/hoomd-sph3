@@ -67,6 +67,7 @@ class PYBIND11_EXPORT SinglePhaseFlowNN : public SPHBaseClass<KT_, SET_>
                         std::shared_ptr<nsearch::NeighborList> nlist,
                         std::shared_ptr<ParticleGroup> fluidgroup,
                         std::shared_ptr<ParticleGroup> solidgroup,
+                        std::shared_ptr<ParticleGroup> allgroup,
                         DensityMethod   mdensitymethod=DENSITYSUMMATION,
                         ViscosityMethod mviscositymethod=HARMONICAVERAGE);
 
@@ -214,6 +215,8 @@ class PYBIND11_EXPORT SinglePhaseFlowNN : public SPHBaseClass<KT_, SET_>
         // Shared pointers
         std::shared_ptr<ParticleGroup> m_fluidgroup; //!< Group of fluid particles
         std::shared_ptr<ParticleGroup> m_solidgroup; //!< Group of fluid particles
+        std::shared_ptr<ParticleGroup> m_allgroup; //!< Group of fluid particles
+
 
         /// r_cut (not squared) given to the neighbor list
         std::shared_ptr<GlobalArray<Scalar>> m_r_cut_nlist;
@@ -246,6 +249,7 @@ class PYBIND11_EXPORT SinglePhaseFlowNN : public SPHBaseClass<KT_, SET_>
         // Auxiliary variables
         std::vector<unsigned int> m_fluidtypes; //!< Fluid type numbers
         std::vector<unsigned int> m_solidtypes; //!< Solid type numbers
+        std::vector<unsigned int> m_alltypes; //!< Solid type numbers
         GPUArray<unsigned int> m_type_property_map; //!< to check if a particle type is solid or fluid
 
         // Flags
