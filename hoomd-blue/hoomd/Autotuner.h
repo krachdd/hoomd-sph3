@@ -52,7 +52,7 @@ class PYBIND11_EXPORT AutotunerBase
     AutotunerBase(const std::string& name) : m_name(name) { }
 
     virtual ~AutotunerBase() { }
-    
+
     /// Call to start the autotuning sequence.
     virtual void startScan() { }
 

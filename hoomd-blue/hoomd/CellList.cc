@@ -18,7 +18,7 @@ namespace hoomd
  */
 CellList::CellList(std::shared_ptr<SystemDefinition> sysdef)
     : Compute(sysdef), m_nominal_width(Scalar(1.0)), m_radius(1), m_compute_xyzf(true),
-      m_compute_tdb(false), 
+      m_compute_type_body(false), 
       // m_compute_orientation(false), m_compute_idx(false), m_flag_charge(false), 
       m_kappa(3), m_flag_type(false), m_sort_cell_list(false), m_compute_adj_list(true)
     {
@@ -200,44 +200,6 @@ void CellList::compute(uint64_t timestep)
         }
     }
 
-/*! \param num_iters Number of iterations to average for the benchmark
-    \returns Milliseconds of execution time per calculation
-
-    Calls computeCellList repeatedly to benchmark the compute
-*/
-double CellList::benchmark(unsigned int num_iters)
-    {
-    ClockSource t;
-
-    // ensure that any changed parameters have been propagated and memory allocated
-    compute(0);
-
-    // warm up run
-    computeCellList();
-
-#ifdef ENABLE_HIP
-    if (m_exec_conf->isCUDAEnabled())
-        {
-        hipDeviceSynchronize();
-        CHECK_CUDA_ERROR();
-        }
-#endif
-
-    // benchmark
-    uint64_t start_time = t.getTime();
-    for (unsigned int i = 0; i < num_iters; i++)
-        computeCellList();
-
-#ifdef ENABLE_HIP
-    if (m_exec_conf->isCUDAEnabled())
-        hipDeviceSynchronize();
-#endif
-    uint64_t total_time_ns = t.getTime() - start_time;
-
-    // convert the run time to milliseconds
-    return double(total_time_ns) / 1e6 / double(num_iters);
-    }
-
 void CellList::initializeAll()
     {
     initializeWidth();
@@ -338,17 +300,17 @@ void CellList::initializeMemory()
         m_xyzf.swap(xyzf);
         }
 
-    if (m_compute_tdb)
+    if (m_compute_type_body)
         {
-        GlobalArray<Scalar4> tdb(m_cell_list_indexer.getNumElements(), m_exec_conf);
-        m_tdb.swap(tdb);
-        TAG_ALLOCATION(m_tdb);
+        GlobalArray<uint2> type_body(m_cell_list_indexer.getNumElements(), m_exec_conf);
+        m_type_body.swap(type_body);
+        TAG_ALLOCATION(m_type_body);
         }
     else
         {
         // array is no longer needed, discard it
-        GlobalArray<Scalar4> tdb;
-        m_tdb.swap(tdb);
+        GlobalArray<uint2> type_body;
+        m_type_body.swap(type_body);
         }
 
     // if (m_compute_orientation)
@@ -451,9 +413,6 @@ void CellList::computeCellList()
     ArrayHandle<unsigned int> h_body(m_pdata->getBodies(),
                                      access_location::host,
                                      access_mode::read);
-    // ArrayHandle<Scalar> h_diameter(m_pdata->getDiameters(),
-    //                                access_location::host,
-    //                                access_mode::read);
     ArrayHandle<Scalar> h_slength(m_pdata->getSlengths(),
                                    access_location::host,
                                    access_mode::read);
@@ -469,7 +428,7 @@ void CellList::computeCellList()
                                             access_location::host,
                                             access_mode::overwrite);
     ArrayHandle<unsigned int> h_cell_idx(m_idx, access_location::host, access_mode::overwrite);
-    ArrayHandle<Scalar4> h_tdb(m_tdb, access_location::host, access_mode::overwrite);
+    ArrayHandle<uint2> h_type_body(m_type_body, access_location::host, access_mode::overwrite);
     uint3 conditions = make_uint3(0, 0, 0);
 
     // shorthand copies of the indexers
@@ -569,9 +528,9 @@ void CellList::computeCellList()
             //                                                 Scalar(0.0));
             //     }
 
-            if (m_compute_tdb)
+            if (m_compute_type_body)
                 {
-                h_tdb.data[cli(offset, bin)] = make_scalar4(h_pos.data[n].w,
+                h_type_body.data[cli(offset, bin)] = make_scalar4(h_pos.data[n].w,
                                                             m_kappa*Scalar(2)*h_slength.data[n],
                                                             __int_as_scalar(h_body.data[n]),
                                                             Scalar(0.0));
@@ -626,9 +585,10 @@ bool CellList::checkConditions()
         ArrayHandle<unsigned int> h_tag(m_pdata->getTags(),
                                         access_location::host,
                                         access_mode::read);
-        m_exec_conf->msg->errorAllRanks()
-            << "Particle with unique tag " << h_tag.data[n] << " has NaN for its position." << endl;
-        throw runtime_error("Error computing cell list");
+
+        ostringstream s;
+        s << "Particle with unique tag " << h_tag.data[n] << " has NaN for its position." << endl;
+        throw runtime_error(s.str());
         }
 
     // detect particles leaving box errors
@@ -647,18 +607,18 @@ bool CellList::checkConditions()
         Scalar3 lo = m_pdata->getBox().getLo();
         Scalar3 hi = m_pdata->getBox().getHi();
 
-        m_exec_conf->msg->errorAllRanks()
-            << "Particle with unique tag " << h_tag.data[n]
-            << " is no longer in the simulation box." << std::endl
-            << std::endl
-            << "Cartesian coordinates: " << std::endl
-            << "x: " << h_pos.data[n].x << " y: " << h_pos.data[n].y << " z: " << h_pos.data[n].z
-            << std::endl
-            << "Fractional coordinates: " << std::endl
-            << "f.x: " << f.x << " f.y: " << f.y << " f.z: " << f.z << std::endl
-            << "Local box lo: (" << lo.x << ", " << lo.y << ", " << lo.z << ")" << std::endl
-            << "          hi: (" << hi.x << ", " << hi.y << ", " << hi.z << ")" << std::endl;
-        throw runtime_error("Error computing cell list");
+        ostringstream s;
+        s << "Particle with unique tag " << h_tag.data[n] << " is no longer in the simulation box."
+          << std::endl
+          << std::endl
+          << "Cartesian coordinates: " << std::endl
+          << "x: " << h_pos.data[n].x << " y: " << h_pos.data[n].y << " z: " << h_pos.data[n].z
+          << std::endl
+          << "Fractional coordinates: " << std::endl
+          << "f.x: " << f.x << " f.y: " << f.y << " f.z: " << f.z << std::endl
+          << "Local box lo: (" << lo.x << ", " << lo.y << ", " << lo.z << ")" << std::endl
+          << "          hi: (" << hi.x << ", " << hi.y << ", " << hi.z << ")" << std::endl;
+        throw runtime_error(s.str());
         }
 
     return result;
@@ -682,17 +642,7 @@ namespace detail
 void export_CellList(pybind11::module& m)
     {
     pybind11::class_<CellList, Compute, std::shared_ptr<CellList>>(m, "CellList")
-        .def(pybind11::init<std::shared_ptr<SystemDefinition>>())
-        .def("setNominalWidth", &CellList::setNominalWidth)
-        .def("setRadius", &CellList::setRadius)
-        .def("setKernelFactor", &CellList::setKernelFactor)
-        .def("setComputeTDB", &CellList::setComputeTDB)
-        // .def("setFlagCharge", &CellList::setFlagCharge)
-        .def("setFlagIndex", &CellList::setFlagIndex)
-        .def("setSortCellList", &CellList::setSortCellList)
-        .def("getDim", &CellList::getDim, pybind11::return_value_policy::reference_internal)
-        .def("getNmax", &CellList::getNmax)
-        .def("benchmark", &CellList::benchmark);
+        .def(pybind11::init<std::shared_ptr<SystemDefinition>>());
     }
 
     } // end namespace detail

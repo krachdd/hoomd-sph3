@@ -183,7 +183,7 @@ def _invalid_params():
     gauss_valid_dict = {'sigma': 0.05, 'epsilon': 0.05}
     gauss_invalid_dicts = _make_invalid_param_dict(gauss_valid_dict)
     invalid_params_list.extend(
-        _make_invalid_params(gauss_invalid_dicts, md.pair.Gauss, {}))
+        _make_invalid_params(gauss_invalid_dicts, md.pair.Gaussian, {}))
 
     expanded_gaussian_valid_dict = {
         'sigma': 0.05,
@@ -407,7 +407,7 @@ def _valid_params(particle_types=['A', 'B']):
     gauss_arg_dict = {'epsilon': [0.025, 0.05, 0.075], 'sigma': [0.5, 1.0, 1.5]}
     gauss_valid_param_dicts = _make_valid_param_dicts(gauss_arg_dict)
     valid_params_list.append(
-        paramtuple(md.pair.Gauss, dict(zip(combos, gauss_valid_param_dicts)),
+        paramtuple(md.pair.Gaussian, dict(zip(combos, gauss_valid_param_dicts)),
                    {}))
 
     expanded_gaussian_arg_dict = {
@@ -688,9 +688,6 @@ def _update_snap(pair_potential, snap):
     if (any(name in str(pair_potential) for name in ['Ewald'])
             and snap.communicator.rank == 0):
         snap.particles.charge[:] = 1.
-    if 'DLVO' in str(pair_potential) and snap.communicator.rank == 0:
-        snap.particles.diameter[0] = 0.2
-        snap.particles.diameter[1] = 0.5
 
 
 def _skip_if_triplet_gpu_mpi(sim, pair_potential):
@@ -894,13 +891,17 @@ def _calculate_force(sim):
         return 0, 0  # return dummy values if not on rank 1
 
 
-def test_force_energy_relationship(simulation_factory,
+def test_force_energy_relationship(device, simulation_factory,
                                    two_particle_snapshot_factory, valid_params):
     # don't really test DPD and DPDLJ for this test
     pot_name = valid_params.pair_potential.__name__
     if any(pot_name == name for name in ["DPD", "DPDLJ"]):
         pytest.skip("Cannot test force energy relationship for " + pot_name
                     + " pair force")
+
+    if (pot_name == 'Tersoff' and isinstance(device, hoomd.device.GPU)
+            and hoomd.version.gpu_platform == 'ROCm'):
+        pytest.skip("Tersoff causes seg faults on ROCm (#1606).")
 
     pair_keys = valid_params.pair_potential_params.keys()
     particle_types = list(set(itertools.chain.from_iterable(pair_keys)))
@@ -1046,7 +1047,7 @@ def test_force_energy_accuracy(simulation_factory,
 def populate_sim(sim):
     """Add an integrator for the following tests."""
     sim.operations.integrator = md.Integrator(
-        dt=0.005, methods=[md.methods.NVE(hoomd.filter.All())])
+        dt=0.005, methods=[md.methods.ConstantVolume(hoomd.filter.All())])
     return sim
 
 
@@ -1190,11 +1191,12 @@ def test_lrc_non_lj(simulation_factory, two_particle_snapshot_factory):
     # test we can't pass in tail_correction to non-LJ pair potential
     cell = md.nlist.Cell(buffer=0.4)
     with pytest.raises(TypeError):
-        # flake8 complains about unused variable with gauss = md.pair.Gauss(...)
-        md.pair.Gauss(nlist=cell,
-                      default_r_cut=2.5,
-                      mode='none',
-                      tail_correction=True)
+        # flake8 complains about unused variable with
+        # gauss = md.pair.Gaussian(...)
+        md.pair.Gaussian(nlist=cell,
+                         default_r_cut=2.5,
+                         mode='none',
+                         tail_correction=True)
 
 
 def test_tail_corrections(simulation_factory, two_particle_snapshot_factory):

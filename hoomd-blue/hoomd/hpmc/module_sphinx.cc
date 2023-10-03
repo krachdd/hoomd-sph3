@@ -10,9 +10,7 @@
 #include "ShapeSphinx.h"
 #include "ShapeUnion.h"
 
-#include "ExternalCallback.h"
 #include "ExternalField.h"
-#include "ExternalFieldComposite.h"
 #include "ExternalFieldHarmonic.h"
 #include "ExternalFieldWall.h"
 
@@ -42,9 +40,7 @@ void export_sphinx(pybind11::module& m)
 
     export_ExternalFieldInterface<ShapeSphinx>(m, "ExternalFieldSphinx");
     export_HarmonicField<ShapeSphinx>(m, "ExternalFieldHarmonicSphinx");
-    export_ExternalFieldComposite<ShapeSphinx>(m, "ExternalFieldCompositeSphinx");
     export_ExternalFieldWall<ShapeSphinx>(m, "WallSphinx");
-    export_ExternalCallback<ShapeSphinx>(m, "ExternalCallbackSphinx");
 
 #ifdef ENABLE_HIP
 #ifdef ENABLE_SPHINX_GPU
