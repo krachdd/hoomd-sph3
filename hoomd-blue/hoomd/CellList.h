@@ -397,7 +397,7 @@ class PYBIND11_EXPORT CellList : public Compute
     GlobalArray<unsigned int> m_cell_size; //!< Number of members in each cell
     GlobalArray<unsigned int> m_cell_adj;  //!< Cell adjacency list
     GlobalArray<Scalar4> m_xyzf;           //!< Cell list with position and flags
-    GlobalArray<Scalar4> m_tdb;            //!< Cell list with type,diameter,body
+    GlobalArray<uint2> m_type_body;        //!< Cell list with type,body
     GlobalArray<Scalar4> m_orientation;    //!< Cell list with orientation
     GlobalArray<unsigned int> m_idx;       //!< Cell list with index
     GlobalArray<uint3> m_conditions; //!< Condition flags set during the computeCellList() call

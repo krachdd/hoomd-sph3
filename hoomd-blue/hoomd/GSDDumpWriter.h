@@ -279,7 +279,7 @@ class PYBIND11_EXPORT GSDDumpWriter : public Analyzer
                        // AngleData::Snapshot& angle,
                        // DihedralData::Snapshot& dihedral,
                        // ImproperData::Snapshot& improper,
-                       ConstraintData::Snapshot& constraint,
+                       ConstraintData::Snapshot& constraint
                        // PairData::Snapshot& pair
                        );
 
