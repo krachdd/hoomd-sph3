@@ -276,10 +276,20 @@ set(_nsearch_cu_sources
                       )
 
 if (ENABLE_HIP)
-set(_cuda_sources ${_nsearch_cu_sources} )
+set(_cuda_sources ${_md_cu_sources} ${DFFT_CU_SOURCES})
+set_source_files_properties(${_md_cu_sources} PROPERTIES LANGUAGE ${HOOMD_DEVICE_LANGUAGE})
 endif (ENABLE_HIP)
 
+# generate pybind11 export cc files
+set(_manifolds Cylinder
+               Diamond
+               Ellipsoid
+               Gyroid
+               Plane
+               Primitive
+               Sphere)
 
+set(_rattle_methods BD Langevin NVE)
 
 pybind11_add_module(_nsearch SHARED ${_nsearch_sources} ${_cuda_sources} ${_nsearch_headers} NO_EXTRAS)
 # alias into the HOOMD namespace so that plugins and symlinked components both work
@@ -318,6 +328,7 @@ set(files __init__.py
 #           constrain.py
 #           dihedral.py
 #           force.py
+          half_step_hook.py
 #           improper.py
 #           integrate.py
 #           manifold.py

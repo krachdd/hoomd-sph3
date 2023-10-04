@@ -72,14 +72,15 @@ of exclusions. The valid exclusion types are:
 * ``'1-4'``: Exclude particles *i* and *m* whenever there are bonds (i,j),
   (j,k), and (k,m).
 """
+
 import hoomd
+from hoomd.nsearch import _nsearch
 import hoomd.device
 from hoomd.data.parameterdicts import ParameterDict, TypeParameterDict
 from hoomd.data.typeparam import TypeParameter
 from hoomd.data.typeconverter import OnlyFrom, OnlyTypes, nonnegative_real
 from hoomd.logging import log
 #from hoomd.mesh import Mesh
-from hoomd.nsearch import _nsearch
 from hoomd.operation import Compute
 
 
@@ -134,6 +135,7 @@ class NeighborList(Compute):
             TypeParameterDict(nonnegative_real, len_keys=2))
         tp_r_cut.default = default_r_cut
         self._add_typeparam(tp_r_cut)
+
         # default exclusions
         params = ParameterDict(exclusions=[validate_exclusions],
                                buffer=float(buffer),
@@ -384,7 +386,7 @@ class Cell(NeighborList):
                  rebuild_check_delay=1,
                  check_dist=True,
                  deterministic=False,
-                 # mesh=None
+                 # mesh=None,
                  kappa = 3, 
                  default_r_cut=0.0):
 
@@ -402,7 +404,6 @@ class Cell(NeighborList):
             nlist_cls = _nsearch.NeighborListGPUBinned
         self._cpp_obj = nlist_cls(self._simulation.state._cpp_sys_def,
                                   self.buffer)
-
         super()._attach_hook()
 
     @log(requires_run=True, default=False, category='sequence')
@@ -587,5 +588,4 @@ class Tree(NeighborList):
             nlist_cls = _nsearch.NeighborListGPUTree
         self._cpp_obj = nlist_cls(self._simulation.state._cpp_sys_def,
                                   self.buffer)
-        super()._attach_hook()
-        
+        super()._attach_hook()     

@@ -56,6 +56,9 @@ class _DynamicIntegrator(BaseIntegrator):
         #     self.rigid._attach(self._simulation)
         super()._attach_hook()
 
+    def _post_attach_hook(self):
+        self.validate_groups()
+
     def _detach_hook(self):
         self._forces._unsync()
         self._methods._unsync()
@@ -63,6 +66,15 @@ class _DynamicIntegrator(BaseIntegrator):
         # if self.rigid is not None:
         #     self.rigid._detach()
         super()._detach()
+
+    def validate_groups(self):
+        """Verify groups.
+
+        Groups may change after attaching.
+        Users can call `validate_groups` to verify the groups after changing
+        them.
+        """
+        self._cpp_obj.validate_groups()
 
     # def _remove(self):
     #     # if self.rigid is not None:
