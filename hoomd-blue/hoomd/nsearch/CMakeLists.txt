@@ -312,8 +312,6 @@ if (ENABLE_HIP)
     target_link_libraries(_nsearch PRIVATE neighbor)
 endif()
 
-fix_cudart_rpath(_nsearch)
-
 # install the library
 install(TARGETS _nsearch EXPORT HOOMDTargets
         LIBRARY DESTINATION ${PYTHON_SITE_INSTALL_DIR}/nsearch
