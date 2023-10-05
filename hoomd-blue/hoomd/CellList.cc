@@ -528,12 +528,18 @@ void CellList::computeCellList()
             //                                                 Scalar(0.0));
             //     }
 
+            // if (m_compute_type_body)
+            //     {
+            //     h_type_body.data[cli(offset, bin)] = make_scalar4(h_pos.data[n].w,
+            //                                                 m_kappa*Scalar(2)*h_slength.data[n],
+            //                                                 __int_as_scalar(h_body.data[n]),
+            //                                                 Scalar(0.0));
+            //     }
+
             if (m_compute_type_body)
                 {
-                h_type_body.data[cli(offset, bin)] = make_scalar4(h_pos.data[n].w,
-                                                            m_kappa*Scalar(2)*h_slength.data[n],
-                                                            __int_as_scalar(h_body.data[n]),
-                                                            Scalar(0.0));
+                h_type_body.data[cli(offset, bin)]
+                    = make_uint2(__scalar_as_int(h_pos.data[n].w), h_body.data[n]);
                 }
 
             // if (m_compute_orientation)

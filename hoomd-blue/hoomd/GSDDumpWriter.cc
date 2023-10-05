@@ -82,7 +82,7 @@ GSDDumpWriter::GSDDumpWriter(std::shared_ptr<SystemDefinition> sysdef,
 
     m_dynamic.reset();
     m_dynamic[gsd_flag::particles_position] = true;
-    m_dynamic[gsd_flag::particles_orientation] = true;
+    // m_dynamic[gsd_flag::particles_orientation] = true;
 
     initFileIO();
     }
@@ -482,9 +482,9 @@ void GSDDumpWriter::write(GSDDumpWriter::GSDFrame& frame, pybind11::dict log_dat
                           // frame.angle_data,
                           // frame.dihedral_data,
                           // frame.improper_data,
-                          frame.constraint_data,
+                          frame.constraint_data
                           //frame.pair_data
-              );
+                          );
             }
         }
 
@@ -590,10 +590,10 @@ void GSDDumpWriter::writeAttributes(const GSDDumpWriter::GSDFrame& frame)
     uint32_t N = m_group->getNumMembersGlobal();
     int retval;
 
-    if (m_dynamic[gsd_flag::particles_types] || m_nframes == 0)
-        {
-        writeTypeMapping("particles/types", frame.particle_data.type_mapping);
-        }
+    // if (m_dynamic[gsd_flag::particles_types] || m_nframes == 0)
+    //     {
+    //     writeTypeMapping("particles/types", frame.particle_data.type_mapping);
+    //     }
 
     if (frame.particle_data.type.size() != 0)
         {
@@ -931,11 +931,12 @@ void GSDDumpWriter::writeMomenta(const GSDDumpWriter::GSDFrame& frame)
     Write out all the snapshot data to the GSD file
 */
 void GSDDumpWriter::writeTopology(BondData::Snapshot& bond,
-                                  AngleData::Snapshot& angle,
-                                  DihedralData::Snapshot& dihedral,
-                                  ImproperData::Snapshot& improper,
-                                  ConstraintData::Snapshot& constraint,
-                                  PairData::Snapshot& pair)
+                                  // AngleData::Snapshot& angle,
+                                  // DihedralData::Snapshot& dihedral,
+                                  // ImproperData::Snapshot& improper,
+                                  ConstraintData::Snapshot& constraint
+                                  // PairData::Snapshot& pair
+                                  )
     {
     if (bond.size > 0)
         {

@@ -155,20 +155,6 @@ void NeighborListBinned::buildNlist(uint64_t timestep)
                 Scalar3 dx = my_pos - neigh_pos;
                 dx = box.minImage(dx);
 
-                Scalar r_list = r_cut + m_r_buff;
-                Scalar sqshift = Scalar(0.0);
-                if (m_diameter_shift)
-                    {
-                    // const Scalar delta
-                    //     = (diam_i + h_diameter.data[cur_neigh]) * Scalar(0.5) - Scalar(1.0);
-                    const Scalar delta = (diam_i + m_kappa*Scalar(2.0)*h_slength.data[cur_neigh]) * Scalar(0.5) - Scalar(1.0);
-                    // r^2 < (r_list + delta)^2
-                    // r^2 < r_listsq + delta^2 + 2*r_list*delta
-                    sqshift = (delta + Scalar(2.0) * r_list) * delta;
-
-                    }
-
-
                 Scalar dr_sq = dot(dx, dx);
 
                 Scalar r_listsq = h_r_listsq.data[m_typpair_idx(type_i, cur_neigh_type)];
