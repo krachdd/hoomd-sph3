@@ -401,7 +401,7 @@ CommFlags SPHIntegratorTwoStep::determineFlags(uint64_t timestep)
 //     return is_anisotropic;
 //     }
 
-void IntegratorTwoStep::validateGroups()
+void SPHIntegratorTwoStep::validateGroups()
     {
     // Check that methods have valid groups.
     size_t group_size = 0;
@@ -447,9 +447,9 @@ void export_SPHIntegratorTwoStep(pybind11::module& m)
                       // &SPHIntegratorTwoStep::getIntegrateRotationalDOF,
                       // &SPHIntegratorTwoStep::setIntegrateRotationalDOF);
         .def_property("half_step_hook",
-                      &IntegratorTwoStep::getHalfStepHook,
-                      &IntegratorTwoStep::setHalfStepHook)
-        .def("validate_groups", &IntegratorTwoStep::validateGroups);
+                      &SPHIntegratorTwoStep::getHalfStepHook,
+                      &SPHIntegratorTwoStep::setHalfStepHook)
+        .def("validate_groups", &SPHIntegratorTwoStep::validateGroups);
     }
 
     } // end namespace detail
