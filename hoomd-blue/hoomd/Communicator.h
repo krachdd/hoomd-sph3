@@ -394,7 +394,7 @@ class PYBIND11_EXPORT Communicator
         };
 
     //@}
-    virtual void updateMeshDefinition();
+    // virtual void updateMeshDefinition();
 
     // void addMeshDefinition(std::shared_ptr<MeshDefinition> meshdef);
 
