@@ -93,13 +93,13 @@ set(HOOMD_GPU_PLATFORM "CUDA" CACHE STRING "Choose the GPU backend: HIP or CUDA.
 option(ENABLE_LLVM "Link to the LLVM library for run time code generation" off)
 
 # Components
-option(BUILD_MD "Build the md package" on)
+option(BUILD_MD "Build the md package" off)
 if (HOOMD_LONGREAL_SIZE STREQUAL "64")
-option(BUILD_HPMC "Build the hpmc package" on)
+option(BUILD_HPMC "Build the hpmc package" off)
 else ()
 option(BUILD_HPMC "Build the hpmc package" off)
 endif()
-option(BUILD_METAL "Build the metal package" on)
+option(BUILD_METAL "Build the metal package" off)
 
 # Optionally use TBB for threading
 option(ENABLE_TBB "Enable support for Threading Building Blocks (TBB)" off)
@@ -120,7 +120,7 @@ include (HOOMDMPISetup)
 include(HOOMDPythonSetup)
 
 if (NOT ENABLE_HIP OR HIP_PLATFORM STREQUAL "nvcc")
-    option(BUILD_MPCD "Build the mpcd package" on)
+    option(BUILD_MPCD "Build the mpcd package" off)
 else()
     option(BUILD_MPCD "Build the mpcd package" off)
 endif()
@@ -163,7 +163,7 @@ exec_program("date +%Y-%m-%d" OUTPUT_VARIABLE COMPILE_DATE)
 ################################
 # set up unit tests
 enable_testing()
-option(BUILD_TESTING "Build unit tests" ON)
+option(BUILD_TESTING "Build unit tests" OFF)
 
 if (BUILD_TESTING)
      # add test_all to the ALL target
