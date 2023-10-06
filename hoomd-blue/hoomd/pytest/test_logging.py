@@ -4,8 +4,9 @@
 from hoomd.conftest import pickling_check
 from pytest import raises, fixture, mark
 from hoomd.logging import (_LoggerQuantity, _NamespaceFilter,
-                           _SafeNamespaceDict, Logger, dict_map, Loggable,
+                           _SafeNamespaceDict, Logger, Loggable,
                            LoggerCategories, log)
+from hoomd.util import _dict_map
 
 
 class DummyNamespace:
@@ -169,7 +170,7 @@ def test_dict_map(base_dict, expected_mapped_dict):
     def func(x):
         return 1
 
-    mapped_dict = dict_map(base_dict, func)
+    mapped_dict = _dict_map(base_dict, func)
     assert mapped_dict == expected_mapped_dict
 
 
@@ -234,7 +235,7 @@ class TestSafeNamespaceDict:
         "only_default": False
     },
     {
-        "categories": ("scalar", "string")
+        "categories": LoggerCategories.scalar | LoggerCategories.string
     },
     {
         "only_default": False,

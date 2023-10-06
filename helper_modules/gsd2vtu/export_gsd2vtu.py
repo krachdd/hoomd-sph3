@@ -18,7 +18,7 @@ def import_trajectory(GSDfilename):
     """
     """
     # Input GSD file
-    f = gsd.fl.GSDFile(name = GSDfilename, mode = 'rb', application = "HOOMD-SPH", schema = "hoomd", schema_version = [1,0])
+    f = gsd.fl.GSDFile(name = GSDfilename, mode = 'r+', application = "HOOMD-SPH", schema = "hoomd", schema_version = [1,0])
     # f = gsd.pygsd.GSDFile(open('log.gsd', 'rb'))
 
     # Parse GSD file into a trajectory object and return

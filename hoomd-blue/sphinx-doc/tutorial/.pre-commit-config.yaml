@@ -14,7 +14,7 @@ repos:
       - id: check-yaml
       - id: check-case-conflict
   - repo: https://github.com/asottile/pyupgrade
-    rev: 'v3.3.1'
+    rev: 'v3.8.0'
     hooks:
       - id: pyupgrade
         args:
@@ -24,7 +24,7 @@ repos:
     hooks:
       - id: isort
   - repo: https://github.com/google/yapf
-    rev: 'v0.32.0'
+    rev: 'v0.40.0'
     hooks:
       - id: yapf
   - repo: https://github.com/PyCQA/flake8
@@ -34,7 +34,7 @@ repos:
         args:
           - --max-line-length=100
   - repo: https://github.com/nbQA-dev/nbQA
-    rev: 1.6.1
+    rev: 1.7.0
     hooks:
       - id: nbqa-pyupgrade
         args:
@@ -49,6 +49,10 @@ repos:
           # Strip metadata but keep counts and outputs
           - --keep-count
           - --keep-output
+          - --extra-keys
+          - metadata.kernelspec cell.metadata.ExecuteTime
+          - --drop-empty-cells
+
   - repo: https://github.com/bdice/nb-strip-paths
     rev: v0.1.0
     hooks:

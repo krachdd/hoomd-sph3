@@ -110,6 +110,9 @@ class PYBIND11_EXPORT SPHIntegratorTwoStep : public Integrator
     //     m_rigid_bodies = new_rigid;
     //     }
 
+    /// Validate method groups.
+    void validateGroups();
+
     protected:
     std::vector<std::shared_ptr<SPHIntegrationMethodTwoStep>>
         m_methods; //!< List of all the integration methods

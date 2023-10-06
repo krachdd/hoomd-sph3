@@ -31,8 +31,7 @@ namespace nsearch
 */
 NeighborList::NeighborList(std::shared_ptr<SystemDefinition> sysdef, Scalar r_buff)
     : Compute(sysdef), m_typpair_idx(m_pdata->getNTypes()), m_rcut_max_max(0.0), m_rcut_min(0.0),
-      m_r_buff(r_buff), m_d_max(1.0), m_kappa(3.0), m_filter_body(false), m_diameter_shift(false),
-      m_storage_mode(half), 
+      m_r_buff(r_buff), m_kappa(3.0), m_filter_body(false), m_storage_mode(half), 
       // m_meshbond_data(NULL), 
       m_rcut_changed(true), m_updates(0),
       m_forced_updates(0), m_dangerous_updates(0), m_force_update(true), m_dist_check(true),
@@ -108,7 +107,6 @@ NeighborList::NeighborList(std::shared_ptr<SystemDefinition> sysdef, Scalar r_bu
         CHECK_CUDA_ERROR();
         }
 #endif
-
 
     // allocate the r_listsq array which accelerates CPU calculations
     GlobalArray<Scalar> r_listsq(m_typpair_idx.getNumElements(), m_exec_conf);
@@ -438,7 +436,6 @@ void NeighborList::compute(uint64_t timestep)
         }
     }
 
-
 /*! \param r_buff New buffer radius to set
     \note Changing the buffer radius does NOT immediately update the neighborlist.
             The new buffer will take effect when compute is called for the next timestep.
@@ -458,7 +455,6 @@ void NeighborList::updateRList()
     {
     // overwrite the new r_cut matrix
     ArrayHandle<Scalar> h_r_cut(m_r_cut, access_location::host, access_mode::overwrite);
-
     ArrayHandle<Scalar> h_rcut_base(m_rcut_base, access_location::host, access_mode::overwrite);
 
     for (unsigned int i = 0; i < m_r_cut.getNumElements(); i++)
@@ -546,8 +542,6 @@ void NeighborList::checkBoxSize()
     // check that rcut fits in the box
     Scalar3 nearest_plane_distance = box.getNearestPlaneDistance();
     Scalar rmax = m_rcut_max_max + m_r_buff;
-    if (m_diameter_shift)
-        rmax += m_d_max - Scalar(1.0);
 
     if ((periodic.x && nearest_plane_distance.x <= rmax * 2.0)
         || (periodic.y && nearest_plane_distance.y <= rmax * 2.0)
@@ -555,8 +549,8 @@ void NeighborList::checkBoxSize()
             && nearest_plane_distance.z <= rmax * 2.0))
         {
         std::ostringstream oss;
-        oss << "nlist: Simulation box is too small! Particles would be interacting with themselves."
-            << "rmax=" << rmax << std::endl;
+        oss << "nlist: Simulation box is too small, the neighbor list is searching beyond the "
+            << " minimum image: rmax=" << rmax << std::endl;
 
         if (box.getPeriodic().x)
             oss << "nearest_plane_distance.x=" << nearest_plane_distance.x << std::endl;
@@ -566,32 +560,6 @@ void NeighborList::checkBoxSize()
             oss << "nearest_plane_distance.z=" << nearest_plane_distance.z << std::endl;
         throw std::runtime_error(oss.str());
         }
-    }
-
-/*! \returns an estimate of the number of neighbors per particle
-    This mean-field estimate may be very bad depending on how clustered particles are.
-    Derived classes can override this method to provide better estimates.
-
-    \note Under NO circumstances should calling this method produce any
-    appreciable amount of overhead. This is mainly a warning to
-    derived classes.
-*/
-Scalar NeighborList::estimateNNeigh()
-    {
-    // calculate a number density of particles
-    BoxDim box = m_pdata->getBox();
-    Scalar3 L = box.getL();
-    Scalar vol = L.x * L.y * L.z;
-    Scalar n_dens = Scalar(m_pdata->getN()) / vol;
-
-    // calculate the average number of neighbors by multiplying by the volume
-    // within the cutoff
-    Scalar r_max = getMaxRCut() + m_r_buff;
-    // diameter shifting requires to communicate a larger rlist
-    if (m_diameter_shift)
-        r_max += m_d_max - Scalar(1.0);
-    Scalar vol_cut = Scalar(4.0 / 3.0 * M_PI) * r_max * r_max * r_max;
-    return n_dens * vol_cut;
     }
 
 /*! \param tag1 TAG (not index) of the first particle in the pair
@@ -825,11 +793,6 @@ void NeighborList::countExclusions()
             << "Particles with more than " << MAX_COUNT_EXCLUDED
             << " exclusions: " << excluded_count[MAX_COUNT_EXCLUDED + 1] << endl;
         }
-
-    if (m_diameter_shift)
-        m_exec_conf->msg->notice(2) << "Neighbors included by diameter          : yes" << endl;
-    else
-        m_exec_conf->msg->notice(2) << "Neighbors included by diameter          : no" << endl;
 
     if (m_filter_body)
         m_exec_conf->msg->notice(2) << "Neighbors excluded when in the same body: yes" << endl;
@@ -2024,7 +1987,6 @@ Scalar NeighborList::getRCut(pybind11::tuple types)
     return h_rcut_base.data[m_typpair_idx(typ1, typ2)];
     }
 
-
 namespace detail
     {
 void export_NeighborList(pybind11::module& m)
@@ -2038,12 +2000,6 @@ void export_NeighborList(pybind11::module& m)
         .def_property("check_dist", &NeighborList::getDistCheck, &NeighborList::setDistCheck)
         .def("setStorageMode", &NeighborList::setStorageMode)
         .def_property("exclusions", &NeighborList::getExclusions, &NeighborList::setExclusions)
-        .def_property("diameter_shift",
-                      &NeighborList::getDiameterShift,
-                      &NeighborList::setDiameterShift)
-        .def_property("max_diameter",
-                      &NeighborList::getMaximumDiameter,
-                      &NeighborList::setMaximumDiameter)
         // .def("addMesh", &NeighborList::AddMesh)
         .def("setKernelFactor", &NeighborList::setKernelFactor)
         .def("getKernelFactor", &NeighborList::getKernelFactor)
@@ -2052,7 +2008,6 @@ void export_NeighborList(pybind11::module& m)
         .def("getMaxRList", &NeighborList::getMaxRList)
         .def("getMinRList", &NeighborList::getMinRList)
         .def("forceUpdate", &NeighborList::forceUpdate)
-        .def("estimateNNeigh", &NeighborList::estimateNNeigh)
         .def("getSmallestRebuild", &NeighborList::getSmallestRebuild)
         .def("getNumUpdates", &NeighborList::getNumUpdates)
         .def("getNumExclusions", &NeighborList::getNumExclusions)

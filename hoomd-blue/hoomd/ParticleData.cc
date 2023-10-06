@@ -2235,13 +2235,8 @@ void ParticleData::initializeFromDistrSnapshot(const SnapshotParticleData<Real>&
    \pre snapshot has to be allocated with a number of elements equal to the global number of
    particles)
 */
-template<class Real>
-std::map<unsigned int, unsigned int>
-ParticleData::takeSnapshot(SnapshotParticleData<Real>& snapshot)
+template<class Real> void ParticleData::takeSnapshot(SnapshotParticleData<Real>& snapshot)
     {
-    // a map to contain a particle tag-> snapshot idx lookup
-    std::map<unsigned int, unsigned int> index;
-
     m_exec_conf->msg->notice(4) << "ParticleData: taking snapshot" << std::endl;
 
     ArrayHandle<Scalar4> h_pos(m_pos, access_location::host, access_mode::read);
@@ -2455,9 +2450,6 @@ ParticleData::takeSnapshot(SnapshotParticleData<Real>& snapshot)
                 unsigned int rank = rank_idx.first;
                 unsigned int idx = rank_idx.second;
 
-                // store tag in index map
-                index.insert(std::make_pair(tag, snap_id));
-
                 snapshot.pos[snap_id] = vec3<Real>(pos_proc[rank][idx]);
                 snapshot.vel[snap_id] = vec3<Real>(vel_proc[rank][idx]);
                 // snapshot.dpe[snap_id] = vec3<Real>(dpe_proc[rank][idx]);
@@ -2493,22 +2485,25 @@ ParticleData::takeSnapshot(SnapshotParticleData<Real>& snapshot)
     else
 #endif
         {
-        // allocate memory in snapshot
         snapshot.resize(getNGlobal());
 
-        assert(m_tag_set.size() == m_nparticles);
-        std::set<unsigned int>::const_iterator it = m_tag_set.begin();
-
-        // iterate through active tags
-        for (unsigned int snap_id = 0; snap_id < m_nparticles; snap_id++)
+        // populate particles in snapshot order
+        // Note, for large N, it is more cache efficient to read particles in the local index order,
+        // however one needs to prepare an additional auxiliary array that maps from local index to
+        // the monotonically increasing tag order in the snapshot.
+        unsigned int tag = 0;
+        for (unsigned int snap_id = 0; snap_id < m_nparticles; snap_id++, tag++)
             {
-            unsigned int tag = *it;
-            assert(tag <= getMaximumTag());
             unsigned int idx = h_rtag.data[tag];
-            assert(idx < m_nparticles);
 
-            // store tag in index map
-            index.insert(std::make_pair(tag, snap_id));
+            // skip ahead to the next tag when particles have been removed by removeParticle()
+            while (idx >= m_nparticles)
+                {
+                tag++;
+                idx = h_rtag.data[tag];
+                }
+
+            assert(idx < m_nparticles);
 
             snapshot.pos[snap_id] = vec3<Real>(
                 make_scalar3(h_pos.data[idx].x, h_pos.data[idx].y, h_pos.data[idx].z) - m_origin);
@@ -2555,8 +2550,6 @@ ParticleData::takeSnapshot(SnapshotParticleData<Real>& snapshot)
             Scalar3 tmp = vec_to_scalar3(snapshot.pos[snap_id]);
             m_global_box->wrap(tmp, snapshot.image[snap_id]);
             snapshot.pos[snap_id] = vec3<Real>(tmp);
-
-            std::advance(it, 1);
             }
         }
 
@@ -2565,7 +2558,6 @@ ParticleData::takeSnapshot(SnapshotParticleData<Real>& snapshot)
     // copy over acceleration set flag (this is a copy in case users take a snapshot before running)
     snapshot.is_accel_set = m_accel_set;
 
-    return index;
     }
 
 #ifdef ENABLE_MPI
@@ -4570,8 +4562,7 @@ template ParticleData::ParticleData(const SnapshotParticleData<double>& snapshot
 template void
 ParticleData::initializeFromSnapshot<double>(const SnapshotParticleData<double>& snapshot,
                                              bool ignore_bodies);
-template std::map<unsigned int, unsigned int>
-ParticleData::takeSnapshot<double>(SnapshotParticleData<double>& snapshot);
+template void ParticleData::takeSnapshot<double>(SnapshotParticleData<double>& snapshot);
 
 #ifdef ENABLE_MPI
 template std::map<unsigned int, unsigned int>
@@ -4586,8 +4577,7 @@ template ParticleData::ParticleData(const SnapshotParticleData<float>& snapshot,
 template void
 ParticleData::initializeFromSnapshot<float>(const SnapshotParticleData<float>& snapshot,
                                             bool ignore_bodies);
-template std::map<unsigned int, unsigned int>
-ParticleData::takeSnapshot<float>(SnapshotParticleData<float>& snapshot);
+template void ParticleData::takeSnapshot<float>(SnapshotParticleData<float>& snapshot);
 #ifdef ENABLE_MPI
 template std::map<unsigned int, unsigned int>
 ParticleData::takeSnapshotDistr<float>(SnapshotParticleData<float>& snapshot);
@@ -4775,7 +4765,7 @@ template<class Real> void SnapshotParticleData<Real>::validate() const
 
 #ifdef ENABLE_MPI
 //! Select non-zero communication lags
-struct comm_flag_select : std::unary_function<const unsigned int, bool>
+struct comm_flag_select
     {
     bool operator()(const unsigned int comm_flag) const
         {
@@ -4998,7 +4988,7 @@ void ParticleData::removeParticles(std::vector<detail::pdata_element>& out,
         std::remove_copy_if(h_comm_flags.data,
                             h_comm_flags.data + old_nparticles,
                             comm_flags.begin(),
-                            std::not1(comm_flag_select()));
+                            std::not_fn(comm_flag_select()));
 
         // reset communication flags to zero
         std::fill(h_comm_flags.data, h_comm_flags.data + new_nparticles, 0);

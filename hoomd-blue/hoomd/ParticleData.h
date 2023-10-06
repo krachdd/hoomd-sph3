@@ -42,7 +42,6 @@
 #include "DomainDecomposition.h"
 
 #include <bitset>
-#include <map>
 #include <stack>
 #include <stdlib.h>
 #include <string>
@@ -71,12 +70,10 @@ namespace hoomd
 struct pdata_flag
     {
     //! The enum
-
-    // TO DO
     enum Enum
         {
         // pressure_tensor = 0,       //!< Bit id in PDataFlags for the full virial
-        kinetic_energy = 0, //!< Bit id in PDataFlags for the rotational kinetic energy
+        rotational_kinetic_energy, //!< Bit id in PDataFlags for the rotational kinetic energy
         // external_field_virial      //!< Bit id in PDataFlags for the external virial contribution of
                                    //!< volume change
         };
@@ -109,29 +106,6 @@ const unsigned int MIN_FLOPPY = 0x80000000;
 const unsigned int NOT_LOCAL = 0xffffffff;
 
     } // end namespace hoomd
-
-#ifdef ENABLE_MPI
-namespace cereal
-    {
-//! Serialization of vec3<Real>
-template<class Archive, class Real>
-void serialize(Archive& ar, hoomd::vec3<Real>& v, const unsigned int version)
-    {
-    ar& v.x;
-    ar& v.y;
-    ar& v.z;
-    }
-
-//! Serialization of quat<Real>
-template<class Archive, class Real>
-void serialize(Archive& ar, hoomd::quat<Real>& q, const unsigned int version)
-    {
-    // serialize both members
-    ar& q.s;
-    ar& q.v;
-    }
-    } // namespace cereal
-#endif
 
 namespace hoomd
     {
@@ -1088,6 +1062,12 @@ class PYBIND11_EXPORT ParticleData
     //! Gets the name of a given particle type index
     std::string getNameByType(unsigned int type) const;
 
+    /// Get the complete type mapping
+    const std::vector<std::string>& getTypeMapping() const
+        {
+        return m_type_mapping;
+        }
+
     //! Get the types for python
     pybind11::list getTypesPy()
         {
@@ -1402,8 +1382,7 @@ class PYBIND11_EXPORT ParticleData
     #endif
 
     //! Take a snapshot
-    template<class Real>
-    std::map<unsigned int, unsigned int> takeSnapshot(SnapshotParticleData<Real>& snapshot);
+    template<class Real> void takeSnapshot(SnapshotParticleData<Real>& snapshot);
 
     #ifdef ENABLE_MPI
     template <class Real>

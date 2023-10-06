@@ -63,7 +63,7 @@ _particle_data = dict(
     # We don't care about a valid body specification here just that we can
     # retrieve and set it correctly.
     body=dict(np_type=np.uint32,
-              value=np.linspace(-1, 10, Np, dtype=np.uint32),
+              value=np.linspace(4294967295, 10, Np, dtype=np.uint32),
               new_value=np.linspace(1, 20, Np, dtype=np.uint32),
               shape=(Np,)),
     # typeid is a signed integer in C++ despite always being nonnegative
@@ -389,8 +389,8 @@ class TestLocalSnapshots:
     @staticmethod
     def check_box(local_snapshot, global_box, ranks):
         """General check that ``box`` and ``local_box`` properties work."""
-        assert type(local_snapshot.global_box) == hoomd.Box
-        assert type(local_snapshot.local_box) == hoomd.Box
+        assert type(local_snapshot.global_box) is hoomd.Box
+        assert type(local_snapshot.local_box) is hoomd.Box
 
         assert local_snapshot.global_box == global_box
         # The local box and global box are equal if and only if

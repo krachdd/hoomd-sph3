@@ -13,6 +13,7 @@
 #include "ExecutionConfiguration.h"
 #include "ForceCompute.h"
 #include "ForceConstraint.h"
+#include "GSDDequeWriter.h"
 #include "GSDDumpWriter.h"
 #include "GSDReader.h"
 #include "HOOMDMath.h"
@@ -41,10 +42,16 @@
 // ParticleFilter objects
 #include "filter/export_filters.h"
 
+// optional MPCD classes
+#ifdef BUILD_MPCD
+#include "hoomd/mpcd/ParticleData.h"
+#include "hoomd/mpcd/ParticleDataSnapshot.h"
+#endif
+
 // include GPU classes
 #ifdef ENABLE_HIP
-#include "CellListGPU.h"
 #include "BoxResizeUpdaterGPU.h"
+#include "CellListGPU.h"
 #include "LoadBalancerGPU.h"
 #include "SFCPackTunerGPU.h"
 #include <hip/hip_runtime.h>
@@ -95,10 +102,8 @@ char env_enable_mpi_cuda[] = "MV2_USE_CUDA=1";
 //! Initialize the MPI environment
 int initialize_mpi()
     {
-#ifdef ENABLE_MPI_CUDA
-    // if we are using an MPI-CUDA implementation, enable this feature
-    // before the MPI_Init
-    putenv(env_enable_mpi_cuda);
+#if defined(ENABLE_HIP) && defined(__HIP_PLATFORM_HCC__)
+    hipInit(0);
 #endif
 
     // initialize MPI if it has not been initialized by another program
@@ -264,7 +269,6 @@ PYBIND11_MODULE(_hoomd, m)
     // export_LocalGroupData<HOOMDHostBuffer, TriangleData>(m, "LocalTriangleDataHost");
     // export_LocalGroupData<HOOMDHostBuffer, DihedralData>(m, "LocalDihedralDataHost");
     // export_LocalGroupData<HOOMDHostBuffer, MeshBondData>(m, "LocalMeshBondDataHost");
-    // export_LocalGroupData<HOOMDHostBuffer, MeshTriangleData>(m, "LocalMeshTriangleDataHost");
     // export_LocalGroupData<HOOMDHostBuffer, ImproperData>(m, "LocalImproperDataHost");
     export_LocalGroupData<HOOMDHostBuffer, ConstraintData>(m, "LocalConstraintDataHost");
     // export_LocalGroupData<HOOMDHostBuffer, PairData>(m, "LocalPairDataHost");
@@ -274,10 +278,13 @@ PYBIND11_MODULE(_hoomd, m)
     // export_LocalGroupData<HOOMDDeviceBuffer, AngleData>(m, "LocalAngleDataDevice");
     // export_LocalGroupData<HOOMDDeviceBuffer, DihedralData>(m, "LocalDihedralDataDevice");
     // export_LocalGroupData<HOOMDDeviceBuffer, MeshBondData>(m, "LocalMeshBondDataDevice");
-    // export_LocalGroupData<HOOMDDeviceBuffer, MeshTriangleData>(m, "LocalMeshTriangleDataDevice");
     // export_LocalGroupData<HOOMDDeviceBuffer, ImproperData>(m, "LocalImproperDataDevice");
     export_LocalGroupData<HOOMDDeviceBuffer, ConstraintData>(m, "LocalConstraintDataDevice");
     // export_LocalGroupData<HOOMDDeviceBuffer, PairData>(m, "LocalPairDataDevice");
+#endif
+#ifdef BUILD_MPCD
+    mpcd::detail::export_ParticleData(m);
+    mpcd::detail::export_ParticleDataSnapshot(m);
 #endif
 
     // initializers
@@ -305,6 +312,7 @@ PYBIND11_MODULE(_hoomd, m)
     export_PythonAnalyzer(m);
     // export_DCDDumpWriter(m);
     export_GSDDumpWriter(m);
+    export_GSDDequeWriter(m);
 
     // updaters
     export_Updater(m);

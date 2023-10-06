@@ -24,7 +24,7 @@ NeighborListBinned::NeighborListBinned(std::shared_ptr<SystemDefinition> sysdef,
 
     m_cl->setRadius(1);
     m_cl->setComputeXYZF(true);
-    m_cl->setComputeTDB(false);
+    m_cl->setComputeTypeBody(false);
     m_cl->setFlagIndex();
     }
 
@@ -39,8 +39,6 @@ void NeighborListBinned::buildNlist(uint64_t timestep)
     if (m_update_cell_size)
         {
         Scalar rmax = getMaxRCut() + m_r_buff;
-        if (m_diameter_shift)
-            rmax += m_d_max - Scalar(1.0);
 
         m_cl->setNominalWidth(rmax);
         m_update_cell_size = false;
@@ -56,9 +54,6 @@ void NeighborListBinned::buildNlist(uint64_t timestep)
     ArrayHandle<unsigned int> h_body(m_pdata->getBodies(),
                                      access_location::host,
                                      access_mode::read);
-    // ArrayHandle<Scalar> h_diameter(m_pdata->getDiameters(),
-    //                                access_location::host,
-    //                                access_mode::read);
     ArrayHandle<Scalar> h_slength(m_pdata->getSlengths(), access_location::host, access_mode::read);
 
     const BoxDim& box = m_pdata->getBox();
@@ -97,7 +92,7 @@ void NeighborListBinned::buildNlist(uint64_t timestep)
 
     // for each local particle
     unsigned int nparticles = m_pdata->getN();
-    
+
     for (int i = 0; i < (int)nparticles; i++)
         {
         unsigned int cur_n_neigh = 0;
@@ -136,13 +131,13 @@ void NeighborListBinned::buildNlist(uint64_t timestep)
 
             // check against all the particles in that neighboring bin to see if it is a neighbor
             unsigned int size = h_cell_size.data[neigh_cell];
-
             for (unsigned int cur_offset = 0; cur_offset < size; cur_offset++)
                 {
                 Scalar4& cur_xyzf = h_cell_xyzf.data[cli(cur_offset, neigh_cell)];
                 unsigned int cur_neigh = __scalar_as_int(cur_xyzf.w);
 
-                // get the current neighbor type from the position data (will use tdb on the GPU)
+                // get the current neighbor type from the position data (will use TypeBody on the
+                // GPU)
                 unsigned int cur_neigh_type = __scalar_as_int(h_pos.data[cur_neigh].w);
                 Scalar r_cut = h_r_cut.data[m_typpair_idx(type_i, cur_neigh_type)];
 
@@ -160,33 +155,18 @@ void NeighborListBinned::buildNlist(uint64_t timestep)
                 Scalar3 dx = my_pos - neigh_pos;
                 dx = box.minImage(dx);
 
-                Scalar r_list = r_cut + m_r_buff;
-                Scalar sqshift = Scalar(0.0);
-                if (m_diameter_shift)
-                    {
-                    // const Scalar delta
-                    //     = (diam_i + h_diameter.data[cur_neigh]) * Scalar(0.5) - Scalar(1.0);
-                    const Scalar delta = (diam_i + m_kappa*Scalar(2.0)*h_slength.data[cur_neigh]) * Scalar(0.5) - Scalar(1.0);
-                    // r^2 < (r_list + delta)^2
-                    // r^2 < r_listsq + delta^2 + 2*r_list*delta
-                    sqshift = (delta + Scalar(2.0) * r_list) * delta;
-
-                    }
-
-
                 Scalar dr_sq = dot(dx, dx);
 
-                // move the squared rlist by the diameter shift if necessary
                 Scalar r_listsq = h_r_listsq.data[m_typpair_idx(type_i, cur_neigh_type)];
-                if (dr_sq <= (r_listsq + sqshift) && !excluded)
+                if (dr_sq <= r_listsq && !excluded)
                     {
+                    // Add the neighbor index to the list.
                     if (m_storage_mode == full || i < (int)cur_neigh)
                         {
                         // local neighbor
                         if (cur_n_neigh < Nmax_i)
                             {
                             h_nlist.data[head_idx_i + cur_n_neigh] = cur_neigh;
-
                             }
                         else
                             h_conditions.data[type_i]

@@ -41,3 +41,4 @@ from hoomd.nsearch import nlist
 # from hoomd.md import mesh
 # from hoomd.md import many_body
 # from hoomd.md import tune
+from hoomd.nsearch.half_step_hook import HalfStepHook

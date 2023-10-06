@@ -401,6 +401,34 @@ CommFlags SPHIntegratorTwoStep::determineFlags(uint64_t timestep)
 //     return is_anisotropic;
 //     }
 
+void SPHIntegratorTwoStep::validateGroups()
+    {
+    // Check that methods have valid groups.
+    size_t group_size = 0;
+    for (auto& method : m_methods)
+        {
+        method->validateGroup();
+        group_size += method->getGroup()->getNumMembersGlobal();
+        }
+
+    // Check that methods have non-overlapping groups.
+    if (m_methods.size() <= 1)
+        {
+        return;
+        }
+    auto group_union
+        = ParticleGroup::groupUnion(m_methods[0]->getGroup(), m_methods[1]->getGroup());
+    for (size_t i = 2; i < m_methods.size(); i++)
+        {
+        group_union = ParticleGroup::groupUnion(m_methods[i]->getGroup(), group_union);
+        }
+    if (group_size != group_union->getNumMembersGlobal())
+        {
+        throw std::runtime_error("Error: the provided groups overlap.");
+        }
+    }
+
+
 namespace detail
     {
 void export_SPHIntegratorTwoStep(pybind11::module& m)
@@ -413,11 +441,15 @@ void export_SPHIntegratorTwoStep(pybind11::module& m)
         m,
         "SPHIntegratorTwoStep")
         .def(pybind11::init<std::shared_ptr<SystemDefinition>, Scalar>())
-        .def_property_readonly("methods", &SPHIntegratorTwoStep::getIntegrationMethods);
+        .def_property_readonly("methods", &SPHIntegratorTwoStep::getIntegrationMethods)
         // .def_property("rigid", &SPHIntegratorTwoStep::getRigid, &SPHIntegratorTwoStep::setRigid)
         // .def_property("integrate_rotational_dof",
                       // &SPHIntegratorTwoStep::getIntegrateRotationalDOF,
                       // &SPHIntegratorTwoStep::setIntegrateRotationalDOF);
+        .def_property("half_step_hook",
+                      &SPHIntegratorTwoStep::getHalfStepHook,
+                      &SPHIntegratorTwoStep::setHalfStepHook)
+        .def("validate_groups", &SPHIntegratorTwoStep::validateGroups);
     }
 
     } // end namespace detail

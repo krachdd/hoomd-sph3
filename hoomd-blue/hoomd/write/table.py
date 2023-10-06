@@ -14,7 +14,7 @@ from hoomd.custom.custom_action import _InternalAction
 from hoomd.logging import LoggerCategories, Logger
 from hoomd.data.parameterdicts import ParameterDict
 from hoomd.data.typeconverter import OnlyTypes
-from hoomd.util import dict_flatten
+from hoomd.util import _dict_flatten
 from hoomd.custom import Action
 
 
@@ -96,6 +96,19 @@ class _Formatter:
         else:
             return self.format_num(value, column_width)
 
+    @staticmethod
+    def _digits_from_decimal(num):
+        """Return digits to represent to the first significant digit."""
+        if num == 0.0:
+            return 1
+
+        digits = int(log10(abs(num)))
+        # Positive exponents require an extra space (10^0 == 1)
+        digits = 1 + digits if digits >= 0 else -digits
+        if num < 0:
+            digits += 1  # - (negative symbol)
+        return digits + 1  # decimal point
+
     def format_num(self, value, column_width):
         # Always output full integer values
         if isinstance(value, Integral):
@@ -107,11 +120,9 @@ class _Formatter:
             # information past the decimal point. For values less than 1 the
             # smallest is 0.xxx. The plus one is for the decimal point. We
             # already attempt to print out as many decimal points as possible so
-            # we only need to determine the minimum size to the left of the
-            # decimal point including the decimal point.
-            min_len_repr = int(log10(max(abs(value), 1))) + 1
-            if value < 0:
-                min_len_repr += 1  # add 1 for the negative sign
+            # we only need to determine the minimum size to from the decimal
+            # point including the decimal point.
+            min_len_repr = self._digits_from_decimal(value) + 1
             # Use scientific formatting
             if not min_len_repr < 6 or min_len_repr > column_width:
                 # Determine the number of decimals to use
@@ -205,15 +216,23 @@ class _TableInternal(_InternalAction):
                  output=output,
                  logger=logger))
         self._param_dict = param_dict
-
         # internal variables that are not part of the state.
-        # Ensure that only scalar and potentially string are set for the logger
-        if (LoggerCategories.scalar not in logger.categories
-                or logger.categories & self._invalid_logger_categories
-                !=  # noqa: W504 (yapf formats this incorrectly
-                LoggerCategories.NONE):
+
+        # Generate LoggerCategories for valid and invalid categories
+        _valid_categories = LoggerCategories.any(
+            [LoggerCategories.scalar, LoggerCategories.string])
+        _invalid_inputs = logger.categories & self._invalid_logger_categories
+
+        # Ensure that only scalar and string categories are set for the logger
+        if logger.categories == LoggerCategories.NONE:
+            pass
+        elif (_valid_categories ^ LoggerCategories.ALL
+              ) & logger.categories == LoggerCategories.NONE:
+            pass
+        else:
             raise ValueError(
-                "Given Logger must have the scalar categories set.")
+                "Table Logger may only have scalar or string categories set. \
+                    Use hoomd.write.GSD for {}.".format(_invalid_inputs))
 
         self._cur_headers_with_width = dict()
         self._fmt = _Formatter(pretty, max_precision)
@@ -233,7 +252,7 @@ class _TableInternal(_InternalAction):
         """Get a flattened dict for writing to output."""
         return {
             key: value[0]
-            for key, value in dict_flatten(self.logger.log()).items()
+            for key, value in _dict_flatten(self.logger.log()).items()
         }
 
     def _update_headers(self, new_keys):
