@@ -17,7 +17,7 @@ from pyevtk.hl import pointsToVTK as vtk
 
 
 # Input GSD file
-f = gsd.fl.GSDFile(name = sys.argv[1], mode = 'rb', application = "HOOMD-SPH", schema = "hoomd", schema_version = [1,0])
+f = gsd.fl.GSDFile(name = sys.argv[1], mode = 'r', application = "HOOMD-SPH", schema = "hoomd", schema_version = [1,0])
 # f = gsd.pygsd.GSDFile(open('log.gsd', 'rb'))
 
 # Parse GSD file into a trajectory object
