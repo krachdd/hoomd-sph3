@@ -725,9 +725,9 @@ void GSDDumpWriter::writeProperties(const GSDDumpWriter::GSDFrame& frame)
             m_nondefault["particles/position"] = true;
         }
 
-    if (frame.particle_data.pos.size() != 0)
+    if (frame.particle_data.density.size() != 0)
         {
-        assert(frame.particle_data.pos.size() == N);
+        assert(frame.particle_data.density.size() == N);
 
         m_exec_conf->msg->notice(10) << "GSD: writing particles/density" << endl;
         retval = gsd_write_chunk(&m_handle,
@@ -736,7 +736,7 @@ void GSDDumpWriter::writeProperties(const GSDDumpWriter::GSDFrame& frame)
                                  N,
                                  1,
                                  0,
-                                 (void*)frame.particle_data.pos.data());
+                                 (void*)frame.particle_data.density.data());
         GSDUtils::checkError(retval, m_fname);
         if (m_nframes == 0)
             m_nondefault["particles/density"] = true;
@@ -1895,11 +1895,11 @@ void GSDDumpWriter::gatherGlobalFrame(const GSDFrame& local_frame)
     //     m_gather_tag_order.gatherArray(m_global_frame.particle_data.orientation,
     //                                    local_frame.particle_data.orientation);
     //     }
-    // if (local_frame.particle_data_present[gsd_flag::particles_type])
-    //     {
-    //     m_gather_tag_order.gatherArray(m_global_frame.particle_data.type,
-    //                                    local_frame.particle_data.type);
-    //     }
+    if (local_frame.particle_data_present[gsd_flag::particles_type])
+        {
+        m_gather_tag_order.gatherArray(m_global_frame.particle_data.type,
+                                       local_frame.particle_data.type);
+        }
     if (local_frame.particle_data_present[gsd_flag::particles_mass])
         {
         m_gather_tag_order.gatherArray(m_global_frame.particle_data.mass,
