@@ -140,7 +140,7 @@ class PYBIND11_EXPORT GSDDumpWriter : public Analyzer
             particles_N,
             particles_position,
             // particles_orientation,
-            // particles_types,
+            particles_types,
             particles_type,
             particles_mass,
             particles_slength,

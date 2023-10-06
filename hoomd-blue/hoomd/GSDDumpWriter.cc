@@ -119,10 +119,10 @@ pybind11::tuple GSDDumpWriter::getDynamic()
         {
         result.append("particles/image");
         }
-    // if (m_dynamic[gsd_flag::particles_types])
-    //     {
-    //     result.append("particles/types");
-    //     }
+    if (m_dynamic[gsd_flag::particles_types])
+        {
+        result.append("particles/types");
+        }
     if (m_dynamic[gsd_flag::particles_type])
         {
         result.append("particles/typeid");
@@ -224,10 +224,10 @@ void GSDDumpWriter::setDynamic(pybind11::object dynamic)
             {
             m_dynamic[gsd_flag::particles_image] = true;
             }
-        // if (s == "particles/types" || s == "attribute")
-        //     {
-        //     m_dynamic[gsd_flag::particles_types] = true;
-        //     }
+        if (s == "particles/types" || s == "attribute")
+            {
+            m_dynamic[gsd_flag::particles_types] = true;
+            }
         if (s == "particles/typeid" || s == "attribute")
             {
             m_dynamic[gsd_flag::particles_type] = true;
@@ -590,10 +590,10 @@ void GSDDumpWriter::writeAttributes(const GSDDumpWriter::GSDFrame& frame)
     uint32_t N = m_group->getNumMembersGlobal();
     int retval;
 
-    // if (m_dynamic[gsd_flag::particles_types] || m_nframes == 0)
-    //     {
-    //     writeTypeMapping("particles/types", frame.particle_data.type_mapping);
-    //     }
+    if (m_dynamic[gsd_flag::particles_types] || m_nframes == 0)
+        {
+        writeTypeMapping("particles/types", frame.particle_data.type_mapping);
+        }
 
     if (frame.particle_data.type.size() != 0)
         {

@@ -355,8 +355,8 @@ class State:
             #     raise RuntimeError("Dihedral types must remain the same")
             # if snapshot.impropers.types != self.improper_types:
             #     raise RuntimeError("Improper types must remain the same")
-            if snapshot.pairs.types != self.special_pair_types:
-                raise RuntimeError("Pair types must remain the same")
+            # if snapshot.pairs.types != self.special_pair_types:
+            #     raise RuntimeError("Pair types must remain the same")
 
         self._cpp_sys_def.initializeFromSnapshot(snapshot._cpp_obj)
         self.update_group_dof()
@@ -400,17 +400,17 @@ class State:
     #     """list[str]: List of all improper types in the simulation state."""
     #     return self._cpp_sys_def.getImproperData().getTypes()
 
-    @property
-    def special_pair_types(self):
-        """list[str]: List of all special pair types in the simulation state.
+    # @property
+    # def special_pair_types(self):
+    #     """list[str]: List of all special pair types in the simulation state.
 
-        .. rubric:: Example:
+    #     .. rubric:: Example:
 
-        .. code-block:: python
+    #     .. code-block:: python
 
-            special_pair_types = simulation.state.special_pair_types
-        """
-        return self._cpp_sys_def.getPairData().getTypes()
+    #         special_pair_types = simulation.state.special_pair_types
+    #     """
+    #     return self._cpp_sys_def.getPairData().getTypes()
 
     @property
     def types(self):
