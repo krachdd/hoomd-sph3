@@ -14,7 +14,7 @@ add_subdirectory (CMake)
 
 ################################
 ## Version information
-set(HOOMD_VERSION_RAW "4.2.0")
+set(HOOMD_VERSION_RAW "4.2.1")
 string(REGEX MATCH "(.*)\\.(.*)\\.(.*)$" _hoomd_version_match ${HOOMD_VERSION_RAW})
 set(HOOMD_VERSION_MAJOR ${CMAKE_MATCH_1})
 set(HOOMD_VERSION_MINOR ${CMAKE_MATCH_2})
@@ -93,13 +93,13 @@ set(HOOMD_GPU_PLATFORM "CUDA" CACHE STRING "Choose the GPU backend: HIP or CUDA.
 option(ENABLE_LLVM "Link to the LLVM library for run time code generation" off)
 
 # Components
-option(BUILD_MD "Build the md package" off)
+option(BUILD_MD "Build the md package" on)
 if (HOOMD_LONGREAL_SIZE STREQUAL "64")
-option(BUILD_HPMC "Build the hpmc package" off)
+option(BUILD_HPMC "Build the hpmc package" on)
 else ()
 option(BUILD_HPMC "Build the hpmc package" off)
 endif()
-option(BUILD_METAL "Build the metal package" off)
+option(BUILD_METAL "Build the metal package" on)
 
 # Optionally use TBB for threading
 option(ENABLE_TBB "Enable support for Threading Building Blocks (TBB)" off)
@@ -120,7 +120,7 @@ include (HOOMDMPISetup)
 include(HOOMDPythonSetup)
 
 if (NOT ENABLE_HIP OR HIP_PLATFORM STREQUAL "nvcc")
-    option(BUILD_MPCD "Build the mpcd package" off)
+    option(BUILD_MPCD "Build the mpcd package" on)
 else()
     option(BUILD_MPCD "Build the mpcd package" off)
 endif()
@@ -163,7 +163,7 @@ exec_program("date +%Y-%m-%d" OUTPUT_VARIABLE COMPILE_DATE)
 ################################
 # set up unit tests
 enable_testing()
-option(BUILD_TESTING "Build unit tests" OFF)
+option(BUILD_TESTING "Build unit tests" ON)
 
 if (BUILD_TESTING)
      # add test_all to the ALL target

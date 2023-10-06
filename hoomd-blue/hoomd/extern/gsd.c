@@ -91,7 +91,6 @@ enum
 // define windows wrapper functions
 #ifdef _WIN32
 #define lseek _lseeki64
-#define open _open
 #define ftruncate _chsize
 #define fsync _commit
 typedef int64_t ssize_t;
