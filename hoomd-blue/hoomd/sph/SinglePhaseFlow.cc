@@ -238,6 +238,66 @@ void SinglePhaseFlow<KT_, SET_>::update_ghost_aux1(uint64_t timestep)
         }
 #endif
     }
+template<SmoothingKernelType KT_,StateEquationType SET_>
+void SinglePhaseFlow<KT_, SET_>::update_ghost_aux2(uint64_t timestep)
+    {
+    this->m_exec_conf->msg->notice(7) << "Computing SinglePhaseFlow::Update Ghost aux1" << std::endl;
+
+#ifdef ENABLE_MPI
+    if (this->m_comm)
+        {
+        CommFlags flags(0);
+        flags[comm_flag::tag] = 0;
+        flags[comm_flag::position] = 0;
+        flags[comm_flag::velocity] = 0;
+        // flags[comm_flag::dpe] = 1;
+        flags[comm_flag::density] = 1;
+        flags[comm_flag::pressure] = 1;
+        flags[comm_flag::energy] = 0;
+        flags[comm_flag::auxiliary1] = 0; // ficticios velocity
+        flags[comm_flag::auxiliary2] = 1;
+        flags[comm_flag::auxiliary3] = 0;
+        flags[comm_flag::auxiliary4] = 0;
+        flags[comm_flag::body] = 0;
+        flags[comm_flag::image] = 0;
+        flags[comm_flag::net_force] = 0;
+        flags[comm_flag::net_ratedpe] = 0;
+        this->m_comm->setFlags(flags);
+        this->m_comm->beginUpdateGhosts(timestep);
+        this->m_comm->finishUpdateGhosts(timestep);
+        }
+#endif
+    }
+// template<SmoothingKernelType KT_,StateEquationType SET_>
+// void SinglePhaseFlow<KT_, SET_>::update_ghost_aux3(uint64_t timestep)
+//     {
+//     this->m_exec_conf->msg->notice(7) << "Computing SinglePhaseFlowNN::Update Ghost aux3" << std::endl;
+
+// #ifdef ENABLE_MPI
+//     if (this->m_comm)
+//         {
+//         CommFlags flags(0);
+//         flags[comm_flag::tag] = 0;
+//         flags[comm_flag::position] = 0;
+//         flags[comm_flag::velocity] = 0;
+//         // flags[comm_flag::dpe] = 1;
+//         flags[comm_flag::density] = 1;
+//         flags[comm_flag::pressure] = 1;
+//         flags[comm_flag::energy] = 0;
+//         flags[comm_flag::auxiliary1] = 0;
+//         flags[comm_flag::auxiliary2] = 0;
+//         flags[comm_flag::auxiliary3] = 1;
+//         flags[comm_flag::auxiliary4] = 0;
+//         flags[comm_flag::body] = 0;
+//         flags[comm_flag::image] = 0;
+//         flags[comm_flag::net_force] = 0;
+//         flags[comm_flag::net_ratedpe] = 0;
+//         this->m_comm->setFlags(flags);
+//         this->m_comm->beginUpdateGhosts(timestep);
+//         this->m_comm->finishUpdateGhosts(timestep);
+//         }
+// #endif
+//     }
 
 template<SmoothingKernelType KT_,StateEquationType SET_>
 void SinglePhaseFlow<KT_, SET_>::validateTypes(unsigned int typ1,
@@ -886,6 +946,7 @@ void SinglePhaseFlow<KT_, SET_>::renormalize_density(uint64_t timestep)
             }
         } // End of particle loop
     } // End renormalize density
+
 
 /*! Perform force computation
  */

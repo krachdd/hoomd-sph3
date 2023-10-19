@@ -23,10 +23,9 @@ SinglePhaseFlowNN<KT_, SET_>::SinglePhaseFlowNN(std::shared_ptr<SystemDefinition
                                  std::shared_ptr<nsearch::NeighborList> nlist,
                                  std::shared_ptr<ParticleGroup> fluidgroup,
                                  std::shared_ptr<ParticleGroup> solidgroup,
-                                 std::shared_ptr<ParticleGroup> allgroup,
                                  DensityMethod mdensitymethod,
                                  ViscosityMethod mviscositymethod)
-    : SPHBaseClass<KT_, SET_>(sysdef,skernel,equationofstate,nlist), m_fluidgroup(fluidgroup), m_solidgroup(solidgroup), m_allgroup(allgroup), m_typpair_idx(this->m_pdata->getNTypes())
+    : SPHBaseClass<KT_, SET_>(sysdef,skernel,equationofstate,nlist), m_fluidgroup(fluidgroup), m_solidgroup(solidgroup), m_typpair_idx(this->m_pdata->getNTypes())
       {
         this->m_exec_conf->msg->notice(5) << "Constructing SinglePhaseFlowNN" << std::endl;
 
@@ -56,7 +55,6 @@ SinglePhaseFlowNN<KT_, SET_>::SinglePhaseFlowNN(std::shared_ptr<SystemDefinition
         // Contruct type vectors
         this->constructTypeVectors(fluidgroup,&m_fluidtypes);
         this->constructTypeVectors(solidgroup,&m_solidtypes);
-        this->constructTypeVectors(allgroup,&m_alltypes);
 
         // all particle groups are based on the same particle data
         unsigned int num_types = this->m_sysdef->getParticleData()->getNTypes();
@@ -226,7 +224,6 @@ void SinglePhaseFlowNN<KT_, SET_>::update_ghost_density(uint64_t timestep)
         }
 #endif
     }
-// TODO: Density and pressure update here? same for aux3
 template<SmoothingKernelType KT_,StateEquationType SET_>
 void SinglePhaseFlowNN<KT_, SET_>::update_ghost_aux1(uint64_t timestep)
     {
@@ -270,8 +267,8 @@ void SinglePhaseFlowNN<KT_, SET_>::update_ghost_aux3(uint64_t timestep)
         flags[comm_flag::position] = 0;
         flags[comm_flag::velocity] = 0;
         // flags[comm_flag::dpe] = 1;
-        flags[comm_flag::density] = 1;
-        flags[comm_flag::pressure] = 1;
+        flags[comm_flag::density] = 0;
+        flags[comm_flag::pressure] = 0;
         flags[comm_flag::energy] = 0;
         flags[comm_flag::auxiliary1] = 0;
         flags[comm_flag::auxiliary2] = 0;
@@ -529,123 +526,6 @@ void SinglePhaseFlowNN<KT_, SET_>::compute_ndensity(uint64_t timestep)
 } // End compute number density
 
 
-/*! Perform  computation of normalization constant for ficticious pressure/velocity computation
- * This method computes and stores the zeroth order normalization constant for solid particles
-   in the density Array.
- */
-template<SmoothingKernelType KT_,StateEquationType SET_>
-void SinglePhaseFlowNN<KT_, SET_>::compute_normalization_constant_solid(uint64_t timestep)
-{
-    this->m_exec_conf->msg->notice(7) << "Computing SinglePhaseFlowNN::Normalization Constant Solid" << std::endl;
-
-    // Grab handles for particle data
-    ArrayHandle<Scalar> h_density(this->m_pdata->getDensities(), access_location::host, access_mode::readwrite);
-    ArrayHandle<Scalar4> h_pos(this->m_pdata->getPositions(), access_location::host, access_mode::read);
-    // ArrayHandle<Scalar4> h_velocity(this->m_pdata->getVelocities(), access_location::host, access_mode::read);
-    ArrayHandle<Scalar>  h_h(this->m_pdata->getSlengths(), access_location::host, access_mode::read);
-
-    // Grab handles for neighbor data
-    ArrayHandle<unsigned int> h_n_neigh(this->m_nlist->getNNeighArray(), access_location::host, access_mode::read);
-    ArrayHandle<unsigned int> h_nlist(this->m_nlist->getNListArray(), access_location::host, access_mode::read);
-    ArrayHandle<size_t> h_head_list(this->m_nlist->getHeadList(), access_location::host, access_mode::read);
-    // ArrayHandle<unsigned int> h_head_list(this->m_nlist->getHeadList(), access_location::host, access_mode::read);
-    ArrayHandle<unsigned int> h_type_property_map(this->m_type_property_map, access_location::host, access_mode::read);
-
-    // Local copy of the simulation box
-    const BoxDim& box = this->m_pdata->getGlobalBox();
-
-    unsigned int size;
-    long unsigned int myHead;
-
-
-    // For all solid particles
-    unsigned int group_size = this->m_solidgroup->getNumMembers();
-    for (unsigned int group_idx = 0; group_idx < group_size; group_idx++)
-    {
-        // Read particle index
-        unsigned int i = this->m_solidgroup->getMemberIndex(group_idx);
-
-        // Access the particle's position
-        Scalar3 pi;
-        pi.x = h_pos.data[i].x;
-        pi.y = h_pos.data[i].y;
-        pi.z = h_pos.data[i].z;
-
-        // Re-Initialize Density
-        h_density.data[i] = 0;
-
-        // Skip neighbor loop if this solid solid particle does not have fluid neighbors
-        bool solid_w_fluid_neigh = false;
-
-        myHead = h_head_list.data[i];
-        size = (unsigned int)h_n_neigh.data[i];
-        for (unsigned int j = 0; j < size; j++)
-        {
-            unsigned int k = h_nlist.data[myHead + j];
-            if ( checkfluid(h_type_property_map.data, h_pos.data[k].w) )
-            {
-                solid_w_fluid_neigh = true;
-                break;
-            }
-        }
-
-        if ( !(solid_w_fluid_neigh) )
-        {
-            h_density.data[i] = this->m_rho0;
-            continue;
-        }
-
-        // Loop over all of the neighbors of this particle
-        size_t myHead = h_head_list.data[i];
-        unsigned int size = (unsigned int)h_n_neigh.data[i];
-
-        for (unsigned int j = 0; j < size; j++)
-        {
-            // Index of neighbor
-            unsigned int k = h_nlist.data[myHead + j];
-
-            // Read particle j type
-            bool j_issolid = checksolid(h_type_property_map.data, h_pos.data[k].w);
-
-            // If both particles are solid, continue with next neighbor in loop
-            if ( j_issolid )
-            {
-                continue;
-            }
-
-            // Access neighbor position
-            Scalar3 pj;
-            pj.x = h_pos.data[k].x;
-            pj.y = h_pos.data[k].y;
-            pj.z = h_pos.data[k].z;
-
-            // Compute distance vector
-            // TODO DEFINE SCALAR NOT in loop but outside !!!!!!!!!
-            Scalar3 dx = pj - pi;
-
-            // Apply periodic boundary conditions
-            dx = box.minImage(dx);
-
-            // Calculate squared distance
-            Scalar rsq = dot(dx, dx);
-
-            // If particle distance is too large, continue with next neighbor in loop
-            if ( this->m_const_slength && rsq > m_rcutsq )
-            {
-                continue;
-            }
-
-            // Calculate distance
-            Scalar r = sqrt(rsq);
-
-            // Normalization constant sum (Wij)^-1
-            h_density.data[i] += this->m_const_slength ? this->m_skernel->wij(m_ch,r) : this->m_skernel->wij(Scalar(0.5)*(h_h.data[i]+h_h.data[k]),r);
-
-        } // END NEIGHBOR LOOP
-
-    } // END PARTICLE LOOP
-
-}
 
 /*! Perform pressure computation
  * Simply done by a equation of state
@@ -1074,59 +954,17 @@ void SinglePhaseFlowNN<KT_, SET_>::compute_viscosity(uint64_t timestep)
     ArrayHandle<unsigned int> h_type_property_map(this->m_type_property_map, access_location::host, access_mode::read);
 
     // Check input data
-    assert(h_pos.data != NULL);
+    //assert(h_pos.data != NULL);
 
     // Local copy of the simulation box
     const BoxDim& box = this->m_pdata->getGlobalBox();
 
-    // Zero data before calculation
-    memset((void*)h_nn.data, 0, sizeof(Scalar3)*this->m_pdata->getAuxiliaries3().getNumElements());
-
-    // unsigned int size;
-    // long unsigned int myHead;
-
     unsigned int size;
     size_t myHead;
 
-    // For all particles
-    unsigned int group_size = this->m_allgroup->getNumMembers();
-    for (unsigned int group_idx = 0; group_idx < group_size; group_idx++)
+    unsigned int nptl_local = this->m_pdata->getN()+ this->m_pdata->getNGhosts();
+    for (unsigned int i = 0; i < nptl_local; i++)
         {
-        // Read particle index
-        unsigned int i = this->m_allgroup->getMemberIndex(group_idx);
-
-    // // Particle loop
-    // for (unsigned int i = 0; i < this->m_pdata->getN(); i++)
-    //     {
-
-        // // Determine particle i type
-        // bool i_issolid = checksolid(h_type_property_map.data, h_pos.data[i].w);
-
-        // // Skip neighbor loop if this solid solid particle does not have fluid neighbors
-        // bool solid_w_fluid_neigh = false;
-        // if ( i_issolid )
-        //     {
-        //     myHead = h_head_list.data[i];
-        //     size = (unsigned int)h_n_neigh.data[i];
-        //     for (unsigned int j = 0; j < size; j++)
-        //         {
-        //             unsigned int k = h_nlist.data[myHead + j];
-        //             if ( checkfluid(h_type_property_map.data, h_pos.data[k].w) )
-        //                 {
-        //                 solid_w_fluid_neigh = true;
-        //                 break;
-        //                 }
-        //             }
-        //     }
-
-        // if ( i_issolid && !(solid_w_fluid_neigh) )
-        //     {
-        //     h_nn.data[i].x = 0.0;           // Shear rate = 0.0
-        //     h_nn.data[i].y = this->m_mu0;   // Viscosity = mu0
-        //     h_nn.data[i].z = 0.0;           // Shearstress = 0.0
-        //     continue;
-        //     }
-
         // TODO: Aus Schleife raus initialisieren hier nur null setzen
         // Initialize velocity gradient
         Scalar L[9] = {0};
@@ -1135,14 +973,9 @@ void SinglePhaseFlowNN<KT_, SET_>::compute_viscosity(uint64_t timestep)
         // Initialize L2-norm of shear rate
         Scalar norm_shear_rate = 0.0;
         // Initialize variable to compute current viscosity
-        // Scalar factor = 0.0;
         Scalar mu_i = 0.0;
         // Initialize variable to compute current shear stress
         Scalar tau_i = 0.0;
-        // Initialze m
-        //Scalar m = 0.0;
-        //Scalar mu_in = 0.0;
-        //Scalar mu_0 = 0.0;
 
         // Access the particle's position, velocity, mass and type
         Scalar3 pi;
@@ -1154,29 +987,15 @@ void SinglePhaseFlowNN<KT_, SET_>::compute_viscosity(uint64_t timestep)
         vi.x = h_velocity.data[i].x;
         vi.y = h_velocity.data[i].y;
         vi.z = h_velocity.data[i].z;
-        
-        //  nicht noetig
-        //Scalar mi = h_velocity.data[i].w;
-        // Read particle i density
-        //Scalar rhoi = h_density.data[i];
 
         // Determine particle i type
         bool i_issolid = checksolid(h_type_property_map.data, h_pos.data[i].w);
-
-        // // Loop over all of the neighbors of this particle
-        // myHead = h_head_list.data[i];
-        // size = (unsigned int)h_n_neigh.data[i];
-
-        // for (unsigned int j = 0; j < size; j++)
-        //     {
-        //     // Index of neighbor (MEM TRANSFER: 1 scalar)
-        //     unsigned int k = h_nlist.data[myHead + j];
-
 
         // Skip neighbor loop if this solid solid particle does not have fluid neighbors
         bool solid_w_fluid_neigh = false;
         if ( i_issolid )
             {
+
             myHead = h_head_list.data[i];
             size = (unsigned int)h_n_neigh.data[i];
             for (unsigned int j = 0; j < size; j++)
@@ -1187,10 +1006,9 @@ void SinglePhaseFlowNN<KT_, SET_>::compute_viscosity(uint64_t timestep)
                         solid_w_fluid_neigh = true;
                         break;
                         }
-                    }
-            }
-        
-        // false false --> true kein solid with fluid neighbor
+                }
+        }
+
         if ( i_issolid && !(solid_w_fluid_neigh) )
             {
             h_nn.data[i].x = 0.0;           // Shear rate = 0.0
@@ -1199,6 +1017,7 @@ void SinglePhaseFlowNN<KT_, SET_>::compute_viscosity(uint64_t timestep)
             continue;
             }
 
+        
         // Loop over all of the neighbors of this particle
         // const long unsigned int myHead = h_head_list.data[i];
         // const unsigned int size = (unsigned int)h_n_neigh.data[i];
@@ -1233,7 +1052,7 @@ void SinglePhaseFlowNN<KT_, SET_>::compute_viscosity(uint64_t timestep)
             Scalar rsq = dot(dx, dx);
 
             // If particle distance is too large, skip this loop
-            if ( this->m_const_slength && rsq > this->m_rcutsq )
+            if ( m_const_slength && rsq > m_rcutsq )
                 continue;
 
             // Determine neighbor type
@@ -1244,7 +1063,6 @@ void SinglePhaseFlowNN<KT_, SET_>::compute_viscosity(uint64_t timestep)
             Scalar mj   = h_velocity.data[k].w;
             if ( issolid )
                 {
-                // soll das hier wirklich mit rein?!
                 vj.x = h_vf.data[k].x;
                 vj.y = h_vf.data[k].y;
                 vj.z = h_vf.data[k].z;
@@ -1256,7 +1074,19 @@ void SinglePhaseFlowNN<KT_, SET_>::compute_viscosity(uint64_t timestep)
                 vj.z = h_velocity.data[k].z;
                 }
             Scalar rhoj = h_density.data[k];
-            Scalar Vj   = mj / rhoj;
+            Scalar Vj   = mj / rhoj;    // =============>>> USE NUMBER DENSITY ???
+            // HINT:
+            // mass_density = m_i * \sum_j wij ==> h_dpe.data[i].x = h_dpe.data[i].x * h_velocity.data[i].w;
+
+            // Compute velocity difference
+            Scalar3 dv;
+            // dv.x = vi.x - vj.x;
+            // dv.y = vi.y - vj.y;
+            // dv.z = vi.z - vj.z;
+
+            dv.x = vj.x - vi.x;
+            dv.y = vj.y - vi.y;
+            dv.z = vj.z - vi.z;
 
             // Calculate absolute and normalized distance
             Scalar r = sqrt(rsq);
@@ -1269,46 +1099,18 @@ void SinglePhaseFlowNN<KT_, SET_>::compute_viscosity(uint64_t timestep)
             Scalar dwdr   = this->m_skernel->dwijdr(meanh,r);
             Scalar dwdr_r = dwdr/(r+eps);
 
-            // Evaluate grad u gradC0
-            L[0] += Vj * (vj.x - vi.x) * (dx.x) * dwdr_r;
-            L[1] += Vj * (vj.x - vi.x) * (dx.y) * dwdr_r;
-            L[2] += Vj * (vj.x - vi.x) * (dx.z) * dwdr_r;
+            // Evaluate grad u (zeroth-order consistency --> doesn't need local momenmtum conservationp)
+            L[0] += Vj * dv.x * dx.x * dwdr_r;
+            L[1] += Vj * dv.x * dx.y * dwdr_r;
+            L[2] += Vj * dv.x * dx.z * dwdr_r;
 
-            L[3] += Vj * (vj.y - vi.y) * (dx.x) * dwdr_r;
-            L[4] += Vj * (vj.y - vi.y) * (dx.y) * dwdr_r;
-            L[5] += Vj * (vj.y - vi.y) * (dx.z) * dwdr_r;
+            L[3] += Vj * dv.y * dx.x * dwdr_r;
+            L[4] += Vj * dv.y * dx.y * dwdr_r;
+            L[5] += Vj * dv.y * dx.z * dwdr_r;
 
-            L[6] += Vj * (vj.z - vi.z) * (dx.x) * dwdr_r;
-            L[7] += Vj * (vj.z - vi.z) * (dx.y) * dwdr_r;
-            L[8] += Vj * (vj.z - vi.z) * (dx.z) * dwdr_r;
-
-
-            // // Test
-            // L[0] += (mi*mj*(vj.x+vi.x)/(rhoi*rhoj))*dwdr_r*dx.x;
-            // L[1] += (mi*mj*(vj.x+vi.x)/(rhoi*rhoj))*dwdr_r*dx.y;
-            // L[2] += (mi*mj*(vj.x+vi.x)/(rhoi*rhoj))*dwdr_r*dx.z;
-
-            // L[3] += (mi*mj*(vj.y+vi.y)/(rhoi*rhoj))*dwdr_r*dx.x;
-            // L[4] += (mi*mj*(vj.y+vi.y)/(rhoi*rhoj))*dwdr_r*dx.y;
-            // L[5] += (mi*mj*(vj.y+vi.y)/(rhoi*rhoj))*dwdr_r*dx.z;
-
-            // L[6] += (mi*mj*(vj.z+vi.z)/(rhoi*rhoj))*dwdr_r*dx.x;
-            // L[7] += (mi*mj*(vj.z+vi.z)/(rhoi*rhoj))*dwdr_r*dx.y;
-            // L[8] += (mi*mj*(vj.z+vi.z)/(rhoi*rhoj))*dwdr_r*dx.z;
-
-
-            // // Eventuell so
-            // L[0] += Vj * vj.x * (dx.x) * dwdr_r;
-            // L[1] += Vj * vj.x * (dx.y) * dwdr_r;
-            // L[2] += Vj * vj.x * (dx.z) * dwdr_r;
-
-            // L[3] += Vj * vj.y * (dx.x) * dwdr_r;
-            // L[4] += Vj * vj.y * (dx.y) * dwdr_r;
-            // L[5] += Vj * vj.y * (dx.z) * dwdr_r;
-
-            // L[6] += Vj * vj.z * (dx.x) * dwdr_r;
-            // L[7] += Vj * vj.z * (dx.y) * dwdr_r;
-            // L[8] += Vj * vj.z * (dx.z) * dwdr_r;
+            L[6] += Vj * dv.z * dx.x * dwdr_r;
+            L[7] += Vj * dv.z * dx.y * dwdr_r;
+            L[8] += Vj * dv.z * dx.z * dwdr_r;
 
             // close neighbor loop
             }
@@ -1346,7 +1148,6 @@ void SinglePhaseFlowNN<KT_, SET_>::compute_viscosity(uint64_t timestep)
             tau_i = this->m_mu0 * norm_shear_rate + this->m_tau0 * ( Scalar(1.0) - exp( -(norm_shear_rate * this->m_m) ) ) ;
             }
 
-
         // Save norm of shear rate in aux3.x
         h_nn.data[i].x = norm_shear_rate;
         // Save viscosity in aux3.y
@@ -1355,7 +1156,6 @@ void SinglePhaseFlowNN<KT_, SET_>::compute_viscosity(uint64_t timestep)
         h_nn.data[i].z = tau_i;
 
         }
-
     }
 
 /*! Perform force computation
@@ -1401,6 +1201,9 @@ void SinglePhaseFlowNN<KT_, SET_>::forcecomputation(uint64_t timestep)
 
     // Check input data
     assert(h_pos.data != NULL);
+
+    unsigned int size;
+    size_t myHead;
 
     // Local copy of the simulation box
     const BoxDim& box = this->m_pdata->getGlobalBox();
@@ -1451,8 +1254,8 @@ void SinglePhaseFlowNN<KT_, SET_>::forcecomputation(uint64_t timestep)
         Scalar mui  = h_nn.data[i].y;
 
         // Loop over all of the neighbors of this particle
-        const long unsigned int myHead = h_head_list.data[i];
-        const unsigned int size = (unsigned int)h_n_neigh.data[i];
+        myHead = h_head_list.data[i];
+        size = (unsigned int)h_n_neigh.data[i];
 
         for (unsigned int j = 0; j < size; j++)
             {
@@ -1574,6 +1377,7 @@ void SinglePhaseFlowNN<KT_, SET_>::forcecomputation(uint64_t timestep)
 
             // Evaluate viscous interaction forces
             meanmu = (Scalar(2.0) * mui * muj) / (mui + muj);
+            //meanmu = m_mu0;
             temp0 = meanmu * (Vi*Vi+Vj*Vj) * dwdr_r;
             h_force.data[i].x  += temp0*dv.x;
             h_force.data[i].y  += temp0*dv.y;
@@ -1640,14 +1444,6 @@ void SinglePhaseFlowNN<KT_, SET_>::computeForces(uint64_t timestep)
     // start by updating the neighborlist
     this->m_nlist->compute(timestep);
 
-    if (!m_solid_removed)
-        {
-        this->m_nlist->forceUpdate();
-        this->m_nlist->compute(timestep);
-        mark_solid_particles_toremove(timestep);
-        m_solid_removed = true;
-        }
-
     // This is executed once to initialize protected/private variables
     if (!m_params_set)
         {
@@ -1656,10 +1452,19 @@ void SinglePhaseFlowNN<KT_, SET_>::computeForces(uint64_t timestep)
         throw std::runtime_error("Error computing SinglePhaseFlowNN forces");
         }
 
+    // m_solid_removed flag is set to False initially, so this 
+    // only executes at timestep 0
+    if (!m_solid_removed)
+        {
+        this->m_nlist->forceUpdate();
+        this->m_nlist->compute(timestep);
+        mark_solid_particles_toremove(timestep);
+        m_solid_removed = true;
+        }
+
     // Apply density renormalization if requested
     if ( m_shepard_renormalization && timestep % m_shepardfreq == 0 )
         {
-        std::cout << "in renormalization density" << std::endl;
         renormalize_density(timestep);
 #ifdef ENABLE_MPI
          // Update ghost particle densities and pressures.
@@ -1670,6 +1475,8 @@ void SinglePhaseFlowNN<KT_, SET_>::computeForces(uint64_t timestep)
     if (m_density_method == DENSITYSUMMATION)
     {
         compute_ndensity(timestep);
+        // compute_particlenumberdensity(timestep);
+
     }
     // The contribution to the normalization constant is also computed for summation approach in compute_ndensity
     // else if (m_density_method == DENSITYCONTINUITY)
@@ -1716,7 +1523,6 @@ void export_SinglePhaseFlowNN(pybind11::module& m, std::string name)
                              std::shared_ptr<SmoothingKernel<KT_> >,
                              std::shared_ptr<StateEquation<SET_> >,
                              std::shared_ptr<nsearch::NeighborList>,
-                             std::shared_ptr<ParticleGroup>,
                              std::shared_ptr<ParticleGroup>,
                              std::shared_ptr<ParticleGroup>,
                              DensityMethod,

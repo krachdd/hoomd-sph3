@@ -93,6 +93,7 @@ void VelocityVerletBasic::integrateStepOne(uint64_t timestep)
     //         std::cout << "Using DENSITYCONTINUITY in Verlet" << std::endl;
     //     }
     // }
+    //std::cout << "VVB_Step1_Timestep:" << timestep  << std::endl;
 
 
     ArrayHandle<Scalar4> h_vel(m_pdata->getVelocities(), access_location::host, access_mode::readwrite);
@@ -101,6 +102,9 @@ void VelocityVerletBasic::integrateStepOne(uint64_t timestep)
     ArrayHandle<Scalar3> h_accel(m_pdata->getAccelerations(), access_location::host, access_mode::read);
     ArrayHandle<Scalar3> h_dpedt(m_pdata->getDPEdts(), access_location::host, access_mode::read);
     ArrayHandle<Scalar4> h_pos(m_pdata->getPositions(), access_location::host, access_mode::readwrite);
+
+    // test
+    ArrayHandle<Scalar3> h_vf(this->m_pdata->getAuxiliaries1(), access_location::host,access_mode::readwrite);
 
     // perform the first half step of velocity verlet
     // r(t+deltaT) = r(t) + v(t)*deltaT + (1/2)a(t)*deltaT^2
@@ -171,6 +175,8 @@ void VelocityVerletBasic::integrateStepTwo(uint64_t timestep)
     {
     m_exec_conf->msg->notice(9) << "VelocityVerletBasic: Integrate Step two" << endl;
     unsigned int group_size = m_group->getNumMembers();
+
+    //std::cout << "VVB_Step2_Timestep:" << timestep << std::endl;
 
     const GlobalArray<Scalar4>& net_force = m_pdata->getNetForce();
 
