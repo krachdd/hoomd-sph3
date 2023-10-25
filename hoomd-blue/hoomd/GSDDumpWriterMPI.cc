@@ -534,7 +534,7 @@ void GSDDumpWriterMPI::writeFrameHeader(const GSDDumpWriterMPI::GSDFrame& frame)
     m_exec_conf->msg->notice(10) << "PGSD: writing configuration/step" << endl;
     retval = pgsd_write_chunk(&m_handle,
                              "configuration/step",
-                             GSD_TYPE_UINT64,
+                             PGSD_TYPE_UINT64,
                              1,
                              1,
                              0,
@@ -545,9 +545,9 @@ void GSDDumpWriterMPI::writeFrameHeader(const GSDDumpWriterMPI::GSDFrame& frame)
         {
         m_exec_conf->msg->notice(10) << "PGSD: writing configuration/dimensions" << endl;
         uint8_t dimensions = (uint8_t)m_sysdef->getNDimensions();
-        retval = gsd_write_chunk(&m_handle,
+        retval = pgsd_write_chunk(&m_handle,
                                  "configuration/dimensions",
-                                 GSD_TYPE_UINT8,
+                                 PGSD_TYPE_UINT8,
                                  1,
                                  1,
                                  0,
@@ -565,9 +565,9 @@ void GSDDumpWriterMPI::writeFrameHeader(const GSDDumpWriterMPI::GSDFrame& frame)
         box_a[3] = (float)frame.global_box.getTiltFactorXY();
         box_a[4] = (float)frame.global_box.getTiltFactorXZ();
         box_a[5] = (float)frame.global_box.getTiltFactorYZ();
-        retval = gsd_write_chunk(&m_handle,
+        retval = pgsd_write_chunk(&m_handle,
                                  "configuration/box",
-                                 GSD_TYPE_FLOAT,
+                                 PGSD_TYPE_FLOAT,
                                  6,
                                  1,
                                  0,
@@ -579,7 +579,7 @@ void GSDDumpWriterMPI::writeFrameHeader(const GSDDumpWriterMPI::GSDFrame& frame)
         {
         m_exec_conf->msg->notice(10) << "PGSD: writing particles/N" << endl;
         uint32_t N = m_group->getNumMembersGlobal();
-        retval = gsd_write_chunk(&m_handle, "particles/N", GSD_TYPE_UINT32, 1, 1, 0, (void*)&N);
+        retval = pgsd_write_chunk(&m_handle, "particles/N", PGSD_TYPE_UINT32, 1, 1, 0, (void*)&N);
         PGSDUtils::checkError(retval, m_fname);
         }
     }
@@ -602,9 +602,9 @@ void GSDDumpWriterMPI::writeAttributes(const GSDDumpWriterMPI::GSDFrame& frame)
         assert(frame.particle_data.type.size() == N);
 
         m_exec_conf->msg->notice(10) << "PGSD: writing particles/typeid" << endl;
-        retval = gsd_write_chunk(&m_handle,
+        retval = pgsd_write_chunk(&m_handle,
                                  "particles/typeid",
-                                 GSD_TYPE_UINT32,
+                                 PGSD_TYPE_UINT32,
                                  N,
                                  1,
                                  0,
@@ -619,9 +619,9 @@ void GSDDumpWriterMPI::writeAttributes(const GSDDumpWriterMPI::GSDFrame& frame)
         assert(frame.particle_data.mass.size() == N);
 
         m_exec_conf->msg->notice(10) << "PGSD: writing particles/mass" << endl;
-        retval = gsd_write_chunk(&m_handle,
+        retval = pgsd_write_chunk(&m_handle,
                                  "particles/mass",
-                                 GSD_TYPE_FLOAT,
+                                 PGSD_TYPE_FLOAT,
                                  N,
                                  1,
                                  0,
@@ -636,9 +636,9 @@ void GSDDumpWriterMPI::writeAttributes(const GSDDumpWriterMPI::GSDFrame& frame)
         assert(frame.particle_data.slength.size() == N);
 
         m_exec_conf->msg->notice(10) << "PGSD: writing particles/slength" << endl;
-        retval = gsd_write_chunk(&m_handle,
+        retval = pgsd_write_chunk(&m_handle,
                                  "particles/slength",
-                                 GSD_TYPE_FLOAT,
+                                 PGSD_TYPE_FLOAT,
                                  N,
                                  1,
                                  0,
@@ -657,7 +657,7 @@ void GSDDumpWriterMPI::writeAttributes(const GSDDumpWriterMPI::GSDFrame& frame)
     //         m_exec_conf->msg->notice(10) << "PGSD: writing particles/diameter" << endl;
     //         retval = gsd_write_chunk(&m_handle,
     //                                  "particles/diameter",
-    //                                  GSD_TYPE_FLOAT,
+    //                                  PGSD_TYPE_FLOAT,
     //                                  N,
     //                                  1,
     //                                  0,
@@ -673,9 +673,9 @@ void GSDDumpWriterMPI::writeAttributes(const GSDDumpWriterMPI::GSDFrame& frame)
         assert(frame.particle_data.body.size() == N);
 
         m_exec_conf->msg->notice(10) << "PGSD: writing particles/body" << endl;
-        retval = gsd_write_chunk(&m_handle,
+        retval = pgsd_write_chunk(&m_handle,
                                  "particles/body",
-                                 GSD_TYPE_INT32,
+                                 PGSD_TYPE_INT32,
                                  N,
                                  1,
                                  0,
@@ -692,7 +692,7 @@ void GSDDumpWriterMPI::writeAttributes(const GSDDumpWriterMPI::GSDFrame& frame)
     //     m_exec_conf->msg->notice(10) << "PGSD: writing particles/moment_inertia" << endl;
     //     retval = gsd_write_chunk(&m_handle,
     //                              "particles/moment_inertia",
-    //                              GSD_TYPE_FLOAT,
+    //                              PGSD_TYPE_FLOAT,
     //                              N,
     //                              3,
     //                              0,
@@ -715,9 +715,9 @@ void GSDDumpWriterMPI::writeProperties(const GSDDumpWriterMPI::GSDFrame& frame)
         assert(frame.particle_data.pos.size() == N);
 
         m_exec_conf->msg->notice(10) << "PGSD: writing particles/position" << endl;
-        retval = gsd_write_chunk(&m_handle,
+        retval = pgsd_write_chunk(&m_handle,
                                  "particles/position",
-                                 GSD_TYPE_FLOAT,
+                                 PGSD_TYPE_FLOAT,
                                  N,
                                  3,
                                  0,
@@ -732,9 +732,9 @@ void GSDDumpWriterMPI::writeProperties(const GSDDumpWriterMPI::GSDFrame& frame)
         assert(frame.particle_data.density.size() == N);
 
         m_exec_conf->msg->notice(10) << "PGSD: writing particles/density" << endl;
-        retval = gsd_write_chunk(&m_handle,
+        retval = pgsd_write_chunk(&m_handle,
                                  "particles/density",
-                                 GSD_TYPE_FLOAT,
+                                 PGSD_TYPE_FLOAT,
                                  N,
                                  1,
                                  0,
@@ -749,9 +749,9 @@ void GSDDumpWriterMPI::writeProperties(const GSDDumpWriterMPI::GSDFrame& frame)
         assert(frame.particle_data.pressure.size() == N);
 
         m_exec_conf->msg->notice(10) << "PGSD: writing particles/pressure" << endl;
-        retval = gsd_write_chunk(&m_handle,
+        retval = pgsd_write_chunk(&m_handle,
                                  "particles/pressure",
-                                 GSD_TYPE_FLOAT,
+                                 PGSD_TYPE_FLOAT,
                                  N,
                                  1,
                                  0,
@@ -766,9 +766,9 @@ void GSDDumpWriterMPI::writeProperties(const GSDDumpWriterMPI::GSDFrame& frame)
         assert(frame.particle_data.energy.size() == N);
 
         m_exec_conf->msg->notice(10) << "PGSD: writing particles/energy" << endl;
-        retval = gsd_write_chunk(&m_handle,
+        retval = pgsd_write_chunk(&m_handle,
                                  "particles/energy",
-                                 GSD_TYPE_FLOAT,
+                                 PGSD_TYPE_FLOAT,
                                  N,
                                  1,
                                  0,
@@ -785,7 +785,7 @@ void GSDDumpWriterMPI::writeProperties(const GSDDumpWriterMPI::GSDFrame& frame)
     //     m_exec_conf->msg->notice(10) << "PGSD: writing particles/orientation" << endl;
     //     retval = gsd_write_chunk(&m_handle,
     //                              "particles/orientation",
-    //                              GSD_TYPE_FLOAT,
+    //                              PGSD_TYPE_FLOAT,
     //                              N,
     //                              4,
     //                              0,
@@ -810,7 +810,7 @@ void GSDDumpWriterMPI::writeMomenta(const GSDDumpWriterMPI::GSDFrame& frame)
         m_exec_conf->msg->notice(10) << "PGSD: writing particles/velocity" << endl;
         retval = gsd_write_chunk(&m_handle,
                                  "particles/velocity",
-                                 GSD_TYPE_FLOAT,
+                                 PGSD_TYPE_FLOAT,
                                  N,
                                  3,
                                  0,
@@ -827,7 +827,7 @@ void GSDDumpWriterMPI::writeMomenta(const GSDDumpWriterMPI::GSDFrame& frame)
         m_exec_conf->msg->notice(10) << "PGSD: writing particles/auxiliary1" << endl;
         retval = gsd_write_chunk(&m_handle,
                                  "particles/auxiliary1",
-                                 GSD_TYPE_FLOAT,
+                                 PGSD_TYPE_FLOAT,
                                  N,
                                  3,
                                  0,
@@ -844,7 +844,7 @@ void GSDDumpWriterMPI::writeMomenta(const GSDDumpWriterMPI::GSDFrame& frame)
         m_exec_conf->msg->notice(10) << "PGSD: writing particles/auxiliary2" << endl;
         retval = gsd_write_chunk(&m_handle,
                                  "particles/auxiliary2",
-                                 GSD_TYPE_FLOAT,
+                                 PGSD_TYPE_FLOAT,
                                  N,
                                  3,
                                  0,
@@ -861,7 +861,7 @@ void GSDDumpWriterMPI::writeMomenta(const GSDDumpWriterMPI::GSDFrame& frame)
         m_exec_conf->msg->notice(10) << "PGSD: writing particles/auxiliary3" << endl;
         retval = gsd_write_chunk(&m_handle,
                                  "particles/auxiliary3",
-                                 GSD_TYPE_FLOAT,
+                                 PGSD_TYPE_FLOAT,
                                  N,
                                  3,
                                  0,
@@ -878,7 +878,7 @@ void GSDDumpWriterMPI::writeMomenta(const GSDDumpWriterMPI::GSDFrame& frame)
         m_exec_conf->msg->notice(10) << "PGSD: writing particles/auxiliary4" << endl;
         retval = gsd_write_chunk(&m_handle,
                                  "particles/auxiliary4",
-                                 GSD_TYPE_FLOAT,
+                                 PGSD_TYPE_FLOAT,
                                  N,
                                  3,
                                  0,
@@ -895,7 +895,7 @@ void GSDDumpWriterMPI::writeMomenta(const GSDDumpWriterMPI::GSDFrame& frame)
     //     m_exec_conf->msg->notice(10) << "PGSD: writing particles/angmom" << endl;
     //     retval = gsd_write_chunk(&m_handle,
     //                              "particles/angmom",
-    //                              GSD_TYPE_FLOAT,
+    //                              PGSD_TYPE_FLOAT,
     //                              N,
     //                              4,
     //                              0,
@@ -912,7 +912,7 @@ void GSDDumpWriterMPI::writeMomenta(const GSDDumpWriterMPI::GSDFrame& frame)
         m_exec_conf->msg->notice(10) << "PGSD: writing particles/image" << endl;
         retval = gsd_write_chunk(&m_handle,
                                  "particles/image",
-                                 GSD_TYPE_INT32,
+                                 PGSD_TYPE_INT32,
                                  N,
                                  3,
                                  0,
@@ -944,7 +944,7 @@ void GSDDumpWriterMPI::writeTopology(BondData::Snapshot& bond,
         {
         m_exec_conf->msg->notice(10) << "PGSD: writing bonds/N" << endl;
         uint32_t N = bond.size;
-        int retval = gsd_write_chunk(&m_handle, "bonds/N", GSD_TYPE_UINT32, 1, 1, 0, (void*)&N);
+        int retval = gsd_write_chunk(&m_handle, "bonds/N", PGSD_TYPE_UINT32, 1, 1, 0, (void*)&N);
         PGSDUtils::checkError(retval, m_fname);
 
         writeTypeMapping("bonds/types", bond.type_mapping);
@@ -952,7 +952,7 @@ void GSDDumpWriterMPI::writeTopology(BondData::Snapshot& bond,
         m_exec_conf->msg->notice(10) << "PGSD: writing bonds/typeid" << endl;
         retval = gsd_write_chunk(&m_handle,
                                  "bonds/typeid",
-                                 GSD_TYPE_UINT32,
+                                 PGSD_TYPE_UINT32,
                                  N,
                                  1,
                                  0,
@@ -962,7 +962,7 @@ void GSDDumpWriterMPI::writeTopology(BondData::Snapshot& bond,
         m_exec_conf->msg->notice(10) << "PGSD: writing bonds/group" << endl;
         retval = gsd_write_chunk(&m_handle,
                                  "bonds/group",
-                                 GSD_TYPE_UINT32,
+                                 PGSD_TYPE_UINT32,
                                  N,
                                  2,
                                  0,
@@ -973,7 +973,7 @@ void GSDDumpWriterMPI::writeTopology(BondData::Snapshot& bond,
     //     {
     //     m_exec_conf->msg->notice(10) << "PGSD: writing angles/N" << endl;
     //     uint32_t N = angle.size;
-    //     int retval = gsd_write_chunk(&m_handle, "angles/N", GSD_TYPE_UINT32, 1, 1, 0, (void*)&N);
+    //     int retval = gsd_write_chunk(&m_handle, "angles/N", PGSD_TYPE_UINT32, 1, 1, 0, (void*)&N);
     //     PGSDUtils::checkError(retval, m_fname);
 
     //     writeTypeMapping("angles/types", angle.type_mapping);
@@ -981,7 +981,7 @@ void GSDDumpWriterMPI::writeTopology(BondData::Snapshot& bond,
     //     m_exec_conf->msg->notice(10) << "PGSD: writing angles/typeid" << endl;
     //     retval = gsd_write_chunk(&m_handle,
     //                              "angles/typeid",
-    //                              GSD_TYPE_UINT32,
+    //                              PGSD_TYPE_UINT32,
     //                              N,
     //                              1,
     //                              0,
@@ -991,7 +991,7 @@ void GSDDumpWriterMPI::writeTopology(BondData::Snapshot& bond,
     //     m_exec_conf->msg->notice(10) << "PGSD: writing angles/group" << endl;
     //     retval = gsd_write_chunk(&m_handle,
     //                              "angles/group",
-    //                              GSD_TYPE_UINT32,
+    //                              PGSD_TYPE_UINT32,
     //                              N,
     //                              3,
     //                              0,
@@ -1002,7 +1002,7 @@ void GSDDumpWriterMPI::writeTopology(BondData::Snapshot& bond,
     //     {
     //     m_exec_conf->msg->notice(10) << "PGSD: writing dihedrals/N" << endl;
     //     uint32_t N = dihedral.size;
-    //     int retval = gsd_write_chunk(&m_handle, "dihedrals/N", GSD_TYPE_UINT32, 1, 1, 0, (void*)&N);
+    //     int retval = gsd_write_chunk(&m_handle, "dihedrals/N", PGSD_TYPE_UINT32, 1, 1, 0, (void*)&N);
     //     PGSDUtils::checkError(retval, m_fname);
 
     //     writeTypeMapping("dihedrals/types", dihedral.type_mapping);
@@ -1010,7 +1010,7 @@ void GSDDumpWriterMPI::writeTopology(BondData::Snapshot& bond,
     //     m_exec_conf->msg->notice(10) << "PGSD: writing dihedrals/typeid" << endl;
     //     retval = gsd_write_chunk(&m_handle,
     //                              "dihedrals/typeid",
-    //                              GSD_TYPE_UINT32,
+    //                              PGSD_TYPE_UINT32,
     //                              N,
     //                              1,
     //                              0,
@@ -1020,7 +1020,7 @@ void GSDDumpWriterMPI::writeTopology(BondData::Snapshot& bond,
     //     m_exec_conf->msg->notice(10) << "PGSD: writing dihedrals/group" << endl;
     //     retval = gsd_write_chunk(&m_handle,
     //                              "dihedrals/group",
-    //                              GSD_TYPE_UINT32,
+    //                              PGSD_TYPE_UINT32,
     //                              N,
     //                              4,
     //                              0,
@@ -1031,7 +1031,7 @@ void GSDDumpWriterMPI::writeTopology(BondData::Snapshot& bond,
     //     {
     //     m_exec_conf->msg->notice(10) << "PGSD: writing impropers/N" << endl;
     //     uint32_t N = improper.size;
-    //     int retval = gsd_write_chunk(&m_handle, "impropers/N", GSD_TYPE_UINT32, 1, 1, 0, (void*)&N);
+    //     int retval = gsd_write_chunk(&m_handle, "impropers/N", PGSD_TYPE_UINT32, 1, 1, 0, (void*)&N);
     //     PGSDUtils::checkError(retval, m_fname);
 
     //     writeTypeMapping("impropers/types", improper.type_mapping);
@@ -1039,7 +1039,7 @@ void GSDDumpWriterMPI::writeTopology(BondData::Snapshot& bond,
     //     m_exec_conf->msg->notice(10) << "PGSD: writing impropers/typeid" << endl;
     //     retval = gsd_write_chunk(&m_handle,
     //                              "impropers/typeid",
-    //                              GSD_TYPE_UINT32,
+    //                              PGSD_TYPE_UINT32,
     //                              N,
     //                              1,
     //                              0,
@@ -1049,7 +1049,7 @@ void GSDDumpWriterMPI::writeTopology(BondData::Snapshot& bond,
     //     m_exec_conf->msg->notice(10) << "PGSD: writing impropers/group" << endl;
     //     retval = gsd_write_chunk(&m_handle,
     //                              "impropers/group",
-    //                              GSD_TYPE_UINT32,
+    //                              PGSD_TYPE_UINT32,
     //                              N,
     //                              4,
     //                              0,
@@ -1062,7 +1062,7 @@ void GSDDumpWriterMPI::writeTopology(BondData::Snapshot& bond,
         m_exec_conf->msg->notice(10) << "PGSD: writing constraints/N" << endl;
         uint32_t N = constraint.size;
         int retval
-            = gsd_write_chunk(&m_handle, "constraints/N", GSD_TYPE_UINT32, 1, 1, 0, (void*)&N);
+            = gsd_write_chunk(&m_handle, "constraints/N", PGSD_TYPE_UINT32, 1, 1, 0, (void*)&N);
         PGSDUtils::checkError(retval, m_fname);
 
         m_exec_conf->msg->notice(10) << "PGSD: writing constraints/value" << endl;
@@ -1074,7 +1074,7 @@ void GSDDumpWriterMPI::writeTopology(BondData::Snapshot& bond,
 
             retval = gsd_write_chunk(&m_handle,
                                      "constraints/value",
-                                     GSD_TYPE_FLOAT,
+                                     PGSD_TYPE_FLOAT,
                                      N,
                                      1,
                                      0,
@@ -1085,7 +1085,7 @@ void GSDDumpWriterMPI::writeTopology(BondData::Snapshot& bond,
         m_exec_conf->msg->notice(10) << "PGSD: writing constraints/group" << endl;
         retval = gsd_write_chunk(&m_handle,
                                  "constraints/group",
-                                 GSD_TYPE_UINT32,
+                                 PGSD_TYPE_UINT32,
                                  N,
                                  2,
                                  0,
@@ -1097,7 +1097,7 @@ void GSDDumpWriterMPI::writeTopology(BondData::Snapshot& bond,
     //     {
     //     m_exec_conf->msg->notice(10) << "PGSD: writing pairs/N" << endl;
     //     uint32_t N = pair.size;
-    //     int retval = gsd_write_chunk(&m_handle, "pairs/N", GSD_TYPE_UINT32, 1, 1, 0, (void*)&N);
+    //     int retval = gsd_write_chunk(&m_handle, "pairs/N", PGSD_TYPE_UINT32, 1, 1, 0, (void*)&N);
     //     PGSDUtils::checkError(retval, m_fname);
 
     //     writeTypeMapping("pairs/types", pair.type_mapping);
@@ -1105,7 +1105,7 @@ void GSDDumpWriterMPI::writeTopology(BondData::Snapshot& bond,
     //     m_exec_conf->msg->notice(10) << "PGSD: writing pairs/typeid" << endl;
     //     retval = gsd_write_chunk(&m_handle,
     //                              "pairs/typeid",
-    //                              GSD_TYPE_UINT32,
+    //                              PGSD_TYPE_UINT32,
     //                              N,
     //                              1,
     //                              0,
@@ -1115,7 +1115,7 @@ void GSDDumpWriterMPI::writeTopology(BondData::Snapshot& bond,
     //     m_exec_conf->msg->notice(10) << "PGSD: writing pairs/group" << endl;
     //     retval = gsd_write_chunk(&m_handle,
     //                              "pairs/group",
-    //                              GSD_TYPE_UINT32,
+    //                              PGSD_TYPE_UINT32,
     //                              N,
     //                              2,
     //                              0,
@@ -1132,51 +1132,51 @@ void GSDDumpWriterMPI::writeLogQuantities(pybind11::dict dict)
         m_exec_conf->msg->notice(10) << "PGSD: writing " << name << endl;
 
         pybind11::array arr = pybind11::array::ensure(key_iter->second, pybind11::array::c_style);
-        gsd_type type = GSD_TYPE_UINT8;
+        Pgsd_type type = PGSD_TYPE_UINT8;
         auto dtype = arr.dtype();
         if (dtype.kind() == 'u' && dtype.itemsize() == 1)
             {
-            type = GSD_TYPE_UINT8;
+            type = PGSD_TYPE_UINT8;
             }
         else if (dtype.kind() == 'u' && dtype.itemsize() == 2)
             {
-            type = GSD_TYPE_UINT16;
+            type = PGSD_TYPE_UINT16;
             }
         else if (dtype.kind() == 'u' && dtype.itemsize() == 4)
             {
-            type = GSD_TYPE_UINT32;
+            type = PGSD_TYPE_UINT32;
             }
         else if (dtype.kind() == 'u' && dtype.itemsize() == 8)
             {
-            type = GSD_TYPE_UINT64;
+            type = PGSD_TYPE_UINT64;
             }
         else if (dtype.kind() == 'i' && dtype.itemsize() == 1)
             {
-            type = GSD_TYPE_INT8;
+            type = PGSD_TYPE_INT8;
             }
         else if (dtype.kind() == 'i' && dtype.itemsize() == 2)
             {
-            type = GSD_TYPE_INT16;
+            type = PGSD_TYPE_INT16;
             }
         else if (dtype.kind() == 'i' && dtype.itemsize() == 4)
             {
-            type = GSD_TYPE_INT32;
+            type = PGSD_TYPE_INT32;
             }
         else if (dtype.kind() == 'i' && dtype.itemsize() == 8)
             {
-            type = GSD_TYPE_INT64;
+            type = PGSD_TYPE_INT64;
             }
         else if (dtype.kind() == 'f' && dtype.itemsize() == 4)
             {
-            type = GSD_TYPE_FLOAT;
+            type = PGSD_TYPE_FLOAT;
             }
         else if (dtype.kind() == 'f' && dtype.itemsize() == 8)
             {
-            type = GSD_TYPE_DOUBLE;
+            type = PGSD_TYPE_DOUBLE;
             }
         else if (dtype.kind() == 'b' && dtype.itemsize() == 1)
             {
-            type = GSD_TYPE_UINT8;
+            type = PGSD_TYPE_UINT8;
             }
         else
             {
