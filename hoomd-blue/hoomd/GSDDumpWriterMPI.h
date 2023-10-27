@@ -227,13 +227,13 @@ class PYBIND11_EXPORT GSDDumpWriterMPI : public GSDDumpWriter
     /// Populate local frame with data.
     void populateLocalFrame(PGSDFrame& frame, uint64_t timestep);
 
-#ifdef ENABLE_MPI
-    /// Copy of the state properties on all ranks, in ascending tag order globally.
-    PGSDFrame m_global_frame;
-    GatherTagOrder m_gather_tag_order;
+// #ifdef ENABLE_MPI
+//     /// Copy of the state properties on all ranks, in ascending tag order globally.
+//     PGSDFrame m_global_frame;
+//     GatherTagOrder m_gather_tag_order;
 
-    void gatherGlobalFrame(const PGSDFrame& local_frame);
-#endif
+//     void gatherGlobalFrame(const PGSDFrame& local_frame);
+// #endif
 
     private:
     std::string m_fname;           //!< The file name we are writing to
