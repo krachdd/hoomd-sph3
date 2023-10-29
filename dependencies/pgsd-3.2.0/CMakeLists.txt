@@ -22,4 +22,4 @@ endif()
 ### Add project subdirs
 include_directories(pgsd)
 add_subdirectory(pgsd)
-add_subdirectory(scripts)
+#add_subdirectory(scripts)
