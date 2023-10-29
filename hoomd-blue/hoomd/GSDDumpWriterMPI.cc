@@ -1,7 +1,7 @@
 // Copyright (c) 2009-2023 The Regents of the University of Michigan.
 // Part of HOOMD-blue, released under the BSD 3-Clause License.
 
-#include "PGSDDumpWriterMPI.h"
+#include "GSDDumpWriterMPI.h"
 #include "Filesystem.h"
 #include "PGSD.h"
 #include "HOOMDVersion.h"
@@ -63,7 +63,7 @@ GSDDumpWriterMPI::GSDDumpWriterMPI(std::shared_ptr<SystemDefinition> sysdef,
                              std::shared_ptr<ParticleGroup> group,
                              std::string mode,
                              bool truncate)
-    : GSDDumpWriter(sysdef, trigger, fanme, mode, truncate, group), m_fname(fname), m_mode(mode), m_truncate(truncate), m_group(group)
+    : GSDDumpWriter(sysdef, trigger, fname, group, mode, truncate), m_fname(fname), m_mode(mode), m_truncate(truncate), m_group(group)
     {
     m_exec_conf->msg->notice(5) << "Constructing GSDDumpWriterMPI: " << m_fname << " " << mode << " "
                                 << truncate << endl;
@@ -405,7 +405,7 @@ GSDDumpWriterMPI::~GSDDumpWriterMPI()
     // if (m_exec_conf->isRoot())
     //     {
     m_exec_conf->msg->notice(5) << "PGSD: close gsd file " << m_fname << endl;
-    pgsd_close(&m_handle);
+    pgsd_close(&m_handle, true);
         // }
     }
 
@@ -429,7 +429,7 @@ void GSDDumpWriterMPI::analyze(uint64_t timestep)
     {
     Analyzer::analyze(timestep);
     int retval;
-    bool root = true;
+    // bool root = true;
 
     // truncate the file if requested
     if (m_truncate)
@@ -494,7 +494,7 @@ void GSDDumpWriterMPI::write(GSDDumpWriterMPI::PGSDFrame& frame, pybind11::dict 
     // if (m_exec_conf->isRoot())
     //     {
     m_exec_conf->msg->notice(10) << "PGSD: ending frame" << endl;
-    int retval = pgsd_end_frame(&m_handle);
+    int retval = pgsd_end_frame(&m_handle, true);
     PGSDUtils::checkError(retval, m_fname);
         // }
 
@@ -503,6 +503,11 @@ void GSDDumpWriterMPI::write(GSDDumpWriterMPI::PGSDFrame& frame, pybind11::dict 
 
 void GSDDumpWriterMPI::writeTypeMapping(std::string chunk, std::vector<std::string> type_mapping)
     {
+    uint32_t N_global = m_group->getNumMembersGlobal();
+    unsigned int rank = m_exec_conf->getRank();
+    int part_offset = 0;
+    part_offset = std::accumulate(snapshot.part_distr.begin(), snapshot.part_distr.begin()+rank, 0);
+
     int max_len = 0;
     for (unsigned int i = 0; i < type_mapping.size(); i++)
         {
@@ -626,7 +631,7 @@ void GSDDumpWriterMPI::writeAttributes(const GSDDumpWriterMPI::GSDFrame& frame)
     bool all_default = true;
     unsigned int rank = m_exec_conf->getRank();
     int part_offset = 0;
-    part_offset = std:accumulate(snapshot.part_distr.begin(), snapshot.part_distr.begin()+rank, 0);
+    part_offset = std::accumulate(snapshot.part_distr.begin(), snapshot.part_distr.begin()+rank, 0);
 
     int retval;
 
@@ -772,7 +777,7 @@ void GSDDumpWriterMPI::writeProperties(const GSDDumpWriterMPI::GSDFrame& frame)
     int rank;
     MPI_Comm_rank(MPI_COMM_WORLD, &rank);
     int part_offset = 0;
-    part_offset = std:accumulate(snapshot.part_distr.begin(), snapshot.part_distr.begin()+rank, 0);
+    part_offset = std::accumulate(snapshot.part_distr.begin(), snapshot.part_distr.begin()+rank, 0);
 
     if (frame.particle_data.pos.size() != 0)
         {
@@ -1211,7 +1216,7 @@ void GSDDumpWriterMPI::writeTopology(BondData::Snapshot& bond,
     //                              0,
     //                              (void*)&constraint.groups[0]);
     //     PGSDUtils::checkError(retval, m_fname);
-        }
+    // }
 
     // if (pair.size > 0)
     //     {
@@ -2113,7 +2118,7 @@ void export_GSDDumpWriterMPI(pybind11::module& m)
     {
     pybind11::bind_map<std::map<std::string, pybind11::function>>(m, "MapStringFunction");
 
-    pybind11::class_<GSDDumpWriterMPI, Analyzer, std::shared_ptr<GSDDumpWriterMPI>>(m, "PGSDDumpWriterMPI")
+    pybind11::class_<GSDDumpWriterMPI, Analyzer, std::shared_ptr<GSDDumpWriterMPI>>(m, "GSDDumpWriterMPI")
         .def(pybind11::init<std::shared_ptr<SystemDefinition>,
                             std::shared_ptr<Trigger>,
                             std::string,
