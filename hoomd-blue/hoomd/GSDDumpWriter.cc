@@ -427,7 +427,7 @@ void GSDDumpWriter::analyze(uint64_t timestep)
     {
     Analyzer::analyze(timestep);
     int retval;
-    bool root = true;
+    // bool root = true;
 
     // truncate the file if requested
     if (m_truncate)

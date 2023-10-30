@@ -264,7 +264,7 @@ class PYBIND11_EXPORT GSDDumpWriterMPI : public GSDDumpWriter
     std::vector<unsigned int> m_index;
 
     //! Write a type mapping out to the file
-    void writeTypeMapping(std::string chunk, std::vector<std::string> type_mapping);
+    void writeTypeMapping(std::string chunk, std::vector<std::string> type_mapping, const PGSDFrame& frame);
 
     //! Write frame header
     void writeFrameHeader(const PGSDFrame& frame);

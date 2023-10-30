@@ -1,7 +1,7 @@
 // Copyright (c) 2009-2023 The Regents of the University of Michigan.
 // Part of HOOMD-blue, released under the BSD 3-Clause License.
 
-#include "GSDReaderMPIMPI.h"
+#include "GSDReaderMPI.h"
 #include "ExecutionConfiguration.h"
 #include "PGSD.h"
 #include "SnapshotSystemData.h"
@@ -87,7 +87,7 @@ GSDReaderMPI::~GSDReaderMPI()
 //         }
 // #endif
 
-    pgsd_close(&m_handle);
+    pgsd_close(&m_handle, true);
     }
 
 /*! \param data Pointer to data to read into
@@ -111,9 +111,9 @@ bool GSDReaderMPI::readChunk(void* data,
                           unsigned int cur_n,
                           unsigned int *offset)
     {
-    const struct pgsd_index_entry* entry = pgsd_find_chunk(&m_handle, frame, name);
+    const struct pgsd_index_entry* entry = pgsd_find_chunk(&m_handle, frame, name, true);
     if (entry == NULL && frame != 0)
-        entry = pgsd_find_chunk(&m_handle, 0, name);
+        entry = pgsd_find_chunk(&m_handle, 0, name, true);
 
     if (entry == NULL || (cur_n != 0 && entry->N != cur_n))
         {
@@ -123,7 +123,7 @@ bool GSDReaderMPI::readChunk(void* data,
     else
         {
         m_exec_conf->msg->notice(7) << "data.pgsd_snapshot: reading chunk " << name << endl;
-        size_t actual_size = entry->N * entry->M * pgsd_sizeof_type((enum gsd_type)entry->type);
+        size_t actual_size = entry->N * entry->M * pgsd_sizeof_type((enum pgsd_type)entry->type);
         if (actual_size != expected_size)
             {
             std::ostringstream s;
@@ -131,7 +131,7 @@ bool GSDReaderMPI::readChunk(void* data,
               << actual_size << ".";
             throw runtime_error(s.str());
             }
-        int retval = pgsd_read_chunk(&m_handle, data, entry, offset);
+        int retval = pgsd_read_chunk(&m_handle, data, entry, offset, true);
         PGSDUtils::checkError(retval, m_name);
 
         return true;
@@ -157,17 +157,17 @@ std::vector<std::string> GSDReaderMPI::readTypes(uint64_t frame, const char* nam
     if (std::string(name) == "particles/types")
         type_mapping.push_back("A");
 
-    const struct pgsd_index_entry* entry = pgsd_find_chunk(&m_handle, frame, name);
+    const struct pgsd_index_entry* entry = pgsd_find_chunk(&m_handle, frame, name, true);
     if (entry == NULL && frame != 0)
-        entry = pgsd_find_chunk(&m_handle, 0, name);
+        entry = pgsd_find_chunk(&m_handle, 0, name, true);
 
     if (entry == NULL)
         return type_mapping;
     else
         {
-        size_t actual_size = entry->N * entry->M * pgsd_sizeof_type((enum gsd_type)entry->type);
+        size_t actual_size = entry->N * entry->M * pgsd_sizeof_type((enum pgsd_type)entry->type);
         std::vector<char> data(actual_size);
-        int retval = pgsd_read_chunk(&m_handle, &data[0], entry, NULL);
+        int retval = pgsd_read_chunk(&m_handle, &data[0], entry, NULL, true);
         PGSDUtils::checkError(retval, m_name);
 
         type_mapping.clear();

@@ -225,6 +225,12 @@ class PYBIND11_EXPORT ExecutionConfiguration
         assert(m_mpi_config);
         return m_mpi_config->getRank();
         }
+        //! Return the global communicator size
+    unsigned int getNRanksGlobal() const
+        {
+        assert(m_mpi_config);
+        return m_mpi_config->getNRanksGlobal();
+        }
 
     //! Returns the partition number of this processor
     unsigned int getPartition() const

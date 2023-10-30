@@ -79,7 +79,7 @@ class PYBIND11_EXPORT GSDReaderMPI
         }
 
     //! get handle
-    gsd_handle getHandle(void) const
+    pgsd_handle getHandle(void) const
         {
         return m_handle;
         }

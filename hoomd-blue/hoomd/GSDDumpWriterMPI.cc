@@ -501,12 +501,12 @@ void GSDDumpWriterMPI::write(GSDDumpWriterMPI::PGSDFrame& frame, pybind11::dict 
     m_nframes++;
     }
 
-void GSDDumpWriterMPI::writeTypeMapping(std::string chunk, std::vector<std::string> type_mapping)
+void GSDDumpWriterMPI::writeTypeMapping(std::string chunk, std::vector<std::string> type_mapping, const GSDDumpWriterMPI::PGSDFrame& frame)
     {
     uint32_t N_global = m_group->getNumMembersGlobal();
     unsigned int rank = m_exec_conf->getRank();
     int part_offset = 0;
-    part_offset = std::accumulate(snapshot.part_distr.begin(), snapshot.part_distr.begin()+rank, 0);
+    part_offset = std::accumulate(frame.particle_data.part_distr.begin(), frame.particle_data.part_distr.begin()+rank, 0);
 
     int max_len = 0;
     for (unsigned int i = 0; i < type_mapping.size(); i++)
@@ -539,7 +539,7 @@ void GSDDumpWriterMPI::writeTypeMapping(std::string chunk, std::vector<std::stri
 /*! Write the data chunks configuration/step, configuration/box, and particles/N. If this is frame
    0, also write configuration/dimensions.
 */
-void GSDDumpWriterMPI::writeFrameHeader(const GSDDumpWriterMPI::GSDFrame& frame)
+void GSDDumpWriterMPI::writeFrameHeader(const GSDDumpWriterMPI::PGSDFrame& frame)
     {
     int retval;
     m_exec_conf->msg->notice(10) << "PGSD: writing configuration/step" << endl;
@@ -624,20 +624,20 @@ void GSDDumpWriterMPI::writeFrameHeader(const GSDDumpWriterMPI::GSDFrame& frame)
 /*! Writes the data chunks typeid, mass, body in
    particles/.
 */
-void GSDDumpWriterMPI::writeAttributes(const GSDDumpWriterMPI::GSDFrame& frame)
+void GSDDumpWriterMPI::writeAttributes(const GSDDumpWriterMPI::PGSDFrame& frame)
     {
     uint32_t N = m_group->getNumMembers();
     uint32_t N_global = m_group->getNumMembersGlobal();
-    bool all_default = true;
+    // bool all_default = true;
     unsigned int rank = m_exec_conf->getRank();
     int part_offset = 0;
-    part_offset = std::accumulate(snapshot.part_distr.begin(), snapshot.part_distr.begin()+rank, 0);
+    part_offset = std::accumulate(frame.particle_data.part_distr.begin(), frame.particle_data.part_distr.begin()+rank, 0);
 
     int retval;
 
     if (m_dynamic[pgsd_flag::particles_types] || m_nframes == 0)
         {
-        writeTypeMapping("particles/types", frame.particle_data.type_mapping);
+        writeTypeMapping("particles/types", frame.particle_data.type_mapping, frame);
         }
 
     if (frame.particle_data.type.size() != 0)
@@ -768,7 +768,7 @@ void GSDDumpWriterMPI::writeAttributes(const GSDDumpWriterMPI::GSDFrame& frame)
 
 /*! Writes the data chunks position and orientation in particles/.
  */
-void GSDDumpWriterMPI::writeProperties(const GSDDumpWriterMPI::GSDFrame& frame)
+void GSDDumpWriterMPI::writeProperties(const GSDDumpWriterMPI::PGSDFrame& frame)
     {
     uint32_t N = m_group->getNumMembers();
     uint32_t N_global = m_group->getNumMembersGlobal();
@@ -777,7 +777,7 @@ void GSDDumpWriterMPI::writeProperties(const GSDDumpWriterMPI::GSDFrame& frame)
     int rank;
     MPI_Comm_rank(MPI_COMM_WORLD, &rank);
     int part_offset = 0;
-    part_offset = std::accumulate(snapshot.part_distr.begin(), snapshot.part_distr.begin()+rank, 0);
+    part_offset = std::accumulate(frame.particle_data.part_distr.begin(), frame.particle_data.part_distr.begin()+rank, 0);
 
     if (frame.particle_data.pos.size() != 0)
         {
@@ -887,7 +887,7 @@ void GSDDumpWriterMPI::writeProperties(const GSDDumpWriterMPI::GSDFrame& frame)
 
 /*! Writes the data chunks velocity, angmom, and image in particles/.
  */
-void GSDDumpWriterMPI::writeMomenta(const GSDDumpWriterMPI::GSDFrame& frame)
+void GSDDumpWriterMPI::writeMomenta(const GSDDumpWriterMPI::PGSDFrame& frame)
     {
     uint32_t N = m_group->getNumMembers();
     uint32_t N_global = m_group->getNumMembersGlobal();
@@ -896,14 +896,14 @@ void GSDDumpWriterMPI::writeMomenta(const GSDDumpWriterMPI::GSDFrame& frame)
     int rank;
     MPI_Comm_rank(MPI_COMM_WORLD, &rank);
     int part_offset = 0;
-    part_offset = std::accumulate(snapshot.part_distr.begin(), snapshot.part_distr.begin()+rank, 0);
+    part_offset = std::accumulate(frame.particle_data.part_distr.begin(), frame.particle_data.part_distr.begin()+rank, 0);
 
     if (frame.particle_data.vel.size() != 0)
         {
         assert(frame.particle_data.vel.size() == N);
 
         m_exec_conf->msg->notice(10) << "PGSD: writing particles/velocity" << endl;
-        retval = gsd_write_chunk(&m_handle,
+        retval = pgsd_write_chunk(&m_handle,
                                  "particles/velocity",
                                  PGSD_TYPE_FLOAT,
                                  N,
@@ -925,7 +925,7 @@ void GSDDumpWriterMPI::writeMomenta(const GSDDumpWriterMPI::GSDFrame& frame)
         assert(frame.particle_data.aux1.size() == N);
 
         m_exec_conf->msg->notice(10) << "PGSD: writing particles/auxiliary1" << endl;
-        retval = gsd_write_chunk(&m_handle,
+        retval = pgsd_write_chunk(&m_handle,
                                  "particles/auxiliary1",
                                  PGSD_TYPE_FLOAT,
                                  N,
@@ -947,7 +947,7 @@ void GSDDumpWriterMPI::writeMomenta(const GSDDumpWriterMPI::GSDFrame& frame)
         assert(frame.particle_data.aux2.size() == N);
 
         m_exec_conf->msg->notice(10) << "PGSD: writing particles/auxiliary2" << endl;
-        retval = gsd_write_chunk(&m_handle,
+        retval = pgsd_write_chunk(&m_handle,
                                  "particles/auxiliary2",
                                  PGSD_TYPE_FLOAT,
                                  N,
@@ -969,7 +969,7 @@ void GSDDumpWriterMPI::writeMomenta(const GSDDumpWriterMPI::GSDFrame& frame)
         assert(frame.particle_data.aux3.size() == N);
 
         m_exec_conf->msg->notice(10) << "PGSD: writing particles/auxiliary3" << endl;
-        retval = gsd_write_chunk(&m_handle,
+        retval = pgsd_write_chunk(&m_handle,
                                  "particles/auxiliary3",
                                  PGSD_TYPE_FLOAT,
                                  N,
@@ -991,7 +991,7 @@ void GSDDumpWriterMPI::writeMomenta(const GSDDumpWriterMPI::GSDFrame& frame)
         assert(frame.particle_data.aux4.size() == N);
 
         m_exec_conf->msg->notice(10) << "PGSD: writing particles/auxiliary4" << endl;
-        retval = gsd_write_chunk(&m_handle,
+        retval = pgsd_write_chunk(&m_handle,
                                  "particles/auxiliary4",
                                  PGSD_TYPE_FLOAT,
                                  N,
@@ -1030,7 +1030,7 @@ void GSDDumpWriterMPI::writeMomenta(const GSDDumpWriterMPI::GSDFrame& frame)
         assert(frame.particle_data.image.size() == N);
 
         m_exec_conf->msg->notice(10) << "PGSD: writing particles/image" << endl;
-        retval = gsd_write_chunk(&m_handle,
+        retval = pgsd_write_chunk(&m_handle,
                                  "particles/image",
                                  PGSD_TYPE_INT32,
                                  N,
@@ -1257,7 +1257,7 @@ void GSDDumpWriterMPI::writeLogQuantities(pybind11::dict dict)
         m_exec_conf->msg->notice(10) << "PGSD: writing " << name << endl;
 
         pybind11::array arr = pybind11::array::ensure(key_iter->second, pybind11::array::c_style);
-        Pgsd_type type = PGSD_TYPE_UINT8;
+        pgsd_type type = PGSD_TYPE_UINT8;
         auto dtype = arr.dtype();
         if (dtype.kind() == 'u' && dtype.itemsize() == 1)
             {
@@ -1337,7 +1337,18 @@ void GSDDumpWriterMPI::writeLogQuantities(pybind11::dict dict)
             }
 
         int retval
-            = gsd_write_chunk(&m_handle, name.c_str(), type, N, (uint32_t)M, 0, (void*)arr.data());
+            = pgsd_write_chunk(&m_handle, 
+                               name.c_str(), 
+                               type, 
+                               N, 
+                               (uint32_t)M,
+                               N,
+                               (uint32_t)M,
+                               0,
+                               0,
+                               false,
+                               0,
+                               (void*)arr.data());
         PGSDUtils::checkError(retval, m_fname);
         }
     }
@@ -1351,7 +1362,7 @@ void GSDDumpWriterMPI::populateNonDefault()
 
     // open the file in read only mode
     m_exec_conf->msg->notice(3) << "PGSD: check frame 0 in gsd file " << m_fname << endl;
-    retval = gsd_open(&m_handle, m_fname.c_str(), GSD_OPEN_READONLY);
+    retval = pgsd_open(&m_handle, m_fname.c_str(), PGSD_OPEN_READONLY);
     PGSDUtils::checkError(retval, m_fname);
 
     // validate schema
@@ -1372,15 +1383,15 @@ void GSDDumpWriterMPI::populateNonDefault()
 
     for (auto const& chunk : particle_chunks)
         {
-        const gsd_index_entry* entry = gsd_find_chunk(&m_handle, 0, chunk.c_str());
+        const pgsd_index_entry* entry = pgsd_find_chunk(&m_handle, 0, chunk.c_str(), true);
         m_nondefault[chunk] = (entry != nullptr);
         }
 
     // close the file
-    gsd_close(&m_handle);
+    pgsd_close(&m_handle, true);
     }
 
-void GSDDumpWriterMPI::populateLocalFrame(GSDDumpWriterMPI::GSDFrame& frame, uint64_t timestep)
+void GSDDumpWriterMPI::populateLocalFrame(GSDDumpWriterMPI::PGSDFrame& frame, uint64_t timestep)
     {
     frame.timestep = timestep;
     frame.global_box = m_pdata->getGlobalBox();
@@ -2001,7 +2012,7 @@ void GSDDumpWriterMPI::populateLocalFrame(GSDDumpWriterMPI::GSDFrame& frame, uin
 /*! Gather per-particle data from the local frame and sort it into ascending tag order in
     m_global_frame.
 */
-// void GSDDumpWriterMPI::gatherGlobalFrame(const GSDFrame& local_frame)
+// void GSDDumpWriterMPI::gatherGlobalFrame(const PGSDFrame& local_frame)
 //     {
 //     m_global_frame.clear();
 
