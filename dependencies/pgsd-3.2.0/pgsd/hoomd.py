@@ -483,7 +483,7 @@ class Frame(object):
             `array_like`)
     """
 
-    def __init__(self, num_proc = 0):
+    def __init__(self, num_procs = 0):
         self.configuration = ConfigurationData()
         self.particles = ParticleData()
         self.bonds = BondData(2)

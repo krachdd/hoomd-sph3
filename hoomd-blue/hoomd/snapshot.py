@@ -520,3 +520,92 @@ class Snapshot:
         warnings.warn("gsd.hoomd.Snapshot is deprecated, use gsd.hoomd.Frame",
                       FutureWarning)
         return cls.from_gsd_frame(gsd_snap, communicator)
+
+    ### PGSD ---
+    @classmethod
+    def from_pgsd_frame(cls, pgsd_snap, communicator):
+        """Constructs a `hoomd.Snapshot` from a `pgsd.hoomd.Frame` object.
+
+        Args:
+            pgsd_snap (pgsd.hoomd.Frame): The pgsd frame to convert to a
+                `hoomd.Snapshot`.
+            communicator (hoomd.communicator.Communicator): The MPI communicator
+                to use for the snapshot. This prevents the snapshot from being
+                stored on every rank.
+
+        Tip:
+            Use `Simulation.create_state_from_gsd` to efficiently initialize
+            the system state from a GSD file.
+
+        Note:
+            `from_gsd_frame` only accesses the ``gsd_snap`` argument on rank
+            0. In MPI simulations, avoid duplicating memory and file reads by
+            reading GSD files only on rank 0 and passing ``gsd_snap=None`` on
+            other ranks.
+        """
+        snap = cls(communicator=communicator)
+
+        def set_properties(snap_section, gsd_snap_section, properties,
+                           array_properties):
+            for prop in properties:
+                gsd_prop = getattr(gsd_snap_section, prop, None)
+                if gsd_prop is not None:
+                    setattr(snap_section, prop, gsd_prop)
+            for prop in array_properties:
+                gsd_prop = getattr(gsd_snap_section, prop, None)
+                if gsd_prop is not None:
+                    getattr(snap_section, prop)[:] = gsd_prop
+
+        if communicator.rank == 0:
+
+            gsd_snap.validate()
+
+            set_properties(snap.particles, gsd_snap.particles, ('N', 'types'),
+                           (
+                            # 'angmom', 
+                            'body', 
+                            # 'charge', 'diameter', 
+                            'image',
+                            'mass', 
+                            # 'moment_inertia', 'orientation', 
+                            'position',
+                            'typeid', 'velocity',
+                            'slength', 'density', 'pressure',  
+                            'energy', 'auxiliary1', 
+                            'auxiliary2', 'auxiliary3', 'auxiliary4', 
+                            ))
+
+            # for section in (
+            #     # 'angles', 
+            #     'bonds'
+            #     # 'dihedrals', 'impropers',
+            #                 # 'pairs'
+            #                 ):
+            #     set_properties(getattr(snap,
+            #                            section), getattr(gsd_snap, section),
+            #                    ('N', 'types'), ('group', 'typeid'))
+
+            set_properties(snap.constraints, gsd_snap.constraints, ('N',),
+                           ('group', 'value'))
+
+            # Set box attribute
+            if gsd_snap.configuration.box is not None:
+                box = list(gsd_snap.configuration.box)
+                if gsd_snap.configuration.dimensions == 2:
+                    box[2] = 0
+                snap.configuration.box = box
+
+        snap._broadcast_box()
+        return snap
+
+    @classmethod
+    def from_gsd_snapshot(cls, gsd_snap, communicator):
+        """Constructs a `hoomd.Snapshot` from a ``gsd.hoomd.Snapshot`` object.
+
+        .. deprecated:: 4.0.0
+
+            Use `from_gsd_frame`.
+        """
+        warnings.warn("gsd.hoomd.Snapshot is deprecated, use gsd.hoomd.Frame",
+                      FutureWarning)
+        return cls.from_gsd_frame(gsd_snap, communicator)
