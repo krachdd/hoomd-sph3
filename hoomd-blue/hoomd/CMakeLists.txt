@@ -83,6 +83,7 @@ set(_hoomd_sources Action.cc
                    GSDDequeWriter.cc
                    GSDDumpWriter.cc
                    GSDDumpWriterMPI.cc
+                   GSDReader.cc
                    GSDReaderMPI.cc
                    HOOMDMath.cc
                    HOOMDVersion.cc
