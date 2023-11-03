@@ -238,7 +238,7 @@ class PGSD(Writer):
         self._logger = None if logger is None else _PGSDLogWriter(logger)
 
     def _attach_hook(self):
-        self._cpp_obj = _hoomd.PGSDDumpWriter(
+        self._cpp_obj = _hoomd.GSDDumpWriterMPI(
             self._simulation.state._cpp_sys_def, self.trigger, self.filename,
             self._simulation.state._get_group(self.filter), self.mode,
             self.truncate)
@@ -267,7 +267,7 @@ class PGSD(Writer):
         if mode != 'wb' and mode != 'xb':
             raise ValueError(f"Invalid PGSD.write file mode: {mode}")
 
-        writer = _hoomd.GSDDumpWriter_MPI(state._cpp_sys_def, Periodic(1),
+        writer = _hoomd.GSDDumpWriterMPI(state._cpp_sys_def, Periodic(1),
                                       str(filename), state._get_group(filter),
                                       mode, False)
 

@@ -350,41 +350,41 @@ class Snapshot:
         else:
             raise RuntimeError('Snapshot data is only present on rank 0')
 
-    @property
-    def mpcd(self):
-        """MPCD data.
+    # @property
+    # def mpcd(self):
+    #     """MPCD data.
 
-        Attributes:
-            mpcd.N (int): Number of MPCD particles.
+    #     Attributes:
+    #         mpcd.N (int): Number of MPCD particles.
 
-            mpcd.position ((*N*, 3) `numpy.ndarray` of `float`):
-                Particle position :math:`[\\mathrm{length}]`.
+    #         mpcd.position ((*N*, 3) `numpy.ndarray` of `float`):
+    #             Particle position :math:`[\\mathrm{length}]`.
 
-            mpcd.velocity ((*N*, 3) `numpy.ndarray` of `float`):
-                Particle velocity :math:`[\\mathrm{velocity}]`.
+    #         mpcd.velocity ((*N*, 3) `numpy.ndarray` of `float`):
+    #             Particle velocity :math:`[\\mathrm{velocity}]`.
 
-            mpcd.types (list[str]):
-                Names of the particle types.
+    #         mpcd.types (list[str]):
+    #             Names of the particle types.
 
-            mpcd.typeid ((*N*, ) `numpy.ndarray` of ``uint32``):
-                Particle type id.
+    #         mpcd.typeid ((*N*, ) `numpy.ndarray` of ``uint32``):
+    #             Particle type id.
 
-            mpcd.mass (float): Particle mass.
+    #         mpcd.mass (float): Particle mass.
 
-        Note:
-            Set ``N`` to change the size of the arrays.
+    #     Note:
+    #         Set ``N`` to change the size of the arrays.
 
-        Note:
-            This attribute is only available when
-            HOOMD-blue is built with the MPCD component.
-        """
-        if not hoomd.version.mpcd_built:
-            raise RuntimeError("MPCD component not built")
+    #     Note:
+    #         This attribute is only available when
+    #         HOOMD-blue is built with the MPCD component.
+    #     """
+    #     if not hoomd.version.mpcd_built:
+    #         raise RuntimeError("MPCD component not built")
 
-        if self.communicator.rank == 0:
-            return self._cpp_obj.mpcd
-        else:
-            raise RuntimeError("Snapshot data is only present on rank 0")
+    #     if self.communicator.rank == 0:
+    #         return self._cpp_obj.mpcd
+    #     else:
+    #         raise RuntimeError("Snapshot data is only present on rank 0")
 
     @classmethod
     def _from_cpp_snapshot(cls, snapshot, communicator):
@@ -545,61 +545,61 @@ class Snapshot:
         """
         snap = cls(communicator=communicator)
 
-        def set_properties(snap_section, gsd_snap_section, properties,
+        def set_properties(snap_section, pgsd_snap_section, properties,
                            array_properties):
             for prop in properties:
-                gsd_prop = getattr(gsd_snap_section, prop, None)
-                if gsd_prop is not None:
-                    setattr(snap_section, prop, gsd_prop)
+                pgsd_prop = getattr(pgsd_snap_section, prop, None)
+                if pgsd_prop is not None:
+                    setattr(snap_section, prop, pgsd_prop)
             for prop in array_properties:
-                gsd_prop = getattr(gsd_snap_section, prop, None)
-                if gsd_prop is not None:
-                    getattr(snap_section, prop)[:] = gsd_prop
+                pgsd_prop = getattr(pgsd_snap_section, prop, None)
+                if pgsd_prop is not None:
+                    getattr(snap_section, prop)[:] = pgsd_prop
 
-        if communicator.rank == 0:
+        # if communicator.rank == 0:
 
-            gsd_snap.validate()
+        pgsd_snap.validate()
 
-            set_properties(snap.particles, gsd_snap.particles, ('N', 'types'),
-                           (
-                            # 'angmom', 
-                            'body', 
-                            # 'charge', 'diameter', 
-                            'image',
-                            'mass', 
-                            # 'moment_inertia', 'orientation', 
-                            'position',
-                            'typeid', 'velocity',
-                            'slength', 'density', 'pressure',  
-                            'energy', 'auxiliary1', 
-                            'auxiliary2', 'auxiliary3', 'auxiliary4', 
-                            ))
+        set_properties(snap.particles, pgsd_snap.particles, ('N', 'types'),
+                       (
+                        # 'angmom', 
+                        'body', 
+                        # 'charge', 'diameter', 
+                        'image',
+                        'mass', 
+                        # 'moment_inertia', 'orientation', 
+                        'position',
+                        'typeid', 'velocity',
+                        'slength', 'density', 'pressure',  
+                        'energy', 'auxiliary1', 
+                        'auxiliary2', 'auxiliary3', 'auxiliary4', 
+                        ))
 
-            # for section in (
-            #     # 'angles', 
-            #     'bonds'
-            #     # 'dihedrals', 'impropers',
-            #                 # 'pairs'
-            #                 ):
-            #     set_properties(getattr(snap,
-            #                            section), getattr(gsd_snap, section),
-            #                    ('N', 'types'), ('group', 'typeid'))
+        # for section in (
+        #     # 'angles', 
+        #     'bonds'
+        #     # 'dihedrals', 'impropers',
+        #                 # 'pairs'
+        #                 ):
+        #     set_properties(getattr(snap,
+        #                            section), getattr(gsd_snap, section),
+        #                    ('N', 'types'), ('group', 'typeid'))
 
-            set_properties(snap.constraints, gsd_snap.constraints, ('N',),
-                           ('group', 'value'))
+        set_properties(snap.constraints, pgsd_snap.constraints, ('N',),
+                       ('group', 'value'))
 
-            # Set box attribute
-            if gsd_snap.configuration.box is not None:
-                box = list(gsd_snap.configuration.box)
-                if gsd_snap.configuration.dimensions == 2:
-                    box[2] = 0
-                snap.configuration.box = box
+        # Set box attribute
+        if pgsd_snap.configuration.box is not None:
+            box = list(pgsd_snap.configuration.box)
+            if pgsd_snap.configuration.dimensions == 2:
+                box[2] = 0
+            snap.configuration.box = box
 
-        snap._broadcast_box()
+        # snap._broadcast_box()
         return snap
 
     @classmethod
-    def from_gsd_snapshot(cls, gsd_snap, communicator):
+    def from_pgsd_snapshot(cls, pgsd_snap, communicator):
         """Constructs a `hoomd.Snapshot` from a ``gsd.hoomd.Snapshot`` object.
 
         .. deprecated:: 4.0.0
@@ -608,4 +608,4 @@ class Snapshot:
         """
         warnings.warn("gsd.hoomd.Snapshot is deprecated, use gsd.hoomd.Frame",
                       FutureWarning)
-        return cls.from_gsd_frame(gsd_snap, communicator)
+        return cls.from_pgsd_frame(pgsd_snap, communicator)

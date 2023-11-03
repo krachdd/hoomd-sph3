@@ -130,8 +130,8 @@ sim.create_state_from_snapshot(snapshot)
 # #     sim, ndel_particles = delete_solids_initial_timestep.delete_solids(sim, device, kernel, 0.000001, viscosity, dx, rho0)
 # #     n_particles = n_particles - ndel_particles
 
-# init_filename = rawfile.replace('.raw', '_init.gsd')
-# hoomd.write.GSD.write(state = sim.state, mode = 'wb', filename = init_filename)
+init_filename = rawfile.replace('.raw', '_init.gsd')
+hoomd.write.PGSD.write(state = sim.state, mode = 'wb', filename = init_filename)
 
 # print(f'Filename: {init_filename}, Number of particles: {n_particles}')
 

@@ -2127,7 +2127,7 @@ namespace detail
     {
 void export_GSDDumpWriterMPI(pybind11::module& m)
     {
-    pybind11::bind_map<std::map<std::string, pybind11::function>>(m, "MapStringFunction");
+    //pybind11::bind_map<std::map<std::string, pybind11::function>>(m, "MapStringFunctionMPI");
 
     pybind11::class_<GSDDumpWriterMPI, Analyzer, std::shared_ptr<GSDDumpWriterMPI>>(m, "GSDDumpWriterMPI")
         .def(pybind11::init<std::shared_ptr<SystemDefinition>,
