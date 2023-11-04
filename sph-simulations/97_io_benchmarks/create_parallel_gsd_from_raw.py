@@ -22,8 +22,8 @@ import array
 import pgsd.hoomd
 # ------------------------------------------------------------
 
-device = hoomd.device.CPU(notice_level=2)
-# # device = hoomd.device.CPU(notice_level=10)
+# device = hoomd.device.CPU(notice_level=2)
+device = hoomd.device.CPU(notice_level=10)
 sim = hoomd.Simulation(device=device)
 
 amode = MPI.MODE_RDONLY

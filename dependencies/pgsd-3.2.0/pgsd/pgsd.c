@@ -1067,12 +1067,12 @@ inline static int pgsd_expand_file_index(struct pgsd_handle* handle, size_t size
         }
 
     // sync the expanded index
-    retval = fsync(handle->fd);
-    if (retval != 0)
-        {
-        free(buf);
-        return PGSD_ERROR_IO;
-        }
+    // retval = fsync(handle->fd);
+    // if (retval != 0)
+    //     {
+    //     free(buf);
+    //     return PGSD_ERROR_IO;
+    //     }
 
     // free the copy buffer
     free(buf);
@@ -1095,11 +1095,11 @@ inline static int pgsd_expand_file_index(struct pgsd_handle* handle, size_t size
         }
 
     // sync the updated header
-    retval = fsync(handle->fd);
-    if (retval != 0)
-        {
-        return PGSD_ERROR_IO;
-        }
+    // retval = fsync(handle->fd);
+    // if (retval != 0)
+    //     {
+    //     return PGSD_ERROR_IO;
+    //     }
 
     // remap the file index
     retval = pgsd_index_buffer_map(&handle->file_index, handle);
@@ -1265,11 +1265,11 @@ inline static int pgsd_flush_name_buffer(struct pgsd_handle* handle, bool all)
             }
 
         // sync the updated name list
-        retval = fsync(handle->fd);
-        if (retval != 0)
-            {
-            return PGSD_ERROR_IO;
-            }
+        // retval = fsync(handle->fd);
+        // if (retval != 0)
+        //     {
+        //     return PGSD_ERROR_IO;
+        //     }
 
         handle->file_size += handle->file_names.data.reserved;
         handle->header.namelist_location = offset;
@@ -1312,11 +1312,11 @@ inline static int pgsd_flush_name_buffer(struct pgsd_handle* handle, bool all)
         }
 
     // sync the updated name list or header
-    retval = fsync(handle->fd);
-    if (retval != 0)
-        {
-        return PGSD_ERROR_IO;
-        }
+    // retval = fsync(handle->fd);
+    // if (retval != 0)
+    //     {
+    //     return PGSD_ERROR_IO;
+    //     }
 
     return PGSD_SUCCESS;
     }
@@ -1422,7 +1422,7 @@ inline static int pgsd_append_name(uint16_t* id, struct pgsd_handle* handle, con
     @param schema_version Version of the scheme data to be written (make with pgsd_make_version())
 */
 inline static int
-pgsd_initialize_file(MPI_File *fd, const char* application, const char* schema, uint32_t schema_version)
+pgsd_initialize_file(MPI_File *fh, const char* application, const char* schema, uint32_t schema_version)
     {
     // check if the file was created
     // if (fd == -1)
@@ -1435,10 +1435,12 @@ pgsd_initialize_file(MPI_File *fd, const char* application, const char* schema, 
 
     // check if the file was created
     MPI_Offset file_size = 0;
-    MPI_File_set_size(fd, file_size);
-    MPI_File_get_size(fd, &file_size);
+    MPI_File_set_size(fh, file_size);
+    MPI_File_get_size(fh, &file_size);
     int retval = file_size;
-    // int retval = ftruncate(fd, 0);
+    MPI_File_seek(fh, 0, MPI_SEEK_SET);
+
+    // retval = ftruncate(fh, 0);
     if (retval != 0)
         {
         return PGSD_ERROR_IO;
@@ -1464,7 +1466,7 @@ pgsd_initialize_file(MPI_File *fd, const char* application, const char* schema, 
 
     // write the header out
     if( rank == 0 ){
-        MPI_File_write(fd, &header, sizeof(header), MPI_BYTE, MPI_STATUS_IGNORE);
+        MPI_File_write(fh, &header, sizeof(header), MPI_BYTE, MPI_STATUS_IGNORE);
     }
     // ssize_t bytes_written = pgsd_io_pwrite_retry(fd, &header, sizeof(header), 0);
     // if (bytes_written != sizeof(header))
@@ -1477,7 +1479,7 @@ pgsd_initialize_file(MPI_File *fd, const char* application, const char* schema, 
     pgsd_util_zero_memory(index, sizeof(index));
 
     if( rank == 0 ){
-        MPI_File_write(fd, &index, sizeof(index), MPI_BYTE, MPI_STATUS_IGNORE);
+        MPI_File_write(fh, &index, sizeof(index), MPI_BYTE, MPI_STATUS_IGNORE);
     }
 
     // write the empty index out
@@ -1493,7 +1495,7 @@ pgsd_initialize_file(MPI_File *fd, const char* application, const char* schema, 
 
 
     if( rank == 0 ){
-        MPI_File_write(fd, &names, sizeof(names), MPI_BYTE, MPI_STATUS_IGNORE);
+        MPI_File_write(fh, &names, sizeof(names), MPI_BYTE, MPI_STATUS_IGNORE);
     }
 
     // // write the namelist out
@@ -1504,11 +1506,12 @@ pgsd_initialize_file(MPI_File *fd, const char* application, const char* schema, 
     //     }
 
     // sync file
-    retval = fsync(fd);
-    if (retval != 0)
-        {
-        return PGSD_ERROR_IO;
-        }
+    // retval = fsync(fh);
+
+    // if (retval != 0)
+    //     {
+    //     return PGSD_ERROR_IO;
+    //     }
 
     return PGSD_SUCCESS;
     }
@@ -1764,8 +1767,9 @@ int pgsd_create_and_open(struct pgsd_handle* handle,
     // handle->fd = pgsd_open_file(fname,
     //                            O_RDWR | O_CREAT | O_TRUNC | extra_flags,
     //                            S_IRUSR | S_IWUSR | S_IRGRP | S_IWGRP);
-    MPI_File_open(MPI_COMM_WORLD ,fname, MPI_MODE_RDWR, MPI_INFO_NULL, &(handle->fh));
+    MPI_File_open(MPI_COMM_WORLD, fname, MPI_MODE_RDWR, MPI_INFO_NULL, &(handle->fh));
     int retval = pgsd_initialize_file(handle->fh, application, schema, schema_version);
+    printf("retval: %i", retval);
     if (retval != 0)
         {
         if (handle->fd != -1)
@@ -2061,11 +2065,11 @@ int pgsd_flush(struct pgsd_handle* handle, bool all)
         }
 
     // sync the data before writing the index
-    retval = fsync(handle->fh);
-    if (retval != 0)
-        {
-        return PGSD_ERROR_IO;
-        }
+    // retval = fsync(handle->fh);
+    // if (retval != 0)
+    //     {
+    //     return PGSD_ERROR_IO;
+    //     }
 
     // Write the frame index to the file, excluding the index entries that are part of the current
     // frame.
@@ -2777,14 +2781,14 @@ int pgsd_set_index_entries_to_buffer(struct pgsd_handle* handle, uint64_t number
     }
 
 // undefine windows wrapper macros
-#ifdef _WIN32
-#undef lseek
-#undef write
-#undef read
-#undef open
-#undef ftruncate
-#pragma warning(pop)
+// #ifdef _WIN32
+// #undef lseek
+// #undef write
+// #undef read
+// #undef open
+// #undef ftruncate
+// #pragma warning(pop)
 
-#endif
+// #endif
 
 // #endif // End ENABLE_MPI

@@ -19,7 +19,7 @@ class PGSDUtils
     /// Check and raise an exception if an error occurs
     static void checkError(int retval, const std::string& fname)
         {
-        // checkError prints errors and then throws exceptions for common gsd error codes
+        // checkError prints errors and then throws exceptions for common pgsd error codes
         if (retval == PGSD_ERROR_IO)
             {
             std::ostringstream s;

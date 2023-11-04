@@ -57,13 +57,20 @@ std::list<std::string> GSDDumpWriterMPI::particle_chunks {"particles/position",
     If the group does not include all particles, then topology information cannot be written to the
    file.
 */
+// GSDDumpWriterMPI::GSDDumpWriterMPI(std::shared_ptr<SystemDefinition> sysdef,
+//                              std::shared_ptr<Trigger> trigger,
+//                              const std::string& fname,
+//                              std::shared_ptr<ParticleGroup> group,
+//                              std::string mode,
+//                              bool truncate)
+//     : GSDDumpWriter(sysdef, trigger, fname, group, mode, truncate), m_fname(fname), m_mode(mode), m_truncate(truncate), m_group(group)
 GSDDumpWriterMPI::GSDDumpWriterMPI(std::shared_ptr<SystemDefinition> sysdef,
                              std::shared_ptr<Trigger> trigger,
                              const std::string& fname,
                              std::shared_ptr<ParticleGroup> group,
                              std::string mode,
                              bool truncate)
-    : GSDDumpWriter(sysdef, trigger, fname, group, mode, truncate), m_fname(fname), m_mode(mode), m_truncate(truncate), m_group(group)
+    : Analyzer(sysdef, trigger), m_fname(fname), m_mode(mode), m_truncate(truncate), m_group(group)
     {
     m_exec_conf->msg->notice(5) << "Constructing GSDDumpWriterMPI: " << m_fname << " " << mode << " "
                                 << truncate << endl;
@@ -73,12 +80,12 @@ GSDDumpWriterMPI::GSDDumpWriterMPI(std::shared_ptr<SystemDefinition> sysdef,
         }
     m_log_writer = pybind11::none();
 
-#ifdef ENABLE_MPI
-    if (m_sysdef->isDomainDecomposed())
-        {
-        m_gather_tag_order = GatherTagOrder(m_exec_conf->getMPICommunicator());
-        }
-#endif
+// #ifdef ENABLE_MPI
+//     if (m_sysdef->isDomainDecomposed())
+//         {
+//         m_gather_tag_order = GatherTagOrder(m_exec_conf->getMPICommunicator());
+//         }
+// #endif
 
     m_dynamic.reset();
     m_dynamic[pgsd_flag::particles_position] = true;
@@ -1373,7 +1380,7 @@ void GSDDumpWriterMPI::populateNonDefault()
           << "Invalid schema in " << m_fname;
         throw runtime_error("Error opening GSD file");
         }
-    if (m_handle.header.schema_version >= gsd_make_version(2, 0))
+    if (m_handle.header.schema_version >= pgsd_make_version(2, 0))
         {
         std::ostringstream s;
         s << "PGSD: "
@@ -2127,7 +2134,7 @@ namespace detail
     {
 void export_GSDDumpWriterMPI(pybind11::module& m)
     {
-    //pybind11::bind_map<std::map<std::string, pybind11::function>>(m, "MapStringFunctionMPI");
+    // pybind11::bind_map<std::map<std::string, pybind11::function>>(m, "MapStringFunctionMPI");
 
     pybind11::class_<GSDDumpWriterMPI, Analyzer, std::shared_ptr<GSDDumpWriterMPI>>(m, "GSDDumpWriterMPI")
         .def(pybind11::init<std::shared_ptr<SystemDefinition>,

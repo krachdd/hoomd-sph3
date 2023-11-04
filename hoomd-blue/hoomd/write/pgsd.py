@@ -247,7 +247,7 @@ class PGSD(Writer):
 
         # Maintain a list of open pgsd writers
         weak_writer = weakref.ref(self)
-        _open_gsd_writers.append(weak_writer)
+        _open_pgsd_writers.append(weak_writer)
         self._finalizer = weakref.finalize(self, _finalize_pgsd, weak_writer,
                                            self._cpp_obj),
 

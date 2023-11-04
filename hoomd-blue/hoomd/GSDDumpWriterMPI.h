@@ -6,7 +6,7 @@
 #include "Analyzer.h"
 #include "ParticleGroup.h"
 #include "SharedSignal.h"
-#include "GSDDumpWriter.h"
+// #include "GSDDumpWriter.h"
 
 #include "hoomd/extern/pgsd.h"
 #include <memory>
@@ -33,7 +33,7 @@ namespace hoomd
 
     \ingroup analyzers
 */
-class PYBIND11_EXPORT GSDDumpWriterMPI : public GSDDumpWriter
+class PYBIND11_EXPORT GSDDumpWriterMPI : public Analyzer
     {
     public:
     //! Construct the writer
@@ -192,7 +192,7 @@ class PYBIND11_EXPORT GSDDumpWriterMPI : public GSDDumpWriter
         // PairData::Snapshot pair_data;
 
         /// Bit flags indicating which particle data fields are present (index by gsd_flag)
-        std::bitset<n_gsd_flags> particle_data_present;
+        std::bitset<n_pgsd_flags> particle_data_present;
 
         void clear()
             {
@@ -243,7 +243,7 @@ class PYBIND11_EXPORT GSDDumpWriterMPI : public GSDDumpWriter
     bool m_write_diameter = false; //!< True if the diameter attribute should be written
 
     /// Flags indicating which particle fields are dynamic.
-    std::bitset<n_gsd_flags> m_dynamic;
+    std::bitset<n_pgsd_flags> m_dynamic;
 
     /// Number of frames written to the file.
     uint64_t m_nframes = 0;
