@@ -237,6 +237,14 @@ class Communicator(object):
         res = self.cpp_mpi_conf.bcast_double(var)
         return res
 
+    #     # added dkrach
+    # def all_gather_dist(self, n_particles_rank, distribution, comm):
+    #     """ gather particle numbers per rank
+    #     """
+
+    #     dist = self.cpp_mpi_conf.all_gather_dist(n_particles_rank, distribution, comm)
+    #     return dist
+
     @contextlib.contextmanager
     def localize_abort(self):
         """Localize MPI_Abort to this partition.

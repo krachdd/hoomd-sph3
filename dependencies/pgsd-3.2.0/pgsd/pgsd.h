@@ -355,10 +355,10 @@ extern "C"
           - PGSD_SUCCESS (0) on success. Negative value on failure:
           - PGSD_ERROR_IO: IO error (check errno).
     */
-    int pgsd_create(const char* fname,
-                   const char* application,
-                   const char* schema,
-                   uint32_t schema_version);
+    // int pgsd_create(const char* fname,
+    //                const char* application,
+    //                const char* schema,
+    //                uint32_t schema_version);
 
     /** Create and open a PGSD file.
 

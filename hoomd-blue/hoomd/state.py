@@ -787,6 +787,10 @@ class State:
                 dir)) - 1 for dir in range(3)
         ])
 
+    def removeParticle(self, tag):
+        """ Delete Particle by tag, needed to remove unnecessary solid particles """
+        self._cpp_sys_def.getParticleData().removeParticle(tag)
+
     @property
     def _simulation(self):
         sim = self._simulation_

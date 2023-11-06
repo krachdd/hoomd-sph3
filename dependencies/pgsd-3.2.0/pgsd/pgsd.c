@@ -34,6 +34,9 @@
 #include <stdlib.h>
 #include <stdbool.h>
 
+// Only testing
+#include <inttypes.h>
+
 #include "pgsd.h"
 
 /** @file pgsd.c
@@ -624,7 +627,7 @@ inline static int pgsd_index_buffer_map(struct pgsd_index_buffer* buf, struct pg
                             index_size + (handle->header.index_location - offset),
                             PROT_READ,
                             MAP_SHARED,
-                            handle->fd,
+                            handle->fh,
                             offset);
 
     if (buf->mapped_data == MAP_FAILED)
@@ -1424,6 +1427,7 @@ inline static int pgsd_append_name(uint16_t* id, struct pgsd_handle* handle, con
 inline static int
 pgsd_initialize_file(MPI_File *fh, const char* application, const char* schema, uint32_t schema_version)
     {
+    printf("Initialize File\n");
     // check if the file was created
     // if (fd == -1)
     //     {
@@ -1451,6 +1455,8 @@ pgsd_initialize_file(MPI_File *fh, const char* application, const char* schema, 
     pgsd_util_zero_memory(&header, sizeof(header));
 
     header.magic = PGSD_MAGIC_ID;
+    printf("%lu \n", PGSD_MAGIC_ID);
+    printf("%lu \n", header.magic);
     header.pgsd_version = pgsd_make_version(PGSD_CURRENT_FILE_VERSION, 0);
     strncpy(header.application, application, sizeof(header.application) - 1);
     header.application[sizeof(header.application) - 1] = 0;
@@ -1467,6 +1473,7 @@ pgsd_initialize_file(MPI_File *fh, const char* application, const char* schema, 
     // write the header out
     if( rank == 0 ){
         MPI_File_write(fh, &header, sizeof(header), MPI_BYTE, MPI_STATUS_IGNORE);
+        printf("Write File header on rank 0\n");
     }
     // ssize_t bytes_written = pgsd_io_pwrite_retry(fd, &header, sizeof(header), 0);
     // if (bytes_written != sizeof(header))
@@ -1480,6 +1487,7 @@ pgsd_initialize_file(MPI_File *fh, const char* application, const char* schema, 
 
     if( rank == 0 ){
         MPI_File_write(fh, &index, sizeof(index), MPI_BYTE, MPI_STATUS_IGNORE);
+        printf("Write File index on rank 0\n");
     }
 
     // write the empty index out
@@ -1524,16 +1532,22 @@ pgsd_initialize_file(MPI_File *fh, const char* application, const char* schema, 
     @pre handle->fd is an open file.
     @pre handle->open_flags is set.
 */
-inline static int pgsd_initialize_handle(struct pgsd_handle* handle)
+inline static int 
+pgsd_initialize_handle(struct pgsd_handle* handle)
     {
+    printf("Initialize File Handle\n");
+
     // check if the file was created
-    if (handle->fd == -1)
+    if (handle->fh == -1)
         {
         return PGSD_ERROR_IO;
         }
 
     // read the header
-    MPI_File_read (handle->fh, &handle->header, sizeof(struct pgsd_header), MPI_BYTE, MPI_STATUS_IGNORE);
+    // MPI_File_seek(handle->fh, 0, MPI_SEEK_SET);
+    MPI_File_read(handle->fh, &handle->header, sizeof(struct pgsd_header), MPI_BYTE, MPI_STATUS_IGNORE);
+    printf("handle->fh %s\n", handle->fh);
+    printf("handle->header.magic %llu\n", handle->header.magic);
     // ssize_t bytes_read
     //     = pgsd_io_pread_retry(handle->fd, &handle->header, sizeof(struct pgsd_header), 0);
     // if (bytes_read == -1)
@@ -1548,6 +1562,7 @@ inline static int pgsd_initialize_handle(struct pgsd_handle* handle)
     // validate the header
     if (handle->header.magic != PGSD_MAGIC_ID)
         {
+        printf("handle->header.magic %llu\n", handle->header.magic);
         return PGSD_ERROR_NOT_A_PGSD_FILE;
         }
 
@@ -1702,30 +1717,30 @@ uint32_t pgsd_make_version(unsigned int major, unsigned int minor)
     return major << (sizeof(uint32_t) * 4) | minor;
     }
 
-int pgsd_create(const char* fname,
-               const char* application,
-               const char* schema,
-               uint32_t schema_version)
-    {
-    int extra_flags = 0;
-#ifdef _WIN32
-    extra_flags = _O_BINARY;
-#endif
+// int pgsd_create(const char* fname,
+//                const char* application,
+//                const char* schema,
+//                uint32_t schema_version)
+//     {
+//     printf("Create pgsd\n");
+//     int extra_flags = 0;
+// #ifdef _WIN32
+//     extra_flags = _O_BINARY;
+// #endif
 
-    // create the file
-    // int fd = pgsd_open_file(fname,
-    //                        O_RDWR | O_CREAT | O_TRUNC | extra_flags,
-    //                        S_IRUSR | S_IWUSR | S_IRGRP | S_IWGRP);
-    MPI_File fh;
-    MPI_File_open(MPI_COMM_WORLD, fname, MPI_MODE_RDWR | MPI_MODE_CREATE, MPI_INFO_NULL, &fh);
+//     // create the file
+//     // int fd = pgsd_open_file(fname,
+//     //                        O_RDWR | O_CREAT | O_TRUNC | extra_flags,
+//     //                        S_IRUSR | S_IWUSR | S_IRGRP | S_IWGRP);
+//     MPI_File_open(MPI_COMM_WORLD, fname, MPI_MODE_RDWR | MPI_MODE_CREATE, MPI_INFO_NULL, &(handle->fh));
     
-    int retval = pgsd_initialize_file(fh, application, schema, schema_version);
-    if (fh != -1)
-        {
-        close(fh);
-        }
-    return retval;
-    }
+//     int retval = pgsd_initialize_file(&(handle->fh), application, schema, schema_version);
+//     if (fh != -1)
+//         {
+//         close(fh);
+//         }
+//     return retval;
+//     }
 
 int pgsd_create_and_open(struct pgsd_handle* handle,
                         const char* fname,
@@ -1767,26 +1782,28 @@ int pgsd_create_and_open(struct pgsd_handle* handle,
     // handle->fd = pgsd_open_file(fname,
     //                            O_RDWR | O_CREAT | O_TRUNC | extra_flags,
     //                            S_IRUSR | S_IWUSR | S_IRGRP | S_IWGRP);
+    // MPI_File fh;
     MPI_File_open(MPI_COMM_WORLD, fname, MPI_MODE_RDWR, MPI_INFO_NULL, &(handle->fh));
-    int retval = pgsd_initialize_file(handle->fh, application, schema, schema_version);
-    printf("retval: %i", retval);
+    int retval = pgsd_initialize_file(&(handle->fh), application, schema, schema_version);
     if (retval != 0)
         {
-        if (handle->fd != -1)
+        if (handle->fh != -1)
             {
-            close(handle->fd);
+            close(handle->fh);
             }
         return retval;
         }
 
+    printf("retval before init handle: %i\n", retval);
     retval = pgsd_initialize_handle(handle);
     if (retval != 0)
         {
-        if (handle->fd != -1)
+        if (handle->fh != -1)
             {
-            close(handle->fd);
+            close(handle->fh);
             }
         }
+    printf("retval after init handle: %i\n", retval);
     return retval;
     }
 
@@ -1823,7 +1840,7 @@ int pgsd_open(struct pgsd_handle* handle, const char* fname, const enum pgsd_ope
     int retval = pgsd_initialize_handle(handle);
     if (retval != 0)
         {
-        if (handle->fd != -1)
+        if (handle->fh != -1)
             {
             close(handle->fd);
             }

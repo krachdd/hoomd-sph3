@@ -36,7 +36,7 @@ lporosity = porosities[rank]
 for i in range(len(types)):
     for k in range(len(resolutions)):
         lref = 1e-03
-        nx, ny, nz = 1, 1, 1
+        nx, ny, nz = 8, 8, 8
         print(rank, types[i], resolutions[k], lporosity)
         fn = create_raw_files.create_spherepacking( types[i], lporosity, lref, resolutions[k] , nx = nx, ny = ny, nz = nz)
         ifn = prepare_simulations.create_sph_input_file(fn, 'WendlandC4',  lref/resolutions[k], 

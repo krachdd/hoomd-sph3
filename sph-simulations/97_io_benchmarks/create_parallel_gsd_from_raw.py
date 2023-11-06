@@ -23,13 +23,15 @@ import pgsd.hoomd
 # ------------------------------------------------------------
 
 # device = hoomd.device.CPU(notice_level=2)
-device = hoomd.device.CPU(notice_level=10)
+device = hoomd.device.CPU(communicator, notice_level=10)
 sim = hoomd.Simulation(device=device)
 
-amode = MPI.MODE_RDONLY
 new_comm = MPI.COMM_WORLD
 rank = new_comm.Get_rank()
 size = new_comm.Get_size()
+# new_comm = device.communicator
+# rank = device.communicator.rank
+# size = device.communicator.num_ranks
 offset = 0
 
 # get stuff from input file
@@ -102,17 +104,26 @@ y = y[offset:offset+n_particles_rank]
 z = z[offset:offset+n_particles_rank]
 
 positions = np.array((x.ravel(), y.ravel(), z.ravel())).T
+tids      = tids[offset:offset+n_particles_rank]
+print(positions.shape)
 
 velocities = np.zeros((positions.shape[0], positions.shape[1]), dtype = np.float32)
 masses     = np.ones((positions.shape[0]), dtype = np.float32) * mass
 slengths   = np.ones((positions.shape[0]), dtype = np.float32) * slength
 densities  = np.ones((positions.shape[0]), dtype = np.float32) * rho0
 
+part_dist = np.zeros(size)
+a = n_particles_rank*np.ones(1)
+new_comm.Allgather([a, MPI.FLOAT], [part_dist, MPI.FLOAT])
+
+print(f'part_dist {part_dist}')
+
 # # create Snapshot 
 # # snapshot = hoomd.Snapshot(device.communicator)
 snapshot = pgsd.hoomd.Frame(size)
+snapshot.part_dist = part_dist
 snapshot.configuration.box     = [box_lx, box_ly, box_lz] + [0, 0, 0]
-snapshot.particles.N           = n_particles
+snapshot.particles.N           = n_particles_rank
 snapshot.particles.position    = positions
 snapshot.particles.typeid      = tids
 snapshot.particles.types       = ['F', 'S']
@@ -120,6 +131,7 @@ snapshot.particles.velocity    = velocities
 snapshot.particles.mass        = masses
 snapshot.particles.slength     = slengths
 snapshot.particles.density     = densities
+
 
 
 sim.create_state_from_snapshot(snapshot)

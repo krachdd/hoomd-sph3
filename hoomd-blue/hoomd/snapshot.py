@@ -180,10 +180,10 @@ class Snapshot:
                 snapshot.particles.types = ['A', 'B']
                 snapshot.particles.typeid[:] = [0, 1, 1, 0]
         """
-        if self.communicator.rank == 0:
-            return self._cpp_obj.particles
-        else:
-            raise RuntimeError('Snapshot data is only present on rank 0')
+        # if self.communicator.rank == 0:
+        return self._cpp_obj.particles
+        # else:
+        #     raise RuntimeError('Snapshot data is only present on rank 0')
 
     @property
     def bonds(self):
@@ -345,10 +345,10 @@ class Snapshot:
                 snapshot.constraints.group[:] = [[0, 1], [2, 3]]
                 snapshot.constraints.value[:] = [1, 1]
         """
-        if self.communicator.rank == 0:
-            return self._cpp_obj.constraints
-        else:
-            raise RuntimeError('Snapshot data is only present on rank 0')
+        # if self.communicator.rank == 0:
+        return self._cpp_obj.constraints
+        # else:
+        #     raise RuntimeError('Snapshot data is only present on rank 0')
 
     # @property
     # def mpcd(self):

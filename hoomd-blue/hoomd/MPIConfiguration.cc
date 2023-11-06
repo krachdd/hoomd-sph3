@@ -100,6 +100,7 @@ void export_MPIConfiguration(pybind11::module& m)
         .def("getRankGlobal", &MPIConfiguration::getRankGlobal)
         .def("getWalltime", &MPIConfiguration::getWalltime)
         .def("bcast_double", &MPIConfiguration::bcast_double)
+        // .def("all_gather_dist", &MPIConfiguration::all_gather_dist)
 #ifdef ENABLE_MPI
         .def_static("_make_mpi_conf_mpi_comm",
                     [](pybind11::object mpi_comm) -> std::shared_ptr<MPIConfiguration>

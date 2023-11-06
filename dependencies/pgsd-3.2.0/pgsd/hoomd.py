@@ -230,6 +230,8 @@ class ParticleData(object):
         """
         logger.debug('Validating ParticleData')
 
+        print(f'self.N {self.N}')
+
         if self.position is not None:
             self.position = numpy.ascontiguousarray(self.position,
                                                     dtype=numpy.float32)
@@ -522,6 +524,7 @@ class Frame(object):
     def set_distribution(self, comm, num_par): # added DK
         a = num_par*numpy.ones(1)
         comm.Allgather([a, MPI.FLOAT], [self.part_dist, MPI.FLOAT]);
+        print(a)
 
     def validate(self):
         """Validate all contained frame data."""

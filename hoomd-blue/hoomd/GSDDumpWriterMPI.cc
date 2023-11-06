@@ -347,6 +347,7 @@ void GSDDumpWriterMPI::initFileIO()
         o << "HOOMD-blue " << HOOMD_VERSION;
 
         m_exec_conf->msg->notice(3) << "PGSD: create or overwrite gsd file " << m_fname << endl;
+        m_exec_conf->msg->notice(3) << "PGSD: create or overwrite gsd file " << &m_handle << endl;
         int retval = pgsd_create_and_open(&m_handle,
                                          m_fname.c_str(),
                                          o.str().c_str(),
@@ -354,6 +355,7 @@ void GSDDumpWriterMPI::initFileIO()
                                          pgsd_make_version(1, 4),
                                          PGSD_OPEN_APPEND,
                                          m_mode == "xb");
+        printf("retval: %i", retval);
         PGSDUtils::checkError(retval, m_fname);
 
         // in a created or overwritten file, all quantities are default

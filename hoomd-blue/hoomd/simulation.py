@@ -303,12 +303,12 @@ class Simulation(metaclass=Loggable):
         # PGSD ---
         elif _match_class_path(snapshot, 'pgsd.hoomd.Frame'):
             # snapshot is gsd.hoomd.Frame (gsd 2.8+, 3.x)
-            snapshot = Snapshot.from_gsd_frame(snapshot,
+            snapshot = Snapshot.from_pgsd_frame(snapshot,
                                                self._device.communicator)
             self._state = State(self, snapshot, domain_decomposition)
         elif _match_class_path(snapshot, 'pgsd.hoomd.Snapshot'):
             # snapshot is gsd.hoomd.Snapshot (gsd 2.x)
-            snapshot = Snapshot.from_gsd_snapshot(snapshot,
+            snapshot = Snapshot.from_pgsd_snapshot(snapshot,
                                                   self._device.communicator)
             self._state = State(self, snapshot, domain_decomposition)
         # PGSD ---
