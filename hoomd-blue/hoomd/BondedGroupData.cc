@@ -1155,7 +1155,7 @@ BondedGroupData<group_size, Group, name, has_type_mapping>::takeSnapshotDistr(Sn
         // allocate memory in snapshot
         snapshot.resize(getN());
 
-        assert(getN() == m_nparticles);
+        assert(getN() == getNGlobal());
         std::map<unsigned int, unsigned int>::iterator rtag_it;
         // index in snapshot
         unsigned int snap_id = 0;

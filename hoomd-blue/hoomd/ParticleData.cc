@@ -3629,7 +3629,7 @@ Scalar ParticleData::getMaxSmoothingLength() const
         result = __scalar_as_int(*std::max_element(tmp.begin(), tmp.end()));
         }
 #endif
-    assert(found);
+
     return result;
     }
 

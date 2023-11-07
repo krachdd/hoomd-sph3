@@ -193,7 +193,7 @@ class PGSD(Writer):
                  logger=None):
 
         super().__init__(trigger)
-
+        print(f'Init PGSD Class')
         dynamic_validation = OnlyFrom([
             'attribute',
             'property',
@@ -236,6 +236,7 @@ class PGSD(Writer):
                           _defaults=dict(filter=filter, dynamic=dynamic)))
 
         self._logger = None if logger is None else _PGSDLogWriter(logger)
+        print(f'Done Init PGSD Class')
 
     def _attach_hook(self):
         self._cpp_obj = _hoomd.GSDDumpWriterMPI(
@@ -264,9 +265,12 @@ class PGSD(Writer):
 
         The valid file modes for `write` are ``'wb'`` and ``'xb'``.
         """
+        print('Start write in PGSD.write')
+
         if mode != 'wb' and mode != 'xb':
             raise ValueError(f"Invalid PGSD.write file mode: {mode}")
 
+        print('Set writer to GSDDumpWriterMPI')
         writer = _hoomd.GSDDumpWriterMPI(state._cpp_sys_def, Periodic(1),
                                       str(filename), state._get_group(filter),
                                       mode, False)

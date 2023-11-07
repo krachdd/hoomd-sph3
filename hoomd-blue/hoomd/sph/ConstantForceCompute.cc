@@ -165,7 +165,7 @@ void ConstantForceCompute::setForces()
 
     // sanity check
     assert(h_f_actVec.data != NULL);
-    assert(h_t_actVec.data != NULL);
+    // assert(h_t_actVec.data != NULL);
 
     // zero forces so we don't leave any forces set for indices that are no longer part of our group
     memset(h_force.data, 0, sizeof(Scalar4) * m_force.getNumElements());

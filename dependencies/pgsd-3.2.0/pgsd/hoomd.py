@@ -539,6 +539,7 @@ class Frame(object):
         self.constraints.validate()
         self.pairs.validate()
 
+        logger.debug('Done Validating Frame')
         # # validate HPMC state
         # if self.particles.types is not None:
         #     NT = len(self.particles.types)

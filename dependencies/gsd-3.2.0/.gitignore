@@ -10,3 +10,6 @@ gsd.egg-info
 __pycache__
 devdoc
 build
+
+CMakeCache.txt
+CMakeFiles

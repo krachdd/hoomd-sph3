@@ -305,6 +305,7 @@ class Simulation(metaclass=Loggable):
             # snapshot is gsd.hoomd.Frame (gsd 2.8+, 3.x)
             snapshot = Snapshot.from_pgsd_frame(snapshot,
                                                self._device.communicator)
+            print(f'set State after init pgsd frame')
             self._state = State(self, snapshot, domain_decomposition)
         elif _match_class_path(snapshot, 'pgsd.hoomd.Snapshot'):
             # snapshot is gsd.hoomd.Snapshot (gsd 2.x)
@@ -320,8 +321,9 @@ class Simulation(metaclass=Loggable):
         step = 0
         if self.timestep is not None:
             step = self.timestep
-
+        print(f'init system')
         self._init_system(step)
+        print(f'done init system')
 
     @property
     def state(self):

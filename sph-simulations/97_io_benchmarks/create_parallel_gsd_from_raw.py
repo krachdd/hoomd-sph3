@@ -18,12 +18,15 @@ import read_input_fromtxt
 import delete_solids_initial_timestep
 import sys, os
 import array
+import logging
 
 import pgsd.hoomd
 # ------------------------------------------------------------
 
-# device = hoomd.device.CPU(notice_level=2)
-device = hoomd.device.CPU(communicator, notice_level=10)
+logging.basicConfig(filename='parallel_gsd.log', encoding='utf-8', level=logging.DEBUG)
+
+device = hoomd.device.CPU(notice_level=2)
+# device = hoomd.device.CPU(communicator, notice_level=10)
 sim = hoomd.Simulation(device=device)
 
 new_comm = MPI.COMM_WORLD
@@ -135,6 +138,8 @@ snapshot.particles.density     = densities
 
 
 sim.create_state_from_snapshot(snapshot)
+
+print('Done with: sim.create_state_from_snapshot(snapshot)')
 
 # # deletesolid_flag = params['delete_flag']
 # # if deletesolid_flag == 1:

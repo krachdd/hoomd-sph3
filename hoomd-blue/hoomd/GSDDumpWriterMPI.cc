@@ -90,7 +90,7 @@ GSDDumpWriterMPI::GSDDumpWriterMPI(std::shared_ptr<SystemDefinition> sysdef,
     m_dynamic.reset();
     m_dynamic[pgsd_flag::particles_position] = true;
     // m_dynamic[pgsd_flag::particles_orientation] = true;
-
+    m_exec_conf->msg->notice(5) << "GSDDumpWriterMPI: start init File IO" << endl;
     initFileIO();
     }
 
@@ -355,7 +355,7 @@ void GSDDumpWriterMPI::initFileIO()
                                          pgsd_make_version(1, 4),
                                          PGSD_OPEN_APPEND,
                                          m_mode == "xb");
-        printf("retval: %i", retval);
+        printf("GSDDumpWriterMPI::initFileIO create and open retval: %i\n", retval);
         PGSDUtils::checkError(retval, m_fname);
 
         // in a created or overwritten file, all quantities are default

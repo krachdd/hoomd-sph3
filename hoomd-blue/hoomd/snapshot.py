@@ -547,14 +547,22 @@ class Snapshot:
 
         def set_properties(snap_section, pgsd_snap_section, properties,
                            array_properties):
+            print(f'snap_section: {snap_section}')
+            print(f'pgsd_snap_section: {pgsd_snap_section}')
+
             for prop in properties:
+                print(f'properties: {properties}, prop {prop}\n')
                 pgsd_prop = getattr(pgsd_snap_section, prop, None)
+                print(f'pgsd_prop: {pgsd_prop}')
                 if pgsd_prop is not None:
                     setattr(snap_section, prop, pgsd_prop)
             for prop in array_properties:
+                print(f'array_properties: {array_properties}, prop {prop}\n')
                 pgsd_prop = getattr(pgsd_snap_section, prop, None)
                 if pgsd_prop is not None:
                     getattr(snap_section, prop)[:] = pgsd_prop
+
+            print(f'Set Properties Done!')
 
         # if communicator.rank == 0:
 
@@ -588,6 +596,8 @@ class Snapshot:
         set_properties(snap.constraints, pgsd_snap.constraints, ('N',),
                        ('group', 'value'))
 
+        print(f'Set Constraints Properties Done!')
+
         # Set box attribute
         if pgsd_snap.configuration.box is not None:
             box = list(pgsd_snap.configuration.box)
@@ -595,6 +605,7 @@ class Snapshot:
                 box[2] = 0
             snap.configuration.box = box
 
+        print(f'Set Box  Done!')
         # snap._broadcast_box()
         return snap
 
