@@ -23,7 +23,7 @@ import logging
 import pgsd.hoomd
 # ------------------------------------------------------------
 
-logging.basicConfig(filename='parallel_gsd.log', encoding='utf-8', level=logging.DEBUG)
+# logging.basicConfig(filename='parallel_gsd.log', encoding='utf-8', level=logging.DEBUG)
 
 device = hoomd.device.CPU(notice_level=2)
 # device = hoomd.device.CPU(communicator, notice_level=10)
