@@ -17,6 +17,7 @@
 #include "GSDDumpWriter.h"
 #include "GSDDumpWriterMPI.h"
 #include "GSDReader.h"
+#include "GSDReaderMPI.h"
 #include "HOOMDMath.h"
 #include "Initializers.h"
 #include "Integrator.h"
@@ -290,6 +291,7 @@ PYBIND11_MODULE(_hoomd, m)
 
     // initializers
     export_GSDReader(m);
+    export_GSDReaderMPI(m);
 
     // computes
     export_Autotuned(m);

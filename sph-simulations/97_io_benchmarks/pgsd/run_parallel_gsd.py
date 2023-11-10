@@ -36,7 +36,7 @@ logname  = f'{logname}_run_gsd_{dt_string}.log'
 dumpname = filename.replace('_init.gsd', '')
 dumpname = f'{dumpname}_run_gsd.gsd'
 
-# sim.create_state_from_pgsd(filename = filename)
+sim.create_state_from_pgsd(filename = filename)
 # MPI.COMM_WORLD.Barrier()
 
 # # Print the domain decomposition.
