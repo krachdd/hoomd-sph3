@@ -364,32 +364,32 @@ void GSDDumpWriterMPI::initFileIO()
             m_nondefault[chunk] = false;
             }
         }
-    else if (m_mode == "ab")
-        {
-        // populate the non-default map
-        populateNonDefault();
+    // else if (m_mode == "ab")
+    //     {
+    //     // populate the non-default map
+    //     populateNonDefault();
 
-        // open the file in append mode
-        m_exec_conf->msg->notice(3) << "PGSD: open gsd file " << m_fname << endl;
-        int retval = pgsd_open(&m_handle, m_fname.c_str(), PGSD_OPEN_APPEND);
-        PGSDUtils::checkError(retval, m_fname);
+    //     // open the file in append mode
+    //     m_exec_conf->msg->notice(3) << "PGSD: open gsd file " << m_fname << endl;
+    //     int retval = pgsd_open(&m_handle, m_fname.c_str(), PGSD_OPEN_APPEND);
+    //     PGSDUtils::checkError(retval, m_fname);
 
-        // validate schema
-        if (string(m_handle.header.schema) != string("hoomd"))
-            {
-            std::ostringstream s;
-            s << "PGSD: "
-              << "Invalid schema in " << m_fname;
-            throw runtime_error("Error opening GSD file");
-            }
-        if (m_handle.header.schema_version >= pgsd_make_version(2, 0))
-            {
-            std::ostringstream s;
-            s << "PGSD: "
-              << "Invalid schema version in " << m_fname;
-            throw runtime_error("Error opening GSD file");
-            }
-        }
+    //     // validate schema
+    //     if (string(m_handle.header.schema) != string("hoomd"))
+    //         {
+    //         std::ostringstream s;
+    //         s << "PGSD: "
+    //           << "Invalid schema in " << m_fname;
+    //         throw runtime_error("Error opening GSD file");
+    //         }
+    //     if (m_handle.header.schema_version >= pgsd_make_version(2, 0))
+    //         {
+    //         std::ostringstream s;
+    //         s << "PGSD: "
+    //           << "Invalid schema version in " << m_fname;
+    //         throw runtime_error("Error opening GSD file");
+    //         }
+    //     }
     else
         {
         throw std::invalid_argument("Invalid PGSD file mode: " + m_mode);

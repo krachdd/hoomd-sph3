@@ -25,8 +25,8 @@ import pgsd.hoomd
 
 # logging.basicConfig(filename='parallel_gsd.log', encoding='utf-8', level=logging.DEBUG)
 
-device = hoomd.device.CPU(notice_level=2)
-# device = hoomd.device.CPU(communicator, notice_level=10)
+# device = hoomd.device.CPU(notice_level=2)
+device = hoomd.device.CPU(communicator, notice_level=10)
 sim = hoomd.Simulation(device=device)
 
 new_comm = MPI.COMM_WORLD

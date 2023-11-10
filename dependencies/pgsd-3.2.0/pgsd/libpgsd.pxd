@@ -77,7 +77,7 @@ cdef extern from "pgsd.h" nogil:
         size_t reserved
 
     cdef struct pgsd_handle:
-        int fd
+        # int fd
         MPI_File fh
         pgsd_header header
         pgsd_index_buffer file_index
@@ -87,7 +87,7 @@ cdef extern from "pgsd.h" nogil:
         pgsd_namelist_entry *namelist
         uint64_t namelist_num_entries
         uint64_t cur_frame
-        int64_t file_size
+        long long int file_size
         pgsd_open_flag open_flags
         pgsd_name_id_map name_map
         uint64_t namelist_written_entries

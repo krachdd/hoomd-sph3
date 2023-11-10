@@ -282,9 +282,10 @@ extern "C"
     struct pgsd_handle
         {
         /// File descriptor
-        int fd;
+        // int fd;
 
-        MPI_File *fh;
+        /// MPI File pointer
+        MPI_File fh;
 
         /// The file header
         struct pgsd_header header;
@@ -311,7 +312,8 @@ extern "C"
         uint64_t cur_frame;
 
         /// Size of the file (in bytes)
-        int64_t file_size;
+        // int64_t file_size;
+        long long int file_size;
 
         /// Flags passed to pgsd_open() when opening this handle
         enum pgsd_open_flag open_flags;

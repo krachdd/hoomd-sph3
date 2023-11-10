@@ -16,7 +16,7 @@ import read_input_fromtxt
 
 # ------------------------------------------------------------
 
-# device = hoomd.device.CPU(notice_level=2)
+device = hoomd.device.CPU(notice_level=2)
 # device = hoomd.device.CPU(notice_level=10)
 sim = hoomd.Simulation(device=device)
 
