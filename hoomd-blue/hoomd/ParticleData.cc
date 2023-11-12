@@ -114,7 +114,6 @@ ParticleData::ParticleData(unsigned int N,
     GlobalVector<unsigned int>(exec_conf).swap(m_rtag);
     TAG_ALLOCATION(m_rtag);
     if (!distributed){
-
         // initialize all processors
         initializeFromSnapshot(snap);
     }
@@ -124,6 +123,7 @@ ParticleData::ParticleData(unsigned int N,
         m_exec_conf->msg->warning() << " MPI is necessary for distributed snapshots " << endl;
         throw runtime_error("Error initializing ParticleData - try to use not distributed varinte or enable MPI");
         #else
+
         initializeFromDistrSnapshot(snap);
         #endif
     }
@@ -144,8 +144,78 @@ ParticleData::ParticleData(unsigned int N,
  * \param exec_conf The execution configuration
  * \param decomposition (optional) Domain decomposition layout
  */
+// template<class Real>
+// ParticleData::ParticleData(const SnapshotParticleData<Real>& snapshot,
+//                            const std::shared_ptr<const BoxDim> global_box,
+//                            std::shared_ptr<ExecutionConfiguration> exec_conf,
+//                            std::shared_ptr<DomainDecomposition> decomposition,
+//                            bool distributed)
+//     : m_exec_conf(exec_conf), m_nparticles(0), m_nghosts(0), m_max_nparticles(0), m_nglobal(0),
+//       m_accel_set(false), m_resize_factor(9. / 8.), m_arrays_allocated(false)
+//     {
+//     m_exec_conf->msg->notice(5) << "Constructing ParticleData" << endl;
+
+// #ifdef ENABLE_MPI
+//     // Set up domain decomposition information
+//     if (decomposition)
+//         setDomainDecomposition(decomposition);
+// #endif
+
+//     // initialize box dimensions on all processors
+//     setGlobalBox(global_box);
+
+//     // it is an error for particles to be initialized outside of their box
+//     if (!inBox(snapshot))
+//         {
+//         m_exec_conf->msg->warning() << "Not all particles were found inside the given box" << endl;
+//         throw runtime_error("Error initializing ParticleData");
+//         }
+
+// #ifdef ENABLE_HIP
+//     if (m_exec_conf->isCUDAEnabled())
+//         {
+//         m_gpu_partition = GPUPartition(m_exec_conf->getGPUIds());
+//         m_memory_advice_last_Nmax = UINT_MAX;
+//         }
+// #endif
+
+//     // initialize rtag array
+//     GlobalVector<unsigned int>(exec_conf).swap(m_rtag);
+//     TAG_ALLOCATION(m_rtag);
+
+//     // initialize particle data with snapshot contents
+//     if(!distributed) {
+//         initializeFromSnapshot(snapshot);
+//     }
+//     else {
+//     #ifndef ENABLE_MPI
+//         m_exec_conf->msg->warning() << " MPI is necessary for distributed snapshots " << endl;
+//         throw runtime_error("Error initializing ParticleData - try to use not distributed varinte or enable MPI");
+//     #else
+//         initializeFromDistrSnapshot(snapshot);
+//     #endif
+//     }
+
+//     // // reset external virial
+//     // for (unsigned int i = 0; i < 6; i++)
+//     //     m_external_virial[i] = Scalar(0.0);
+
+//     m_external_energy = Scalar(0.0);
+
+//     // zero the origin
+//     m_origin = make_scalar3(0, 0, 0);
+//     m_o_image = make_int3(0, 0, 0);
+//     }
+
+
+/*! Loads particle data from the snapshot into the internal arrays.
+ * \param snapshot The particle data snapshot
+ * \param global_box The dimensions of the global simulation box
+ * \param exec_conf The execution configuration
+ * \param decomposition (optional) Domain decomposition layout
+ */
 template<class Real>
-ParticleData::ParticleData(const SnapshotParticleData<Real>& snapshot,
+ParticleData::ParticleData(SnapshotParticleData<Real>& snapshot,
                            const std::shared_ptr<const BoxDim> global_box,
                            std::shared_ptr<ExecutionConfiguration> exec_conf,
                            std::shared_ptr<DomainDecomposition> decomposition,
@@ -1704,7 +1774,7 @@ void ParticleData::initializeFromSnapshot(const SnapshotParticleData<Real>& snap
 
 #ifdef ENABLE_MPI
 template<class Real>
-void ParticleData::initializeFromDistrSnapshot(const SnapshotParticleData<Real>& snapshot,
+void ParticleData::initializeFromDistrSnapshot(SnapshotParticleData<Real>& snapshot,
                                           bool ignore_bodies)
     {
     m_exec_conf->msg->notice(4) << "ParticleData: initializing from distributed snapshot" << std::endl;
@@ -1715,15 +1785,16 @@ void ParticleData::initializeFromDistrSnapshot(const SnapshotParticleData<Real>&
                                        "in shared memory errors on the GPU."
                                     << std::endl;
         }
-
     // remove all ghost particles
+    printf("Distributed Snapshot remove all ghosts\n");
     removeAllGhostParticles();
+    printf("Distributed Snapshot Done remove all ghosts\n");
 
     // check that all fields in the snapshot have correct length
-    if (m_exec_conf->getRank() == 0)
-        {
-        snapshot.validate();
-        }
+    // if (m_exec_conf->getRank() == 0)
+    //     {
+    //     snapshot.validate();
+    //     }
 
     // clear set of active tags
     m_tag_set.clear();
@@ -1735,11 +1806,16 @@ void ParticleData::initializeFromDistrSnapshot(const SnapshotParticleData<Real>&
     unsigned int size = m_exec_conf->getNRanks();
     unsigned int my_rank = m_exec_conf->getRank();
     std::vector<unsigned int> offset(size);
-    all_gather_v(snapshot.size, offset, MPI_COMM_WORLD);
+    printf("RAnk %i, offset[0] %i, offset[1] %i\n", my_rank, offset[0], offset[1] );
 
+    all_gather_v(snapshot.size, offset, MPI_COMM_WORLD);
+    printf("RAnk %i, snapshot size %i, size %i\n", my_rank, snapshot.size, size );
+    printf("RAnk %i, offset[0] %i, offset[1] %i\n", my_rank, offset[0], offset[1] );
     // global number of particles
     unsigned int nglobal = std::accumulate(offset.begin(), offset.begin()+my_rank,0);
+    // unsigned int nglobal = std::accumulate(offset.begin(), offset.end(), 0);
     unsigned int max_typeid = 0;
+    printf("Distributed snapshot nglobal %i\n", nglobal);
 
 
         // Define per-processor particle data
@@ -1772,7 +1848,7 @@ void ParticleData::initializeFromDistrSnapshot(const SnapshotParticleData<Real>&
         // resize to number of ranks in communicator
         const MPI_Comm mpi_comm = m_exec_conf->getMPICommunicator();
 
-
+        printf("First resizing\n");
         pos_proc.resize(size);
         vel_proc.resize(size);
         // dpe_proc.resize(size);
@@ -1797,6 +1873,7 @@ void ParticleData::initializeFromDistrSnapshot(const SnapshotParticleData<Real>&
         // inertia_proc.resize(size);
         tag_proc.resize(size);
         N_proc.resize(size, 0);
+        printf("Done with First resizing\n");
 
         ArrayHandle<unsigned int> h_cart_ranks(m_decomposition->getCartRanks(),
                                                access_location::host,
@@ -1909,6 +1986,7 @@ void ParticleData::initializeFromDistrSnapshot(const SnapshotParticleData<Real>&
             max_typeid = std::max(max_typeid, snapshot.type[snap_idx]);
             }
 
+        printf("before get type mapping\n");
         // get type mapping
         m_type_mapping = snapshot.type_mapping;
 
@@ -1922,6 +2000,7 @@ void ParticleData::initializeFromDistrSnapshot(const SnapshotParticleData<Real>&
 
         // resize array for reverse-lookup tags
         m_rtag.resize(nglobal);
+        printf("Done get type mapping\n");
 
         // Local particle data
         std::vector<Scalar3> pos(m_nparticles);
@@ -1976,61 +2055,64 @@ void ParticleData::initializeFromDistrSnapshot(const SnapshotParticleData<Real>&
         // // distribute number of particles
         // scatter_v(N_proc, m_nparticles, root, mpi_comm);
 
-        for(unsigned int rank_i = 0; rank_i < size; rank_i++){
+        for(unsigned int rank_i = 0; rank_i < size; rank_i++)
+        {
             int recv_off = std::accumulate(num_part_recv.begin(), num_part_recv.begin()+rank_i, 0);
+            MPI_Irecv(&pos[recv_off],     3*num_part_recv[rank_i],  MPI_HOOMD_SCALAR, rank_i,       rank_i, mpi_comm, &recv_req[rank_i*17]);
+            MPI_Irecv(&vel[recv_off],     3*num_part_recv[rank_i],  MPI_HOOMD_SCALAR, rank_i,  1000+rank_i, mpi_comm, &recv_req[1+rank_i*17]);
+            MPI_Irecv(&type[recv_off],      num_part_recv[rank_i],  MPI_UNSIGNED,      rank_i,  2000+rank_i, mpi_comm, &recv_req[2+rank_i*17]);
+            MPI_Irecv(&mass[recv_off],      num_part_recv[rank_i],  MPI_HOOMD_SCALAR, rank_i,  3000+rank_i, mpi_comm, &recv_req[3+rank_i*17]);
+            // MPI_Irecv(&dpe[recv_off],     3*num_part_recv[rank_i], MPI_HOOMD_SCALAR, rank_i,  4000+rank_i, mpi_comm, &recv_req[4+rank_i*17]);
+            MPI_Irecv(&density[recv_off],   num_part_recv[rank_i], MPI_HOOMD_SCALAR, rank_i,  4000+rank_i, mpi_comm, &recv_req[4+rank_i*17]);
+            MPI_Irecv(&pressure[recv_off],  num_part_recv[rank_i], MPI_HOOMD_SCALAR, rank_i,  5000+rank_i, mpi_comm, &recv_req[5+rank_i*17]);
+            MPI_Irecv(&energy[recv_off],    num_part_recv[rank_i], MPI_HOOMD_SCALAR, rank_i,  6000+rank_i, mpi_comm, &recv_req[6+rank_i*17]);
+            MPI_Irecv(&aux1[recv_off],    3*num_part_recv[rank_i], MPI_HOOMD_SCALAR, rank_i,  7000+rank_i, mpi_comm, &recv_req[7+rank_i*17]);
+            MPI_Irecv(&aux2[recv_off],    3*num_part_recv[rank_i], MPI_HOOMD_SCALAR, rank_i,  8000+rank_i, mpi_comm, &recv_req[8+rank_i*17]);
+            MPI_Irecv(&aux3[recv_off],    3*num_part_recv[rank_i], MPI_HOOMD_SCALAR, rank_i,  9000+rank_i, mpi_comm, &recv_req[9+rank_i*17]);
+            MPI_Irecv(&aux4[recv_off],    3*num_part_recv[rank_i], MPI_HOOMD_SCALAR, rank_i,  10000+rank_i, mpi_comm, &recv_req[10+rank_i*17]);
+            MPI_Irecv(&slength[recv_off],   num_part_recv[rank_i], MPI_HOOMD_SCALAR, rank_i,  11000+rank_i, mpi_comm, &recv_req[11+rank_i*17]);
+            MPI_Irecv(&accel[recv_off],   3*num_part_recv[rank_i], MPI_HOOMD_SCALAR, rank_i, 12000+rank_i, mpi_comm, &recv_req[12+rank_i*17]);
+            MPI_Irecv(&dpedt[recv_off],   3*num_part_recv[rank_i], MPI_HOOMD_SCALAR, rank_i, 13000+rank_i, mpi_comm, &recv_req[13+rank_i*17]);
+            MPI_Irecv(&image[recv_off],   3*num_part_recv[rank_i], MPI_INT,           rank_i, 14000+rank_i, mpi_comm, &recv_req[14+rank_i*17]);
+            MPI_Irecv(&body[recv_off],      num_part_recv[rank_i], MPI_UNSIGNED,      rank_i, 15000+rank_i, mpi_comm, &recv_req[15+rank_i*17]);
+            MPI_Irecv(&tag[recv_off],       num_part_recv[rank_i], MPI_UNSIGNED,      rank_i, 16000+rank_i, mpi_comm, &recv_req[16+rank_i*17]);
 
-          MPI_Irecv(&pos[recv_off],     3*num_part_recv[rank_i],  MPI_HOOMD_SCALAR, rank_i,       rank_i, mpi_comm, &recv_req[rank_i*17]);
-          MPI_Irecv(&vel[recv_off],     3*num_part_recv[rank_i],  MPI_HOOMD_SCALAR, rank_i,  1000+rank_i, mpi_comm, &recv_req[1+rank_i*17]);
-          MPI_Irecv(&type[recv_off],      num_part_recv[rank_i],  MPI_UNSIGNED,      rank_i,  2000+rank_i, mpi_comm, &recv_req[2+rank_i*17]);
-          MPI_Irecv(&mass[recv_off],      num_part_recv[rank_i],  MPI_HOOMD_SCALAR, rank_i,  3000+rank_i, mpi_comm, &recv_req[3+rank_i*17]);
-          // MPI_Irecv(&dpe[recv_off],     3*num_part_recv[rank_i], MPI_HOOMD_SCALAR, rank_i,  4000+rank_i, mpi_comm, &recv_req[4+rank_i*17]);
-          MPI_Irecv(&density[recv_off],   num_part_recv[rank_i], MPI_HOOMD_SCALAR, rank_i,  4000+rank_i, mpi_comm, &recv_req[4+rank_i*17]);
-          MPI_Irecv(&pressure[recv_off],  num_part_recv[rank_i], MPI_HOOMD_SCALAR, rank_i,  5000+rank_i, mpi_comm, &recv_req[4+rank_i*17]);
-          MPI_Irecv(&energy[recv_off],    num_part_recv[rank_i], MPI_HOOMD_SCALAR, rank_i,  6000+rank_i, mpi_comm, &recv_req[4+rank_i*17]);
-          MPI_Irecv(&aux1[recv_off],    3*num_part_recv[rank_i], MPI_HOOMD_SCALAR, rank_i,  7000+rank_i, mpi_comm, &recv_req[5+rank_i*17]);
-          MPI_Irecv(&aux2[recv_off],    3*num_part_recv[rank_i], MPI_HOOMD_SCALAR, rank_i,  8000+rank_i, mpi_comm, &recv_req[6+rank_i*17]);
-          MPI_Irecv(&aux3[recv_off],    3*num_part_recv[rank_i], MPI_HOOMD_SCALAR, rank_i,  9000+rank_i, mpi_comm, &recv_req[7+rank_i*17]);
-          MPI_Irecv(&aux4[recv_off],    3*num_part_recv[rank_i], MPI_HOOMD_SCALAR, rank_i,  10000+rank_i, mpi_comm, &recv_req[8+rank_i*17]);
-          MPI_Irecv(&slength[recv_off],   num_part_recv[rank_i], MPI_HOOMD_SCALAR, rank_i,  11000+rank_i, mpi_comm, &recv_req[9+rank_i*17]);
-          MPI_Irecv(&accel[recv_off],   3*num_part_recv[rank_i], MPI_HOOMD_SCALAR, rank_i, 12000+rank_i, mpi_comm, &recv_req[10+rank_i*17]);
-          MPI_Irecv(&dpedt[recv_off],   3*num_part_recv[rank_i], MPI_HOOMD_SCALAR, rank_i, 13000+rank_i, mpi_comm, &recv_req[11+rank_i*17]);
-          MPI_Irecv(&image[recv_off],   3*num_part_recv[rank_i], MPI_INT,           rank_i, 14000+rank_i, mpi_comm, &recv_req[12+rank_i*17]);
-          MPI_Irecv(&body[recv_off],      num_part_recv[rank_i], MPI_UNSIGNED,      rank_i, 15000+rank_i, mpi_comm, &recv_req[13+rank_i*17]);
-          MPI_Irecv(&tag[recv_off],       num_part_recv[rank_i], MPI_UNSIGNED,      rank_i, 16000+rank_i, mpi_comm, &recv_req[14+rank_i*17]);
+            MPI_Isend(&pos_proc[rank_i][0],    3*N_proc[rank_i], MPI_HOOMD_SCALAR, rank_i,       my_rank, mpi_comm, &send_req[rank_i*17]);
+            MPI_Isend(&vel_proc[rank_i][0],    3*N_proc[rank_i], MPI_HOOMD_SCALAR, rank_i,  1000+my_rank, mpi_comm, &send_req[1+rank_i*17]);
+            MPI_Isend(&type_proc[rank_i][0],     N_proc[rank_i], MPI_UNSIGNED,      rank_i,  2000+my_rank, mpi_comm, &send_req[2+rank_i*17]);
+            MPI_Isend(&mass_proc[rank_i][0],     N_proc[rank_i], MPI_HOOMD_SCALAR, rank_i,  3000+my_rank, mpi_comm, &send_req[3+rank_i*17]);
+            // MPI_Isend(&dpe_proc[rank_i][0],    3*N_proc[rank_i], MPI_HOOMD_SCALAR, rank_i,  4000+my_rank, mpi_comm, &send_req[4+rank_i*17]);
+            MPI_Isend(&density_proc[rank_i][0],  N_proc[rank_i], MPI_HOOMD_SCALAR, rank_i,  4000+my_rank, mpi_comm, &send_req[4+rank_i*17]);
+            MPI_Isend(&pressure_proc[rank_i][0], N_proc[rank_i], MPI_HOOMD_SCALAR, rank_i,  5000+my_rank, mpi_comm, &send_req[5+rank_i*17]);
+            MPI_Isend(&energy_proc[rank_i][0],   N_proc[rank_i], MPI_HOOMD_SCALAR, rank_i,  6000+my_rank, mpi_comm, &send_req[6+rank_i*17]);
+            MPI_Isend(&aux1_proc[rank_i][0],   3*N_proc[rank_i], MPI_HOOMD_SCALAR, rank_i,  7000+my_rank, mpi_comm, &send_req[7+rank_i*17]);
+            MPI_Isend(&aux2_proc[rank_i][0],   3*N_proc[rank_i], MPI_HOOMD_SCALAR, rank_i,  8000+my_rank, mpi_comm, &send_req[8+rank_i*17]);
+            MPI_Isend(&aux3_proc[rank_i][0],   3*N_proc[rank_i], MPI_HOOMD_SCALAR, rank_i,  9000+my_rank, mpi_comm, &send_req[9+rank_i*17]);
+            MPI_Isend(&aux4_proc[rank_i][0],   3*N_proc[rank_i], MPI_HOOMD_SCALAR, rank_i,  10000+my_rank, mpi_comm, &send_req[10+rank_i*17]);
+            MPI_Isend(&slength_proc[rank_i][0],  N_proc[rank_i], MPI_HOOMD_SCALAR, rank_i,  11000+my_rank, mpi_comm, &send_req[11+rank_i*17]);
+            MPI_Isend(&accel_proc[rank_i][0],  3*N_proc[rank_i], MPI_HOOMD_SCALAR, rank_i, 12000+my_rank, mpi_comm, &send_req[12+rank_i*17]);
+            MPI_Isend(&dpedt_proc[rank_i][0],  3*N_proc[rank_i], MPI_HOOMD_SCALAR, rank_i, 13000+my_rank, mpi_comm, &send_req[13+rank_i*17]);
+            MPI_Isend(&image_proc[rank_i][0],  3*N_proc[rank_i], MPI_INT,           rank_i, 14000+my_rank, mpi_comm, &send_req[14+rank_i*17]);
+            MPI_Isend(&body_proc[rank_i][0],     N_proc[rank_i], MPI_UNSIGNED,      rank_i, 15000+my_rank, mpi_comm, &send_req[15+rank_i*17]);
+            MPI_Isend(&tag_proc[rank_i][0],      N_proc[rank_i], MPI_UNSIGNED,      rank_i, 16000+my_rank, mpi_comm, &send_req[16+rank_i*17]);
+    }
 
-          MPI_Isend(&pos_proc[rank_i][0],    3*N_proc[rank_i], MPI_HOOMD_SCALAR, rank_i,       my_rank, mpi_comm, &send_req[rank_i*17]);
-          MPI_Isend(&vel_proc[rank_i][0],    3*N_proc[rank_i], MPI_HOOMD_SCALAR, rank_i,  1000+my_rank, mpi_comm, &send_req[1+rank_i*17]);
-          MPI_Isend(&type_proc[rank_i][0],     N_proc[rank_i], MPI_UNSIGNED,      rank_i,  2000+my_rank, mpi_comm, &send_req[2+rank_i*17]);
-          MPI_Isend(&mass_proc[rank_i][0],     N_proc[rank_i], MPI_HOOMD_SCALAR, rank_i,  3000+my_rank, mpi_comm, &send_req[3+rank_i*17]);
-          // MPI_Isend(&dpe_proc[rank_i][0],    3*N_proc[rank_i], MPI_HOOMD_SCALAR, rank_i,  4000+my_rank, mpi_comm, &send_req[4+rank_i*17]);
-          MPI_Isend(&density_proc[rank_i][0],  N_proc[rank_i], MPI_HOOMD_SCALAR, rank_i,  4000+my_rank, mpi_comm, &send_req[4+rank_i*17]);
-          MPI_Isend(&pressure_proc[rank_i][0], N_proc[rank_i], MPI_HOOMD_SCALAR, rank_i,  5000+my_rank, mpi_comm, &send_req[4+rank_i*17]);
-          MPI_Isend(&energy_proc[rank_i][0],   N_proc[rank_i], MPI_HOOMD_SCALAR, rank_i,  6000+my_rank, mpi_comm, &send_req[4+rank_i*17]);
-          MPI_Isend(&aux1_proc[rank_i][0],   3*N_proc[rank_i], MPI_HOOMD_SCALAR, rank_i,  7000+my_rank, mpi_comm, &send_req[5+rank_i*17]);
-          MPI_Isend(&aux2_proc[rank_i][0],   3*N_proc[rank_i], MPI_HOOMD_SCALAR, rank_i,  8000+my_rank, mpi_comm, &send_req[6+rank_i*17]);
-          MPI_Isend(&aux3_proc[rank_i][0],   3*N_proc[rank_i], MPI_HOOMD_SCALAR, rank_i,  9000+my_rank, mpi_comm, &send_req[7+rank_i*17]);
-          MPI_Isend(&aux4_proc[rank_i][0],   3*N_proc[rank_i], MPI_HOOMD_SCALAR, rank_i,  10000+my_rank, mpi_comm, &send_req[8+rank_i*17]);
-          MPI_Isend(&slength_proc[rank_i][0],  N_proc[rank_i], MPI_HOOMD_SCALAR, rank_i,  11000+my_rank, mpi_comm, &send_req[9+rank_i*17]);
-          MPI_Isend(&accel_proc[rank_i][0],  3*N_proc[rank_i], MPI_HOOMD_SCALAR, rank_i, 12000+my_rank, mpi_comm, &send_req[10+rank_i*17]);
-          MPI_Isend(&dpedt_proc[rank_i][0],  3*N_proc[rank_i], MPI_HOOMD_SCALAR, rank_i, 13000+my_rank, mpi_comm, &send_req[11+rank_i*17]);
-          MPI_Isend(&image_proc[rank_i][0],  3*N_proc[rank_i], MPI_INT,           rank_i, 14000+my_rank, mpi_comm, &send_req[12+rank_i*17]);
-          MPI_Isend(&body_proc[rank_i][0],     N_proc[rank_i], MPI_UNSIGNED,      rank_i, 15000+my_rank, mpi_comm, &send_req[13+rank_i*17]);
-          MPI_Isend(&tag_proc[rank_i][0],      N_proc[rank_i], MPI_UNSIGNED,      rank_i, 16000+my_rank, mpi_comm, &send_req[14+rank_i*17]);
 
+        printf("rank %i Done with all ssend recvs\n", my_rank);
+        MPI_Waitall(17*size, send_req, MPI_STATUSES_IGNORE);
+        printf("Done with waitall\n");
+
+        {
+        // reset all reverse lookup tags to NOT_LOCAL flag
+        ArrayHandle<unsigned int> h_rtag(getRTags(),
+                                         access_location::host,
+                                         access_mode::overwrite);
+
+        // we have to reset all previous rtags, to remove 'leftover' ghosts
+        unsigned int max_tag = (unsigned int)m_rtag.size();
+        for (unsigned int tag = 0; tag < max_tag; tag++)
+            h_rtag.data[tag] = NOT_LOCAL;
         }
-
-
-            {
-            // reset all reverse lookup tags to NOT_LOCAL flag
-            ArrayHandle<unsigned int> h_rtag(getRTags(),
-                                             access_location::host,
-                                             access_mode::overwrite);
-
-            // we have to reset all previous rtags, to remove 'leftover' ghosts
-            unsigned int max_tag = (unsigned int)m_rtag.size();
-            for (unsigned int tag = 0; tag < max_tag; tag++)
-                h_rtag.data[tag] = NOT_LOCAL;
-            }
 
         // update list of active tags
         for (unsigned int tag = 0; tag < nglobal; tag++)
@@ -2073,6 +2155,7 @@ void ParticleData::initializeFromDistrSnapshot(const SnapshotParticleData<Real>&
                                               access_mode::overwrite);
         ArrayHandle<unsigned int> h_rtag(m_rtag, access_location::host, access_mode::readwrite);
 
+        printf("Rank %i Done loding particle data\n");
         for (unsigned int idx = 0; idx < m_nparticles; idx++)
             {
             h_pos.data[idx]
@@ -2101,6 +2184,7 @@ void ParticleData::initializeFromDistrSnapshot(const SnapshotParticleData<Real>&
 
             h_comm_flag.data[idx] = 0; // initialize with zero
             }
+        printf("Done cp data\n");
     //         }
     //     else
     // #endif
@@ -2195,16 +2279,26 @@ void ParticleData::initializeFromDistrSnapshot(const SnapshotParticleData<Real>&
     // set global number of particles
     setNGlobal(nglobal);
 
+    // set number of Particles per rank  
+    std::vector<unsigned int> part_distribution;
+    all_gather_v(m_nparticles, part_distribution, MPI_COMM_WORLD);
+    snapshot.set_part_distr(part_distribution);
+    printf("After all gather rank, m_nparticles, snapshot.part_distr[rank] %i %i %i\n", my_rank, m_nparticles, snapshot.part_distr[my_rank]);
+    // MPI_Allgather(m_nparticles, 1, MPI_INT, snapshot.part_distr, 1, MPI_INT, MPI_COMM_WORLD);
+
+
+
     // notify listeners about resorting of local particles
     notifyParticleSort();
-
+    printf("Done notifying particle sort\n");
     // zero the origin
     m_origin = make_scalar3(0, 0, 0);
     m_o_image = make_int3(0, 0, 0);
 
     unsigned int snapshot_size = snapshot.size;
+    printf("Done getting snapshot size %i\n", snapshot_size);
 
-    MPI_Waitall(15*size, send_req, MPI_STATUSES_IGNORE);
+    printf("Done Waitall\n");
 
     // Raise an exception if there are any invalid type ids. This is done here (instead of in the
     // loops above) to avoid MPI communication deadlocks when only some ranks have invalid types.
@@ -2804,10 +2898,10 @@ ParticleData::takeSnapshotDistr(SnapshotParticleData<Real>& snapshot)
         // allocate memory in snapshot
         snapshot.resize(getN());
 
+        all_gather_v(m_nparticles, snapshot.part_distr, MPI_COMM_WORLD);
         // assert(m_tag_set.size() == m_nparticles); // TODO
         std::set<unsigned int>::const_iterator it = m_tag_set.begin();
 
-        all_gather_v(m_nparticles, snapshot.part_distr, MPI_COMM_WORLD);
 
         std::map<unsigned int, unsigned int> rtag_map;
 
@@ -4554,7 +4648,12 @@ string print_ParticleData(ParticleData* pdata)
     } // end namespace detail
 
 // instantiate both float and double methods for snapshots
-template ParticleData::ParticleData(const SnapshotParticleData<double>& snapshot,
+// template ParticleData::ParticleData(const SnapshotParticleData<double>& snapshot,
+//                                     const std::shared_ptr<const BoxDim> global_box,
+//                                     std::shared_ptr<ExecutionConfiguration> exec_conf,
+//                                     std::shared_ptr<DomainDecomposition> decomposition,
+//                                     bool distributed);
+template ParticleData::ParticleData(SnapshotParticleData<double>& snapshot,
                                     const std::shared_ptr<const BoxDim> global_box,
                                     std::shared_ptr<ExecutionConfiguration> exec_conf,
                                     std::shared_ptr<DomainDecomposition> decomposition,
@@ -4569,7 +4668,12 @@ template std::map<unsigned int, unsigned int>
 ParticleData::takeSnapshotDistr<double>(SnapshotParticleData<double>& snapshot);
 #endif
 
-template ParticleData::ParticleData(const SnapshotParticleData<float>& snapshot,
+// template ParticleData::ParticleData(const SnapshotParticleData<float>& snapshot,
+//                                     const std::shared_ptr<const BoxDim> global_box,
+//                                     std::shared_ptr<ExecutionConfiguration> exec_conf,
+//                                     std::shared_ptr<DomainDecomposition> decomposition,
+//                                     bool distributed);
+template ParticleData::ParticleData(SnapshotParticleData<float>& snapshot,
                                     const std::shared_ptr<const BoxDim> global_box,
                                     std::shared_ptr<ExecutionConfiguration> exec_conf,
                                     std::shared_ptr<DomainDecomposition> decomposition,
@@ -6396,6 +6500,7 @@ template<class Real> void SnapshotParticleData<Real>::bcast(unsigned int root, M
 
     hoomd::bcast(size, root, mpi_comm);
     hoomd::bcast(type_mapping, root, mpi_comm);
+    // hoomd::bcast(part_distr, root, mpi_comm);
     hoomd::bcast(is_accel_set, root, mpi_comm);
     }
 #endif

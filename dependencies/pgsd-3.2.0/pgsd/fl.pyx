@@ -764,101 +764,107 @@ cdef class PGSDFile:
                 f.read_chunk(frame=2, name='chunk1')
                 f.close()
         """
-        raise NotImplementedError;
+        # raise NotImplementedError;
 
-        # if not self.__is_open:
-        #     raise ValueError("File is not open")
+        if not self.__is_open:
+            raise ValueError("File is not open")
 
-        # cdef const libpgsd.pgsd_index_entry* index_entry
-        # cdef char * c_name
-        # name_e = name.encode('utf-8')
-        # c_name = name_e
-        # cdef int64_t c_frame
-        # c_frame = frame
+        cdef const libpgsd.pgsd_index_entry* index_entry
+        cdef char * c_name
+        name_e = name.encode('utf-8')
+        c_name = name_e
+        cdef int64_t c_frame
+        c_frame = frame
+        cdef uint32_t offset;
+        offset = 0;
+        cdef bool wr_all
+        wr_all = False
 
-        # with nogil:
-        #     index_entry = libpgsd.pgsd_find_chunk(&self.__handle, c_frame, c_name)
+        with nogil:
+            index_entry = libpgsd.pgsd_find_chunk(&self.__handle, c_frame, c_name, False)
 
-        # if index_entry == NULL:
-        #     raise KeyError("frame " + str(frame) + " / chunk " + name
-        #                    + " not found in: " + self.name)
+        if index_entry == NULL:
+            raise KeyError("frame " + str(frame) + " / chunk " + name
+                           + " not found in: " + self.name)
 
-        # cdef libpgsd.pgsd_type pgsd_type
-        # pgsd_type = <libpgsd.pgsd_type>index_entry.type
+        cdef libpgsd.pgsd_type pgsd_type
+        pgsd_type = <libpgsd.pgsd_type>index_entry.type
 
-        # cdef void *data_ptr
-        # if pgsd_type == libpgsd.PGSD_TYPE_UINT8:
-        #     data_array = numpy.empty(dtype=numpy.uint8,
-        #                              shape=[index_entry.N, index_entry.M])
-        # elif pgsd_type == libpgsd.PGSD_TYPE_UINT16:
-        #     data_array = numpy.empty(dtype=numpy.uint16,
-        #                              shape=[index_entry.N, index_entry.M])
-        # elif pgsd_type == libpgsd.PGSD_TYPE_UINT32:
-        #     data_array = numpy.empty(dtype=numpy.uint32,
-        #                              shape=[index_entry.N, index_entry.M])
-        # elif pgsd_type == libpgsd.PGSD_TYPE_UINT64:
-        #     data_array = numpy.empty(dtype=numpy.uint64,
-        #                              shape=[index_entry.N, index_entry.M])
-        # elif pgsd_type == libpgsd.PGSD_TYPE_INT8:
-        #     data_array = numpy.empty(dtype=numpy.int8,
-        #                              shape=[index_entry.N, index_entry.M])
-        # elif pgsd_type == libpgsd.PGSD_TYPE_INT16:
-        #     data_array = numpy.empty(dtype=numpy.int16,
-        #                              shape=[index_entry.N, index_entry.M])
-        # elif pgsd_type == libpgsd.PGSD_TYPE_INT32:
-        #     data_array = numpy.empty(dtype=numpy.int32,
-        #                              shape=[index_entry.N, index_entry.M])
-        # elif pgsd_type == libpgsd.PGSD_TYPE_INT64:
-        #     data_array = numpy.empty(dtype=numpy.int64,
-        #                              shape=[index_entry.N, index_entry.M])
-        # elif pgsd_type == libpgsd.PGSD_TYPE_FLOAT:
-        #     data_array = numpy.empty(dtype=numpy.float32,
-        #                              shape=[index_entry.N, index_entry.M])
-        # elif pgsd_type == libpgsd.PGSD_TYPE_DOUBLE:
-        #     data_array = numpy.empty(dtype=numpy.float64,
-        #                              shape=[index_entry.N, index_entry.M])
-        # else:
-        #     raise ValueError("invalid type for chunk: " + name)
+        cdef void *data_ptr
+        if pgsd_type == libpgsd.PGSD_TYPE_UINT8:
+            data_array = numpy.empty(dtype=numpy.uint8,
+                                     shape=[index_entry.N, index_entry.M])
+        elif pgsd_type == libpgsd.PGSD_TYPE_UINT16:
+            data_array = numpy.empty(dtype=numpy.uint16,
+                                     shape=[index_entry.N, index_entry.M])
+        elif pgsd_type == libpgsd.PGSD_TYPE_UINT32:
+            data_array = numpy.empty(dtype=numpy.uint32,
+                                     shape=[index_entry.N, index_entry.M])
+        elif pgsd_type == libpgsd.PGSD_TYPE_UINT64:
+            data_array = numpy.empty(dtype=numpy.uint64,
+                                     shape=[index_entry.N, index_entry.M])
+        elif pgsd_type == libpgsd.PGSD_TYPE_INT8:
+            data_array = numpy.empty(dtype=numpy.int8,
+                                     shape=[index_entry.N, index_entry.M])
+        elif pgsd_type == libpgsd.PGSD_TYPE_INT16:
+            data_array = numpy.empty(dtype=numpy.int16,
+                                     shape=[index_entry.N, index_entry.M])
+        elif pgsd_type == libpgsd.PGSD_TYPE_INT32:
+            data_array = numpy.empty(dtype=numpy.int32,
+                                     shape=[index_entry.N, index_entry.M])
+        elif pgsd_type == libpgsd.PGSD_TYPE_INT64:
+            data_array = numpy.empty(dtype=numpy.int64,
+                                     shape=[index_entry.N, index_entry.M])
+        elif pgsd_type == libpgsd.PGSD_TYPE_FLOAT:
+            data_array = numpy.empty(dtype=numpy.float32,
+                                     shape=[index_entry.N, index_entry.M])
+        elif pgsd_type == libpgsd.PGSD_TYPE_DOUBLE:
+            data_array = numpy.empty(dtype=numpy.float64,
+                                     shape=[index_entry.N, index_entry.M])
+        else:
+            raise ValueError("invalid type for chunk: " + name)
 
-        # logger.debug('read chunk: ' + self.name + ' - '
-        #              + str(frame) + ' - ' + name)
+        logger.debug('read chunk: ' + self.name + ' - '
+                     + str(frame) + ' - ' + name)
 
-        # # only read chunk if we have data
-        # if index_entry.N != 0 and index_entry.M != 0:
-        #     if pgsd_type == libpgsd.PGSD_TYPE_UINT8:
-        #         data_ptr = __get_ptr_uint8(data_array)
-        #     elif pgsd_type == libpgsd.PGSD_TYPE_UINT16:
-        #         data_ptr = __get_ptr_uint16(data_array)
-        #     elif pgsd_type == libpgsd.PGSD_TYPE_UINT32:
-        #         data_ptr = __get_ptr_uint32(data_array)
-        #     elif pgsd_type == libpgsd.PGSD_TYPE_UINT64:
-        #         data_ptr = __get_ptr_uint64(data_array)
-        #     elif pgsd_type == libpgsd.PGSD_TYPE_INT8:
-        #         data_ptr = __get_ptr_int8(data_array)
-        #     elif pgsd_type == libpgsd.PGSD_TYPE_INT16:
-        #         data_ptr = __get_ptr_int16(data_array)
-        #     elif pgsd_type == libpgsd.PGSD_TYPE_INT32:
-        #         data_ptr = __get_ptr_int32(data_array)
-        #     elif pgsd_type == libpgsd.PGSD_TYPE_INT64:
-        #         data_ptr = __get_ptr_int64(data_array)
-        #     elif pgsd_type == libpgsd.PGSD_TYPE_FLOAT:
-        #         data_ptr = __get_ptr_float32(data_array)
-        #     elif pgsd_type == libpgsd.PGSD_TYPE_DOUBLE:
-        #         data_ptr = __get_ptr_float64(data_array)
-        #     else:
-        #         raise ValueError("invalid type for chunk: " + name)
+        # only read chunk if we have data
+        if index_entry.N != 0 and index_entry.M != 0:
+            if pgsd_type == libpgsd.PGSD_TYPE_UINT8:
+                data_ptr = __get_ptr_uint8(data_array)
+            elif pgsd_type == libpgsd.PGSD_TYPE_UINT16:
+                data_ptr = __get_ptr_uint16(data_array)
+            elif pgsd_type == libpgsd.PGSD_TYPE_UINT32:
+                data_ptr = __get_ptr_uint32(data_array)
+            elif pgsd_type == libpgsd.PGSD_TYPE_UINT64:
+                data_ptr = __get_ptr_uint64(data_array)
+            elif pgsd_type == libpgsd.PGSD_TYPE_INT8:
+                data_ptr = __get_ptr_int8(data_array)
+            elif pgsd_type == libpgsd.PGSD_TYPE_INT16:
+                data_ptr = __get_ptr_int16(data_array)
+            elif pgsd_type == libpgsd.PGSD_TYPE_INT32:
+                data_ptr = __get_ptr_int32(data_array)
+            elif pgsd_type == libpgsd.PGSD_TYPE_INT64:
+                data_ptr = __get_ptr_int64(data_array)
+            elif pgsd_type == libpgsd.PGSD_TYPE_FLOAT:
+                data_ptr = __get_ptr_float32(data_array)
+            elif pgsd_type == libpgsd.PGSD_TYPE_DOUBLE:
+                data_ptr = __get_ptr_float64(data_array)
+            else:
+                raise ValueError("invalid type for chunk: " + name)
 
-        #     with nogil:
-        #         retval = libpgsd.pgsd_read_chunk(&self.__handle,
-        #                                        data_ptr,
-        #                                        index_entry)
+            with nogil:
+                retval = libpgsd.pgsd_read_chunk(&self.__handle,
+                                               data_ptr,
+                                               index_entry,
+                                               &offset,
+                                               wr_all)
 
-        #     __raise_on_error(retval, self.name)
+            __raise_on_error(retval, self.name)
 
-        # if index_entry.M == 1:
-        #     return data_array.reshape([index_entry.N])
-        # else:
-        #     return data_array
+        if index_entry.M == 1:
+            return data_array.reshape([index_entry.N])
+        else:
+            return data_array
 
     def find_matching_chunk_names(self, match, write_all):
         """find_matching_chunk_names(match)

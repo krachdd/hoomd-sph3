@@ -128,7 +128,8 @@ cdef extern from "pgsd.h" nogil:
                                           bool all)
     int pgsd_read_chunk(pgsd_handle* handle, void* data,
                        const pgsd_index_entry* chunk,
-                       unsigned int *offset)
+                       uint32_t* offset, 
+                       bool all)
     uint64_t pgsd_get_nframes(pgsd_handle* handle)
     size_t pgsd_sizeof_type(pgsd_type type)
     const char *pgsd_find_matching_chunk_name(pgsd_handle* handle,

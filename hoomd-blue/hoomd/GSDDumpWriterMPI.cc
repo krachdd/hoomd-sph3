@@ -300,12 +300,13 @@ void GSDDumpWriterMPI::setDynamic(pybind11::object dynamic)
 
 void GSDDumpWriterMPI::flush()
     {
-    bool root = false;
-    if (m_exec_conf->isRoot())
-        {
-        m_exec_conf->msg->notice(5) << "PGSD: flush gsd file " << m_fname << endl;
-        root = true;
-        }
+    // bool root = false;
+    // // if (m_exec_conf->isRoot())
+    //     {
+    //     m_exec_conf->msg->notice(5) << "PGSD: flush gsd file " << m_fname << endl;
+    //     root = true;
+    //     }
+    bool root = true;
     int retval = pgsd_flush(&m_handle, root);
     PGSDUtils::checkError(retval, m_fname);
     }
@@ -325,14 +326,14 @@ void GSDDumpWriterMPI::setMaximumWriteBufferSize(uint64_t size)
 
 uint64_t GSDDumpWriterMPI::getMaximumWriteBufferSize()
     {
-    if (m_exec_conf->isRoot())
-        {
-        return pgsd_get_maximum_write_buffer_size(&m_handle);
-        }
-    else
-        {
-        return 0;
-        }
+    // if (m_exec_conf->isRoot())
+    //     {
+    return pgsd_get_maximum_write_buffer_size(&m_handle);
+    //     }
+    // else
+    //     {
+    //     return 0;
+    //     }
     }
 
 //! Initializes the output file for writing
@@ -413,6 +414,7 @@ GSDDumpWriterMPI::~GSDDumpWriterMPI()
 
     // if (m_exec_conf->isRoot())
     //     {
+    MPI_Barrier(MPI_COMM_WORLD);
     m_exec_conf->msg->notice(5) << "PGSD: close gsd file " << m_fname << endl;
     pgsd_close(&m_handle, true);
         // }
@@ -477,27 +479,28 @@ void GSDDumpWriterMPI::write(GSDDumpWriterMPI::PGSDFrame& frame, pybind11::dict 
 //     else
 // #endif
         {
-        writeFrameHeader(frame);
-        writeAttributes(frame);
-        writeProperties(frame);
-        writeMomenta(frame);
-        writeLogQuantities(log_data);
+    printf("in GSDDumpWriterMPI:write Rank %i write header etc \n", m_exec_conf->getRank());
+    writeFrameHeader(frame);
+    writeAttributes(frame);
+    writeProperties(frame);
+    writeMomenta(frame);
+    writeLogQuantities(log_data);
         }
     // topology is only meaningful if this is the all group
     // TODO
     if (m_group->getNumMembersGlobal() == m_pdata->getNGlobal()
         && (m_write_topology || m_nframes == 0))
         {
-        if (m_exec_conf->isRoot())
-            {
-            writeTopology(frame.bond_data,
-                          // frame.angle_data,
-                          // frame.dihedral_data,
-                          // frame.improper_data,
-                          frame.constraint_data
-                          //frame.pair_data
-                          );
-            }
+        // if (m_exec_conf->isRoot())
+        //     {
+        writeTopology(frame.bond_data,
+                      // frame.angle_data,
+                      // frame.dihedral_data,
+                      // frame.improper_data,
+                      frame.constraint_data
+                      //frame.pair_data
+                      );
+            // }
         }
 
     // if (m_exec_conf->isRoot())
@@ -514,8 +517,10 @@ void GSDDumpWriterMPI::writeTypeMapping(std::string chunk, std::vector<std::stri
     {
     uint32_t N_global = m_group->getNumMembersGlobal();
     unsigned int rank = m_exec_conf->getRank();
-    int part_offset = 0;
-    part_offset = std::accumulate(frame.particle_data.part_distr.begin(), frame.particle_data.part_distr.begin()+rank, 0);
+    // int part_offset = 0;
+    // part_offset = std::accumulate(frame.particle_data.part_distr.begin(), frame.particle_data.part_distr.begin()+rank, 0);
+
+    printf("GSDDumpWriterMPI: type mapping size %i\n", type_mapping.size());
 
     int max_len = 0;
     for (unsigned int i = 0; i < type_mapping.size(); i++)
@@ -523,6 +528,9 @@ void GSDDumpWriterMPI::writeTypeMapping(std::string chunk, std::vector<std::stri
         max_len = std::max(max_len, (int)type_mapping[i].size());
         }
     max_len += 1; // for null
+    printf("GSDDumpWriterMPI: max_len %i\n", max_len);
+    printf("GSDDumpWriterMPI: N_global %i\n", N_global);
+
 
         {
         m_exec_conf->msg->notice(10) << "PGSD: writing " << chunk << endl;
@@ -534,11 +542,11 @@ void GSDDumpWriterMPI::writeTypeMapping(std::string chunk, std::vector<std::stri
                                      PGSD_TYPE_UINT8,
                                      type_mapping.size(),
                                      max_len,
-                                     N_global,
+                                     type_mapping.size(),
                                      max_len,
-                                     max_len * part_offset,
-                                     max_len * N_global,
-                                     true,
+                                     0,
+                                     0,
+                                     false,
                                      0,
                                      (void*)&types[0]);
         PGSDUtils::checkError(retval, m_fname);
@@ -633,14 +641,26 @@ void GSDDumpWriterMPI::writeFrameHeader(const GSDDumpWriterMPI::PGSDFrame& frame
 /*! Writes the data chunks typeid, mass, body in
    particles/.
 */
-void GSDDumpWriterMPI::writeAttributes(const GSDDumpWriterMPI::PGSDFrame& frame)
+void GSDDumpWriterMPI::writeAttributes(GSDDumpWriterMPI::PGSDFrame& frame)
     {
     uint32_t N = m_group->getNumMembers();
     uint32_t N_global = m_group->getNumMembersGlobal();
     // bool all_default = true;
     unsigned int rank = m_exec_conf->getRank();
-    int part_offset = 0;
-    part_offset = std::accumulate(frame.particle_data.part_distr.begin(), frame.particle_data.part_distr.begin()+rank, 0);
+    unsigned int size = m_exec_conf->getNRanks();
+    int part_offset;
+
+    std::vector<unsigned int> part_distribution(size);
+    all_gather_v(N, part_distribution, MPI_COMM_WORLD);
+    part_offset = std::accumulate(part_distribution.begin(), part_distribution.begin()+rank, 0);
+
+    printf("part_distribution [0], [1] %i, %i\n", part_distribution[0], part_distribution[1]);
+
+    printf("GSDDumpWriterMPI write attribute: rank %i\n", rank);
+    printf("GSDDumpWriterMPI write attribute: N %i\n", N);
+    printf("GSDDumpWriterMPI write attribute: N_global %i\n", N_global);
+
+    printf("GSDDumpWriterMPI write attribute: part_offset %i\n", part_offset);
 
     int retval;
 
@@ -782,11 +802,14 @@ void GSDDumpWriterMPI::writeProperties(const GSDDumpWriterMPI::PGSDFrame& frame)
     uint32_t N = m_group->getNumMembers();
     uint32_t N_global = m_group->getNumMembersGlobal();
     int retval;
+    unsigned int rank = m_exec_conf->getRank();
+    unsigned int size = m_exec_conf->getNRanks();
+    int part_offset;
+    
+    std::vector<unsigned int> part_distribution(size);
+    all_gather_v(N, part_distribution, MPI_COMM_WORLD);
+    part_offset = std::accumulate(part_distribution.begin(), part_distribution.begin()+rank, 0);
 
-    int rank;
-    MPI_Comm_rank(MPI_COMM_WORLD, &rank);
-    int part_offset = 0;
-    part_offset = std::accumulate(frame.particle_data.part_distr.begin(), frame.particle_data.part_distr.begin()+rank, 0);
 
     if (frame.particle_data.pos.size() != 0)
         {
@@ -902,10 +925,14 @@ void GSDDumpWriterMPI::writeMomenta(const GSDDumpWriterMPI::PGSDFrame& frame)
     uint32_t N_global = m_group->getNumMembersGlobal();
     int retval;
 
-    int rank;
-    MPI_Comm_rank(MPI_COMM_WORLD, &rank);
-    int part_offset = 0;
-    part_offset = std::accumulate(frame.particle_data.part_distr.begin(), frame.particle_data.part_distr.begin()+rank, 0);
+    unsigned int rank = m_exec_conf->getRank();
+    unsigned int size = m_exec_conf->getNRanks();
+    int part_offset;
+    std::vector<unsigned int> part_distribution(size);
+    all_gather_v(N, part_distribution, MPI_COMM_WORLD);
+    part_offset = std::accumulate(part_distribution.begin(), part_distribution.begin()+rank, 0);
+
+    printf("Write Momenta om rank %i\n", rank);
 
     if (frame.particle_data.vel.size() != 0)
         {

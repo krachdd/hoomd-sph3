@@ -42,6 +42,7 @@ GSDReaderMPI::GSDReaderMPI(std::shared_ptr<const ExecutionConfiguration> exec_co
     // open the GSD file in read mode
     m_exec_conf->msg->notice(3) << "data.pgsd_snapshot: open gsd file " << name << endl;
     int retval = pgsd_open(&m_handle, name.c_str(), PGSD_OPEN_READONLY);
+    printf("Rank: %i GSDReaderMPI: Check error after gsd open %i\n", m_exec_conf->getRank(), retval);
     PGSDUtils::checkError(retval, m_name);
 
     // validate schema
@@ -71,9 +72,11 @@ GSDReaderMPI::GSDReaderMPI(std::shared_ptr<const ExecutionConfiguration> exec_co
           << pgsd_get_nframes(&m_handle) << " frames.";
         throw runtime_error(s.str());
         }
-
+    printf("Read File HEader\n");
     readHeader();
+    printf("Read File Particles\n");
     readParticles();
+    printf("Read Topology\n");
     readTopology();
     }
 
@@ -109,7 +112,7 @@ bool GSDReaderMPI::readChunk(void* data,
                           const char* name,
                           size_t expected_size,
                           unsigned int cur_n,
-                          unsigned int *offset)
+                          uint32_t *offset)
     {
     const struct pgsd_index_entry* entry = pgsd_find_chunk(&m_handle, frame, name, true);
     if (entry == NULL && frame != 0)
@@ -176,7 +179,7 @@ std::vector<std::string> GSDReaderMPI::readTypes(uint64_t frame, const char* nam
             size_t l = strnlen(&data[i * entry->M], entry->M);
             type_mapping.push_back(std::string(&data[i * entry->M], l));
             }
-
+        printf("types %i\n", type_mapping.size());
         return type_mapping;
         }
     }
@@ -186,9 +189,12 @@ std::vector<std::string> GSDReaderMPI::readTypes(uint64_t frame, const char* nam
 void GSDReaderMPI::readHeader()
     {
     readChunk(&m_timestep, m_frame, "configuration/step", 8);
-
+    printf("Frame %i\n", m_frame);
+    printf("Timestep %i\n", m_timestep);
     uint8_t dim = 3;
     readChunk(&dim, m_frame, "configuration/dimensions", 1);
+    printf("dim %i\n", dim);
+
     m_snapshot->dimensions = dim;
 
     float box[6] = {1.0f, 1.0f, 1.0f, 0.0f, 0.0f, 0.0f};
@@ -212,7 +218,10 @@ void GSDReaderMPI::readHeader()
         throw runtime_error(s.str());
         }
 
+    printf("Rank: %i N %i\n", m_exec_conf->getRank(), N);
     m_part_per_rank.resize(m_exec_conf->getNRanksGlobal());
+    all_gather_v(N, m_part_per_rank, MPI_COMM_WORLD);
+
     unsigned int n = floor(N/m_exec_conf->getNRanksGlobal());
     std::fill(m_part_per_rank.begin(),m_part_per_rank.end(), n);
     unsigned int rem = N%m_exec_conf->getNRanksGlobal();
@@ -220,6 +229,7 @@ void GSDReaderMPI::readHeader()
     if(m_exec_conf->getRank() < rem){
         n++;
     }
+
 
     for(unsigned int i=0; i< rem; i++){
         m_part_per_rank[i]++;
@@ -233,6 +243,7 @@ void GSDReaderMPI::readHeader()
 void GSDReaderMPI::readParticles()
     {
     unsigned int N = m_snapshot->particle_data.size;
+    printf("Read types\n");
     m_snapshot->particle_data.type_mapping = readTypes(m_frame, "particles/types");
 
     unsigned int N_global = std::accumulate(m_part_per_rank.begin(), m_part_per_rank.end(),0);

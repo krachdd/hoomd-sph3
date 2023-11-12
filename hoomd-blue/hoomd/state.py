@@ -248,17 +248,22 @@ class State:
     .. _Kamberaj 2005: http://dx.doi.org/10.1063/1.1906216
     """
 
-    def __init__(self, simulation, snapshot, domain_decomposition):
+    def __init__(self, simulation, snapshot, domain_decomposition, distributed = False):
         self._simulation = simulation
+        self.distributed = distributed
         snapshot._broadcast_box()
         decomposition = _create_domain_decomposition(
             simulation.device, snapshot._cpp_obj._global_box,
             domain_decomposition)
 
+        if distributed:
+            print("Initialize system with distributed snapshot")
+
         if decomposition is not None:
+            print('Create System Definition')
             self._cpp_sys_def = _hoomd.SystemDefinition(
                 snapshot._cpp_obj, simulation.device._cpp_exec_conf,
-                decomposition)
+                decomposition, self.distributed)
         else:
             self._cpp_sys_def = _hoomd.SystemDefinition(
                 snapshot._cpp_obj, simulation.device._cpp_exec_conf)

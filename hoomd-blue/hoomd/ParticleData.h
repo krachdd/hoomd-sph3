@@ -150,6 +150,14 @@ template<class Real> struct PYBIND11_EXPORT SnapshotParticleData
         return size;
         }
 
+    std::vector<unsigned int> get_part_distr(){
+        return part_distr;
+    }
+
+    void set_part_distr(std::vector<unsigned int> part_distribution){
+        part_distr = part_distribution;
+    }
+
     //! Insert n elements at position i
     void insert(unsigned int i, unsigned int n);
 
@@ -470,8 +478,18 @@ class PYBIND11_EXPORT ParticleData
                  bool distributed = false);
 
     //! Construct using a ParticleDataSnapshot
+    // template<class Real>
+    // ParticleData(const SnapshotParticleData<Real>& snapshot,
+    //              const std::shared_ptr<const BoxDim> global_box,
+    //              std::shared_ptr<ExecutionConfiguration> exec_conf,
+    //              std::shared_ptr<DomainDecomposition> decomposition
+    //              = std::shared_ptr<DomainDecomposition>(),
+    //              bool distributed = false);
+
+    //! Construct using a ParticleDataSnapshot
+    // For distr Snapshot snapshot must be modifyable
     template<class Real>
-    ParticleData(const SnapshotParticleData<Real>& snapshot,
+    ParticleData(SnapshotParticleData<Real>& snapshot,
                  const std::shared_ptr<const BoxDim> global_box,
                  std::shared_ptr<ExecutionConfiguration> exec_conf,
                  std::shared_ptr<DomainDecomposition> decomposition
@@ -1378,7 +1396,7 @@ class PYBIND11_EXPORT ParticleData
 
     #ifdef ENABLE_MPI
     template <class Real>
-    void initializeFromDistrSnapshot(const SnapshotParticleData<Real> & snapshot, bool ignore_bodies=false);
+    void initializeFromDistrSnapshot(SnapshotParticleData<Real> & snapshot, bool ignore_bodies=false);
     #endif
 
     //! Take a snapshot

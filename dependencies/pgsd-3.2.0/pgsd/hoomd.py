@@ -488,12 +488,12 @@ class Frame(object):
     def __init__(self, num_procs = 0):
         self.configuration = ConfigurationData()
         self.particles = ParticleData()
-        self.bonds = BondData(2)
+        # self.bonds = BondData(2)
         # self.angles = BondData(3)
         # self.dihedrals = BondData(4)
         # self.impropers = BondData(4)
         self.constraints = ConstraintData()
-        self.pairs = BondData(2)
+        # self.pairs = BondData(2)
         self.state = {}
         self.log = {}
         self.num_procs = num_procs; # added DK 
@@ -521,10 +521,7 @@ class Frame(object):
         #     'hpmc/simple_polygon/vertices',
         # ]
 
-    def set_distribution(self, comm, num_par): # added DK
-        a = num_par*numpy.ones(1)
-        comm.Allgather([a, MPI.FLOAT], [self.part_dist, MPI.FLOAT]);
-        print(a)
+
 
     def validate(self):
         """Validate all contained frame data."""
@@ -532,12 +529,12 @@ class Frame(object):
 
         self.configuration.validate()
         self.particles.validate()
-        self.bonds.validate()
+        # self.bonds.validate()
         # self.angles.validate()
         # self.dihedrals.validate()
         # self.impropers.validate()
         self.constraints.validate()
-        self.pairs.validate()
+        # self.pairs.validate()
 
         logger.debug('Done Validating Frame')
         # # validate HPMC state
@@ -906,7 +903,7 @@ class HOOMDTrajectory(object):
                 data, container._default_value[name])
 
         if matches_default_value \
-                and not self.file.chunk_exists(frame=0, name=path + '/' + name):
+                and not self.file.chunk_exists(frame=0, name=path + '/' + name, write_all=False):
             logger.debug('skipping data chunk, default value: ' + path + '/'
                          + name)
             return False
@@ -943,151 +940,150 @@ class HOOMDTrajectory(object):
 
     def _read_frame(self, idx):
         """Implements read_frame."""
-        raise NotImplementedError;
 
-        # if idx >= len(self):
-        #     raise IndexError
+        if idx >= len(self):
+            raise IndexError
 
-        # logger.debug('reading frame ' + str(idx) + ' from: ' + str(self.file))
+        logger.debug('reading frame ' + str(idx) + ' from: ' + str(self.file))
 
-        # if self._initial_frame is None and idx != 0:
-        #     self._read_frame(0)
+        if self._initial_frame is None and idx != 0:
+            self._read_frame(0)
 
-        # snap = Frame()
-        # # read configuration first
-        # if self.file.chunk_exists(frame=idx, name='configuration/step'):
-        #     step_arr = self.file.read_chunk(frame=idx,
-        #                                     name='configuration/step')
-        #     snap.configuration.step = step_arr[0]
-        # else:
-        #     if self._initial_frame is not None:
-        #         snap.configuration.step = self._initial_frame.configuration.step
-        #     else:
-        #         snap.configuration.step = \
-        #             snap.configuration._default_value['step']
+        snap = Frame()
+        # read configuration first
+        if self.file.chunk_exists(frame=idx, name='configuration/step', write_all=False):
+            step_arr = self.file.read_chunk(frame=idx,
+                                            name='configuration/step')
+            snap.configuration.step = step_arr[0]
+        else:
+            if self._initial_frame is not None:
+                snap.configuration.step = self._initial_frame.configuration.step
+            else:
+                snap.configuration.step = \
+                    snap.configuration._default_value['step']
 
-        # if self.file.chunk_exists(frame=idx, name='configuration/dimensions'):
-        #     dimensions_arr = self.file.read_chunk(
-        #         frame=idx, name='configuration/dimensions')
-        #     snap.configuration.dimensions = dimensions_arr[0]
-        # else:
-        #     if self._initial_frame is not None:
-        #         snap.configuration.dimensions = \
-        #             self._initial_frame.configuration.dimensions
-        #     else:
-        #         snap.configuration.dimensions = \
-        #             snap.configuration._default_value['dimensions']
+        if self.file.chunk_exists(frame=idx, name='configuration/dimensions', write_all=False):
+            dimensions_arr = self.file.read_chunk(
+                frame=idx, name='configuration/dimensions')
+            snap.configuration.dimensions = dimensions_arr[0]
+        else:
+            if self._initial_frame is not None:
+                snap.configuration.dimensions = \
+                    self._initial_frame.configuration.dimensions
+            else:
+                snap.configuration.dimensions = \
+                    snap.configuration._default_value['dimensions']
 
-        # if self.file.chunk_exists(frame=idx, name='configuration/box'):
-        #     snap.configuration.box = self.file.read_chunk(
-        #         frame=idx, name='configuration/box')
-        # else:
-        #     if self._initial_frame is not None:
-        #         snap.configuration.box = self._initial_frame.configuration.box
-        #     else:
-        #         snap.configuration.box = \
-        #             snap.configuration._default_value['box']
+        if self.file.chunk_exists(frame=idx, name='configuration/box', write_all=False):
+            snap.configuration.box = self.file.read_chunk(
+                frame=idx, name='configuration/box')
+        else:
+            if self._initial_frame is not None:
+                snap.configuration.box = self._initial_frame.configuration.box
+            else:
+                snap.configuration.box = \
+                    snap.configuration._default_value['box']
 
-        # # then read all groups that have N, types, etc...
-        # for path in [
-        #         'particles',
-        #         'bonds',
-        #         # 'angles',
-        #         # 'dihedrals',
-        #         # 'impropers',
-        #         'constraints',
-        #         'pairs',
-        # ]:
-        #     container = getattr(snap, path)
-        #     if self._initial_frame is not None:
-        #         initial_frame_container = getattr(self._initial_frame, path)
+        # then read all groups that have N, types, etc...
+        for path in [
+                'particles',
+                'bonds',
+                # 'angles',
+                # 'dihedrals',
+                # 'impropers',
+                'constraints',
+                # 'pairs',
+        ]:
+            container = getattr(snap, path)
+            if self._initial_frame is not None:
+                initial_frame_container = getattr(self._initial_frame, path)
 
-        #     container.N = 0
-        #     if self.file.chunk_exists(frame=idx, name=path + '/N'):
-        #         N_arr = self.file.read_chunk(frame=idx, name=path + '/N')
-        #         container.N = N_arr[0]
-        #     else:
-        #         if self._initial_frame is not None:
-        #             container.N = initial_frame_container.N
+            container.N = 0
+            if self.file.chunk_exists(frame=idx, name=path + '/N', write_all=False):
+                N_arr = self.file.read_chunk(frame=idx, name=path + '/N')
+                container.N = N_arr[0]
+            else:
+                if self._initial_frame is not None:
+                    container.N = initial_frame_container.N
 
-        #     # type names
-        #     if 'types' in container._default_value:
-        #         if self.file.chunk_exists(frame=idx, name=path + '/types'):
-        #             tmp = self.file.read_chunk(frame=idx, name=path + '/types')
-        #             tmp = tmp.view(dtype=numpy.dtype((bytes, tmp.shape[1])))
-        #             tmp = tmp.reshape([tmp.shape[0]])
-        #             container.types = list(a.decode('UTF-8') for a in tmp)
-        #         else:
-        #             if self._initial_frame is not None:
-        #                 container.types = initial_frame_container.types
-        #             else:
-        #                 container.types = container._default_value['types']
+            # type names
+            if 'types' in container._default_value:
+                if self.file.chunk_exists(frame=idx, name=path + '/types', write_all=False):
+                    tmp = self.file.read_chunk(frame=idx, name=path + '/types')
+                    tmp = tmp.view(dtype=numpy.dtype((bytes, tmp.shape[1])))
+                    tmp = tmp.reshape([tmp.shape[0]])
+                    container.types = list(a.decode('UTF-8') for a in tmp)
+                else:
+                    if self._initial_frame is not None:
+                        container.types = initial_frame_container.types
+                    else:
+                        container.types = container._default_value['types']
 
-        #     # type shapes
-        #     if ('type_shapes' in container._default_value
-        #             and path == 'particles'):
-        #         if self.file.chunk_exists(frame=idx,
-        #                                   name=path + '/type_shapes'):
-        #             tmp = self.file.read_chunk(frame=idx,
-        #                                        name=path + '/type_shapes')
-        #             tmp = tmp.view(dtype=numpy.dtype((bytes, tmp.shape[1])))
-        #             tmp = tmp.reshape([tmp.shape[0]])
-        #             container.type_shapes = \
-        #                 list(json.loads(json_string.decode('UTF-8'))
-        #                      for json_string in tmp)
-        #         else:
-        #             if self._initial_frame is not None:
-        #                 container.type_shapes = \
-        #                     initial_frame_container.type_shapes
-        #             else:
-        #                 container.type_shapes = \
-        #                     container._default_value['type_shapes']
+            # type shapes
+            if ('type_shapes' in container._default_value
+                    and path == 'particles'):
+                if self.file.chunk_exists(frame=idx,
+                                          name=path + '/type_shapes', write_all=False):
+                    tmp = self.file.read_chunk(frame=idx,
+                                               name=path + '/type_shapes')
+                    tmp = tmp.view(dtype=numpy.dtype((bytes, tmp.shape[1])))
+                    tmp = tmp.reshape([tmp.shape[0]])
+                    container.type_shapes = \
+                        list(json.loads(json_string.decode('UTF-8'))
+                             for json_string in tmp)
+                else:
+                    if self._initial_frame is not None:
+                        container.type_shapes = \
+                            initial_frame_container.type_shapes
+                    else:
+                        container.type_shapes = \
+                            container._default_value['type_shapes']
 
-        #     for name in container._default_value:
-        #         if name in ('N', 'types', 'type_shapes'):
-        #             continue
+            for name in container._default_value:
+                if name in ('N', 'types', 'type_shapes'):
+                    continue
 
-        #         # per particle/bond quantities
-        #         if self.file.chunk_exists(frame=idx, name=path + '/' + name):
-        #             container.__dict__[name] = self.file.read_chunk(
-        #                 frame=idx, name=path + '/' + name)
-        #         else:
-        #             if (self._initial_frame is not None
-        #                     and initial_frame_container.N == container.N):
-        #                 # read default from initial frame
-        #                 container.__dict__[name] = \
-        #                     initial_frame_container.__dict__[name]
-        #             else:
-        #                 # initialize from default value
-        #                 tmp = numpy.array([container._default_value[name]])
-        #                 s = list(tmp.shape)
-        #                 s[0] = container.N
-        #                 container.__dict__[name] = numpy.empty(shape=s,
-        #                                                        dtype=tmp.dtype)
-        #                 container.__dict__[name][:] = tmp
+                # per particle/bond quantities
+                if self.file.chunk_exists(frame=idx, name=path + '/' + name, write_all=False):
+                    container.__dict__[name] = self.file.read_chunk(
+                        frame=idx, name=path + '/' + name)
+                else:
+                    if (self._initial_frame is not None
+                            and initial_frame_container.N == container.N):
+                        # read default from initial frame
+                        container.__dict__[name] = \
+                            initial_frame_container.__dict__[name]
+                    else:
+                        # initialize from default value
+                        tmp = numpy.array([container._default_value[name]])
+                        s = list(tmp.shape)
+                        s[0] = container.N
+                        container.__dict__[name] = numpy.empty(shape=s,
+                                                               dtype=tmp.dtype)
+                        container.__dict__[name][:] = tmp
 
-        #             container.__dict__[name].flags.writeable = False
+                    container.__dict__[name].flags.writeable = False
 
-        # # # read state data
-        # # for state in snap._valid_state:
-        # #     if self.file.chunk_exists(frame=idx, name='state/' + state):
-        # #         snap.state[state] = self.file.read_chunk(frame=idx,
-        # #                                                  name='state/' + state)
+        # # read state data
+        # for state in snap._valid_state:
+        #     if self.file.chunk_exists(frame=idx, name='state/' + state):
+        #         snap.state[state] = self.file.read_chunk(frame=idx,
+        #                                                  name='state/' + state)
 
-        # # read log data
-        # logged_data_names = self.file.find_matching_chunk_names('log/')
-        # for log in logged_data_names:
-        #     if self.file.chunk_exists(frame=idx, name=log):
-        #         snap.log[log[4:]] = self.file.read_chunk(frame=idx, name=log)
-        #     else:
-        #         if self._initial_frame is not None:
-        #             snap.log[log[4:]] = self._initial_frame.log[log[4:]]
+        # read log data
+        logged_data_names = self.file.find_matching_chunk_names('log/')
+        for log in logged_data_names:
+            if self.file.chunk_exists(frame=idx, name=log, write_all=False):
+                snap.log[log[4:]] = self.file.read_chunk(frame=idx, name=log)
+            else:
+                if self._initial_frame is not None:
+                    snap.log[log[4:]] = self._initial_frame.log[log[4:]]
 
-        # # store initial frame
-        # if self._initial_frame is None and idx == 0:
-        #     self._initial_frame = snap
+        # store initial frame
+        if self._initial_frame is None and idx == 0:
+            self._initial_frame = snap
 
-        # return snap
+        return snap
 
     def __getitem__(self, key):
         """Index trajectory frames.
@@ -1230,7 +1226,7 @@ def read_log(name, scalar_only=False):
 
         logged_data_dict = dict()
         for log in logged_data_names:
-            log_exists_frame_0 = pgsdfileobj.chunk_exists(frame=0, name=log)
+            log_exists_frame_0 = pgsdfileobj.chunk_exists(frame=0, name=log, write_all=False)
             is_configuration_step = log == 'configuration/step'
 
             if log_exists_frame_0 or is_configuration_step:
@@ -1252,7 +1248,7 @@ def read_log(name, scalar_only=False):
 
             for idx in range(1, pgsdfileobj.nframes):
                 for log in logged_data_dict.keys():
-                    if not pgsdfileobj.chunk_exists(frame=idx, name=log):
+                    if not pgsdfileobj.chunk_exists(frame=idx, name=log, write_all=False):
                         continue
                     data = pgsdfileobj.read_chunk(frame=idx, name=log)
                     if len(logged_data_dict[log][idx].shape) == 0:

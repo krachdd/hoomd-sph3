@@ -547,17 +547,17 @@ class Snapshot:
 
         def set_properties(snap_section, pgsd_snap_section, properties,
                            array_properties):
-            print(f'snap_section: {snap_section}')
-            print(f'pgsd_snap_section: {pgsd_snap_section}')
+            # print(f'snap_section: {snap_section}')
+            # print(f'pgsd_snap_section: {pgsd_snap_section}')
 
             for prop in properties:
-                print(f'properties: {properties}, prop {prop}\n')
+                # print(f'properties: {properties}, prop {prop}\n')
                 pgsd_prop = getattr(pgsd_snap_section, prop, None)
                 print(f'pgsd_prop: {pgsd_prop}')
                 if pgsd_prop is not None:
                     setattr(snap_section, prop, pgsd_prop)
             for prop in array_properties:
-                print(f'array_properties: {array_properties}, prop {prop}\n')
+                # print(f'array_properties: {array_properties}, prop {prop}\n')
                 pgsd_prop = getattr(pgsd_snap_section, prop, None)
                 if pgsd_prop is not None:
                     getattr(snap_section, prop)[:] = pgsd_prop

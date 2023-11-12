@@ -270,7 +270,7 @@ class PYBIND11_EXPORT GSDDumpWriterMPI : public Analyzer
     void writeFrameHeader(const PGSDFrame& frame);
 
     //! Write particle attributes
-    void writeAttributes(const PGSDFrame& frame);
+    void writeAttributes(PGSDFrame& frame);
 
     //! Write particle properties
     void writeProperties(const PGSDFrame& frame);

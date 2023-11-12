@@ -70,7 +70,7 @@ class PYBIND11_EXPORT GSDReaderMPI
                    const char* name,
                    size_t expected_size,
                    unsigned int cur_n = 0, 
-                   unsigned int *offset=nullptr);
+                   uint32_t *offset=nullptr);
 
     //! clears the snapshot object
     void clearSnapshot()

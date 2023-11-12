@@ -363,12 +363,12 @@ class Simulation(metaclass=Loggable):
             snapshot = Snapshot.from_pgsd_frame(snapshot,
                                                self._device.communicator)
             print(f'set State after init pgsd frame')
-            self._state = State(self, snapshot, domain_decomposition)
+            self._state = State(self, snapshot, domain_decomposition, distributed = True)
         elif _match_class_path(snapshot, 'pgsd.hoomd.Snapshot'):
             # snapshot is gsd.hoomd.Snapshot (gsd 2.x)
             snapshot = Snapshot.from_pgsd_snapshot(snapshot,
                                                   self._device.communicator)
-            self._state = State(self, snapshot, domain_decomposition)
+            self._state = State(self, snapshot, domain_decomposition, distributed = True)
         # PGSD ---
         else:
             raise TypeError(

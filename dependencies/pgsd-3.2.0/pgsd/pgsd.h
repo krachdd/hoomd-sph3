@@ -580,7 +580,7 @@ extern "C"
     @note pgsd_read_chunk() calls pgsd_flush() when the file is writable.
     */
     
-    int pgsd_read_chunk(struct pgsd_handle* handle, void* data, const struct pgsd_index_entry* chunk, unsigned int *offset, bool all);
+    int pgsd_read_chunk(struct pgsd_handle* handle, void* data, const struct pgsd_index_entry* chunk, uint32_t *offset, bool all);
 
     /** Get the number of frames in the PGSD file.
 

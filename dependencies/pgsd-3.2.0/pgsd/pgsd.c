@@ -574,12 +574,14 @@ inline static int pgsd_index_buffer_allocate(struct pgsd_index_buffer* buf, size
     if (buf == NULL || buf->mapped_data || buf->data || reserve == 0 || buf->reserved != 0
         || buf->size != 0)
         {
+        printf("Failed: invalid argument");
         return PGSD_ERROR_INVALID_ARGUMENT;
         }
 
     buf->data = calloc(reserve, sizeof(struct pgsd_index_entry));
     if (buf->data == NULL)
         {
+        printf("Failed: Mem alloc error");
         return PGSD_ERROR_MEMORY_ALLOCATION_FAILED;
         }
 
@@ -608,15 +610,16 @@ inline static int pgsd_index_buffer_map(struct pgsd_index_buffer* buf, struct pg
     {
     if (buf == NULL || buf->mapped_data || buf->data || buf->reserved != 0 || buf->size != 0)
         {
+        printf("index buffer map: invalid arg\n");
         return PGSD_ERROR_INVALID_ARGUMENT;
         }
-    printf("index buffer map: buffer correct\n");
 
     // validate that the index block exists inside the file
     if (handle->header.index_location
             + sizeof(struct pgsd_index_entry) * handle->header.index_allocated_entries
         > (uint64_t)handle->file_size)
         {
+        printf("index File corrupt\n");
         return PGSD_ERROR_FILE_CORRUPT;
         }
     printf("index buffer map: buffer correct\n");
@@ -656,10 +659,11 @@ inline static int pgsd_index_buffer_map(struct pgsd_index_buffer* buf, struct pg
     int retval = pgsd_index_buffer_allocate(buf, handle->header.index_allocated_entries);
     if (retval != PGSD_SUCCESS)
         {
+        printf("index allocate failed\n");
         return retval;
         }
 
-    size_t bytes_read = sizeof(struct pgsd_index_entry)* handle->header.index_allocated_entries;
+    // size_t bytes_read = sizeof(struct pgsd_index_entry)* handle->header.index_allocated_entries;
     MPI_File_read_at(handle->fh, handle->header.index_location, buf->data, sizeof(struct pgsd_index_entry)* handle->header.index_allocated_entries, MPI_BYTE, MPI_STATUS_IGNORE);
 
 
@@ -669,17 +673,18 @@ inline static int pgsd_index_buffer_map(struct pgsd_index_buffer* buf, struct pg
     //                                             * handle->header.index_allocated_entries,
     //                                         handle->header.index_location);
 
-    if (bytes_read == -1
-        || bytes_read != sizeof(struct pgsd_index_entry) * handle->header.index_allocated_entries)
-        {
-        return PGSD_ERROR_IO;
-        }
+    // if (bytes_read == -1
+    //     || bytes_read != sizeof(struct pgsd_index_entry) * handle->header.index_allocated_entries)
+    //     {
+    //     return PGSD_ERROR_IO;
+    //     }
 #endif
 
     // determine the number of index entries in the list
     // file is corrupt if first index entry is invalid
     if (buf->data[0].location != 0 && !pgsd_is_entry_valid(handle, 0))
         {
+        printf("index File corrupt after endif \n");
         return PGSD_ERROR_FILE_CORRUPT;
         }
 
@@ -698,12 +703,13 @@ inline static int pgsd_index_buffer_map(struct pgsd_index_buffer* buf, struct pg
         do
             {
             size_t m = (L + R) / 2;
-
+            
             // file is corrupt if any index entry is invalid or frame does not increase
             // monotonically
             if (buf->data[m].location != 0
                 && (!pgsd_is_entry_valid(handle, m) || buf->data[m].frame < buf->data[L].frame))
                 {
+                printf("index File corrupt in loop\n");
                 return PGSD_ERROR_FILE_CORRUPT;
                 }
 
@@ -1449,7 +1455,6 @@ pgsd_initialize_file(MPI_File fh, const char* application, const char* schema, u
     int rank;
     MPI_Comm_rank(MPI_COMM_WORLD, &rank); 
 
-    if( rank == 0 ){
     printf("MPI_File %p\n", fh);
 
     // check if the file was created
@@ -1466,6 +1471,7 @@ pgsd_initialize_file(MPI_File fh, const char* application, const char* schema, u
         {
         return PGSD_ERROR_IO;
         }
+    if( rank == 0 ){
     // MPI_Barrier(MPI_COMM_WORLD);
     // populate header fields
         printf("Populate Header on rank %i\n", rank);
@@ -1623,6 +1629,7 @@ pgsd_initialize_handle(struct pgsd_handle* handle)
             + (PGSD_NAME_SIZE * handle->header.namelist_allocated_entries)
         > (uint64_t)handle->file_size)
         {
+        printf("Here is the return value for corrupt file 1\n");
         return PGSD_ERROR_FILE_CORRUPT;
         }
 
@@ -1631,6 +1638,8 @@ pgsd_initialize_handle(struct pgsd_handle* handle)
     int retval = pgsd_name_id_map_allocate(&handle->name_map, PGSD_NAME_MAP_SIZE);
     if (retval != PGSD_SUCCESS)
         {
+        printf("error in allocate has map\n");
+
         return retval;
         }
 
@@ -1640,11 +1649,12 @@ pgsd_initialize_handle(struct pgsd_handle* handle)
     retval = pgsd_byte_buffer_allocate(&handle->file_names.data, namelist_n_bytes);
     if (retval != PGSD_SUCCESS)
         {
+        printf("error in allocate has byte buffer\n");
         return retval;
         }
     printf("read namelist block done!\n");
 
-    ssize_t bytes_read = namelist_n_bytes;
+    // ssize_t bytes_read = namelist_n_bytes;
     MPI_File_read_at(handle->fh, handle->header.namelist_location, handle->file_names.data.data, namelist_n_bytes, MPI_BYTE, MPI_STATUS_IGNORE);
     // bytes_read = pgsd_io_pread_retry(handle->fd,
     //                                 handle->file_names.data.data,
@@ -1652,15 +1662,16 @@ pgsd_initialize_handle(struct pgsd_handle* handle)
     //                                 handle->header.namelist_location);
 
 
-    if (bytes_read == -1 || bytes_read != namelist_n_bytes)
-        {
-        return PGSD_ERROR_IO;
-        }
+    // if (bytes_read == -1 || bytes_read != namelist_n_bytes)
+    //     {
+    //     return PGSD_ERROR_IO;
+    //     }
     printf("Test namelist bytes read!\n");
 
     // The name buffer must end in a NULL terminator or else the file is corrupt
     if (handle->file_names.data.data[handle->file_names.data.reserved - 1] != 0)
         {
+        printf("Here is the return value for corrupt file 1\n");
         return PGSD_ERROR_FILE_CORRUPT;
         }
     printf("Test name buffer corruoptnes!\n");
@@ -1682,6 +1693,7 @@ pgsd_initialize_handle(struct pgsd_handle* handle)
             = pgsd_name_id_map_insert(&handle->name_map, name, (uint16_t)handle->file_names.n_names);
         if (retval != PGSD_SUCCESS)
             {
+            printf("error in id map insert\n");
             return retval;
             }
         handle->file_names.n_names++;
@@ -1705,6 +1717,7 @@ pgsd_initialize_handle(struct pgsd_handle* handle)
     retval = pgsd_index_buffer_map(&handle->file_index, handle);
     if (retval != PGSD_SUCCESS)
         {
+        printf("error in index buffer map\n");
         return retval;
         }
 
@@ -1726,18 +1739,21 @@ pgsd_initialize_handle(struct pgsd_handle* handle)
         retval = pgsd_index_buffer_allocate(&handle->frame_index, PGSD_INITIAL_FRAME_INDEX_SIZE);
         if (retval != PGSD_SUCCESS)
             {
+            printf("error in buffer allocate\n");
             return retval;
             }
 
         retval = pgsd_index_buffer_allocate(&handle->buffer_index, PGSD_INITIAL_FRAME_INDEX_SIZE);
         if (retval != PGSD_SUCCESS)
             {
+            printf("error in buffer allocate2\n");
             return retval;
             }
 
         retval = pgsd_byte_buffer_allocate(&handle->write_buffer, PGSD_INITIAL_WRITE_BUFFER_SIZE);
         if (retval != PGSD_SUCCESS)
             {
+            printf("error in buffer allocate3\n");
             return retval;
             }
 
@@ -1745,6 +1761,7 @@ pgsd_initialize_handle(struct pgsd_handle* handle)
         retval = pgsd_byte_buffer_allocate(&handle->frame_names.data, PGSD_NAME_SIZE);
         if (retval != PGSD_SUCCESS)
             {
+            printf("error in buffer allocate4\n");
             return retval;
             }
         }
@@ -1868,7 +1885,7 @@ int pgsd_open(struct pgsd_handle* handle, const char* fname, const enum pgsd_ope
     {
     // zero the handle
     pgsd_util_zero_memory(handle, sizeof(struct pgsd_handle));
-
+    printf("Filename ind pgsd_open %s\n", fname);
 //     int extra_flags = 0;
 // #ifdef _WIN32
 //     extra_flags = _O_BINARY;
@@ -1895,6 +1912,7 @@ int pgsd_open(struct pgsd_handle* handle, const char* fname, const enum pgsd_ope
         }
 
     int retval = pgsd_initialize_handle(handle);
+    printf("retval after open file write only %i\n", retval);
     if (retval != 0)
         {
         if (handle->fh != NULL)
@@ -1902,6 +1920,7 @@ int pgsd_open(struct pgsd_handle* handle, const char* fname, const enum pgsd_ope
             MPI_File_close(&(handle->fh));
             }
         }
+
     return retval;
     }
 
@@ -2120,12 +2139,12 @@ int pgsd_flush(struct pgsd_handle* handle, bool all)
 
     int rank;
     MPI_Comm_rank(MPI_COMM_WORLD, &rank);
-    if(rank != 0){
-        return 0;
-    }
+    // if(rank != 0){
+    //     return 0;
+    // }
 
     // flush the namelist buffer
-    int retval = pgsd_flush_name_buffer(handle, all);
+    int retval = pgsd_flush_name_buffer(handle, false);
     if (retval != PGSD_SUCCESS)
         {
         return retval;
@@ -2456,7 +2475,7 @@ pgsd_find_chunk(struct pgsd_handle* handle, uint64_t frame, const char* name, bo
     return NULL;
     }
 
-int pgsd_read_chunk(struct pgsd_handle* handle, void* data, const struct pgsd_index_entry* chunk, unsigned int *offset, bool all)
+int pgsd_read_chunk(struct pgsd_handle* handle, void* data, const struct pgsd_index_entry* chunk, uint32_t * offset, bool all)
     {
     if (handle == NULL)
         {
@@ -2479,7 +2498,7 @@ int pgsd_read_chunk(struct pgsd_handle* handle, void* data, const struct pgsd_in
             }
         }
 
-    unsigned int stride = 0;
+    uint64_t stride = 0;
     int rank;
     int nprocs;
     unsigned int loc_N = chunk->N;
@@ -2499,16 +2518,19 @@ int pgsd_read_chunk(struct pgsd_handle* handle, void* data, const struct pgsd_in
     // size_t size = chunk->N * chunk->M * pgsd_sizeof_type((enum pgsd_type)chunk->type);
     if (size == 0)
         {
+        printf("Here is the return value for corrupt file 3\n");
         return PGSD_ERROR_FILE_CORRUPT;
         }
     if (chunk->location == 0)
         {
+        printf("Here is the return value for corrupt file 4\n");
         return PGSD_ERROR_FILE_CORRUPT;
         }
 
     // validate that we don't read past the end of the file
     if ((chunk->location + size + stride) > (uint64_t)handle->file_size)
         {
+        printf("Here is the return value for corrupt file 5\n");
         return PGSD_ERROR_FILE_CORRUPT;
         }
 

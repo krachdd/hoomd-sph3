@@ -13,7 +13,7 @@ from mpi4py import MPI
 import math
 # import itertools
 from datetime import datetime
-import export_gsd2vtu 
+import export_pgsd2vtu 
 import read_input_fromtxt
 import delete_solids_initial_timestep
 import sys, os
@@ -153,4 +153,4 @@ hoomd.write.PGSD.write(state = sim.state, mode = 'wb', filename = init_filename)
 # print(f'Filename: {init_filename}, Number of particles: {n_particles}')
 
 # if device.communicator.rank == 0:
-#     export_gsd2vtu.export_spf(init_filename)
+#     export_pgsd2vtu.export_spf(init_filename)
