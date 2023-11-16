@@ -318,6 +318,8 @@ class GSDFile(object):
             :py:meth:`read_chunk()` on the same chunk repeatedly. Cache the
             arrays instead.
         """
+
+        print("read_chuck in pypgsd")
         if not self.__is_open:
             raise ValueError("File is not open")
 

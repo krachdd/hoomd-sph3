@@ -802,12 +802,12 @@ class HOOMDTrajectory(object):
         for path in [
                 'configuration',
                 'particles',
-                'bonds',
+                # 'bonds',
                 # 'angles',
                 # 'dihedrals',
                 # 'impropers',
                 'constraints',
-                'pairs',
+                # 'pairs',
         ]:
             container = getattr(frame, path)
             for name in container._default_value:
@@ -952,8 +952,13 @@ class HOOMDTrajectory(object):
         snap = Frame()
         # read configuration first
         if self.file.chunk_exists(frame=idx, name='configuration/step', write_all=False):
+            c_offset = numpy.asarray([0], dtype = numpy.uint32)
+            print(f'c_offset {c_offset}') 
             step_arr = self.file.read_chunk(frame=idx,
-                                            name='configuration/step')
+                                            name='configuration/step', 
+                                            offset = c_offset, 
+                                            r_all = False)
+            print(f'step_arr[0] {step_arr[0]}')
             snap.configuration.step = step_arr[0]
         else:
             if self._initial_frame is not None:
@@ -963,8 +968,12 @@ class HOOMDTrajectory(object):
                     snap.configuration._default_value['step']
 
         if self.file.chunk_exists(frame=idx, name='configuration/dimensions', write_all=False):
-            dimensions_arr = self.file.read_chunk(
-                frame=idx, name='configuration/dimensions')
+            c_offset = numpy.asarray([0], dtype = numpy.uint32)
+            dimensions_arr = self.file.read_chunk(frame=idx, 
+                                                  name='configuration/dimensions',
+                                                  offset = c_offset,
+                                                  r_all = False)
+            print(f'dimensionsarray {dimensions_arr}')
             snap.configuration.dimensions = dimensions_arr[0]
         else:
             if self._initial_frame is not None:
@@ -975,8 +984,13 @@ class HOOMDTrajectory(object):
                     snap.configuration._default_value['dimensions']
 
         if self.file.chunk_exists(frame=idx, name='configuration/box', write_all=False):
-            snap.configuration.box = self.file.read_chunk(
-                frame=idx, name='configuration/box')
+            c_offset = numpy.asarray([0], dtype = numpy.uint32)
+            snap.configuration.box = self.file.read_chunk(frame=idx, 
+                                                          name='configuration/box',
+                                                          offset = c_offset,
+                                                          r_all = False)
+            print('Box dimensions read')
+            #print(f'box : {snap.configuration.box}')
         else:
             if self._initial_frame is not None:
                 snap.configuration.box = self._initial_frame.configuration.box
@@ -987,7 +1001,7 @@ class HOOMDTrajectory(object):
         # then read all groups that have N, types, etc...
         for path in [
                 'particles',
-                'bonds',
+                # 'bonds',
                 # 'angles',
                 # 'dihedrals',
                 # 'impropers',
@@ -1000,7 +1014,12 @@ class HOOMDTrajectory(object):
 
             container.N = 0
             if self.file.chunk_exists(frame=idx, name=path + '/N', write_all=False):
-                N_arr = self.file.read_chunk(frame=idx, name=path + '/N')
+                c_offset = numpy.asarray([0], dtype = numpy.uint32)
+                N_arr = self.file.read_chunk(frame=idx, 
+                                             name=path + '/N',
+                                             offset = c_offset, 
+                                             r_all = False)
+                print(f'N: {N_arr[0]}')
                 container.N = N_arr[0]
             else:
                 if self._initial_frame is not None:
@@ -1009,10 +1028,15 @@ class HOOMDTrajectory(object):
             # type names
             if 'types' in container._default_value:
                 if self.file.chunk_exists(frame=idx, name=path + '/types', write_all=False):
-                    tmp = self.file.read_chunk(frame=idx, name=path + '/types')
+                    c_offset = numpy.asarray([0], dtype = numpy.uint32)
+                    tmp = self.file.read_chunk(frame=idx, 
+                                               name=path + '/types',
+                                               offset = c_offset,
+                                               r_all = False)
                     tmp = tmp.view(dtype=numpy.dtype((bytes, tmp.shape[1])))
                     tmp = tmp.reshape([tmp.shape[0]])
                     container.types = list(a.decode('UTF-8') for a in tmp)
+                    print(f'container.types: {container.types}')
                 else:
                     if self._initial_frame is not None:
                         container.types = initial_frame_container.types
@@ -1024,13 +1048,17 @@ class HOOMDTrajectory(object):
                     and path == 'particles'):
                 if self.file.chunk_exists(frame=idx,
                                           name=path + '/type_shapes', write_all=False):
+                    c_offset = numpy.asarray([0], dtype = numpy.uint32)
                     tmp = self.file.read_chunk(frame=idx,
-                                               name=path + '/type_shapes')
+                                               name=path + '/type_shapes',
+                                               offset = c_offset,
+                                               r_all = False)
                     tmp = tmp.view(dtype=numpy.dtype((bytes, tmp.shape[1])))
                     tmp = tmp.reshape([tmp.shape[0]])
                     container.type_shapes = \
                         list(json.loads(json_string.decode('UTF-8'))
                              for json_string in tmp)
+                    print(f'container.type_shapes: {container.type_shapes}')
                 else:
                     if self._initial_frame is not None:
                         container.type_shapes = \
@@ -1045,8 +1073,11 @@ class HOOMDTrajectory(object):
 
                 # per particle/bond quantities
                 if self.file.chunk_exists(frame=idx, name=path + '/' + name, write_all=False):
-                    container.__dict__[name] = self.file.read_chunk(
-                        frame=idx, name=path + '/' + name)
+                    c_offset = numpy.asarray([0], dtype = numpy.uint32)
+                    container.__dict__[name] = self.file.read_chunk(frame=idx, 
+                                                                    name=path + '/' + name,
+                                                                    offset = c_offset,
+                                                                    r_all = False)
                 else:
                     if (self._initial_frame is not None
                             and initial_frame_container.N == container.N):
@@ -1062,6 +1093,7 @@ class HOOMDTrajectory(object):
                                                                dtype=tmp.dtype)
                         container.__dict__[name][:] = tmp
 
+
                     container.__dict__[name].flags.writeable = False
 
         # # read state data
@@ -1071,10 +1103,14 @@ class HOOMDTrajectory(object):
         #                                                  name='state/' + state)
 
         # read log data
-        logged_data_names = self.file.find_matching_chunk_names('log/')
+        logged_data_names = self.file.find_matching_chunk_names('log/', False)
         for log in logged_data_names:
             if self.file.chunk_exists(frame=idx, name=log, write_all=False):
-                snap.log[log[4:]] = self.file.read_chunk(frame=idx, name=log)
+                c_offset = numpy.asarray([0], dtype = numpy.uint32)
+                snap.log[log[4:]] = self.file.read_chunk(frame=idx,
+                                                         name=log,
+                                                         offset = c_offset,
+                                                         r_all = False)
             else:
                 if self._initial_frame is not None:
                     snap.log[log[4:]] = self._initial_frame.log[log[4:]]

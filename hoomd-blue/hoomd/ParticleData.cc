@@ -1303,6 +1303,7 @@ void ParticleData::initializeFromSnapshot(const SnapshotParticleData<Real>& snap
         snapshot.validate();
         }
 
+    m_exec_conf->msg->notice(4) << "ParticleData: snapshot validataed" << std::endl;
     // clear set of active tags
     m_tag_set.clear();
 
@@ -1317,6 +1318,7 @@ void ParticleData::initializeFromSnapshot(const SnapshotParticleData<Real>& snap
 #ifdef ENABLE_MPI
     if (m_decomposition)
         {
+        m_exec_conf->msg->notice(4) << "ParticleData: in DomainDecomposition" << std::endl;
         // gather box information from all processors
         unsigned int root = 0;
 
@@ -1351,6 +1353,7 @@ void ParticleData::initializeFromSnapshot(const SnapshotParticleData<Real>& snap
         const MPI_Comm mpi_comm = m_exec_conf->getMPICommunicator();
         unsigned int size = m_exec_conf->getNRanks();
         unsigned int my_rank = m_exec_conf->getRank();
+        m_exec_conf->msg->notice(4) << "ParticleData: start resizing size = " << size << std::endl;
 
         pos_proc.resize(size);
         vel_proc.resize(size);
@@ -1647,7 +1650,9 @@ void ParticleData::initializeFromSnapshot(const SnapshotParticleData<Real>& snap
 #endif
         {
         // allocate array for reverse lookup tags
+        m_exec_conf->msg->notice(4) << "ParticleData: after DomainDecomposition" << std::endl;
         m_rtag.resize(snapshot.size);
+        m_exec_conf->msg->notice(4) << "ParticleData: tags resized" << std::endl;
 
         // Now that active tag list has changed, invalidate the cache
         m_invalid_cached_tags = true;
@@ -1741,6 +1746,7 @@ void ParticleData::initializeFromSnapshot(const SnapshotParticleData<Real>& snap
 
     // set global number of particles
     setNGlobal(nglobal);
+    m_exec_conf->msg->notice(4) << "ParticleData: set nglobal " << nglobal << std::endl;
 
     // notify listeners about resorting of local particles
     notifyParticleSort();
@@ -1805,6 +1811,8 @@ void ParticleData::initializeFromDistrSnapshot(SnapshotParticleData<Real>& snaps
 
     unsigned int size = m_exec_conf->getNRanks();
     unsigned int my_rank = m_exec_conf->getRank();
+    unsigned int nglobal = 0;
+
     std::vector<unsigned int> offset(size);
     printf("RAnk %i, offset[0] %i, offset[1] %i\n", my_rank, offset[0], offset[1] );
 
@@ -1812,10 +1820,10 @@ void ParticleData::initializeFromDistrSnapshot(SnapshotParticleData<Real>& snaps
     printf("RAnk %i, snapshot size %i, size %i\n", my_rank, snapshot.size, size );
     printf("RAnk %i, offset[0] %i, offset[1] %i\n", my_rank, offset[0], offset[1] );
     // global number of particles
-    unsigned int nglobal = std::accumulate(offset.begin(), offset.begin()+my_rank,0);
-    // unsigned int nglobal = std::accumulate(offset.begin(), offset.end(), 0);
+    unsigned int start_tag_proc = std::accumulate(offset.begin(), offset.begin()+my_rank,0);
+
     unsigned int max_typeid = 0;
-    printf("Distributed snapshot nglobal %i\n", nglobal);
+    printf("Distributed snapshot start_tag_proc %i\n", start_tag_proc);
 
 
         // Define per-processor particle data
@@ -1979,7 +1987,7 @@ void ParticleData::initializeFromDistrSnapshot(SnapshotParticleData<Real>& snaps
             // orientation_proc[rank].push_back(quat_to_scalar4(snapshot.orientation[snap_idx]));
             // angmom_proc[rank].push_back(quat_to_scalar4(snapshot.angmom[snap_idx]));
             // inertia_proc[rank].push_back(vec_to_scalar3(snapshot.inertia[snap_idx]));
-            tag_proc[rank].push_back(nglobal++);
+            tag_proc[rank].push_back(start_tag_proc++);
             N_proc[rank]++;
 
             // determine max typeid on root rank
@@ -1991,6 +1999,7 @@ void ParticleData::initializeFromDistrSnapshot(SnapshotParticleData<Real>& snaps
         m_type_mapping = snapshot.type_mapping;
 
         nglobal = std::accumulate(offset.begin(),offset.end(), 0);
+        printf("rank %i print nglobal after typemapping%i\n", m_exec_conf->getRank(), nglobal);
 
         std::vector<unsigned int> num_part_recv(size,0);
 

@@ -714,7 +714,7 @@ cdef class PGSDFile:
 
         return index_entry != NULL
 
-    def read_chunk(self, frame, name):
+    def read_chunk(self, frame, name, uint32_t[:] offset, r_all):
         """read_chunk(frame, name)
 
         Read a data chunk from the file and return it as a numpy array.
@@ -775,10 +775,10 @@ cdef class PGSDFile:
         c_name = name_e
         cdef int64_t c_frame
         c_frame = frame
-        cdef uint32_t offset;
-        offset = 0;
+        # cdef uint32_t * c_offset;
+        # c_offset  = offset;
         cdef bool wr_all
-        wr_all = False
+        wr_all = r_all
 
         with nogil:
             index_entry = libpgsd.pgsd_find_chunk(&self.__handle, c_frame, c_name, False)
@@ -856,7 +856,7 @@ cdef class PGSDFile:
                 retval = libpgsd.pgsd_read_chunk(&self.__handle,
                                                data_ptr,
                                                index_entry,
-                                               &offset,
+                                               &offset[0],
                                                wr_all)
 
             __raise_on_error(retval, self.name)

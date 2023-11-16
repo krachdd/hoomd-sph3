@@ -21,8 +21,8 @@ import array
 import gsd.hoomd
 # ------------------------------------------------------------
 
-device = hoomd.device.CPU(notice_level=2)
-# device = hoomd.device.CPU(notice_level=10)
+# device = hoomd.device.CPU(notice_level=2)
+device = hoomd.device.CPU(notice_level=10)
 sim = hoomd.Simulation(device=device)
 
 # get stuff from input file
@@ -104,5 +104,5 @@ hoomd.write.GSD.write(state = sim.state, mode = 'wb', filename = init_filename)
 
 print(f'Filename: {init_filename}, Number of particles: {n_particles}')
 
-if device.communicator.rank == 0:
-    export_gsd2vtu.export_spf(init_filename)
+# if device.communicator.rank == 0:
+#     export_gsd2vtu.export_spf(init_filename)

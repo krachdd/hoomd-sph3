@@ -2502,18 +2502,31 @@ int pgsd_read_chunk(struct pgsd_handle* handle, void* data, const struct pgsd_in
     int rank;
     int nprocs;
     unsigned int loc_N = chunk->N;
+    size_t size;
     MPI_Comm_rank(MPI_COMM_WORLD,&rank);
     MPI_Comm_size(MPI_COMM_WORLD,&nprocs);
-    if(offset != NULL) {
-        unsigned int i;
-        for( i = 0; i < rank; i++){
-            stride += offset[i];
-        }
-        loc_N = offset[rank];
+    printf("pgsd read chuck: rank %i, size %i\n", rank, nprocs);
+    printf("pgsd read chuck: offset[0] %i, stride %i\n", offset[0], stride);
+
+    if (all == false){
+        stride = 0;
+        size = chunk->N * chunk->M * pgsd_sizeof_type((enum pgsd_type)chunk->type);
     }
-    
-    stride *= chunk->M *pgsd_sizeof_type(chunk->type);
-    size_t size = loc_N * chunk->M * pgsd_sizeof_type(chunk->type);
+    else if (all == true){
+        if(offset != NULL) {
+            unsigned int i;
+            for( i = 0; i < rank; i++){
+                stride += offset[i];
+            }
+            loc_N = offset[rank];
+        }
+        printf("pgsd_sizeof_type(chunk->type) %i\n", pgsd_sizeof_type(chunk->type));
+        stride *= chunk->M *pgsd_sizeof_type(chunk->type);
+        size = loc_N * chunk->M * pgsd_sizeof_type(chunk->type);
+        printf("pgsd read chuck: stride %i, size %i\n", stride, size);
+        printf("pgsd read chuck: chunk->M %i, loc_N %i\n", chunk->M, loc_N);
+
+    }
 
     // size_t size = chunk->N * chunk->M * pgsd_sizeof_type((enum pgsd_type)chunk->type);
     if (size == 0)
@@ -2533,13 +2546,18 @@ int pgsd_read_chunk(struct pgsd_handle* handle, void* data, const struct pgsd_in
         printf("Here is the return value for corrupt file 5\n");
         return PGSD_ERROR_FILE_CORRUPT;
         }
-
+    printf("handle->fh: %lu\n", handle->fh);
+    printf("size: %i\n", size);
+    printf("chunk->location+stride: %lu\n", chunk->location+stride);
+    printf("chunk->location: %lu\n", chunk->location);
+    printf("before read file at\n");
     MPI_File_read_at(handle->fh, chunk->location+stride, data, size, MPI_BYTE, MPI_STATUS_IGNORE);
     // ssize_t bytes_read = pgsd_io_pread_retry(handle->fd, data, size, chunk->location);
     // if (bytes_read == -1 || bytes_read != size)
     //     {
     //     return PGSD_ERROR_IO;
     //     }
+    printf("after read file at\n");
 
     return PGSD_SUCCESS;
     }
