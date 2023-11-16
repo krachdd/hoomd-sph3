@@ -962,7 +962,9 @@ void SinglePhaseFlowNN<KT_, SET_>::compute_viscosity(uint64_t timestep)
     unsigned int size;
     size_t myHead;
 
-    unsigned int nptl_local = this->m_pdata->getN()+ this->m_pdata->getNGhosts();
+    unsigned int nptl_local = this->m_pdata->getN();
+
+    //unsigned int nptl_local = this->m_pdata->getN()+ this->m_pdata->getNGhosts();
     for (unsigned int i = 0; i < nptl_local; i++)
         {
         // TODO: Aus Schleife raus initialisieren hier nur null setzen
