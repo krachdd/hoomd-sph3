@@ -21,7 +21,6 @@
 #endif
 
 #include <pybind11/pybind11.h>
-#include <pybind11/stl.h>
 
 namespace hoomd
     {
@@ -148,74 +147,6 @@ class PYBIND11_EXPORT MPIConfiguration
 #endif
     return v;
     }
-
-
-//     //! Wrapper around MPI_Allgatherv
-// std::vector<double> all_gather_dist(double in_value, std::vector<double> out_values, MPI_Comm mpi_comm)
-//     {
-
-//     MPI_Allgather(&in_value, 1, MPI_DOUBLE, &out_values, 1, MPI_DOUBLE, mpi_comm);
-//     return out_values;
-//     // int rank;
-//     // int size;
-//     // MPI_Comm_rank(mpi_comm, &rank);
-//     // MPI_Comm_size(mpi_comm, &size);
-
-//     // // serialize in_value
-//     // std::stringstream s(std::ios_base::out | std::ios_base::binary);
-//     // cereal::BinaryOutputArchive ar(s);
-
-//     // ar << in_value;
-//     // s.flush();
-
-//     // // copy into send buffer
-//     // std::string str = s.str();
-//     // unsigned int send_count = (unsigned int)str.length();
-
-//     // // allocate memory for buffer lengths
-//     // out_values.resize(size);
-//     // int* recv_counts = new int[size];
-//     // int* displs = new int[size];
-
-//     // // gather lengths of buffers
-//     // MPI_Allgather(&send_count, 1, MPI_INT, recv_counts, 1, MPI_INT, mpi_comm);
-
-//     // // allocate receiver buffer
-//     // unsigned int len = 0;
-//     // for (unsigned int i = 0; i < (unsigned int)size; i++)
-//     //     {
-//     //     displs[i] = (i > 0) ? displs[i - 1] + recv_counts[i - 1] : 0;
-//     //     len += recv_counts[i];
-//     //     }
-//     // char* rbuf = new char[len];
-
-//     // // now gather actual objects
-//     // MPI_Allgatherv((void*)str.data(),
-//     //                send_count,
-//     //                MPI_BYTE,
-//     //                rbuf,
-//     //                recv_counts,
-//     //                displs,
-//     //                MPI_BYTE,
-//     //                mpi_comm);
-
-//     // // de-serialize data
-//     // for (unsigned int i = 0; i < out_values.size(); i++)
-//     //     {
-//     //     std::stringstream s(std::string(rbuf + displs[i], recv_counts[i]),
-//     //                         std::ios_base::in | std::ios_base::binary);
-//     //     cereal::BinaryInputArchive ar(s);
-
-//     //     ar >> out_values[i];
-//     //     }
-
-//     // delete[] displs;
-//     // delete[] recv_counts;
-//     // delete[] rbuf;
-//     // return out_values;
-//     }
-
-
 
     protected:
 #ifdef ENABLE_MPI

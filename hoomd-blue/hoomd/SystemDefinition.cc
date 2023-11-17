@@ -280,7 +280,7 @@ void export_SystemDefinition(pybind11::module& m)
         .def(pybind11::init<std::shared_ptr<SnapshotSystemData<float>>,
                             std::shared_ptr<ExecutionConfiguration>,
                             std::shared_ptr<DomainDecomposition>,
-                            bool>()                            )
+                            bool>())
         .def(pybind11::init<std::shared_ptr<SnapshotSystemData<float>>,
                             std::shared_ptr<ExecutionConfiguration>>())
         .def(pybind11::init<std::shared_ptr<SnapshotSystemData<double>>,

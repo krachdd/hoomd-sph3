@@ -90,7 +90,7 @@ GSDReaderMPI::~GSDReaderMPI()
 //         }
 // #endif
 
-    pgsd_close(&m_handle, true);
+    pgsd_close(&m_handle);
     }
 
 /*! \param data Pointer to data to read into
@@ -114,9 +114,9 @@ bool GSDReaderMPI::readChunk(void* data,
                           unsigned int cur_n,
                           uint32_t *offset)
     {
-    const struct pgsd_index_entry* entry = pgsd_find_chunk(&m_handle, frame, name, true);
+    const struct pgsd_index_entry* entry = pgsd_find_chunk(&m_handle, frame, name);
     if (entry == NULL && frame != 0)
-        entry = pgsd_find_chunk(&m_handle, 0, name, true);
+        entry = pgsd_find_chunk(&m_handle, 0, name);
 
     if (entry == NULL || (cur_n != 0 && entry->N != cur_n))
         {
@@ -160,9 +160,9 @@ std::vector<std::string> GSDReaderMPI::readTypes(uint64_t frame, const char* nam
     if (std::string(name) == "particles/types")
         type_mapping.push_back("A");
 
-    const struct pgsd_index_entry* entry = pgsd_find_chunk(&m_handle, frame, name, true);
+    const struct pgsd_index_entry* entry = pgsd_find_chunk(&m_handle, frame, name);
     if (entry == NULL && frame != 0)
-        entry = pgsd_find_chunk(&m_handle, 0, name, true);
+        entry = pgsd_find_chunk(&m_handle, 0, name);
 
     if (entry == NULL)
         return type_mapping;

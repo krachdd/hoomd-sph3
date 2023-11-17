@@ -22,13 +22,11 @@ f = pgsd.fl.PGSDFile(name = sys.argv[1], mode = 'r', application = "HOOMD-SPH", 
 
 # Parse GSD file into a trajectory object
 t = pgsd.hoomd.HOOMDTrajectory(f)
-
-# print(t[0].particles.position)
-
 # Run loop over all snapshots
 count = 0
 for snapshot in t:
    count += 1
+   print(count)
    
    pname = sys.argv[1].replace('.gsd','')
    

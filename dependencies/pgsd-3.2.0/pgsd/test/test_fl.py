@@ -358,42 +358,42 @@ def test_dtype_errors(tmp_path, open_mode):
             f.end_frame()
 
 
-def test_truncate(tmp_path):
-    """Test that the truncate method functions."""
-    data = numpy.ascontiguousarray(numpy.random.random(size=(1000, 3)),
-                                   dtype=numpy.float32)
-    with gsd.fl.open(name=tmp_path / 'test_truncate.gsd',
-                     mode='wb',
-                     application='test_truncate',
-                     schema='none',
-                     schema_version=[1, 2]) as f:
-        assert f.mode == 'wb'
-        for i in range(10):
-            f.write_chunk(name='data', data=data)
-            f.end_frame()
+# def test_truncate(tmp_path):
+#     """Test that the truncate method functions."""
+#     data = numpy.ascontiguousarray(numpy.random.random(size=(1000, 3)),
+#                                    dtype=numpy.float32)
+#     with gsd.fl.open(name=tmp_path / 'test_truncate.gsd',
+#                      mode='wb',
+#                      application='test_truncate',
+#                      schema='none',
+#                      schema_version=[1, 2]) as f:
+#         assert f.mode == 'wb'
+#         for i in range(10):
+#             f.write_chunk(name='data', data=data)
+#             f.end_frame()
 
-        assert f.nframes == 10
+#         assert f.nframes == 10
 
-        f.truncate()
-        assert f.nframes == 0
-        assert f.application == 'test_truncate'
-        assert f.schema == 'none'
-        assert f.schema_version == (1, 2)
+#         f.truncate()
+#         assert f.nframes == 0
+#         assert f.application == 'test_truncate'
+#         assert f.schema == 'none'
+#         assert f.schema_version == (1, 2)
 
-        f.write_chunk(name='data', data=data)
-        f.end_frame()
+#         f.write_chunk(name='data', data=data)
+#         f.end_frame()
 
-    with gsd.fl.open(name=tmp_path / 'test_truncate.gsd',
-                     mode='rb',
-                     application='test_truncate',
-                     schema='none',
-                     schema_version=[1, 2]) as f:
-        assert f.name == str(tmp_path / 'test_truncate.gsd')
-        assert f.mode == 'rb'
-        assert f.application == 'test_truncate'
-        assert f.schema == 'none'
-        assert f.schema_version == (1, 2)
-        assert f.nframes == 1
+#     with gsd.fl.open(name=tmp_path / 'test_truncate.gsd',
+#                      mode='rb',
+#                      application='test_truncate',
+#                      schema='none',
+#                      schema_version=[1, 2]) as f:
+#         assert f.name == str(tmp_path / 'test_truncate.gsd')
+#         assert f.mode == 'rb'
+#         assert f.application == 'test_truncate'
+#         assert f.schema == 'none'
+#         assert f.schema_version == (1, 2)
+#         assert f.nframes == 1
 
 
 def test_namelen(tmp_path, open_mode):

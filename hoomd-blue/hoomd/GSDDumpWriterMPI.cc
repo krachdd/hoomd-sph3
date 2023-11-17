@@ -300,28 +300,29 @@ void GSDDumpWriterMPI::setDynamic(pybind11::object dynamic)
 
 void GSDDumpWriterMPI::flush()
     {
+    unsigned int rank = m_exec_conf->getRank();
+    printf("Flush with rank %i\n", rank);
     // bool root = false;
-    // // if (m_exec_conf->isRoot())
+    // if (m_exec_conf->isRoot())
     //     {
-    //     m_exec_conf->msg->notice(5) << "PGSD: flush gsd file " << m_fname << endl;
-    //     root = true;
-    //     }
-    bool root = true;
-    int retval = pgsd_flush(&m_handle, root);
+    m_exec_conf->msg->notice(5) << "PGSD: flush gsd file " << m_fname << endl;
+        // root = true;
+        // }
+    int retval = pgsd_flush(&m_handle);
     PGSDUtils::checkError(retval, m_fname);
     }
 
 void GSDDumpWriterMPI::setMaximumWriteBufferSize(uint64_t size)
     {
-    if (m_exec_conf->isRoot())
-        {
-        int retval = pgsd_set_maximum_write_buffer_size(&m_handle, size);
-        PGSDUtils::checkError(retval, m_fname);
+    // if (m_exec_conf->isRoot())
+    //     {
+    int retval = pgsd_set_maximum_write_buffer_size(&m_handle, size);
+    PGSDUtils::checkError(retval, m_fname);
 
-        // Scale the index buffer entires to write with the write buffer.
-        retval = pgsd_set_index_entries_to_buffer(&m_handle, size / 256);
-        PGSDUtils::checkError(retval, m_fname);
-        }
+    // Scale the index buffer entires to write with the write buffer.
+    retval = pgsd_set_index_entries_to_buffer(&m_handle, size / 256);
+    PGSDUtils::checkError(retval, m_fname);
+        // }
     }
 
 uint64_t GSDDumpWriterMPI::getMaximumWriteBufferSize()
@@ -395,8 +396,9 @@ void GSDDumpWriterMPI::initFileIO()
         {
         throw std::invalid_argument("Invalid PGSD file mode: " + m_mode);
         }
-
+    MPI_Barrier(MPI_COMM_WORLD);
     m_nframes = pgsd_get_nframes(&m_handle);
+    MPI_Barrier(MPI_COMM_WORLD);
         // }
 
 // #ifdef ENABLE_MPI
@@ -416,7 +418,7 @@ GSDDumpWriterMPI::~GSDDumpWriterMPI()
     //     {
     MPI_Barrier(MPI_COMM_WORLD);
     m_exec_conf->msg->notice(5) << "PGSD: close gsd file " << m_fname << endl;
-    pgsd_close(&m_handle, true);
+    pgsd_close(&m_handle);
         // }
     }
 
@@ -438,6 +440,9 @@ pybind11::dict GSDDumpWriterMPI::getLogData() const
 */
 void GSDDumpWriterMPI::analyze(uint64_t timestep)
     {
+    unsigned int rank = m_exec_conf->getRank();
+    printf("Analyse with rank %i\n", rank);
+    m_exec_conf->msg->notice(5) << "GSDDumpWriterMPI: analyse" << endl;
     Analyzer::analyze(timestep);
     int retval;
     // bool root = true;
@@ -447,14 +452,16 @@ void GSDDumpWriterMPI::analyze(uint64_t timestep)
         {
         // if (m_exec_conf->isRoot())
         //     {
+        throw runtime_error("Error truncating GSD file: not implemented!");
         m_exec_conf->msg->notice(10) << "PGSD: truncating file" << endl;
-        retval = pgsd_truncate(&m_handle);
-        PGSDUtils::checkError(retval, m_fname);
+
+        // retval = pgsd_truncate(&m_handle);
+        // PGSDUtils::checkError(retval, m_fname);
             // }
 
         m_nframes = 0;
         }
-
+    m_exec_conf->msg->notice(5) << "GSDDumpWriterMPI Populate local frame" << endl;
     populateLocalFrame(m_local_frame, timestep);
     auto log_data = getLogData();
     write(m_local_frame, log_data);
@@ -488,25 +495,26 @@ void GSDDumpWriterMPI::write(GSDDumpWriterMPI::PGSDFrame& frame, pybind11::dict 
         }
     // topology is only meaningful if this is the all group
     // TODO
-    if (m_group->getNumMembersGlobal() == m_pdata->getNGlobal()
-        && (m_write_topology || m_nframes == 0))
-        {
-        // if (m_exec_conf->isRoot())
-        //     {
-        writeTopology(frame.bond_data,
-                      // frame.angle_data,
-                      // frame.dihedral_data,
-                      // frame.improper_data,
-                      frame.constraint_data
-                      //frame.pair_data
-                      );
-            // }
-        }
+    // if (m_group->getNumMembersGlobal() == m_pdata->getNGlobal()
+    //     && (m_write_topology || m_nframes == 0))
+    //     {
+    //     // if (m_exec_conf->isRoot())
+    //     //     {
+    //     writeTopology(frame.bond_data,
+    //                   // frame.angle_data,
+    //                   // frame.dihedral_data,
+    //                   // frame.improper_data,
+    //                   frame.constraint_data
+    //                   //frame.pair_data
+    //                   );
+    //         // }
+    //     }
 
     // if (m_exec_conf->isRoot())
     //     {
-    m_exec_conf->msg->notice(10) << "PGSD: ending frame" << endl;
-    int retval = pgsd_end_frame(&m_handle, true);
+    m_exec_conf->msg->notice(10) << "PGSD: ending frame " << m_nframes << endl;
+    
+    int retval = pgsd_end_frame(&m_handle);
     PGSDUtils::checkError(retval, m_fname);
         // }
 
@@ -956,6 +964,7 @@ void GSDDumpWriterMPI::writeMomenta(const GSDDumpWriterMPI::PGSDFrame& frame)
                                  true,
                                  0,
                                  (void*)frame.particle_data.vel.data());
+
         PGSDUtils::checkError(retval, m_fname);
         if (m_nframes == 0)
             m_nondefault["particles/velocity"] = true;
@@ -1424,16 +1433,17 @@ void GSDDumpWriterMPI::populateNonDefault()
 
     for (auto const& chunk : particle_chunks)
         {
-        const pgsd_index_entry* entry = pgsd_find_chunk(&m_handle, 0, chunk.c_str(), true);
+        const pgsd_index_entry* entry = pgsd_find_chunk(&m_handle, 0, chunk.c_str());
         m_nondefault[chunk] = (entry != nullptr);
         }
 
     // close the file
-    pgsd_close(&m_handle, true);
+    pgsd_close(&m_handle);
     }
 
 void GSDDumpWriterMPI::populateLocalFrame(GSDDumpWriterMPI::PGSDFrame& frame, uint64_t timestep)
     {
+    m_exec_conf->msg->notice(5) << "GSDDumpWriterMPI::populateLocalFrame" << endl;
     frame.timestep = timestep;
     frame.global_box = m_pdata->getGlobalBox();
 
@@ -2181,7 +2191,7 @@ void export_GSDDumpWriterMPI(pybind11::module& m)
         .def_property_readonly("filename", &GSDDumpWriterMPI::getFilename)
         .def_property_readonly("mode", &GSDDumpWriterMPI::getMode)
         .def_property("dynamic", &GSDDumpWriterMPI::getDynamic, &GSDDumpWriterMPI::setDynamic)
-        .def_property_readonly("truncate", &GSDDumpWriterMPI::getTruncate)
+        // .def_property_readonly("truncate", &GSDDumpWriterMPI::getTruncate)
         .def_property_readonly("filter",
                                [](const std::shared_ptr<GSDDumpWriterMPI> gsd)
                                { return gsd->getGroup()->getFilter(); })

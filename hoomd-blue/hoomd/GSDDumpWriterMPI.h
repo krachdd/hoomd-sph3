@@ -163,7 +163,7 @@ class PYBIND11_EXPORT GSDDumpWriterMPI : public Analyzer
         };
 
     /// Number of entires in the gsd_flag enum.
-    static const unsigned int n_pgsd_flags = 14;
+    static const unsigned int n_pgsd_flags = 17;
 
     /// Store a GSD frame for writing.
     /** Local frames store particles local to the rank, sorted in ascending tag order.

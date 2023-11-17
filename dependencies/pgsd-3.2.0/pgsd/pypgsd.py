@@ -211,9 +211,9 @@ class PGSDFile(object):
             self.__is_open = False
             self.__file.close()
 
-    def truncate(self):
-        """Not implemented."""
-        raise NotImplementedError
+    # def truncate(self):
+    #     """Not implemented."""
+    #     raise NotImplementedError
 
     def end_frame(self):
         """Not implemented."""

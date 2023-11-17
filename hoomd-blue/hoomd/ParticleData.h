@@ -150,14 +150,6 @@ template<class Real> struct PYBIND11_EXPORT SnapshotParticleData
         return size;
         }
 
-    // std::vector<unsigned int> get_part_distr(){
-    //     return part_distr;
-    // }
-
-    // void set_part_distr(std::vector<unsigned int> part_distribution){
-    //     part_distr = part_distribution;
-    // }
-
     //! Insert n elements at position i
     void insert(unsigned int i, unsigned int n);
 
@@ -485,16 +477,6 @@ class PYBIND11_EXPORT ParticleData
                  std::shared_ptr<DomainDecomposition> decomposition
                  = std::shared_ptr<DomainDecomposition>(),
                  bool distributed = false);
-
-    //! Construct using a ParticleDataSnapshot
-    // For distr Snapshot snapshot must be modifyable
-    // template<class Real>
-    // ParticleData(SnapshotParticleData<Real>& snapshot,
-    //              const std::shared_ptr<const BoxDim> global_box,
-    //              std::shared_ptr<ExecutionConfiguration> exec_conf,
-    //              std::shared_ptr<DomainDecomposition> decomposition
-    //              = std::shared_ptr<DomainDecomposition>(),
-    //              bool distributed = false);
 
     //! Destructor
     virtual ~ParticleData();

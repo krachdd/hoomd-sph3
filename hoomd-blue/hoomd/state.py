@@ -257,7 +257,7 @@ class State:
             domain_decomposition)
 
         if distributed:
-            print("Initialize system with distributed snapshot")
+            print("Initialize system with distributed snapshot.")
 
         if decomposition is not None:
             print('Create System Definition')
@@ -265,8 +265,17 @@ class State:
                 snapshot._cpp_obj, simulation.device._cpp_exec_conf,
                 decomposition, self.distributed)
         else:
-            self._cpp_sys_def = _hoomd.SystemDefinition(
-                snapshot._cpp_obj, simulation.device._cpp_exec_conf)
+            if distributed:
+                raise NotImplementedError('PGSD is not implemented for a single core usage!')
+            # to get a instance of SystemDefinition one would have to use
+            # self._cpp_sys_def = _hoomd.SystemDefinition(
+            #        snapshot._cpp_obj, simulation.device._cpp_exec_conf
+            #        None, self.distributed)
+            # is a TODO
+            else:
+                self._cpp_sys_def = _hoomd.SystemDefinition(
+                    snapshot._cpp_obj, simulation.device._cpp_exec_conf)
+
 
         # Necessary for local snapshot API. This is used to ensure two local
         # snapshots are not contexted at once.

@@ -413,49 +413,49 @@ cdef class PGSDFile:
         if self.__is_open:
             logger.info('closing file: ' + self.name)
             with nogil:
-                retval = libpgsd.pgsd_close(&self.__handle, wr_all)
+                retval = libpgsd.pgsd_close(&self.__handle)
             self.__is_open = False
 
             __raise_on_error(retval, self.name)
 
-    def truncate(self):
-        """truncate()
+    # def truncate(self):
+    #     """truncate()
 
-        Truncate all data from the file. After truncation, the file has no
-        frames and no data chunks. The application, schema, and schema version
-        remain the same.
+    #     Truncate all data from the file. After truncation, the file has no
+    #     frames and no data chunks. The application, schema, and schema version
+    #     remain the same.
 
-        Example:
-            .. ipython:: python
+    #     Example:
+    #         .. ipython:: python
 
-                with pgsd.fl.open(name='file.pgsd', mode='w',
-                                 application="My application",
-                                 schema="My Schema", schema_version=[1,0]) as f:
-                    for i in range(10):
-                        f.write_chunk(name='chunk1',
-                                      data=numpy.array([1,2,3,4],
-                                                       dtype=numpy.float32))
-                        f.end_frame()
+    #             with pgsd.fl.open(name='file.pgsd', mode='w',
+    #                              application="My application",
+    #                              schema="My Schema", schema_version=[1,0]) as f:
+    #                 for i in range(10):
+    #                     f.write_chunk(name='chunk1',
+    #                                   data=numpy.array([1,2,3,4],
+    #                                                    dtype=numpy.float32))
+    #                     f.end_frame()
 
-                f = pgsd.fl.open(name='file.pgsd', mode='r+',
-                                application="My application",
-                                schema="My Schema", schema_version=[1,0])
-                f.nframes
-                f.schema, f.schema_version, f.application
-                f.truncate()
-                f.nframes
-                f.schema, f.schema_version, f.application
-                f.close()
-        """
+    #             f = pgsd.fl.open(name='file.pgsd', mode='r+',
+    #                             application="My application",
+    #                             schema="My Schema", schema_version=[1,0])
+    #             f.nframes
+    #             f.schema, f.schema_version, f.application
+    #             f.truncate()
+    #             f.nframes
+    #             f.schema, f.schema_version, f.application
+    #             f.close()
+    #     """
 
-        if not self.__is_open:
-            raise ValueError("File is not open")
+    #     if not self.__is_open:
+    #         raise ValueError("File is not open")
 
-        logger.info('truncating file: ' + self.name)
-        with nogil:
-            retval = libpgsd.pgsd_truncate(&self.__handle)
+    #     logger.info('truncating file: ' + self.name)
+    #     with nogil:
+    #         retval = libpgsd.pgsd_truncate(&self.__handle)
 
-        __raise_on_error(retval, self.name)
+    #     __raise_on_error(retval, self.name)
 
     def end_frame(self, write_all):
         """end_frame()
@@ -501,7 +501,7 @@ cdef class PGSDFile:
         logger.debug('end frame: ' + self.name)
 
         with nogil:
-            retval = libpgsd.pgsd_end_frame(&self.__handle, wr_all)
+            retval = libpgsd.pgsd_end_frame(&self.__handle)
 
         __raise_on_error(retval, self.name)
 
@@ -519,7 +519,7 @@ cdef class PGSDFile:
         logger.debug('flush: ' + self.name)
 
         with nogil:
-            retval = libpgsd.pgsd_flush(&self.__handle, wr_all)
+            retval = libpgsd.pgsd_flush(&self.__handle)
 
         __raise_on_error(retval, self.name)
 
@@ -710,7 +710,7 @@ cdef class PGSDFile:
         logger.debug('chunk exists: ' + self.name + ' - ' + name)
 
         with nogil:
-            index_entry = libpgsd.pgsd_find_chunk(&self.__handle, c_frame, c_name, wr_all)
+            index_entry = libpgsd.pgsd_find_chunk(&self.__handle, c_frame, c_name)
 
         return index_entry != NULL
 
@@ -781,7 +781,7 @@ cdef class PGSDFile:
         wr_all = r_all
 
         with nogil:
-            index_entry = libpgsd.pgsd_find_chunk(&self.__handle, c_frame, c_name, False)
+            index_entry = libpgsd.pgsd_find_chunk(&self.__handle, c_frame, c_name)
 
         if index_entry == NULL:
             raise KeyError("frame " + str(frame) + " / chunk " + name
@@ -925,8 +925,7 @@ cdef class PGSDFile:
         with nogil:
             c_found = libpgsd.pgsd_find_matching_chunk_name(&self.__handle,
                                                           c_match,
-                                                          NULL, 
-                                                          wr_all)
+                                                          NULL)
 
         while c_found != NULL:
             retval.append(c_found.decode('utf-8'))
@@ -934,8 +933,7 @@ cdef class PGSDFile:
             with nogil:
                 c_found = libpgsd.pgsd_find_matching_chunk_name(&self.__handle,
                                                               c_match,
-                                                              c_found,
-                                                              wr_all)
+                                                              c_found)
 
         return retval
 
@@ -1036,5 +1034,5 @@ cdef class PGSDFile:
     def __dealloc__(self):
         if self.__is_open:
             logger.info('closing file: ' + self.name)
-            libpgsd.pgsd_close(&self.__handle, True)
+            libpgsd.pgsd_close(&self.__handle)
             self.__is_open = False

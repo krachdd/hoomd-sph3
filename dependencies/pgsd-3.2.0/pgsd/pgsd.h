@@ -435,7 +435,7 @@ extern "C"
           - PGSD_ERROR_FILE_CORRUPT: Corrupt file.
           - PGSD_ERROR_MEMORY_ALLOCATION_FAILED: Unable to allocate memory.
     */
-    int pgsd_truncate(struct pgsd_handle* handle);
+    // int pgsd_truncate(struct pgsd_handle* handle);
 
     /** Close a PGSD file.
 
@@ -456,7 +456,7 @@ extern "C"
           - PGSD_ERROR_IO: IO error (check errno).
           - PGSD_ERROR_INVALID_ARGUMENT: *handle* is NULL.
     */
-    int pgsd_close(struct pgsd_handle* handle, bool all);
+    int pgsd_close(struct pgsd_handle* handle);
 
     /** Complete the current frame.
 
@@ -474,7 +474,7 @@ extern "C"
           - PGSD_ERROR_FILE_MUST_BE_WRITABLE: The file was opened read-only.
           - PGSD_ERROR_MEMORY_ALLOCATION_FAILED: Unable to allocate memory.
     */
-    int pgsd_end_frame(struct pgsd_handle* handle, bool all);
+    int pgsd_end_frame(struct pgsd_handle* handle);
 
     /** Flush the write buffer.
 
@@ -493,7 +493,7 @@ extern "C"
           - PGSD_ERROR_FILE_MUST_BE_WRITABLE: The file was opened read-only.
           - PGSD_ERROR_MEMORY_ALLOCATION_FAILED: Unable to allocate memory.
     */
-    int pgsd_flush(struct pgsd_handle* handle, bool all);
+    int pgsd_flush(struct pgsd_handle* handle);
 
     /** Add a data chunk to the current frame.
 
@@ -558,7 +558,7 @@ extern "C"
         @note pgsd_find_chunk() calls gsd_flush() when the file is writable.
     */
     const struct pgsd_index_entry*
-    pgsd_find_chunk(struct pgsd_handle* handle, uint64_t frame, const char* name, bool all);
+    pgsd_find_chunk(struct pgsd_handle* handle, uint64_t frame, const char* name);
 
     /** Read a chunk from the PGSD file.
 
@@ -620,7 +620,7 @@ extern "C"
 
     */
     const char*
-    pgsd_find_matching_chunk_name(struct pgsd_handle* handle, const char* match, const char* prev, bool all);
+    pgsd_find_matching_chunk_name(struct pgsd_handle* handle, const char* match, const char* prev);
 
     /** Upgrade a PGSD file to the latest specification.
 

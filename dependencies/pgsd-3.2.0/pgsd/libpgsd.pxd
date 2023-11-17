@@ -106,10 +106,10 @@ cdef extern from "pgsd.h" nogil:
                             int exclusive_create)
     int pgsd_open(pgsd_handle* handle, const char *fname,
                  const pgsd_open_flag flags)
-    int pgsd_truncate(pgsd_handle* handle)
-    int pgsd_close(pgsd_handle* handle, bool all)
-    int pgsd_end_frame(pgsd_handle* handle, bool all)
-    int pgsd_flush(pgsd_handle* handle, bool all)
+    # int pgsd_truncate(pgsd_handle* handle)
+    int pgsd_close(pgsd_handle* handle)
+    int pgsd_end_frame(pgsd_handle* handle)
+    int pgsd_flush(pgsd_handle* handle)
     int pgsd_write_chunk(pgsd_handle* handle,
                         const char *name,
                         pgsd_type type,
@@ -124,8 +124,7 @@ cdef extern from "pgsd.h" nogil:
                         const void *data)
     const pgsd_index_entry* pgsd_find_chunk(pgsd_handle* handle,
                                           uint64_t frame,
-                                          const char *name,
-                                          bool all)
+                                          const char *name)
     int pgsd_read_chunk(pgsd_handle* handle, void* data,
                        const pgsd_index_entry* chunk,
                        uint32_t* offset, 
@@ -134,8 +133,7 @@ cdef extern from "pgsd.h" nogil:
     size_t pgsd_sizeof_type(pgsd_type type)
     const char *pgsd_find_matching_chunk_name(pgsd_handle* handle,
                                              const char *match,
-                                             const char *prev,
-                                             bool all)
+                                             const char *prev)
     # int pgsd_upgrade(pgsd_handle *handle)
     uint64_t pgsd_get_maximum_write_buffer_size(pgsd_handle* handle)
     int pgsd_set_maximum_write_buffer_size(pgsd_handle* handle, uint64_t size)

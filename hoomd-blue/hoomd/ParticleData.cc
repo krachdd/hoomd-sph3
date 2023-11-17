@@ -123,7 +123,6 @@ ParticleData::ParticleData(unsigned int N,
         m_exec_conf->msg->warning() << " MPI is necessary for distributed snapshots " << endl;
         throw runtime_error("Error initializing ParticleData - try to use not distributed varinte or enable MPI");
         #else
-
         initializeFromDistrSnapshot(snap);
         #endif
     }
@@ -206,76 +205,6 @@ ParticleData::ParticleData(const SnapshotParticleData<Real>& snapshot,
     m_origin = make_scalar3(0, 0, 0);
     m_o_image = make_int3(0, 0, 0);
     }
-
-
-/*! Loads particle data from the snapshot into the internal arrays.
- * \param snapshot The particle data snapshot
- * \param global_box The dimensions of the global simulation box
- * \param exec_conf The execution configuration
- * \param decomposition (optional) Domain decomposition layout
- */
-// template<class Real>
-// ParticleData::ParticleData(SnapshotParticleData<Real>& snapshot,
-//                            const std::shared_ptr<const BoxDim> global_box,
-//                            std::shared_ptr<ExecutionConfiguration> exec_conf,
-//                            std::shared_ptr<DomainDecomposition> decomposition,
-//                            bool distributed)
-//     : m_exec_conf(exec_conf), m_nparticles(0), m_nghosts(0), m_max_nparticles(0), m_nglobal(0),
-//       m_accel_set(false), m_resize_factor(9. / 8.), m_arrays_allocated(false)
-//     {
-//     m_exec_conf->msg->notice(5) << "Constructing ParticleData" << endl;
-
-// #ifdef ENABLE_MPI
-//     // Set up domain decomposition information
-//     if (decomposition)
-//         setDomainDecomposition(decomposition);
-// #endif
-
-//     // initialize box dimensions on all processors
-//     setGlobalBox(global_box);
-
-//     // it is an error for particles to be initialized outside of their box
-//     if (!inBox(snapshot))
-//         {
-//         m_exec_conf->msg->warning() << "Not all particles were found inside the given box" << endl;
-//         throw runtime_error("Error initializing ParticleData");
-//         }
-
-// #ifdef ENABLE_HIP
-//     if (m_exec_conf->isCUDAEnabled())
-//         {
-//         m_gpu_partition = GPUPartition(m_exec_conf->getGPUIds());
-//         m_memory_advice_last_Nmax = UINT_MAX;
-//         }
-// #endif
-
-//     // initialize rtag array
-//     GlobalVector<unsigned int>(exec_conf).swap(m_rtag);
-//     TAG_ALLOCATION(m_rtag);
-
-//     // initialize particle data with snapshot contents
-//     if(!distributed) {
-//         initializeFromSnapshot(snapshot);
-//     }
-//     else {
-//     #ifndef ENABLE_MPI
-//         m_exec_conf->msg->warning() << " MPI is necessary for distributed snapshots " << endl;
-//         throw runtime_error("Error initializing ParticleData - try to use not distributed varinte or enable MPI");
-//     #else
-//         initializeFromDistrSnapshot(snapshot);
-//     #endif
-//     }
-
-//     // // reset external virial
-//     // for (unsigned int i = 0; i < 6; i++)
-//     //     m_external_virial[i] = Scalar(0.0);
-
-//     m_external_energy = Scalar(0.0);
-
-//     // zero the origin
-//     m_origin = make_scalar3(0, 0, 0);
-//     m_o_image = make_int3(0, 0, 0);
-//     }
 
 ParticleData::~ParticleData()
     {
@@ -2305,7 +2234,7 @@ void ParticleData::initializeFromDistrSnapshot(const SnapshotParticleData<Real>&
     unsigned int snapshot_size = snapshot.size;
     printf("Done getting snapshot size %i\n", snapshot_size);
 
-    printf("Done Waitall\n");
+    MPI_Waitall(17*size, send_req, MPI_STATUSES_IGNORE);
 
     // Raise an exception if there are any invalid type ids. This is done here (instead of in the
     // loops above) to avoid MPI communication deadlocks when only some ranks have invalid types.
@@ -2905,7 +2834,7 @@ ParticleData::takeSnapshotDistr(SnapshotParticleData<Real>& snapshot)
         // allocate memory in snapshot
         snapshot.resize(getN());
 
-        all_gather_v(m_nparticles, snapshot.part_distr, MPI_COMM_WORLD);
+        // all_gather_v(m_nparticles, snapshot.part_distr, MPI_COMM_WORLD);
         // assert(m_tag_set.size() == m_nparticles); // TODO
         std::set<unsigned int>::const_iterator it = m_tag_set.begin();
 
@@ -4660,11 +4589,6 @@ template ParticleData::ParticleData(const SnapshotParticleData<double>& snapshot
                                     std::shared_ptr<ExecutionConfiguration> exec_conf,
                                     std::shared_ptr<DomainDecomposition> decomposition,
                                     bool distributed);
-// template ParticleData::ParticleData(SnapshotParticleData<double>& snapshot,
-//                                     const std::shared_ptr<const BoxDim> global_box,
-//                                     std::shared_ptr<ExecutionConfiguration> exec_conf,
-//                                     std::shared_ptr<DomainDecomposition> decomposition,
-//                                     bool distributed);
 template void
 ParticleData::initializeFromSnapshot<double>(const SnapshotParticleData<double>& snapshot,
                                              bool ignore_bodies);
@@ -4680,11 +4604,6 @@ template ParticleData::ParticleData(const SnapshotParticleData<float>& snapshot,
                                     std::shared_ptr<ExecutionConfiguration> exec_conf,
                                     std::shared_ptr<DomainDecomposition> decomposition,
                                     bool distributed);
-// template ParticleData::ParticleData(SnapshotParticleData<float>& snapshot,
-//                                     const std::shared_ptr<const BoxDim> global_box,
-//                                     std::shared_ptr<ExecutionConfiguration> exec_conf,
-//                                     std::shared_ptr<DomainDecomposition> decomposition,
-//                                     bool distributed);
 template void
 ParticleData::initializeFromSnapshot<float>(const SnapshotParticleData<float>& snapshot,
                                             bool ignore_bodies);

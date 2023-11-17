@@ -859,10 +859,10 @@ class HOOMDTrajectory(object):
 
         self.file.end_frame()
 
-    def truncate(self):
-        """Remove all frames from the file."""
-        self.file.truncate()
-        self._initial_frame = None
+    # def truncate(self):
+    #     """Remove all frames from the file."""
+    #     self.file.truncate()
+    #     self._initial_frame = None
 
     def close(self):
         """Close the file."""
