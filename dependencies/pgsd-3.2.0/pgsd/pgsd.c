@@ -22,6 +22,9 @@
 // #define PGSD_USE_MMAP 1
 #define PGSD_USE_MMAP 0
 
+// for sys/mman.h and mmap see:
+// https://pubs.opengroup.org/onlinepubs/000095399/functions/mmap.html
+
 #endif
 
 #ifdef __APPLE__
@@ -662,10 +665,12 @@ inline static int pgsd_index_buffer_map(struct pgsd_index_buffer* buf, struct pg
         printf("index allocate failed\n");
         return retval;
         }
-
+    printf("index buffer allocated");
     // size_t bytes_read = sizeof(struct pgsd_index_entry)* handle->header.index_allocated_entries;
+    MPI_File_get_size(handle->fh, &(handle->header.index_location));
+    MPI_File_seek(handle->fh, 0, MPI_SEEK_END);
+    MPI_Barrier(MPI_COMM_WORLD);
     MPI_File_read_at(handle->fh, handle->header.index_location, buf->data, sizeof(struct pgsd_index_entry)* handle->header.index_allocated_entries, MPI_BYTE, MPI_STATUS_IGNORE);
-
 
     // ssize_t bytes_read = pgsd_io_pread_retry(handle->fd,
     //                                         buf->data,
@@ -1621,6 +1626,7 @@ pgsd_initialize_handle(struct pgsd_handle* handle)
     printf("Get Size!\n");
     MPI_File_get_size(handle->fh, &(handle->file_size));
     printf("File see end !\n");
+    MPI_Barrier(MPI_COMM_WORLD);
     MPI_File_seek(handle->fh, 0, MPI_SEEK_END);
     // printf("rank %i: File see end correct!\n", rank);
     

@@ -654,7 +654,12 @@ void GSDDumpWriterMPI::writeAttributes(GSDDumpWriterMPI::PGSDFrame& frame)
     all_gather_v(N, part_distribution, MPI_COMM_WORLD);
     part_offset = std::accumulate(part_distribution.begin(), part_distribution.begin()+rank, 0);
 
-    printf("part_distribution [0], [1] %i, %i\n", part_distribution[0], part_distribution[1]);
+    printf("rank %i part_distribution [rank] %i\n", rank, part_distribution[rank]);
+
+    int i;
+    for(i = 0; i < size; i++){
+        printf("Rank %i, part_distribution [%i] %i\n", rank, i, part_distribution[i]);
+    }
 
     printf("GSDDumpWriterMPI write attribute: rank %i\n", rank);
     printf("GSDDumpWriterMPI write attribute: N %i\n", N);
