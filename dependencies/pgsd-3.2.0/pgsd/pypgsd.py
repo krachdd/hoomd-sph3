@@ -106,6 +106,7 @@ class PGSDFile(object):
         self.__file = file
 
         logger.info('opening file: ' + str(file))
+        print('opening file: ' + str(file))
 
         # read the header
         self.__file.seek(0)
@@ -146,6 +147,7 @@ class PGSDFile(object):
 
         for name in names:
             sname = name.decode('utf-8')
+            print(f'Init PGSDFile: sname{sname}')
             if len(sname) != 0:
                 self.__namelist[sname] = c
                 c = c + 1
@@ -205,6 +207,7 @@ class PGSDFile(object):
         """
         if self.__is_open:
             logger.info('closing file: ' + str(self.__file))
+            print('closing file: ' + str(self.__file))
             self.__handle = None
             self.__index = None
             self.__namelist = None

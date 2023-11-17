@@ -26,7 +26,6 @@ t = pgsd.hoomd.HOOMDTrajectory(f)
 count = 0
 for snapshot in t:
    count += 1
-   print(count)
    
    pname = sys.argv[1].replace('.gsd','')
    

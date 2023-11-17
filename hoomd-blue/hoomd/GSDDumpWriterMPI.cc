@@ -513,7 +513,7 @@ void GSDDumpWriterMPI::write(GSDDumpWriterMPI::PGSDFrame& frame, pybind11::dict 
     // if (m_exec_conf->isRoot())
     //     {
     m_exec_conf->msg->notice(10) << "PGSD: ending frame " << m_nframes << endl;
-    
+    MPI_Barrier(MPI_COMM_WORLD);
     int retval = pgsd_end_frame(&m_handle);
     PGSDUtils::checkError(retval, m_fname);
         // }

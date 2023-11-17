@@ -108,6 +108,7 @@ z = z[offset:offset+n_particles_rank]
 
 positions = np.array((x.ravel(), y.ravel(), z.ravel())).T
 tids      = tids[offset:offset+n_particles_rank]
+print(f'{np.unique(tids)} unique tids')
 print(positions.shape)
 
 velocities = np.zeros((positions.shape[0], positions.shape[1]), dtype = np.float32)

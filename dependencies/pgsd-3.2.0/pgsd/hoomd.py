@@ -497,7 +497,7 @@ class Frame(object):
         self.state = {}
         self.log = {}
         self.num_procs = num_procs; # added DK 
-        self.part_dist = numpy.zeros(num_procs); # added DK
+        # self.part_dist = numpy.zeros(num_procs); # added DK
 
         # self._valid_state = [
         #     'hpmc/integrate/d',
@@ -750,6 +750,7 @@ class HOOMDTrajectory(object):
         self._initial_frame = None
 
         logger.info('opening HOOMDTrajectory: ' + str(self.file))
+        print('opening HOOMDTrajectory: ' + str(self.file))
 
         if self.file.schema != 'hoomd':
             raise RuntimeError('PGSD file is not a hoomd schema file: '
@@ -763,6 +764,7 @@ class HOOMDTrajectory(object):
                                + str(version) + ' in: ' + str(self.file))
 
         logger.info('found ' + str(len(self)) + ' frames')
+        print('found ' + str(len(self)) + ' frames')
 
     @property
     def file(self):
@@ -786,78 +788,81 @@ class HOOMDTrajectory(object):
         frame. If it is the same, do not write it out as it can be instantiated
         either from the value at the initial frame or the default value.
         """
-        logger.debug('Appending frame to hoomd trajectory: '
-                     + str(self.file))
+        raise NotImplementedError('Python Interface only implemented for single core reading of gsd files.')
+        # logger.debug('Appending frame to hoomd trajectory: '
+        #              + str(self.file))
 
-        frame.validate()
+        # frame.validate()
 
-        rank = MPI.COMM_WORLD.Get_rank(); # added DK
-        size = MPI.COMM_WORLD.Get_rank();
+        # rank = MPI.COMM_WORLD.Get_rank(); # added DK
+        # size = MPI.COMM_WORLD.Get_rank();
 
-        # want the initial frame specified as a reference to detect if chunks
-        # need to be written
-        if self._initial_frame is None and len(self) > 0:
-            self._read_frame(0)
+        # # want the initial frame specified as a reference to detect if chunks
+        # # need to be written
+        # if self._initial_frame is None and len(self) > 0:
+        #     self._read_frame(0)
 
-        for path in [
-                'configuration',
-                'particles',
-                # 'bonds',
-                # 'angles',
-                # 'dihedrals',
-                # 'impropers',
-                'constraints',
-                # 'pairs',
-        ]:
-            container = getattr(frame, path)
-            for name in container._default_value:
-                if self._should_write(path, name, frame):
-                    logger.debug('writing data chunk: ' + path + '/' + name)
+        # for path in [
+        #         'configuration',
+        #         'particles',
+        #         # 'bonds',
+        #         # 'angles',
+        #         # 'dihedrals',
+        #         # 'impropers',
+        #         'constraints',
+        #         # 'pairs',
+        # ]:
+        #     container = getattr(frame, path)
+        #     for name in container._default_value:
+        #         if self._should_write(path, name, frame):
+        #             logger.debug('writing data chunk: ' + path + '/' + name)
                     
-                    write_all = True # added DK
-                    offset = frame.part_dist;
+        #             write_all = True # added DK
+        #             offset = frame.part_dist;
+        #             print(f'offset: {offset}')
+        #             print(f'frame.part_dist: {frame.part_dist}')
                     
-                    data = getattr(container, name)
+        #             data = getattr(container, name)
 
-                    if name == 'box': # added DK
-                        offset = None;
-                        write_all = False;
+        #             if name == 'box': # added DK
+        #                 offset = None;
+        #                 write_all = False;
 
-                    if name == 'N':
-                        data = frame.part_dist.sum()
-                        data = numpy.array([data], dtype=numpy.uint32);
-                        write_all = False;
-                        offset = None;
-                    if name == 'step':
-                        data = numpy.array([data], dtype=numpy.uint64);
-                        write_all = False;
-                        offset = None;
-                    if name == 'dimensions':
-                        data = numpy.array([data], dtype=numpy.uint8);
-                        write_all = False;
-                        offset = None;
-                    if name in ('types', 'type_shapes'):
-                        write_all = False;
-                        offset = None;
-                        if name == 'type_shapes':
-                            data = [
-                                json.dumps(shape_dict) for shape_dict in data
-                            ]
-                        wid = max(len(w) for w in data) + 1
-                        b = numpy.array(data, dtype=numpy.dtype((bytes, wid)))
-                        data = b.view(dtype=numpy.int8).reshape(len(b), wid)
-                    MPI.COMM_WORLD.Barrier()
-                    self.file.write_chunk(path + '/' + name, offset, rank, write_all, data)
+        #             if name == 'N':
+        #                 data = frame.part_dist.sum()
+        #                 data = numpy.array([data], dtype=numpy.uint32);
+        #                 write_all = False;
+        #                 offset = None;
+        #             if name == 'step':
+        #                 data = numpy.array([data], dtype=numpy.uint64);
+        #                 write_all = False;
+        #                 offset = None;
+        #             if name == 'dimensions':
+        #                 data = numpy.array([data], dtype=numpy.uint8);
+        #                 write_all = False;
+        #                 offset = None;
+        #             if name in ('types', 'type_shapes'):
+        #                 write_all = False;
+        #                 offset = None;
+        #                 if name == 'type_shapes':
+        #                     data = [
+        #                         json.dumps(shape_dict) for shape_dict in data
+        #                     ]
+        #                 wid = max(len(w) for w in data) + 1
+        #                 b = numpy.array(data, dtype=numpy.dtype((bytes, wid)))
+        #                 data = b.view(dtype=numpy.int8).reshape(len(b), wid)
+        #             MPI.COMM_WORLD.Barrier()
+        #             self.file.write_chunk(path + '/' + name, offset, rank, write_all, data)
 
-        # # write state data
-        # for state, data in frame.state.items():
-        #     self.file.write_chunk('state/' + state, data)
+        # # # write state data
+        # # for state, data in frame.state.items():
+        # #     self.file.write_chunk('state/' + state, data)
 
-        # write log data
-        for log, data in frame.log.items():
-            self.file.write_chunk('log/' + log, data)
+        # # write log data
+        # for log, data in frame.log.items():
+        #     self.file.write_chunk('log/' + log, data)
 
-        self.file.end_frame()
+        # self.file.end_frame()
 
     # def truncate(self):
     #     """Remove all frames from the file."""
@@ -871,7 +876,7 @@ class HOOMDTrajectory(object):
 
     def _should_write(self, path, name, frame):
         """Test if we should write a given data chunk.
-
+    
         Args:
             path (str): Path part of the data chunk.
             name (str): Name part of the data chunk.
@@ -881,34 +886,35 @@ class HOOMDTrajectory(object):
             False if the data matches that in the initial frame. False
             if the data matches all default values. True otherwise.
         """
-        container = getattr(frame, path)
-        data = getattr(container, name)
+        raise NotImplementedError('Python Interface only implemented for single core reading of gsd files.')
+        # container = getattr(frame, path)
+        # data = getattr(container, name)
 
-        if data is None:
-            return False
+        # if data is None:
+        #     return False
 
-        if self._initial_frame is not None:
-            initial_container = getattr(self._initial_frame, path)
-            initial_data = getattr(initial_container, name)
-            if numpy.array_equal(initial_data, data):
-                logger.debug('skipping data chunk, matches frame 0: ' + path
-                             + '/' + name)
-                return False
+        # if self._initial_frame is not None:
+        #     initial_container = getattr(self._initial_frame, path)
+        #     initial_data = getattr(initial_container, name)
+        #     if numpy.array_equal(initial_data, data):
+        #         logger.debug('skipping data chunk, matches frame 0: ' + path
+        #                      + '/' + name)
+        #         return False
 
-        matches_default_value = False
-        if name == 'types':
-            matches_default_value = data == container._default_value[name]
-        else:
-            matches_default_value = numpy.array_equiv(
-                data, container._default_value[name])
+        # matches_default_value = False
+        # if name == 'types':
+        #     matches_default_value = data == container._default_value[name]
+        # else:
+        #     matches_default_value = numpy.array_equiv(
+        #         data, container._default_value[name])
 
-        if matches_default_value \
-                and not self.file.chunk_exists(frame=0, name=path + '/' + name, write_all=False):
-            logger.debug('skipping data chunk, default value: ' + path + '/'
-                         + name)
-            return False
+        # if matches_default_value \
+        #         and not self.file.chunk_exists(frame=0, name=path + '/' + name, write_all=False):
+        #     logger.debug('skipping data chunk, default value: ' + path + '/'
+        #                  + name)
+        #     return False
 
-        return True
+        # return True
 
     def extend(self, iterable):
         """Append each item of the iterable to the file.
@@ -1078,6 +1084,8 @@ class HOOMDTrajectory(object):
                                                                     name=path + '/' + name,
                                                                     offset = c_offset,
                                                                     r_all = False)
+                    print(f'Name: {name} size {container.__dict__[name].shape}')
+                    numpy.savetxt(f'{name}.txt', container.__dict__[name])
                 else:
                     if (self._initial_frame is not None
                             and initial_frame_container.N == container.N):

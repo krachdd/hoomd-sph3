@@ -271,6 +271,7 @@ class PGSD(Writer):
             raise ValueError(f"Invalid PGSD.write file mode: {mode}")
 
         print('Set writer to GSDDumpWriterMPI')
+        # Last Argument is truncate -> is not implemented 
         writer = _hoomd.GSDDumpWriterMPI(state._cpp_sys_def, Periodic(1),
                                       str(filename), state._get_group(filter),
                                       mode, False)
