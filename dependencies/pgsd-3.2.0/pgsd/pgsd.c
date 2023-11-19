@@ -635,16 +635,10 @@ inline static int pgsd_index_buffer_map(struct pgsd_index_buffer* buf, struct pg
     printf("index buffer map: buffer correct\n");
 
 #if PGSD_USE_MMAP
-    printf("index buffer map: use mmap\n");
     // map the index in read only mode
     size_t page_size = getpagesize();
-    printf("index buffer map: pagesizes %ld\n", page_size);
     size_t index_size = sizeof(struct pgsd_index_entry) * handle->header.index_allocated_entries;
-    printf("index buffer map: sindexizes %ld\n", index_size);
     size_t offset = (handle->header.index_location / page_size) * page_size;
-    printf("index buffer map: offset %ld\n", offset);
-    printf("index buffer map: index_size + (handle->header.index_location - offset) %ld\n", index_size + (handle->header.index_location - offset));
-    printf("index buffer map: handle->header.index_location %ld\n", handle->header.index_location);
     buf->mapped_data = mmap(NULL,
                             index_size + (handle->header.index_location - offset),
                             PROT_READ,
@@ -657,8 +651,6 @@ inline static int pgsd_index_buffer_map(struct pgsd_index_buffer* buf, struct pg
         return PGSD_ERROR_IO;
         }
 
-    printf("index buffer map: mmap success\n");
-
     buf->data = (struct pgsd_index_entry*)(((char*)buf->mapped_data)
                                           + (handle->header.index_location - offset));
 
@@ -669,15 +661,14 @@ inline static int pgsd_index_buffer_map(struct pgsd_index_buffer* buf, struct pg
     int retval = pgsd_index_buffer_allocate(buf, handle->header.index_allocated_entries);
     if (retval != PGSD_SUCCESS)
         {
-        printf("index allocate failed\n");
         return retval;
         }
-    printf("index buffer allocated");
     // size_t bytes_read = sizeof(struct pgsd_index_entry)* handle->header.index_allocated_entries;
     // MPI_File_get_size(handle->fh, &(handle->header.index_location));
     // MPI_File_seek(handle->fh, 0, MPI_SEEK_END);
     // MPI_Barrier(MPI_COMM_WORLD);
-    
+    MPI_Barrier(MPI_COMM_WORLD);
+    MPI_File_seek(handle->fh, handle->header.index_location, MPI_SEEK_SET);
     MPI_File_read_at(handle->fh, handle->header.index_location, buf->data, sizeof(struct pgsd_index_entry)* handle->header.index_allocated_entries, MPI_BYTE, MPI_STATUS_IGNORE);
 
     // ssize_t bytes_read = pgsd_io_pread_retry(handle->fd,
@@ -790,7 +781,8 @@ inline static int pgsd_index_buffer_free(struct pgsd_index_buffer* buf)
 
     @returns PGSD_SUCCESS on success, PGSD_* error codes on error.
 
-    DK : per rank
+    DK : only used on rank 0 since:
+        N_global and M_global are entries in index (see write chunk)
 */
 inline static int pgsd_index_buffer_add(struct pgsd_index_buffer* buf, struct pgsd_index_entry** entry)
     {
@@ -1183,9 +1175,11 @@ inline static int pgsd_flush_write_buffer(struct pgsd_handle* handle)
         root = true;
     }
 
+    printf("rank %i before MPI_Allgather\n", rank);
     size_t allbuffers[nprocs];
     MPI_Allgather(&handle->write_buffer.size, 1, MPI_UNSIGNED_LONG, allbuffers, 1, MPI_UNSIGNED_LONG, MPI_COMM_WORLD);
     // printf("rank %i allbuffers %lu\n", rank, allbuffers[rank]);
+    printf("rank %i nach MPI_Allgather\n", rank);
 
     
     // handle->write_buffer.size
@@ -1433,6 +1427,9 @@ inline static int pgsd_flush_name_buffer(struct pgsd_handle* handle)
       - PGSD_ERROR_IO: IO error (check errno).
       - PGSD_ERROR_MEMORY_ALLOCATION_FAILED: Unable to allocate memory.
       - PGSD_ERROR_FILE_MUST_BE_WRITABLE: File must not be read only.
+
+    DK : Append name is only used within a root loop
+         names should only be appended once
 */
 inline static int pgsd_append_name(uint16_t* id, struct pgsd_handle* handle, const char* name)
     {
@@ -2224,7 +2221,7 @@ int pgsd_flush(struct pgsd_handle* handle)
     if( rank == 0 ){
         root = true;
     }
-
+    printf("Rank %i flush name buffer \n", rank);
     // flush the namelist buffer
     int retval = pgsd_flush_name_buffer(handle);
     if (retval != PGSD_SUCCESS)
@@ -2232,12 +2229,14 @@ int pgsd_flush(struct pgsd_handle* handle)
         return retval;
         }
 
+    printf("Rank %i flush write buffer \n", rank);
     // flush the write buffer
     retval = pgsd_flush_write_buffer(handle);
     if (retval != PGSD_SUCCESS)
         {
         return retval;
         }
+    printf("Rank %i done flush write buffer \n", rank);
 
     // sync the data before writing the index
     // retval = fsync(handle->fh);
@@ -2245,6 +2244,9 @@ int pgsd_flush(struct pgsd_handle* handle)
     //     {
     //     return PGSD_ERROR_IO;
     //     }
+
+    // Wait for all since index buffer is sorted in here
+    MPI_Barrier(MPI_COMM_WORLD);
     if ( root == true ){
         // Write the frame index to the file, excluding the index entries that are part of the current
         // frame.
@@ -2450,6 +2452,7 @@ int pgsd_write_chunk(struct pgsd_handle* handle,
             return PGSD_ERROR_IO;
             }
 
+        MPI_Barrier(MPI_COMM_WORLD);
         // update the file_size in the handle
         handle->file_size += bytes_written;
         }

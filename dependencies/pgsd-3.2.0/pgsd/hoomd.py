@@ -1085,7 +1085,8 @@ class HOOMDTrajectory(object):
                                                                     offset = c_offset,
                                                                     r_all = False)
                     print(f'Name: {name} size {container.__dict__[name].shape}')
-                    numpy.savetxt(f'{name}.txt', container.__dict__[name])
+                    # DK for tests save all fields to txt files
+                    # numpy.savetxt(f'{name}.txt', container.__dict__[name])
                 else:
                     if (self._initial_frame is not None
                             and initial_frame_container.N == container.N):

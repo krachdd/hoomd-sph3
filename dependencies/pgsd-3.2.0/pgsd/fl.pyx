@@ -772,6 +772,7 @@ cdef class PGSDFile:
         cdef const libpgsd.pgsd_index_entry* index_entry
         cdef char * c_name
         name_e = name.encode('utf-8')
+        print("in file fl.pyx name: " +str(name_e))
         c_name = name_e
         cdef int64_t c_frame
         c_frame = frame
@@ -789,6 +790,8 @@ cdef class PGSDFile:
 
         cdef libpgsd.pgsd_type pgsd_type
         pgsd_type = <libpgsd.pgsd_type>index_entry.type
+        print("in file fl.pyx pgsd_type: " +str(pgsd_type))
+
 
         cdef void *data_ptr
         if pgsd_type == libpgsd.PGSD_TYPE_UINT8:
