@@ -14,7 +14,7 @@ import gsd.hoomd
 # ------------------------------------------------------------
 
 
-def delete_solids(sim, device, kernel, dt, mu, DX, rho0):
+def delete_fluids(sim, device, kernel, dt, mu, DX, rho0):
     """
     
 
@@ -42,7 +42,8 @@ def delete_solids(sim, device, kernel, dt, mu, DX, rho0):
     """
 
     # Some additional parameters
-    densitymethod = 'CONTINUITY'
+    #densitymethod = 'CONTINUITY'
+    densitymethod = 'SUMMATION'
 
 
     # Kernel
@@ -59,11 +60,6 @@ def delete_solids(sim, device, kernel, dt, mu, DX, rho0):
     EOS = hoomd.sph.eos.Linear()
     EOS.set_params(rho0 ,0.01)
 
-    # # Define groups/filters
-    # filterFLUID  = hoomd.filter.Type(['F']) # is zero
-    # filterSOLID  = hoomd.filter.Type(['S']) # is one
-    # filterAll    = hoomd.filter.All()
-
     # Define groups/filters
     filterFLUID  = hoomd.filter.Type(['F1','F2']) # is zero
     filterSOLID  = hoomd.filter.Type(['S']) # is one
@@ -71,13 +67,15 @@ def delete_solids(sim, device, kernel, dt, mu, DX, rho0):
 
 
     # Set up SPH solver
-    model = hoomd.sph.sphmodel.SinglePhaseFlow(kernel = Kernel,
+    model = hoomd.sph.sphmodel.SinglePhaseFlowNN(kernel = Kernel,
                                                eos    = EOS,
                                                nlist  = NList,
                                                fluidgroup_filter = filterFLUID,
                                                solidgroup_filter = filterSOLID)
 
-    model.mu = mu
+    model.mu0 = mu
+    model.tau0 = 100.0
+    model.m = 5
     model.densitymethod = densitymethod
     model.gx = 0.0000001
     model.damp = 1000
@@ -109,7 +107,12 @@ def delete_solids(sim, device, kernel, dt, mu, DX, rho0):
 
     with sim.state.cpu_local_snapshot as data:
         for i in range(len(data.particles.position)):
-            # print(data.particles.mass[i])
+            # print('mass:',data.particles.mass[i])
+            # print('typeid:',data.particles.typeid[i],'\n')
+            if data.particles.typeid[i] == 0 and data.particles.mass[i] == -999:
+                tags.append(data.particles.tag[i])
+                # print(f'Rank: {device.communicator.rank} -> Delete Particle {data.particles.tag[i]}')
+                deleted += 1
             if data.particles.typeid[i] == 1 and data.particles.mass[i] == -999:
                 tags.append(data.particles.tag[i])
                 # print(f'Rank: {device.communicator.rank} -> Delete Particle {data.particles.tag[i]}')
@@ -122,7 +125,7 @@ def delete_solids(sim, device, kernel, dt, mu, DX, rho0):
 
     device.communicator.barrier_all()
 
-    print(f'Rank {device.communicator.rank}: {deleted} unnecessary solid particles deleted.')
+    print(f'Rank {device.communicator.rank}: {deleted} fluid particles deleted.')
 
 
     return sim, deleted

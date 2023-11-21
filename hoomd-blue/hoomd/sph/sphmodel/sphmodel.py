@@ -794,13 +794,6 @@ class SinglePhaseFlowNN(SPHModel):
         #self._cpp_obj.setRCut(('S', 'F'), rcut)
         self._cpp_obj.setRCut(('S', 'S'), rcut)
         self._cpp_obj.setRCut(('F', 'F'), rcut)
-        ## For different TIDs
-        # self._cpp_obj.setRCut(('F1', 'S'), rcut)
-        # self._cpp_obj.setRCut(('F2', 'S'), rcut)
-        # self._cpp_obj.setRCut(('S', 'S'), rcut)
-        # self._cpp_obj.setRCut(('F1', 'F1'), rcut)
-        # self._cpp_obj.setRCut(('F1', 'F2'), rcut)
-        # self._cpp_obj.setRCut(('F2', 'F2'), rcut)
 
     # @property
     def densitymethod(self):
