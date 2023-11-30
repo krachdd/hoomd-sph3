@@ -59,16 +59,10 @@ def delete_solids(sim, device, kernel, dt, mu, DX, rho0):
     EOS = hoomd.sph.eos.Linear()
     EOS.set_params(rho0 ,0.01)
 
-    # # Define groups/filters
-    # filterFLUID  = hoomd.filter.Type(['F']) # is zero
-    # filterSOLID  = hoomd.filter.Type(['S']) # is one
-    # filterAll    = hoomd.filter.All()
-
     # Define groups/filters
-    filterFLUID  = hoomd.filter.Type(['F1','F2']) # is zero
+    filterFLUID  = hoomd.filter.Type(['F']) # is zero
     filterSOLID  = hoomd.filter.Type(['S']) # is one
-    filterall    = hoomd.filter.All()
-
+    filterAll    = hoomd.filter.All()
 
     # Set up SPH solver
     model = hoomd.sph.sphmodel.SinglePhaseFlow(kernel = Kernel,

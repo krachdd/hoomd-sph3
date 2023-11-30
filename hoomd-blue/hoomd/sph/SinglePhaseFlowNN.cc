@@ -1411,10 +1411,7 @@ void SinglePhaseFlowNN<KT_, SET_>::forcecomputation(uint64_t timestep)
                     }
 
                 // Compute density rate of change
-                // std::cout << "Compute density rate of change: rhoi " << rhoi << " Vj " << Vj << " dot(dv,dwdr_r*dx) " << dot(dv,dwdr_r*dx) << std::endl;
                 h_ratedpe.data[i].x += rhoi*Vj*dot(dv,dwdr_r*dx);
-                // std::cout << "Compute density rate of change: h_ratedpe.data[i].x " << h_ratedpe.data[i].x << std::endl;
-
                 //h_ratedpe.data[i].x += mj*dot(dv,dwdr_r*dx);
 
                 // Add density diffusion if requested

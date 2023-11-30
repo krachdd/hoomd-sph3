@@ -533,22 +533,29 @@ class SinglePhaseFlow(SPHModel):
         # Speed of sound
         # CFL condition
         C2_1 = UREF*UREF/DRHO
+        print('C2_1:',C2_1)
         # Gravity waves condition
         C2_2 = GMAG*LREF/DRHO
+        print('C2_2:',C2_2)
         # Fourier condition
         C2_3 = (MU*UREF)/(RHO0*LREF*DRHO)
+        print('C2_3:',C2_3)
         # Maximum speed of sound
         C = np.sqrt(np.max([C2_1,C2_2,C2_3]))
+        print('C:',C)
         self.eos.set_speedofsound(C)
 
         # CFL condition
         # DT_1 = 0.25*H/C
         DT_1 = 0.25*DX/C
+        print('DT_1:',DT_1)
         # Fourier condition
         DT_2 = (DX*DX*RHO0)/(8.0*MU)
+        print('DT_2:',DT_2)
         if GMAG > 0.0:
             # Gravity waves condition
             DT_3 = np.sqrt(H/(16.0*GMAG))
+            print('DT_3:',DT_3)
             return COURANT*np.min([DT_1,DT_2,DT_3])
         else:
             return COURANT*np.min([DT_1,DT_2])
