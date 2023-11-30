@@ -36,13 +36,16 @@ ParticleGroup::ParticleGroup(std::shared_ptr<SystemDefinition> sysdef,
       m_global_ptl_num_change(false), m_selector(selector), m_update_tags(update_tags),
       m_warning_printed(false)
     {
+    std::cout << "PARTICLE GROUP !" << std::endl;
 #ifdef ENABLE_HIP
     if (m_pdata->getExecConf()->isCUDAEnabled())
         m_gpu_partition = GPUPartition(m_exec_conf->getGPUIds());
 #endif
+    std::cout << "ParticleGroup: before uprate member rank:" << m_pdata->getExecConf()->getRank() << " N " << m_pdata->getN() << std::endl;
 
     // update member tag arrays
     updateMemberTags(true);
+    std::cout << "ParticleGroup: after uprate member rank:" << m_pdata->getExecConf()->getRank() << " N " << m_pdata->getN() << std::endl;
 
     // connect to the particle sort signal
     m_pdata->getParticleSortSignal().connect<ParticleGroup, &ParticleGroup::slotParticleSort>(this);
@@ -71,6 +74,7 @@ ParticleGroup::ParticleGroup(std::shared_ptr<SystemDefinition> sysdef,
       m_global_ptl_num_change(false), m_update_tags(false), m_warning_printed(false)
     {
     // check input
+    std::cout << "PARTICLE GROUP check input!" << std::endl;
     unsigned int max_tag = m_pdata->getMaximumTag();
     for (std::vector<unsigned int>::const_iterator it = member_tags.begin();
          it != member_tags.end();
@@ -83,6 +87,7 @@ ParticleGroup::ParticleGroup(std::shared_ptr<SystemDefinition> sysdef,
             throw std::runtime_error("Error creating ParticleGroup\n");
             }
         }
+
 
 #ifdef ENABLE_MPI
     if (m_pdata->getDomainDecomposition())
@@ -537,6 +542,7 @@ void ParticleGroup::rebuildIndexList()
     {
     // notice message
     m_pdata->getExecConf()->msg->notice(10) << "ParticleGroup: rebuilding index" << std::endl;
+    std::cout << "ParticleGroup: rebuildung index rank:" << m_pdata->getExecConf()->getRank() << " N " << m_pdata->getN() << std::endl;
 
 #ifdef ENABLE_HIP
     if (m_pdata->getExecConf()->isCUDAEnabled())
@@ -572,9 +578,11 @@ void ParticleGroup::rebuildIndexList()
                 cur_member++;
                 }
             }
-
         m_num_local_members = cur_member;
+        std::cout << "ParticleGroup: rebuildung index rank:" << m_pdata->getExecConf()->getRank() << " m_num_local_members " << m_num_local_members << std::endl;
+
         assert(m_num_local_members <= m_member_tags.getNumElements());
+        
         }
 
     // index has been rebuilt

@@ -112,21 +112,48 @@ bool GSDReaderMPI::readChunk(void* data,
                           const char* name,
                           size_t expected_size,
                           unsigned int cur_n,
-                          uint32_t *offset)
+                          uint32_t N_local, 
+                          uint32_t M_local,
+                          uint32_t offset, 
+                          bool all)
     {
+
     const struct pgsd_index_entry* entry = pgsd_find_chunk(&m_handle, frame, name);
-    if (entry == NULL && frame != 0)
+    
+    bool empty_entry_indicator = false;
+    if (entry == NULL && frame != 0 && is_root() )
+        empty_entry_indicator = true;
+    MPI_Bcast(&empty_entry_indicator, 1, MPI_C_BOOL, 0, MPI_COMM_WORLD);
+
+    if ( empty_entry_indicator == true)
         entry = pgsd_find_chunk(&m_handle, 0, name);
 
-    if (entry == NULL || (cur_n != 0 && entry->N != cur_n))
+    empty_entry_indicator = false;
+    if (entry == NULL && frame != 0 && is_root() )
+        empty_entry_indicator = true;
+    MPI_Bcast(&empty_entry_indicator, 1, MPI_C_BOOL, 0, MPI_COMM_WORLD);
+
+    size_t m_N;
+    uint8_t m_type;
+
+    if ( is_root() )
+        {
+        m_N = entry->N;
+        m_type = entry->type;
+        }
+    MPI_Bcast(&m_N, 1, my_MPI_SIZE_T, 0, MPI_COMM_WORLD);
+    MPI_Bcast(&m_type, 1, MPI_UINT8_T, 0, MPI_COMM_WORLD);
+
+    if (empty_entry_indicator == true || (cur_n != 0 && m_N != cur_n))
         {
         m_exec_conf->msg->notice(10) << "data.pgsd_snapshot: chunk not found " << name << endl;
         return false;
         }
+
     else
         {
         m_exec_conf->msg->notice(7) << "data.pgsd_snapshot: reading chunk " << name << endl;
-        size_t actual_size = entry->N * entry->M * pgsd_sizeof_type((enum pgsd_type)entry->type);
+        size_t actual_size = N_local * M_local * pgsd_sizeof_type((enum pgsd_type)m_type);
         if (actual_size != expected_size)
             {
             std::ostringstream s;
@@ -134,7 +161,8 @@ bool GSDReaderMPI::readChunk(void* data,
               << actual_size << ".";
             throw runtime_error(s.str());
             }
-        int retval = pgsd_read_chunk(&m_handle, data, entry, offset, true);
+
+        int retval = pgsd_read_chunk(&m_handle, data, entry, N_local, M_local, offset, all);
         PGSDUtils::checkError(retval, m_name);
 
         return true;
@@ -161,23 +189,49 @@ std::vector<std::string> GSDReaderMPI::readTypes(uint64_t frame, const char* nam
         type_mapping.push_back("A");
 
     const struct pgsd_index_entry* entry = pgsd_find_chunk(&m_handle, frame, name);
-    if (entry == NULL && frame != 0)
-        entry = pgsd_find_chunk(&m_handle, 0, name);
 
-    if (entry == NULL)
+    bool empty_entry_indicator = false;
+    if (entry == NULL && frame != 0 && is_root() )
+        empty_entry_indicator = true;
+    MPI_Bcast(&empty_entry_indicator, 1, MPI_C_BOOL, 0, MPI_COMM_WORLD);
+
+    if ( empty_entry_indicator == true )
+        entry = pgsd_find_chunk(&m_handle, 0, name);
+    
+    empty_entry_indicator = false;
+    
+    if (entry == NULL && is_root() )
+        empty_entry_indicator = true;
+
+    MPI_Bcast(&empty_entry_indicator, 1, MPI_C_BOOL, 0, MPI_COMM_WORLD);
+
+    if ( empty_entry_indicator == true )
         return type_mapping;
     else
         {
-        size_t actual_size = entry->N * entry->M * pgsd_sizeof_type((enum pgsd_type)entry->type);
+        size_t m_N, m_M;
+        uint8_t m_type;
+
+        if ( is_root() )
+            {
+            m_N = entry->N;
+            m_type = entry->type;
+            }
+        MPI_Bcast(&m_N, 1, my_MPI_SIZE_T, 0, MPI_COMM_WORLD);
+        MPI_Bcast(&m_M, 1, my_MPI_SIZE_T, 0, MPI_COMM_WORLD);
+        MPI_Bcast(&m_type, 1, MPI_UINT8_T, 0, MPI_COMM_WORLD);
+        
+        size_t actual_size = m_N * m_M * pgsd_sizeof_type((enum pgsd_type)m_type);
+        
         std::vector<char> data(actual_size);
-        int retval = pgsd_read_chunk(&m_handle, &data[0], entry, NULL, true);
+        int retval = pgsd_read_chunk(&m_handle, &data[0], entry, m_N, m_M, 0, true);
         PGSDUtils::checkError(retval, m_name);
 
         type_mapping.clear();
-        for (unsigned int i = 0; i < entry->N; i++)
+        for (unsigned int i = 0; i < m_N; i++)
             {
-            size_t l = strnlen(&data[i * entry->M], entry->M);
-            type_mapping.push_back(std::string(&data[i * entry->M], l));
+            size_t l = strnlen(&data[i * m_M], m_M);
+            type_mapping.push_back(std::string(&data[i * m_M], l));
             }
         printf("types %i\n", type_mapping.size());
         return type_mapping;
@@ -188,17 +242,20 @@ std::vector<std::string> GSDReaderMPI::readTypes(uint64_t frame, const char* nam
  */
 void GSDReaderMPI::readHeader()
     {
-    readChunk(&m_timestep, m_frame, "configuration/step", 8);
+    uint32_t N_local = 1;
+    uint32_t M_local = 1;
+    unsigned int cur_n = 0;
+    readChunk(&m_timestep, m_frame, "configuration/step", 8, cur_n, N_local, M_local, 0, true);
     printf("Frame %i\n", m_frame);
     printf("Timestep %i\n", m_timestep);
     uint8_t dim = 3;
-    readChunk(&dim, m_frame, "configuration/dimensions", 1);
+    readChunk(&dim, m_frame, "configuration/dimensions", 1, cur_n, N_local, M_local, 0, true);
     printf("dim %i\n", dim);
 
     m_snapshot->dimensions = dim;
 
     float box[6] = {1.0f, 1.0f, 1.0f, 0.0f, 0.0f, 0.0f};
-    readChunk(&box, m_frame, "configuration/box", 6 * 4);
+    readChunk(&box, m_frame, "configuration/box", 6 * 4, cur_n, N_local, M_local, 0, true);
     // Set Lz, xz, and yz to 0 for 2D boxes. Needed for working with hoomd v 2 GSD files.
     if (dim == 2)
         {
@@ -210,7 +267,7 @@ void GSDReaderMPI::readHeader()
     m_snapshot->global_box->setTiltFactors(box[3], box[4], box[5]);
 
     unsigned int N = 0;
-    readChunk(&N, m_frame, "particles/N", 4);
+    readChunk(&N, m_frame, "particles/N", 4, cur_n, N_local, M_local, 0, true);
     if (N == 0)
         {
         std::ostringstream s;
@@ -242,42 +299,50 @@ void GSDReaderMPI::readHeader()
  */
 void GSDReaderMPI::readParticles()
     {
-    unsigned int N = m_snapshot->particle_data.size;
-    printf("Read types\n");
+    uint32_t N = m_snapshot->particle_data.size;
+
+    unsigned int rank = m_exec_conf->getRank();
+    unsigned int size = m_exec_conf->getNRanks();
+    int offset;
+
+    std::vector<unsigned int> part_distribution(size);
+    all_gather_v(N, part_distribution, MPI_COMM_WORLD);
+    offset = std::accumulate(part_distribution.begin(), part_distribution.begin()+rank, 0);
+    uint32_t N_global = std::accumulate(part_distribution.begin(), part_distribution.end(),0);
+
     m_snapshot->particle_data.type_mapping = readTypes(m_frame, "particles/types");
 
-    unsigned int N_global = std::accumulate(m_part_per_rank.begin(), m_part_per_rank.end(),0);
 
     // the snapshot already has default values, if a chunk is not found, the value
     // is already at the default, and the failed read is not a problem
-    readChunk(&m_snapshot->particle_data.type[0], m_frame, "particles/typeid", N * 4, N_global, &m_part_per_rank[0]);
-    readChunk(&m_snapshot->particle_data.mass[0], m_frame, "particles/mass", N * 4, N_global, &m_part_per_rank[0]);
-    readChunk(&m_snapshot->particle_data.slength[0], m_frame, "particles/slength", N * 4, N_global, &m_part_per_rank[0]);
-    // readChunk(&m_snapshot->particle_data.charge[0], m_frame, "particles/charge", N * 4, N_global, &m_part_per_rank[0]);
-    // readChunk(&m_snapshot->particle_data.diameter[0], m_frame, "particles/diameter", N * 4, N_global, &m_part_per_rank[0]);
-    readChunk(&m_snapshot->particle_data.body[0], m_frame, "particles/body", N * 4, N_global, &m_part_per_rank[0]);
+    readChunk(&m_snapshot->particle_data.type[0], m_frame, "particles/typeid", N * 4, N_global, N, 1, offset, true);
+    readChunk(&m_snapshot->particle_data.mass[0], m_frame, "particles/mass", N * 4, N_global, N, 1, offset, true);
+    readChunk(&m_snapshot->particle_data.slength[0], m_frame, "particles/slength", N * 4, N_global, N, 1, offset, true);
+    // readChunk(&m_snapshot->particle_data.charge[0], m_frame, "particles/charge", N * 4, N_global, N, , offset, true);
+    // readChunk(&m_snapshot->particle_data.diameter[0], m_frame, "particles/diameter", N * 4, N_global, N, , offset, true);
+    readChunk(&m_snapshot->particle_data.body[0], m_frame, "particles/body", N * 4, N_global, N, 1, offset, true);
     // readChunk(&m_snapshot->particle_data.inertia[0],
     //           m_frame,
     //           "particles/moment_inertia",
     //           N * 12,
-    //           N_global, &m_part_per_rank[0]);
-    readChunk(&m_snapshot->particle_data.pos[0], m_frame, "particles/position", N * 12, N_global, &m_part_per_rank[0]);
+    //           N_global, N, , offset, true);
+    readChunk(&m_snapshot->particle_data.pos[0], m_frame, "particles/position", N * 12, N_global, N, 3, offset, true);
     // readChunk(&m_snapshot->particle_data.orientation[0],
     //           m_frame,
     //           "particles/orientation",
     //           N * 16,
-    //           N_global, &m_part_per_rank[0]);
-    readChunk(&m_snapshot->particle_data.vel[0], m_frame, "particles/velocity", N * 12, N_global, &m_part_per_rank[0]);
-    // readChunk(&m_snapshot->particle_data.dpe[0], m_frame, "particles/dpe", N * 12, N_global, &m_part_per_rank[0]);
-    readChunk(&m_snapshot->particle_data.density[0], m_frame, "particles/density", N * 4, N_global, &m_part_per_rank[0]);
-    readChunk(&m_snapshot->particle_data.pressure[0], m_frame, "particles/pressure", N * 4, N_global, &m_part_per_rank[0]);
-    readChunk(&m_snapshot->particle_data.energy[0], m_frame, "particles/energy", N * 4, N_global, &m_part_per_rank[0]);
-    readChunk(&m_snapshot->particle_data.aux1[0], m_frame, "particles/auxiliary1", N * 12, N_global, &m_part_per_rank[0]);
-    readChunk(&m_snapshot->particle_data.aux2[0], m_frame, "particles/auxiliary2", N * 12, N_global, &m_part_per_rank[0]);
-    readChunk(&m_snapshot->particle_data.aux3[0], m_frame, "particles/auxiliary3", N * 12, N_global, &m_part_per_rank[0]);
-    readChunk(&m_snapshot->particle_data.aux4[0], m_frame, "particles/auxiliary4", N * 12, N_global, &m_part_per_rank[0]);
-    // readChunk(&m_snapshot->particle_data.angmom[0], m_frame, "particles/angmom", N * 16, N_global, &m_part_per_rank[0]);
-    readChunk(&m_snapshot->particle_data.image[0], m_frame, "particles/image", N * 12, N_global, &m_part_per_rank[0]);
+    //           N_global, N, , offset, true);
+    readChunk(&m_snapshot->particle_data.vel[0], m_frame, "particles/velocity", N * 12, N_global, N, 3, offset, true);
+    // readChunk(&m_snapshot->particle_data.dpe[0], m_frame, "particles/dpe", N * 12, N_global, N, , offset, true);
+    readChunk(&m_snapshot->particle_data.density[0], m_frame, "particles/density", N * 4, N_global, N, 1, offset, true);
+    readChunk(&m_snapshot->particle_data.pressure[0], m_frame, "particles/pressure", N * 4, N_global, N, 1, offset, true);
+    readChunk(&m_snapshot->particle_data.energy[0], m_frame, "particles/energy", N * 4, N_global, N, 1, offset, true);
+    readChunk(&m_snapshot->particle_data.aux1[0], m_frame, "particles/auxiliary1", N * 12, N_global, N, 3, offset, true);
+    readChunk(&m_snapshot->particle_data.aux2[0], m_frame, "particles/auxiliary2", N * 12, N_global, N, 3, offset, true);
+    readChunk(&m_snapshot->particle_data.aux3[0], m_frame, "particles/auxiliary3", N * 12, N_global, N, 3, offset, true);
+    readChunk(&m_snapshot->particle_data.aux4[0], m_frame, "particles/auxiliary4", N * 12, N_global, N, 3, offset, true);
+    // readChunk(&m_snapshot->particle_data.angmom[0], m_frame, "particles/angmom", N * 16, N_global, N, , offset, true);
+    readChunk(&m_snapshot->particle_data.image[0], m_frame, "particles/image", N * 12, N_global, N, 3, offset, true);
     }
 
 /*! Read the same data chunks for topology

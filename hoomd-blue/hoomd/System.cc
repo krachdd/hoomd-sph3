@@ -40,6 +40,7 @@ System::System(std::shared_ptr<SystemDefinition> sysdef, uint64_t initial_tstep)
     // sanity check
     assert(m_sysdef);
     m_exec_conf = m_sysdef->getParticleData()->getExecConf();
+    std::cout << "System: init, rank: " << m_exec_conf->getRank() << " N " << m_sysdef->getParticleData()->getN() << std::endl;
 
 #ifdef ENABLE_MPI
     // the initial time step is defined on the root processor

@@ -13,7 +13,7 @@ from mpi4py import MPI
 import math
 # import itertools
 from datetime import datetime
-import export_pgsd2vtu 
+# import export_pgsd2vtu 
 import read_input_fromtxt
 import delete_solids_initial_timestep
 import sys, os
@@ -26,7 +26,7 @@ import pgsd.hoomd
 # logging.basicConfig(filename='parallel_gsd.log', encoding='utf-8', level=logging.DEBUG)
 
 # device = hoomd.device.CPU(notice_level=2)
-device = hoomd.device.CPU(communicator, notice_level=10)
+device = hoomd.device.CPU(notice_level=10)
 sim = hoomd.Simulation(device=device)
 
 new_comm = MPI.COMM_WORLD
@@ -36,6 +36,7 @@ size = new_comm.Get_size()
 # rank = device.communicator.rank
 # size = device.communicator.num_ranks
 offset = 0
+
 
 # get stuff from input file
 infile = str(sys.argv[1])
@@ -78,6 +79,8 @@ tids = tids.flatten(order = 'F')
 rawf_handle.close()
 porosity = np.sum(tids)/(nx * ny * nz)
 
+
+
 # get rank specific parameters
 if n_particles != tids.shape[0]:
     raise ValueError('Number of particles does not match the number of Type IDs.')
@@ -108,6 +111,10 @@ z = z[offset:offset+n_particles_rank]
 
 positions = np.array((x.ravel(), y.ravel(), z.ravel())).T
 tids      = tids[offset:offset+n_particles_rank]
+
+print(f'rank {rank}: tids {tids}')
+
+
 print(f'{np.unique(tids)} unique tids')
 print(positions.shape)
 

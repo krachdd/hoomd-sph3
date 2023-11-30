@@ -461,8 +461,9 @@ void GSDDumpWriterMPI::analyze(uint64_t timestep)
 
         m_nframes = 0;
         }
-    m_exec_conf->msg->notice(5) << "GSDDumpWriterMPI Populate local frame" << endl;
+    m_exec_conf->msg->notice(5) << "GSDDumpWriterMPI before Populate local frame N_global, N " << m_group->getNumMembersGlobal() << " " << m_group->getNumMembers() << endl;
     populateLocalFrame(m_local_frame, timestep);
+    m_exec_conf->msg->notice(5) << "GSDDumpWriterMPI Populate local frame N_global, N " << m_group->getNumMembersGlobal() << " " << m_group->getNumMembers() << endl;
     auto log_data = getLogData();
     write(m_local_frame, log_data);
     }
@@ -669,11 +670,11 @@ void GSDDumpWriterMPI::writeAttributes(GSDDumpWriterMPI::PGSDFrame& frame)
         printf("Rank %i, part_distribution [%i] %i\n", rank, i, part_distribution[i]);
     }
 
-    printf("GSDDumpWriterMPI write attribute: rank %i\n", rank);
-    printf("GSDDumpWriterMPI write attribute: N %i\n", N);
-    printf("GSDDumpWriterMPI write attribute: N_global %i\n", N_global);
+    printf("GSDDumpWriterMPI write attributes: rank %i\n", rank);
+    printf("GSDDumpWriterMPI write attributes: N %i\n", N);
+    printf("GSDDumpWriterMPI write attributes: N_global %i\n", N_global);
 
-    printf("GSDDumpWriterMPI write attribute: part_offset %i\n", part_offset);
+    printf("GSDDumpWriterMPI write attributes: part_offset %i\n", part_offset);
 
     int retval;
 
