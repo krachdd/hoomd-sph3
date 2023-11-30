@@ -1,3 +1,6 @@
 [submodule "dependencies/pgsd-sph"]
 	path = dependencies/pgsd-sph
 	url = git@github.tik.uni-stuttgart.de:ac126015/pgsd-sph.git
+[submodule "dependencies/gsd-sph"]
+	path = dependencies/gsd-sph
+	url = git@github.tik.uni-stuttgart.de:ac126015/gsd-sph.git
