@@ -265,7 +265,7 @@ class PGSD(Writer):
 
         The valid file modes for `write` are ``'wb'`` and ``'xb'``.
         """
-        print('Start write in PGSD.write')
+        print(f'Start write in PGSD.write, logger = {logger}')
 
         if mode != 'wb' and mode != 'xb':
             raise ValueError(f"Invalid PGSD.write file mode: {mode}")
@@ -277,7 +277,9 @@ class PGSD(Writer):
                                       mode, False)
 
         if logger is not None:
-            writer.log_writer = _PGSDLogWriter(logger)
+            # writer.log_writer = _PGSDLogWriter(logger)
+            raise NotImplementedError('Used normal logger!')
+        print("Constructing GSD DUMP writer done! starting analyse\n")
         writer.analyze(state._simulation.timestep)
         writer.flush()
 

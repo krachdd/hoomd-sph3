@@ -1732,6 +1732,8 @@ void ParticleData::initializeFromDistrSnapshot(const SnapshotParticleData<Real>&
                                     << std::endl;
         }
 
+    unsigned int root = 0;
+
     std::cout << "Rank " << m_exec_conf->getRank() << " DistrSnapshot start " << snapshot.size << " " << getN()<< endl;
     // remove all ghost particles
     printf("Distributed Snapshot remove all ghosts\n");
@@ -1829,6 +1831,8 @@ void ParticleData::initializeFromDistrSnapshot(const SnapshotParticleData<Real>&
 
     std::cout << "Rank " << m_exec_conf->getRank() << " DistrSnapshot start done resizing " << snapshot.size << " " << getN() << " " << N_proc[0] << " " << pos_proc.size()<< endl;
 
+
+
     const Index3D& di = m_decomposition->getDomainIndexer();
     unsigned int n_ranks = m_exec_conf->getNRanks();
 
@@ -1840,7 +1844,6 @@ void ParticleData::initializeFromDistrSnapshot(const SnapshotParticleData<Real>&
          it++)
         {
         unsigned int snap_idx = (unsigned int)(it - snapshot.pos.begin());
-
         // if requested, do not initialize constituent particles of bodies
         if (ignore_bodies && snapshot.body[snap_idx] < MIN_FLOPPY
             && snapshot.body[snap_idx] != snap_idx)
@@ -1935,23 +1938,39 @@ void ParticleData::initializeFromDistrSnapshot(const SnapshotParticleData<Real>&
         // determine max typeid on root rank
         max_typeid = std::max(max_typeid, snapshot.type[snap_idx]);
         }
+    std::cout << "Rank " << m_exec_conf->getRank() << "max typeid " << max_typeid << std::endl;
     std::cout << "Rank " << m_exec_conf->getRank() << " DistrSnapshot done placing them in domain  " << snapshot.size << " " << getN() << " " << N_proc[my_rank] << endl;
+    
 
     printf("before get type mapping\n");
     // get type mapping
     m_type_mapping = snapshot.type_mapping;
 
+    if (my_rank != root)
+        {
+        m_type_mapping.clear();
+        }
+
+    // broadcast type mapping
+    bcast(m_type_mapping, root, mpi_comm);
+
     nglobal = std::accumulate(part_distribution.begin(),part_distribution.end(), 0);
+
     printf("rank %i print nglobal after typemapping%i\n", m_exec_conf->getRank(), nglobal);
     std::vector<unsigned int> num_part_recv(size, 0);
 
     MPI_Alltoall(&N_proc[0], 1, MPI_UNSIGNED, &num_part_recv[0], 1, MPI_UNSIGNED, mpi_comm);
     m_nparticles = std::accumulate(num_part_recv.begin(), num_part_recv.end(), 0);
-    std::cout << "Rank " << m_exec_conf->getRank() << " DistrSnapshot done placing them in domain  " << snapshot.size << " " << getN() << " " << num_part_recv[my_rank] << " " << m_nparticles << endl;
+    std::cout << "Rank " << m_exec_conf->getRank() << " DistrSnapshot done placing them in domain  " << snapshot.size << " " << getN() << " " << num_part_recv[my_rank] << " " << N_proc[0] << " " << N_proc[1]  <<" " << m_nparticles <<   endl;
 
     // resize array for reverse-lookup tags
     m_rtag.resize(nglobal);
     printf("Done get type mapping\n");
+
+    // for (unsigned int iii = 0; iii < type_proc[my_rank].size() ; iii++)
+    // {
+    //     std::cout << "Rank " << m_exec_conf->getRank() << " DistrSnapshot check type_proc  " << type_proc[my_rank][iii] << " " <<  endl;
+    // }
 
     // Local particle data
     std::vector<Scalar3> pos(m_nparticles);
@@ -1981,34 +2000,13 @@ void ParticleData::initializeFromDistrSnapshot(const SnapshotParticleData<Real>&
     MPI_Request send_req[17*size];
     MPI_Request recv_req[17*size];
 
-        // // distribute particle data
-        // scatter_v(pos_proc, pos, root, mpi_comm);
-        // scatter_v(vel_proc, vel, root, mpi_comm);
-        // scatter_v(dpe_proc, dpe, root, mpi_comm);
-        // scatter_v(aux1_proc, aux1, root, mpi_comm);
-        // scatter_v(aux2_proc, aux2, root, mpi_comm);
-        // scatter_v(aux3_proc, aux3, root, mpi_comm);
-        // scatter_v(aux4_proc, aux4, root, mpi_comm);
-        // scatter_v(slength_proc, slength, root, mpi_comm);
-        // scatter_v(accel_proc, accel, root, mpi_comm);
-        // scatter_v(dpedt_proc, dpedt, root, mpi_comm);
-        // scatter_v(type_proc, type, root, mpi_comm);
-        // scatter_v(mass_proc, mass, root, mpi_comm);
-        // // scatter_v(charge_proc, charge, root, mpi_comm);
-        // // scatter_v(diameter_proc, diameter, root, mpi_comm);
-        // scatter_v(image_proc, image, root, mpi_comm);
-        // scatter_v(body_proc, body, root, mpi_comm);
-        // // scatter_v(orientation_proc, orientation, root, mpi_comm);
-        // // scatter_v(angmom_proc, angmom, root, mpi_comm);
-        // // scatter_v(inertia_proc, inertia, root, mpi_comm);
-        // scatter_v(tag_proc, tag, root, mpi_comm);
-
         // // distribute number of particles
-        // scatter_v(N_proc, m_nparticles, root, mpi_comm);
+        // scatter_v(N_proc, m_nparticles, root, mpi_comm); TODO
 
     for(unsigned int rank_i = 0; rank_i < size; rank_i++)
         {
         int recv_off = std::accumulate(num_part_recv.begin(), num_part_recv.begin()+rank_i, 0);
+        std::cout << "Rank " << my_rank << " rank " << rank_i << " recv_off " << recv_off << std::endl;
         MPI_Irecv(&pos[recv_off],     3*num_part_recv[rank_i],  MPI_HOOMD_SCALAR, rank_i,       rank_i, mpi_comm, &recv_req[rank_i*17]);
         MPI_Irecv(&vel[recv_off],     3*num_part_recv[rank_i],  MPI_HOOMD_SCALAR, rank_i,  1000+rank_i, mpi_comm, &recv_req[1+rank_i*17]);
         MPI_Irecv(&type[recv_off],      num_part_recv[rank_i],  MPI_UNSIGNED,      rank_i,  2000+rank_i, mpi_comm, &recv_req[2+rank_i*17]);
@@ -2048,11 +2046,12 @@ void ParticleData::initializeFromDistrSnapshot(const SnapshotParticleData<Real>&
         MPI_Isend(&tag_proc[rank_i][0],      N_proc[rank_i], MPI_UNSIGNED,      rank_i, 16000+my_rank, mpi_comm, &send_req[16+rank_i*17]);
         }
 
+    std::cout << "Rank " << m_exec_conf->getRank() << " DistrSnapshot done comm  " << snapshot.size << " " << getN() << " " << m_nparticles << endl;
+    // std::cout << "Rank " << m_exec_conf->getRank() << " max type " << std::max_element(mass.begin(), mass.end()) << std::endl;
 
-        printf("rank %i Done with all ssend recvs\n", my_rank);
-        MPI_Waitall(17*size, send_req, MPI_STATUSES_IGNORE);
-
-        {
+    MPI_Waitall(17*size, send_req, MPI_STATUSES_IGNORE);
+    
+    { // Keep these brackets to avoid redeclaration
         // reset all reverse lookup tags to NOT_LOCAL flag
         ArrayHandle<unsigned int> h_rtag(getRTags(),
                                          access_location::host,
@@ -2061,167 +2060,86 @@ void ParticleData::initializeFromDistrSnapshot(const SnapshotParticleData<Real>&
         // we have to reset all previous rtags, to remove 'leftover' ghosts
         unsigned int max_tag = (unsigned int)m_rtag.size();
         for (unsigned int tag = 0; tag < max_tag; tag++)
+            {
             h_rtag.data[tag] = NOT_LOCAL;
+            }
+    }
+    // update list of active tags
+    for (unsigned int tag = 0; tag < nglobal; tag++)
+        {
+        m_tag_set.insert(tag);
         }
 
-        // update list of active tags
-        for (unsigned int tag = 0; tag < nglobal; tag++)
-            {
-            m_tag_set.insert(tag);
-            }
+    // Now that active tag list has changed, invalidate the cache
+    m_invalid_cached_tags = true;
 
-        // Now that active tag list has changed, invalidate the cache
-        m_invalid_cached_tags = true;
+    // resize particle data
+    resize(m_nparticles);
 
-        // resize particle data
-        resize(m_nparticles);
+    // Load particle data
+    ArrayHandle<Scalar4> h_pos(m_pos, access_location::host, access_mode::overwrite);
+    ArrayHandle<Scalar4> h_vel(m_vel, access_location::host, access_mode::overwrite);
+    ArrayHandle<Scalar3> h_accel(m_accel, access_location::host, access_mode::overwrite);
+    // ArrayHandle< Scalar3 > h_dpe(m_dpe, access_location::host, access_mode::overwrite);
+    ArrayHandle< Scalar > h_density(m_density, access_location::host, access_mode::overwrite);
+    ArrayHandle< Scalar > h_pressure(m_pressure, access_location::host, access_mode::overwrite);
+    ArrayHandle< Scalar > h_energy(m_energy, access_location::host, access_mode::overwrite);
+    ArrayHandle< Scalar3 > h_aux1(m_aux1, access_location::host, access_mode::overwrite);
+    ArrayHandle< Scalar3 > h_aux2(m_aux2, access_location::host, access_mode::overwrite);
+    ArrayHandle< Scalar3 > h_aux3(m_aux3, access_location::host, access_mode::overwrite);
+    ArrayHandle< Scalar3 > h_aux4(m_aux4, access_location::host, access_mode::overwrite);
+    ArrayHandle< Scalar> h_slength(m_slength, access_location::host, access_mode::overwrite);
+    ArrayHandle<int3> h_image(m_image, access_location::host, access_mode::overwrite);
+    // ArrayHandle<Scalar> h_charge(m_charge, access_location::host, access_mode::overwrite);
+    // ArrayHandle<Scalar> h_diameter(m_diameter, access_location::host, access_mode::overwrite);
+    ArrayHandle<unsigned int> h_body(m_body, access_location::host, access_mode::overwrite);
+    ArrayHandle< Scalar3 > h_dpedt(m_dpedt, access_location::host, access_mode::overwrite);
+    // ArrayHandle<Scalar4> h_orientation(m_orientation,
+    //                                    access_location::host,
+    //                                    access_mode::overwrite);
+    // ArrayHandle<Scalar4> h_angmom(m_angmom, access_location::host, access_mode::overwrite);
+    // ArrayHandle<Scalar3> h_inertia(m_inertia, access_location::host, access_mode::overwrite);
+    ArrayHandle<unsigned int> h_tag(m_tag, access_location::host, access_mode::overwrite);
+    ArrayHandle<unsigned int> h_comm_flag(m_comm_flags,
+                                          access_location::host,
+                                          access_mode::overwrite);
+    ArrayHandle<unsigned int> h_rtag(m_rtag, access_location::host, access_mode::readwrite);
 
-        // Load particle data
-        ArrayHandle<Scalar4> h_pos(m_pos, access_location::host, access_mode::overwrite);
-        ArrayHandle<Scalar4> h_vel(m_vel, access_location::host, access_mode::overwrite);
-        ArrayHandle<Scalar3> h_accel(m_accel, access_location::host, access_mode::overwrite);
-        // ArrayHandle< Scalar3 > h_dpe(m_dpe, access_location::host, access_mode::overwrite);
-        ArrayHandle< Scalar > h_density(m_density, access_location::host, access_mode::overwrite);
-        ArrayHandle< Scalar > h_pressure(m_pressure, access_location::host, access_mode::overwrite);
-        ArrayHandle< Scalar > h_energy(m_energy, access_location::host, access_mode::overwrite);
-        ArrayHandle< Scalar3 > h_aux1(m_aux1, access_location::host, access_mode::overwrite);
-        ArrayHandle< Scalar3 > h_aux2(m_aux2, access_location::host, access_mode::overwrite);
-        ArrayHandle< Scalar3 > h_aux3(m_aux3, access_location::host, access_mode::overwrite);
-        ArrayHandle< Scalar3 > h_aux4(m_aux4, access_location::host, access_mode::overwrite);
-        ArrayHandle< Scalar> h_slength(m_slength, access_location::host, access_mode::overwrite);
-        ArrayHandle<int3> h_image(m_image, access_location::host, access_mode::overwrite);
-        // ArrayHandle<Scalar> h_charge(m_charge, access_location::host, access_mode::overwrite);
-        // ArrayHandle<Scalar> h_diameter(m_diameter, access_location::host, access_mode::overwrite);
-        ArrayHandle<unsigned int> h_body(m_body, access_location::host, access_mode::overwrite);
-        ArrayHandle< Scalar3 > h_dpedt(m_dpedt, access_location::host, access_mode::overwrite);
-        // ArrayHandle<Scalar4> h_orientation(m_orientation,
-        //                                    access_location::host,
-        //                                    access_mode::overwrite);
-        // ArrayHandle<Scalar4> h_angmom(m_angmom, access_location::host, access_mode::overwrite);
-        // ArrayHandle<Scalar3> h_inertia(m_inertia, access_location::host, access_mode::overwrite);
-        ArrayHandle<unsigned int> h_tag(m_tag, access_location::host, access_mode::overwrite);
-        ArrayHandle<unsigned int> h_comm_flag(m_comm_flags,
-                                              access_location::host,
-                                              access_mode::overwrite);
-        ArrayHandle<unsigned int> h_rtag(m_rtag, access_location::host, access_mode::readwrite);
+    for (unsigned int idx = 0; idx < m_nparticles; idx++)
+        {
+        h_pos.data[idx]
+            = make_scalar4(pos[idx].x, pos[idx].y, pos[idx].z, __int_as_scalar(type[idx]));
+        h_vel.data[idx] = make_scalar4(vel[idx].x, vel[idx].y, vel[idx].z, mass[idx]);
+        // h_dpe.data[idx] = dpe[idx];
+        h_density.data[idx] = density[idx];
+        h_pressure.data[idx] = pressure[idx];
+        h_energy.data[idx] = energy[idx];
+        h_aux1.data[idx] = aux1[idx];
+        h_aux2.data[idx] = aux2[idx];
+        h_aux3.data[idx] = aux3[idx];
+        h_aux4.data[idx] = aux4[idx];
+        h_slength.data[idx] = slength[idx];
+        h_accel.data[idx] = accel[idx];
+        h_dpedt.data[idx] = dpedt[idx];
+        // h_charge.data[idx] = charge[idx];
+        // h_diameter.data[idx] = diameter[idx];
+        h_image.data[idx] = image[idx];
+        h_tag.data[idx] = tag[idx];
+        h_rtag.data[tag[idx]] = idx;
+        h_body.data[idx] = body[idx];
+        // h_orientation.data[idx] = orientation[idx];
+        // h_angmom.data[idx] = angmom[idx];
+        // h_inertia.data[idx] = inertia[idx];
 
-        printf("Rank %i Done loding particle data\n");
-        for (unsigned int idx = 0; idx < m_nparticles; idx++)
-            {
-            h_pos.data[idx]
-                = make_scalar4(pos[idx].x, pos[idx].y, pos[idx].z, __int_as_scalar(type[idx]));
-            h_vel.data[idx] = make_scalar4(vel[idx].x, vel[idx].y, vel[idx].z, mass[idx]);
-            // h_dpe.data[idx] = dpe[idx];
-            h_density.data[idx] = density[idx];
-            h_pressure.data[idx] = pressure[idx];
-            h_energy.data[idx] = energy[idx];
-            h_aux1.data[idx] = aux1[idx];
-            h_aux2.data[idx] = aux2[idx];
-            h_aux3.data[idx] = aux3[idx];
-            h_aux4.data[idx] = aux4[idx];
-            h_slength.data[idx] = slength[idx];
-            h_accel.data[idx] = accel[idx];
-            h_dpedt.data[idx] = dpedt[idx];
-            // h_charge.data[idx] = charge[idx];
-            // h_diameter.data[idx] = diameter[idx];
-            h_image.data[idx] = image[idx];
-            h_tag.data[idx] = tag[idx];
-            h_rtag.data[tag[idx]] = idx;
-            h_body.data[idx] = body[idx];
-            // h_orientation.data[idx] = orientation[idx];
-            // h_angmom.data[idx] = angmom[idx];
-            // h_inertia.data[idx] = inertia[idx];
-
-            h_comm_flag.data[idx] = 0; // initialize with zero
-            }
-        printf("Done cp data\n");
+        h_comm_flag.data[idx] = 0; // initialize with zero
+        }
+   
+    // for (unsigned int iii = 0; iii < h_tag.data.size() ; iii++)
+    // {
+    //     std::cout << "Rank " << m_exec_conf->getRank() << " DistrSnapshot check type_proc  " << type_proc[my_rank][iii] << " " <<  endl;
+    // }
     //         }
-    //     else
-    // #endif
-    //         {
-    //         // allocate array for reverse lookup tags
-    //         m_rtag.resize(snapshot.size);
-
-    //         // Now that active tag list has changed, invalidate the cache
-    //         m_invalid_cached_tags = true;
-
-    //         // allocate particle data such that we can accommodate the particles
-    //         resize(snapshot.size);
-
-    //         ArrayHandle<Scalar4> h_pos(m_pos, access_location::host, access_mode::overwrite);
-    //         ArrayHandle<Scalar4> h_vel(m_vel, access_location::host, access_mode::overwrite);
-    //         ArrayHandle< Scalar3 > h_dpe(m_dpe, access_location::host, access_mode::overwrite);
-    //         ArrayHandle< Scalar3 > h_aux1(m_aux1, access_location::host, access_mode::overwrite);
-    //         ArrayHandle< Scalar3 > h_aux2(m_aux2, access_location::host, access_mode::overwrite);
-    //         ArrayHandle< Scalar3 > h_aux3(m_aux3, access_location::host, access_mode::overwrite);
-    //         ArrayHandle< Scalar3 > h_aux4(m_aux4, access_location::host, access_mode::overwrite);
-    //         ArrayHandle< Scalar > h_slength(m_slength, access_location::host, access_mode::overwrite);
-    //         ArrayHandle< Scalar3 > h_accel(m_accel, access_location::host, access_mode::overwrite);
-    //         ArrayHandle< Scalar3 > h_dpedt(m_dpedt, access_location::host, access_mode::overwrite);
-    //         ArrayHandle<int3> h_image(m_image, access_location::host, access_mode::overwrite);
-    //         // ArrayHandle<Scalar> h_charge(m_charge, access_location::host, access_mode::overwrite);
-    //         // ArrayHandle<Scalar> h_diameter(m_diameter, access_location::host, access_mode::overwrite);
-    //         ArrayHandle<unsigned int> h_body(m_body, access_location::host, access_mode::overwrite);
-    //         // ArrayHandle<Scalar4> h_orientation(m_orientation,
-    //         //                                    access_location::host,
-    //         //                                    access_mode::overwrite);
-    //         // ArrayHandle<Scalar4> h_angmom(m_angmom, access_location::host, access_mode::overwrite);
-    //         // ArrayHandle<Scalar3> h_inertia(m_inertia, access_location::host, access_mode::overwrite);
-    //         ArrayHandle<unsigned int> h_tag(m_tag, access_location::host, access_mode::overwrite);
-    //         ArrayHandle<unsigned int> h_rtag(m_rtag, access_location::host, access_mode::readwrite);
-
-    //         for (unsigned int snap_idx = 0; snap_idx < snapshot.size; snap_idx++)
-    //             {
-    //             // if requested, do not initialize constituent particles of rigid bodies
-    //             if (ignore_bodies && snapshot.body[snap_idx] != NO_BODY)
-    //                 {
-    //                 continue;
-    //                 }
-
-    //             max_typeid = std::max(max_typeid, snapshot.type[snap_idx]);
-
-    //             h_pos.data[nglobal] = make_scalar4(snapshot.pos[snap_idx].x,
-    //                                                snapshot.pos[snap_idx].y,
-    //                                                snapshot.pos[snap_idx].z,
-    //                                                __int_as_scalar(snapshot.type[snap_idx]));
-    //             h_vel.data[nglobal] = make_scalar4(snapshot.vel[snap_idx].x,
-    //                                                snapshot.vel[snap_idx].y,
-    //                                                snapshot.vel[snap_idx].z,
-    //                                                snapshot.mass[snap_idx]);
-    //              h_dpe.data[nglobal] = vec_to_scalar3(snapshot.dpe[snap_idx]);
-    //             h_aux1.data[nglobal] = vec_to_scalar3(snapshot.aux1[snap_idx]);
-    //             h_aux2.data[nglobal] = vec_to_scalar3(snapshot.aux2[snap_idx]);
-    //             h_aux3.data[nglobal] = vec_to_scalar3(snapshot.aux3[snap_idx]);
-    //             h_aux4.data[nglobal] = vec_to_scalar3(snapshot.aux4[snap_idx]);
-    //             h_slength.data[nglobal] = snapshot.slength[snap_idx];
-    //             h_accel.data[nglobal] = vec_to_scalar3(snapshot.accel[snap_idx]);
-    //             h_dpedt.data[nglobal] = vec_to_scalar3(snapshot.dpedt[snap_idx]);
-    //             // h_charge.data[nglobal] = snapshot.charge[snap_idx];
-    //             // h_diameter.data[nglobal] = snapshot.diameter[snap_idx];
-    //             h_image.data[nglobal] = snapshot.image[snap_idx];
-    //             h_tag.data[nglobal] = nglobal;
-    //             h_rtag.data[nglobal] = nglobal;
-    //             h_body.data[nglobal] = snapshot.body[snap_idx];
-    //             // h_orientation.data[nglobal] = quat_to_scalar4(snapshot.orientation[snap_idx]);
-    //             // h_angmom.data[nglobal] = quat_to_scalar4(snapshot.angmom[snap_idx]);
-    //             // h_inertia.data[nglobal] = vec_to_scalar3(snapshot.inertia[snap_idx]);
-    //             nglobal++;
-    //             }
-
-    //         m_nparticles = nglobal;
-
-    //         // update list of active tags
-    //         for (unsigned int tag = 0; tag < nglobal; tag++)
-    //             {
-    //             m_tag_set.insert(tag);
-    //             }
-
-    //         // rtag size reflects actual number of tags
-    //         m_rtag.resize(nglobal);
-
-    //         // initialize type mapping
-    //         m_type_mapping = snapshot.type_mapping;
-    //         }
+    
 
     // copy over accel_set flag from snapshot
     m_accel_set = snapshot.is_accel_set;
@@ -2245,22 +2163,26 @@ void ParticleData::initializeFromDistrSnapshot(const SnapshotParticleData<Real>&
     m_origin = make_scalar3(0, 0, 0);
     m_o_image = make_int3(0, 0, 0);
 
-    unsigned int snapshot_size = snapshot.size;
+    unsigned int snapshot_size = m_nparticles;
     printf("Done getting snapshot size %i\n", snapshot_size);
 
-    MPI_Waitall(17*size, send_req, MPI_STATUSES_IGNORE);
+    Scalar max_typeid_test = 0;
+    for (unsigned int idx = 0; idx < m_nparticles; idx++)
+    {
+        Scalar ctid = h_pos.data[idx].w;
+        if (ctid > max_typeid_test){
+            max_typeid_test = ctid;
+        }
+    }
+    std::cout << "Rank " << m_exec_conf->getRank() << " Max tid test " << max_typeid << endl;
+
 
     // Raise an exception if there are any invalid type ids. This is done here (instead of in the
     // loops above) to avoid MPI communication deadlocks when only some ranks have invalid types.
     // As a convenience, broadcast the values needed to evaluate the condition the same on all
     // ranks.
-#ifdef ENABLE_MPI
-    if (m_decomposition)
-        {
-        bcast(max_typeid, 0, m_exec_conf->getMPICommunicator());
-        // bcast(snapshot_size, 0, m_exec_conf->getMPICommunicator());
-        }
-#endif
+
+    bcast(max_typeid, 0, m_exec_conf->getMPICommunicator());
 
     if (snapshot_size != 0 && max_typeid >= m_type_mapping.size())
         {

@@ -119,7 +119,7 @@ SystemDefinition::SystemDefinition(std::shared_ptr<SnapshotSystemData<Real>> sna
 
     m_particle_data = std::shared_ptr<ParticleData>(
         new ParticleData(snapshot->particle_data, snapshot->global_box, exec_conf, decomposition, distributed));
-    printf("Done creating Particle Data");
+    printf("Done creating Particle Data\n");
 #ifdef ENABLE_MPI
     // in MPI simulations, broadcast dimensionality from rank zero
     if (m_particle_data->getDomainDecomposition())

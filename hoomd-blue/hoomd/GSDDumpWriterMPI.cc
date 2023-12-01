@@ -80,18 +80,11 @@ GSDDumpWriterMPI::GSDDumpWriterMPI(std::shared_ptr<SystemDefinition> sysdef,
         }
     m_log_writer = pybind11::none();
 
-// #ifdef ENABLE_MPI
-//     if (m_sysdef->isDomainDecomposed())
-//         {
-//         m_gather_tag_order = GatherTagOrder(m_exec_conf->getMPICommunicator());
-//         }
-// #endif
-
     m_dynamic.reset();
     m_dynamic[pgsd_flag::particles_position] = true;
-    // m_dynamic[pgsd_flag::particles_orientation] = true;
     m_exec_conf->msg->notice(5) << "GSDDumpWriterMPI: start init File IO" << endl;
     initFileIO();
+    std::cout << "GSDDumpWriterMPI: Done init File IO" << std::endl;
     }
 
 pybind11::tuple GSDDumpWriterMPI::getDynamic()
@@ -110,18 +103,10 @@ pybind11::tuple GSDDumpWriterMPI::getDynamic()
         {
         result.append("particles/position");
         }
-    // if (m_dynamic[pgsd_flag::particles_orientation])
-    //     {
-    //     result.append("particles/orientation");
-    //     }
     if (m_dynamic[pgsd_flag::particles_velocity])
         {
         result.append("particles/velocity");
         }
-    // if (m_dynamic[pgsd_flag::particles_angmom])
-    //     {
-    //     result.append("particles/angmom");
-    //     }
     if (m_dynamic[pgsd_flag::particles_image])
         {
         result.append("particles/image");
@@ -138,26 +123,6 @@ pybind11::tuple GSDDumpWriterMPI::getDynamic()
         {
         result.append("particles/mass");
         }
-    // if (m_dynamic[pgsd_flag::particles_charge])
-    //     {
-    //     result.append("particles/charge");
-    //     }
-    // if (m_dynamic[pgsd_flag::particles_diameter])
-    //     {
-    //     result.append("particles/diameter");
-    //     }
-    // if (m_dynamic[pgsd_flag::particles_body])
-    //     {
-    //     result.append("particles/body");
-    //     }
-    // if (m_dynamic[pgsd_flag::particles_inertia])
-    //     {
-    //     result.append("particles/moment_inertia");
-    //     }
-    // if (m_write_topology)
-    //     {
-    //     result.append("topology");
-    //     }
     if (m_dynamic[pgsd_flag::particles_slength])
         {
         result.append("particles/slength");
@@ -215,18 +180,10 @@ void GSDDumpWriterMPI::setDynamic(pybind11::object dynamic)
             {
             m_dynamic[pgsd_flag::particles_position] = true;
             }
-        // if (s == "particles/orientation" || s == "property")
-        //     {
-        //     m_dynamic[pgsd_flag::particles_orientation] = true;
-        //     }
         if (s == "particles/velocity" || s == "momentum")
             {
             m_dynamic[pgsd_flag::particles_velocity] = true;
             }
-        // if (s == "particles/angmom" || s == "momentum")
-        //     {
-        //     m_dynamic[pgsd_flag::particles_angmom] = true;
-        //     }
         if (s == "particles/image" || s == "momentum")
             {
             m_dynamic[pgsd_flag::particles_image] = true;
@@ -243,26 +200,6 @@ void GSDDumpWriterMPI::setDynamic(pybind11::object dynamic)
             {
             m_dynamic[pgsd_flag::particles_mass] = true;
             }
-        // if (s == "particles/charge" || s == "attribute")
-        //     {
-        //     m_dynamic[pgsd_flag::particles_charge] = true;
-        //     }
-        // if (s == "particles/diameter" || s == "attribute")
-        //     {
-        //     m_dynamic[pgsd_flag::particles_diameter] = true;
-        //     }
-        // if (s == "particles/body" || s == "attribute")
-        //     {
-        //     m_dynamic[pgsd_flag::particles_body] = true;
-        //     }
-        // if (s == "particles/moment_inertia" || s == "attribute")
-        //     {
-        //     m_dynamic[pgsd_flag::particles_inertia] = true;
-        //     }
-        // if (s == "topology")
-        //     {
-        //     m_write_topology = true;
-        //     }
         if (s == "particles/slength" || s == "attribute")
             {
             m_dynamic[pgsd_flag::particles_slength] = true;
@@ -327,21 +264,12 @@ void GSDDumpWriterMPI::setMaximumWriteBufferSize(uint64_t size)
 
 uint64_t GSDDumpWriterMPI::getMaximumWriteBufferSize()
     {
-    // if (m_exec_conf->isRoot())
-    //     {
     return pgsd_get_maximum_write_buffer_size(&m_handle);
-    //     }
-    // else
-    //     {
-    //     return 0;
-    //     }
     }
 
 //! Initializes the output file for writing
 void GSDDumpWriterMPI::initFileIO()
     {
-    // if (m_exec_conf->isRoot())
-    //     {
     // create a new file or overwrite an existing one
     if (m_mode == "wb" || m_mode == "xb" || (m_mode == "ab" && !filesystem::exists(m_fname)))
         {
@@ -399,15 +327,6 @@ void GSDDumpWriterMPI::initFileIO()
     MPI_Barrier(MPI_COMM_WORLD);
     m_nframes = pgsd_get_nframes(&m_handle);
     MPI_Barrier(MPI_COMM_WORLD);
-        // }
-
-// #ifdef ENABLE_MPI
-//     if (m_sysdef->isDomainDecomposed())
-//         {
-//         bcast(m_nframes, 0, m_exec_conf->getMPICommunicator());
-//         bcast(m_nondefault, 0, m_exec_conf->getMPICommunicator());
-//         }
-// #endif
     }
 
 GSDDumpWriterMPI::~GSDDumpWriterMPI()
@@ -461,6 +380,7 @@ void GSDDumpWriterMPI::analyze(uint64_t timestep)
 
         m_nframes = 0;
         }
+
     m_exec_conf->msg->notice(5) << "GSDDumpWriterMPI before Populate local frame N_global, N " << m_group->getNumMembersGlobal() << " " << m_group->getNumMembers() << endl;
     populateLocalFrame(m_local_frame, timestep);
     m_exec_conf->msg->notice(5) << "GSDDumpWriterMPI Populate local frame N_global, N " << m_group->getNumMembersGlobal() << " " << m_group->getNumMembers() << endl;
@@ -470,30 +390,18 @@ void GSDDumpWriterMPI::analyze(uint64_t timestep)
 
 void GSDDumpWriterMPI::write(GSDDumpWriterMPI::PGSDFrame& frame, pybind11::dict log_data)
     {
-// #ifdef ENABLE_MPI
-//     if (m_sysdef->isDomainDecomposed())
-//         {
-//         gatherGlobalFrame(frame);
 
-//         if (m_exec_conf->isRoot())
-//             {
-//             writeFrameHeader(m_global_frame);
-//             writeAttributes(m_global_frame);
-//             writeProperties(m_global_frame);
-//             writeMomenta(m_global_frame);
-//             writeLogQuantities(log_data);
-//             }
-//         }
-//     else
-// #endif
-        {
     printf("in GSDDumpWriterMPI:write Rank %i write header etc \n", m_exec_conf->getRank());
     writeFrameHeader(frame);
+    MPI_Barrier(MPI_COMM_WORLD);
     writeAttributes(frame);
+    MPI_Barrier(MPI_COMM_WORLD);
     writeProperties(frame);
+    MPI_Barrier(MPI_COMM_WORLD);
     writeMomenta(frame);
-    writeLogQuantities(log_data);
-        }
+    MPI_Barrier(MPI_COMM_WORLD);
+    // writeLogQuantities(log_data);
+
     // topology is only meaningful if this is the all group
     // TODO
     // if (m_group->getNumMembersGlobal() == m_pdata->getNGlobal()
@@ -539,7 +447,6 @@ void GSDDumpWriterMPI::writeTypeMapping(std::string chunk, std::vector<std::stri
     max_len += 1; // for null
     printf("GSDDumpWriterMPI: max_len %i\n", max_len);
     printf("GSDDumpWriterMPI: N_global %i\n", N_global);
-
 
         {
         m_exec_conf->msg->notice(10) << "PGSD: writing " << chunk << endl;
@@ -612,6 +519,7 @@ void GSDDumpWriterMPI::writeFrameHeader(const GSDDumpWriterMPI::PGSDFrame& frame
         box_a[3] = (float)frame.global_box.getTiltFactorXY();
         box_a[4] = (float)frame.global_box.getTiltFactorXZ();
         box_a[5] = (float)frame.global_box.getTiltFactorYZ();
+        std::cout << "box " << box_a[0] << " " << box_a[1] << " " << box_a[2] << std::endl;
         retval = pgsd_write_chunk(&m_handle,
                                  "configuration/box",
                                  PGSD_TYPE_FLOAT,
@@ -677,7 +585,7 @@ void GSDDumpWriterMPI::writeAttributes(GSDDumpWriterMPI::PGSDFrame& frame)
     printf("GSDDumpWriterMPI write attributes: part_offset %i\n", part_offset);
 
     int retval;
-
+    MPI_Barrier(MPI_COMM_WORLD);
     if (m_dynamic[pgsd_flag::particles_types] || m_nframes == 0)
         {
         writeTypeMapping("particles/types", frame.particle_data.type_mapping, frame);
@@ -749,25 +657,6 @@ void GSDDumpWriterMPI::writeAttributes(GSDDumpWriterMPI::PGSDFrame& frame)
             m_nondefault["particles/slength"] = true;
         }
 
-    // if (m_write_diameter)
-    //     {
-    //     if (frame.particle_data.diameter.size() != 0)
-    //         {
-    //         assert(frame.particle_data.diameter.size() == N);
-
-    //         m_exec_conf->msg->notice(10) << "PGSD: writing particles/diameter" << endl;
-    //         retval = gsd_write_chunk(&m_handle,
-    //                                  "particles/diameter",
-    //                                  PGSD_TYPE_FLOAT,
-    //                                  N,
-    //                                  1,
-    //                                  0,
-    //                                  (void*)frame.particle_data.diameter.data());
-    //         PGSDUtils::checkError(retval, m_fname);
-    //         if (m_nframes == 0)
-    //             m_nondefault["particles/diameter"] = true;
-    //         }
-    //     }
 
     if (frame.particle_data.body.size() != 0)
         {
@@ -790,23 +679,6 @@ void GSDDumpWriterMPI::writeAttributes(GSDDumpWriterMPI::PGSDFrame& frame)
         if (m_nframes == 0)
             m_nondefault["particles/body"] = true;
         }
-
-    // if (frame.particle_data.inertia.size() != 0)
-    //     {
-    //     assert(frame.particle_data.inertia.size() == N);
-
-    //     m_exec_conf->msg->notice(10) << "PGSD: writing particles/moment_inertia" << endl;
-    //     retval = gsd_write_chunk(&m_handle,
-    //                              "particles/moment_inertia",
-    //                              PGSD_TYPE_FLOAT,
-    //                              N,
-    //                              3,
-    //                              0,
-    //                              (void*)frame.particle_data.inertia.data());
-    //     PGSDUtils::checkError(retval, m_fname);
-    //     if (m_nframes == 0)
-    //         m_nondefault["particles/moment_inertia"] = true;
-    //     }
     }
 
 /*! Writes the data chunks position and orientation in particles/.
@@ -850,7 +722,6 @@ void GSDDumpWriterMPI::writeProperties(const GSDDumpWriterMPI::PGSDFrame& frame)
     if (frame.particle_data.density.size() != 0)
         {
         assert(frame.particle_data.density.size() == N);
-
         m_exec_conf->msg->notice(10) << "PGSD: writing particles/density" << endl;
         retval = pgsd_write_chunk(&m_handle,
                                  "particles/density",
@@ -912,23 +783,6 @@ void GSDDumpWriterMPI::writeProperties(const GSDDumpWriterMPI::PGSDFrame& frame)
         if (m_nframes == 0)
             m_nondefault["particles/energy"] = true;
         }
-
-    // if (frame.particle_data.orientation.size() != 0)
-    //     {
-    //     assert(frame.particle_data.orientation.size() == N);
-
-    //     m_exec_conf->msg->notice(10) << "PGSD: writing particles/orientation" << endl;
-    //     retval = gsd_write_chunk(&m_handle,
-    //                              "particles/orientation",
-    //                              PGSD_TYPE_FLOAT,
-    //                              N,
-    //                              4,
-    //                              0,
-    //                              (void*)frame.particle_data.orientation.data());
-    //     PGSDUtils::checkError(retval, m_fname);
-    //     if (m_nframes == 0)
-    //         m_nondefault["particles/orientation"] = true;
-    //     }
     }
 
 /*! Writes the data chunks velocity, angmom, and image in particles/.
@@ -992,7 +846,7 @@ void GSDDumpWriterMPI::writeMomenta(const GSDDumpWriterMPI::PGSDFrame& frame)
         if (m_nframes == 0)
             m_nondefault["particles/auxiliary1"] = true;
         }
-
+    
     if (frame.particle_data.aux2.size() != 0)
         {
         assert(frame.particle_data.aux2.size() == N);
@@ -1058,23 +912,6 @@ void GSDDumpWriterMPI::writeMomenta(const GSDDumpWriterMPI::PGSDFrame& frame)
         if (m_nframes == 0)
             m_nondefault["particles/auxiliary4"] = true;
         }
-
-    // if (frame.particle_data.angmom.size() != 0)
-    //     {
-    //     assert(frame.particle_data.angmom.size() == N);
-
-    //     m_exec_conf->msg->notice(10) << "PGSD: writing particles/angmom" << endl;
-    //     retval = gsd_write_chunk(&m_handle,
-    //                              "particles/angmom",
-    //                              PGSD_TYPE_FLOAT,
-    //                              N,
-    //                              4,
-    //                              0,
-    //                              (void*)frame.particle_data.angmom.data());
-    //     PGSDUtils::checkError(retval, m_fname);
-    //     if (m_nframes == 0)
-    //         m_nondefault["particles/angmom"] = true;
-    //     }
 
     if (frame.particle_data.image.size() != 0)
         {
@@ -1450,6 +1287,7 @@ void GSDDumpWriterMPI::populateLocalFrame(GSDDumpWriterMPI::PGSDFrame& frame, ui
 
     frame.particle_data.type_mapping = m_pdata->getTypeMapping();
 
+    // Global Group size since could be zero on one rank
     uint32_t N = m_group->getNumMembersGlobal();
 
     // Assume values are all default to start, set flags to false when we find a non-default.
@@ -1480,6 +1318,8 @@ void GSDDumpWriterMPI::populateLocalFrame(GSDDumpWriterMPI::PGSDFrame& frame, ui
             m_index.push_back(index);
             }
         }
+
+    std::cout << "Rank " << m_exec_conf->getRank() << " m_index size " << m_index.size() << std::endl;
 
     if (N > 0
         && (m_dynamic[pgsd_flag::particles_position] || m_dynamic[pgsd_flag::particles_type]
@@ -1549,25 +1389,6 @@ void GSDDumpWriterMPI::populateLocalFrame(GSDDumpWriterMPI::PGSDFrame& frame, ui
             }
         }
 
-    // if (N > 0 && (m_dynamic[pgsd_flag::particles_orientation] || m_nframes == 0))
-    //     {
-    //     ArrayHandle<Scalar4> h_orientation(m_pdata->getOrientationArray(),
-    //                                        access_location::host,
-    //                                        access_mode::read);
-    //     frame.particle_data_present[pgsd_flag::particles_orientation] = true;
-
-    //     for (unsigned int index : m_index)
-    //         {
-    //         quat<Scalar> orientation(h_orientation.data[index]);
-    //         if (orientation.s != Scalar(1.0) || orientation.v.x != Scalar(0.0)
-    //             || orientation.v.y != Scalar(0.0) || orientation.v.z != Scalar(0.0))
-    //             {
-    //             all_default[pgsd_flag::particles_orientation] = false;
-    //             }
-
-    //         frame.particle_data.orientation.push_back(quat<float>(orientation));
-    //         }
-    //     }
 
     if (N > 0
         && (m_dynamic[pgsd_flag::particles_velocity] || m_dynamic[pgsd_flag::particles_mass]
@@ -1614,26 +1435,6 @@ void GSDDumpWriterMPI::populateLocalFrame(GSDDumpWriterMPI::PGSDFrame& frame, ui
                 }
             }
         }
-
-    // if (N > 0 && (m_dynamic[pgsd_flag::particles_charge] || m_nframes == 0))
-    //     {
-    //     ArrayHandle<Scalar> h_charge(m_pdata->getCharges(),
-    //                                  access_location::host,
-    //                                  access_mode::read);
-
-    //     frame.particle_data_present[pgsd_flag::particles_charge] = true;
-
-    //     for (unsigned int index : m_index)
-    //         {
-    //         float charge = static_cast<float>(h_charge.data[index]);
-    //         if (charge != 0.0f)
-    //             {
-    //             all_default[pgsd_flag::particles_charge] = false;
-    //             }
-
-    //         frame.particle_data.charge.push_back(charge);
-    //         }
-    //     }
 
     if (N > 0 && (m_dynamic[pgsd_flag::particles_slength] || m_nframes == 0))
         {
@@ -1800,26 +1601,6 @@ void GSDDumpWriterMPI::populateLocalFrame(GSDDumpWriterMPI::PGSDFrame& frame, ui
             }
         }
 
-    // if (N > 0 && (m_dynamic[pgsd_flag::particles_diameter] || m_nframes == 0))
-    //     {
-    //     ArrayHandle<Scalar> h_diameter(m_pdata->getDiameters(),
-    //                                    access_location::host,
-    //                                    access_mode::read);
-
-    //     frame.particle_data_present[pgsd_flag::particles_diameter] = true;
-
-    //     for (unsigned int index : m_index)
-    //         {
-    //         float diameter = static_cast<float>(h_diameter.data[index]);
-
-    //         if (diameter != 1.0f)
-    //             {
-    //             all_default[pgsd_flag::particles_diameter] = false;
-    //             }
-
-    //         frame.particle_data.diameter.push_back(diameter);
-    //         }
-    //     }
 
     if (N > 0 && (m_dynamic[pgsd_flag::particles_body] || m_nframes == 0))
         {
@@ -1842,67 +1623,21 @@ void GSDDumpWriterMPI::populateLocalFrame(GSDDumpWriterMPI::PGSDFrame& frame, ui
             }
         }
 
-    // if (N > 0 && (m_dynamic[pgsd_flag::particles_inertia] || m_nframes == 0))
-    //     {
-    //     ArrayHandle<Scalar3> h_inertia(m_pdata->getMomentsOfInertiaArray(),
-    //                                    access_location::host,
-    //                                    access_mode::read);
-
-    //     frame.particle_data_present[pgsd_flag::particles_inertia] = true;
-
-    //     for (unsigned int index : m_index)
-    //         {
-    //         vec3<float> inertia = vec3<float>(h_inertia.data[index]);
-
-    //         if (inertia != vec3<float>(0, 0, 0))
-    //             {
-    //             all_default[pgsd_flag::particles_inertia] = false;
-    //             }
-
-    //         frame.particle_data.inertia.push_back(inertia);
-    //         }
-    //     }
-
-    // if (N > 0 && (m_dynamic[pgsd_flag::particles_angmom] || m_nframes == 0))
-    //     {
-    //     ArrayHandle<Scalar4> h_angmom(m_pdata->getAngularMomentumArray(),
-    //                                   access_location::host,
-    //                                   access_mode::read);
-
-    //     frame.particle_data_present[pgsd_flag::particles_angmom] = true;
-
-    //     for (unsigned int index : m_index)
-    //         {
-    //         quat<float> angmom = quat<float>(h_angmom.data[index]);
-
-    //         if (angmom.s != 0.0f || angmom.v.x != 0.0f || angmom.v.y != 0.0f || angmom.v.z != 0.0f)
-    //             {
-    //             all_default[pgsd_flag::particles_angmom] = false;
-    //             }
-
-    //         frame.particle_data.angmom.push_back(angmom);
-    //         }
-    //     }
 
 
-#ifdef ENABLE_MPI
-    if (m_sysdef->isDomainDecomposed())
-        {
-        unsigned long v = all_default.to_ulong();
+    unsigned long v = all_default.to_ulong();
 
-        // All default only when all ranks are all default.
-        MPI_Allreduce(MPI_IN_PLACE, &v, 1, MPI_LONG, MPI_BAND, m_exec_conf->getMPICommunicator());
+    // All default only when all ranks are all default.
+    MPI_Allreduce(MPI_IN_PLACE, &v, 1, MPI_LONG, MPI_BAND, m_exec_conf->getMPICommunicator());
 
-        all_default = std::bitset<n_pgsd_flags>(v);
+    all_default = std::bitset<n_pgsd_flags>(v);
 
-        // Present when any rank is present
-        v = frame.particle_data_present.to_ulong();
+    // Present when any rank is present
+    v = frame.particle_data_present.to_ulong();
 
-        MPI_Allreduce(MPI_IN_PLACE, &v, 1, MPI_LONG, MPI_BOR, m_exec_conf->getMPICommunicator());
+    MPI_Allreduce(MPI_IN_PLACE, &v, 1, MPI_LONG, MPI_BOR, m_exec_conf->getMPICommunicator());
 
         frame.particle_data_present = std::bitset<n_pgsd_flags>(v);
-        }
-#endif
 
     // Keep data in arrays only when they are not all default or this is a non-zero frame
     // and the zeroth frame is non-default. To not keep, resize the arrays back to 0.
@@ -1916,13 +1651,6 @@ void GSDDumpWriterMPI::populateLocalFrame(GSDDumpWriterMPI::PGSDFrame& frame, ui
         frame.particle_data_present[pgsd_flag::particles_position] = false;
         }
 
-    // if (all_default[pgsd_flag::particles_orientation]
-    //     && !(m_nframes > 0 && m_nondefault["particles/orientation"]))
-    //     {
-    //     frame.particle_data.orientation.resize(0);
-    //     frame.particle_data_present[pgsd_flag::particles_orientation] = false;
-    //     }
-
     if (all_default[pgsd_flag::particles_type]
         && !(m_nframes > 0 && m_nondefault["particles/typeid"]))
         {
@@ -1935,13 +1663,6 @@ void GSDDumpWriterMPI::populateLocalFrame(GSDDumpWriterMPI::PGSDFrame& frame, ui
         frame.particle_data.mass.resize(0);
         frame.particle_data_present[pgsd_flag::particles_mass] = false;
         }
-
-    // if (all_default[pgsd_flag::particles_charge]
-    //     && !(m_nframes > 0 && m_nondefault["particles/charge"]))
-    //     {
-    //     frame.particle_data.charge.resize(0);
-    //     frame.particle_data_present[pgsd_flag::particles_charge] = false;
-    //     }
 
     if (all_default[pgsd_flag::particles_slength]
         && !(m_nframes > 0 && m_nondefault["particles/slength"]))
@@ -1971,25 +1692,11 @@ void GSDDumpWriterMPI::populateLocalFrame(GSDDumpWriterMPI::PGSDFrame& frame, ui
         frame.particle_data_present[pgsd_flag::particles_energy] = false;
         }
 
-    // if (all_default[pgsd_flag::particles_diameter]
-    //     && !(m_nframes > 0 && m_nondefault["particles/diameter"]))
-    //     {
-    //     frame.particle_data.diameter.resize(0);
-    //     frame.particle_data_present[pgsd_flag::particles_diameter] = false;
-    //     }
-
     if (all_default[pgsd_flag::particles_body] && !(m_nframes > 0 && m_nondefault["particles/body"]))
         {
         frame.particle_data.body.resize(0);
         frame.particle_data_present[pgsd_flag::particles_body] = false;
         }
-
-    // if (all_default[pgsd_flag::particles_inertia]
-    //     && !(m_nframes > 0 && m_nondefault["particles/moment_inertia"]))
-    //     {
-    //     frame.particle_data.inertia.resize(0);
-    //     frame.particle_data_present[pgsd_flag::particles_inertia] = false;
-    //     }
 
     // momenta
     if (all_default[pgsd_flag::particles_velocity]
@@ -2027,13 +1734,6 @@ void GSDDumpWriterMPI::populateLocalFrame(GSDDumpWriterMPI::PGSDFrame& frame, ui
         frame.particle_data_present[pgsd_flag::particles_aux4] = false;
         }
 
-    // if (all_default[pgsd_flag::particles_angmom]
-    //     && !(m_nframes > 0 && m_nondefault["particles/angmom"]))
-    //     {
-    //     frame.particle_data.angmom.resize(0);
-    //     frame.particle_data_present[pgsd_flag::particles_angmom] = false;
-    //     }
-
     if (all_default[pgsd_flag::particles_image]
         && !(m_nframes > 0 && m_nondefault["particles/image"]))
         {
@@ -2041,22 +1741,23 @@ void GSDDumpWriterMPI::populateLocalFrame(GSDDumpWriterMPI::PGSDFrame& frame, ui
         frame.particle_data_present[pgsd_flag::particles_image] = false;
         }
 
-    // capture topology data
-    if (m_group->getNumMembersGlobal() != m_pdata->getNGlobal() && m_write_topology)
-        {
-        throw std::runtime_error("Cannot write topology for a portion of the system");
-        }
+    // // capture topology data
+    // if (m_group->getNumMembersGlobal() != m_pdata->getNGlobal() && m_write_topology)
+    //     {
+    //     throw std::runtime_error("Cannot write topology for a portion of the system");
+    //     }
 
-    if (m_group->getNumMembersGlobal() == m_pdata->getNGlobal()
-        && (m_write_topology || m_nframes == 0))
-        {
-        m_sysdef->getBondData()->takeSnapshotDistr(frame.bond_data);
-        // m_sysdef->getAngleData()->takeSnapshot(frame.angle_data);
-        // m_sysdef->getDihedralData()->takeSnapshot(frame.dihedral_data);
-        // m_sysdef->getImproperData()->takeSnapshot(frame.improper_data);
-        m_sysdef->getConstraintData()->takeSnapshotDistr(frame.constraint_data);
-        // m_sysdef->getPairData()->takeSnapshot(frame.pair_data);
-        }
+    // if (m_group->getNumMembersGlobal() == m_pdata->getNGlobal()
+    //     && (m_write_topology || m_nframes == 0))
+    //     {
+    //     printf("write topology");
+    //     m_sysdef->getBondData()->takeSnapshotDistr(frame.bond_data);
+    //     // m_sysdef->getAngleData()->takeSnapshot(frame.angle_data);
+    //     // m_sysdef->getDihedralData()->takeSnapshot(frame.dihedral_data);
+    //     // m_sysdef->getImproperData()->takeSnapshot(frame.improper_data);
+    //     m_sysdef->getConstraintData()->takeSnapshotDistr(frame.constraint_data);
+    //     // m_sysdef->getPairData()->takeSnapshot(frame.pair_data);
+    //     }
     }
 
 //#ifdef ENABLE_MPI

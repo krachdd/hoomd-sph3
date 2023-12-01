@@ -147,6 +147,11 @@ snapshot.particles.density     = densities
 
 sim.create_state_from_snapshot(snapshot)
 
+with sim.state.cpu_local_snapshot as s:
+    my_N = len(s.particles.position)
+    unique_tids = np.unique(s.particles.typeid)
+print(f'Rank {rank} with {unique_tids} unique tids and size {my_N}')
+
 print('Done with: sim.create_state_from_snapshot(snapshot)')
 
 # # deletesolid_flag = params['delete_flag']
