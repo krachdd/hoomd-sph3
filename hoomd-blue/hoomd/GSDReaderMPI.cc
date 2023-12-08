@@ -119,30 +119,39 @@ bool GSDReaderMPI::readChunk(void* data,
     {
 
     const struct pgsd_index_entry* entry = pgsd_find_chunk(&m_handle, frame, name);
-    
+    printf("Rank %i Chunck %s found\n", m_exec_conf->getRank(), name );
     bool empty_entry_indicator = false;
     if (entry == NULL && frame != 0 && is_root() )
         empty_entry_indicator = true;
     MPI_Bcast(&empty_entry_indicator, 1, MPI_C_BOOL, 0, MPI_COMM_WORLD);
+    printf("Rank %i Chunck %s communicated 0 \n", m_exec_conf->getRank(), name );
 
     if ( empty_entry_indicator == true)
         entry = pgsd_find_chunk(&m_handle, 0, name);
+    printf("Rank %i Chunck %s communicated 1\n", m_exec_conf->getRank(), name );
 
     empty_entry_indicator = false;
     if (entry == NULL && frame != 0 && is_root() )
         empty_entry_indicator = true;
     MPI_Bcast(&empty_entry_indicator, 1, MPI_C_BOOL, 0, MPI_COMM_WORLD);
+    printf("Rank %i Chunck %s communicated 2 \n", m_exec_conf->getRank(), name );
 
     size_t m_N;
     uint8_t m_type;
 
     if ( is_root() )
         {
+        printf("Rank %i Chunck %s before m_N \n", m_exec_conf->getRank(), name );
         m_N = entry->N;
+        printf("Rank %i Chunck %s m_N \n", m_exec_conf->getRank(), name );
         m_type = entry->type;
+        printf("Rank %i Chunck %s m_type \n", m_exec_conf->getRank(), name );
         }
+    printf("Rank %i Chunck %s communicated 3\n", m_exec_conf->getRank(), name );
+
     MPI_Bcast(&m_N, 1, my_MPI_SIZE_T, 0, MPI_COMM_WORLD);
     MPI_Bcast(&m_type, 1, MPI_UINT8_T, 0, MPI_COMM_WORLD);
+    printf("Rank %i Chunck %s communicated 4\n", m_exec_conf->getRank(), name );
 
     if (empty_entry_indicator == true || (cur_n != 0 && m_N != cur_n))
         {
@@ -209,7 +218,8 @@ std::vector<std::string> GSDReaderMPI::readTypes(uint64_t frame, const char* nam
         return type_mapping;
     else
         {
-        size_t m_N, m_M;
+        size_t m_N;
+        uint32_t m_M = 1;
         uint8_t m_type;
 
         if ( is_root() )
@@ -220,6 +230,8 @@ std::vector<std::string> GSDReaderMPI::readTypes(uint64_t frame, const char* nam
         MPI_Bcast(&m_N, 1, my_MPI_SIZE_T, 0, MPI_COMM_WORLD);
         MPI_Bcast(&m_M, 1, my_MPI_SIZE_T, 0, MPI_COMM_WORLD);
         MPI_Bcast(&m_type, 1, MPI_UINT8_T, 0, MPI_COMM_WORLD);
+        
+        printf("Rank: %i m_N %i, m_M %i, pgsd_sizeof_type((enum pgsd_type)m_type) %i\n", m_exec_conf->getRank(), m_N, m_M, pgsd_sizeof_type((enum pgsd_type)m_type));
         
         size_t actual_size = m_N * m_M * pgsd_sizeof_type((enum pgsd_type)m_type);
         
@@ -255,7 +267,7 @@ void GSDReaderMPI::readHeader()
     m_snapshot->dimensions = dim;
 
     float box[6] = {1.0f, 1.0f, 1.0f, 0.0f, 0.0f, 0.0f};
-    readChunk(&box, m_frame, "configuration/box", 6 * 4, cur_n, N_local, M_local, 0, true);
+    readChunk(&box, m_frame, "configuration/box", 6 * 4, cur_n, 6 * N_local, M_local, 0, true);
     // Set Lz, xz, and yz to 0 for 2D boxes. Needed for working with hoomd v 2 GSD files.
     if (dim == 2)
         {
@@ -275,12 +287,10 @@ void GSDReaderMPI::readHeader()
         throw runtime_error(s.str());
         }
 
-    printf("Rank: %i N %i\n", m_exec_conf->getRank(), N);
     m_part_per_rank.resize(m_exec_conf->getNRanksGlobal());
-    all_gather_v(N, m_part_per_rank, MPI_COMM_WORLD);
 
     unsigned int n = floor(N/m_exec_conf->getNRanksGlobal());
-    std::fill(m_part_per_rank.begin(),m_part_per_rank.end(), n);
+    // std::fill(m_part_per_rank.begin(),m_part_per_rank.end(), n);
     unsigned int rem = N%m_exec_conf->getNRanksGlobal();
     
     if(m_exec_conf->getRank() < rem){
@@ -292,6 +302,9 @@ void GSDReaderMPI::readHeader()
         m_part_per_rank[i]++;
     }
 
+    all_gather_v(n, m_part_per_rank, MPI_COMM_WORLD);
+    printf("Rank: %i N %i, parts rank %i\n", m_exec_conf->getRank(), N, m_part_per_rank[m_exec_conf->getRank()]);
+
     m_snapshot->particle_data.resize(n);
     }
 
@@ -300,6 +313,7 @@ void GSDReaderMPI::readHeader()
 void GSDReaderMPI::readParticles()
     {
     uint32_t N = m_snapshot->particle_data.size;
+    printf("Rank: %i N %i, parts rank %i\n", m_exec_conf->getRank(), N, m_part_per_rank[m_exec_conf->getRank()]);
 
     unsigned int rank = m_exec_conf->getRank();
     unsigned int size = m_exec_conf->getNRanks();
@@ -316,11 +330,14 @@ void GSDReaderMPI::readParticles()
     // the snapshot already has default values, if a chunk is not found, the value
     // is already at the default, and the failed read is not a problem
     readChunk(&m_snapshot->particle_data.type[0], m_frame, "particles/typeid", N * 4, N_global, N, 1, offset, true);
+    MPI_Barrier(MPI_COMM_WORLD);
     readChunk(&m_snapshot->particle_data.mass[0], m_frame, "particles/mass", N * 4, N_global, N, 1, offset, true);
+    MPI_Barrier(MPI_COMM_WORLD);
     readChunk(&m_snapshot->particle_data.slength[0], m_frame, "particles/slength", N * 4, N_global, N, 1, offset, true);
+    MPI_Barrier(MPI_COMM_WORLD);
     // readChunk(&m_snapshot->particle_data.charge[0], m_frame, "particles/charge", N * 4, N_global, N, , offset, true);
     // readChunk(&m_snapshot->particle_data.diameter[0], m_frame, "particles/diameter", N * 4, N_global, N, , offset, true);
-    readChunk(&m_snapshot->particle_data.body[0], m_frame, "particles/body", N * 4, N_global, N, 1, offset, true);
+    // readChunk(&m_snapshot->particle_data.body[0], m_frame, "particles/body", N * 4, N_global, N, 1, offset, true);
     // readChunk(&m_snapshot->particle_data.inertia[0],
     //           m_frame,
     //           "particles/moment_inertia",
@@ -332,6 +349,8 @@ void GSDReaderMPI::readParticles()
     //           "particles/orientation",
     //           N * 16,
     //           N_global, N, , offset, true);
+    MPI_Barrier(MPI_COMM_WORLD);
+
     readChunk(&m_snapshot->particle_data.vel[0], m_frame, "particles/velocity", N * 12, N_global, N, 3, offset, true);
     // readChunk(&m_snapshot->particle_data.dpe[0], m_frame, "particles/dpe", N * 12, N_global, N, , offset, true);
     readChunk(&m_snapshot->particle_data.density[0], m_frame, "particles/density", N * 4, N_global, N, 1, offset, true);
