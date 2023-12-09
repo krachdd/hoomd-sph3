@@ -70,7 +70,7 @@ class PYBIND11_EXPORT GSDReaderMPI
                    const char* name,
                    size_t expected_size,
                    unsigned int cur_n,
-                   uint32_t N_local,
+                   uint64_t N_local,
                    uint32_t M_local, 
                    uint32_t offset,
                    bool all);
