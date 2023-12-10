@@ -290,7 +290,7 @@ class Simulation(metaclass=Loggable):
                                                self.device.communicator)
 
         step = reader.getTimeStep() if self.timestep is None else self.timestep
-        self._state = State(self, snapshot, domain_decomposition)
+        self._state = State(self, snapshot, domain_decomposition, distributed = True)
 
         reader.clearSnapshot()
 

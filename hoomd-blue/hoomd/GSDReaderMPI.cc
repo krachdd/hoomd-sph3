@@ -362,7 +362,7 @@ void GSDReaderMPI::readParticles()
     MPI_Barrier(MPI_COMM_WORLD);
     // readChunk(&m_snapshot->particle_data.charge[0], m_frame, "particles/charge", N * 4, N_global, N, , offset, true);
     // readChunk(&m_snapshot->particle_data.diameter[0], m_frame, "particles/diameter", N * 4, N_global, N, , offset, true);
-    // readChunk(&m_snapshot->particle_data.body[0], m_frame, "particles/body", N * 4, N_global, N, 1, offset, true);
+    readChunk(&m_snapshot->particle_data.body[0], m_frame, "particles/body", N * 4, N_global, N, 1, offset, true);
     // readChunk(&m_snapshot->particle_data.inertia[0],
     //           m_frame,
     //           "particles/moment_inertia",

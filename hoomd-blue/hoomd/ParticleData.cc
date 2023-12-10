@@ -80,7 +80,7 @@ ParticleData::ParticleData(unsigned int N,
     : m_exec_conf(exec_conf), m_nparticles(0), m_nghosts(0), m_max_nparticles(0), m_nglobal(0),
       m_accel_set(false), m_resize_factor(9. / 8.), m_arrays_allocated(false)
     {
-    m_exec_conf->msg->notice(5) << "Constructing ParticleData" << endl;
+    m_exec_conf->msg->notice(5) << "Constructing ParticleData c1 " << endl;
     std::cout << "Rank " << m_exec_conf->getRank() << " Constructing ParticleData with particles " << N << endl;
 
     // initialize snapshot with default values
@@ -154,8 +154,7 @@ ParticleData::ParticleData(const SnapshotParticleData<Real>& snapshot,
       m_accel_set(false), m_resize_factor(9. / 8.), m_arrays_allocated(false)
     {
     m_exec_conf->msg->notice(5) << "Constructing ParticleData" << endl;
-    std::cout << "Rank " << m_exec_conf->getRank() << " Constructing ParticleData with particles " << m_nparticles << " " << getN() << endl;
-
+    std::cout << "Rank " << m_exec_conf->getRank() << " Constructing ParticleData with particles c2 " << m_nparticles << " " << getN() << endl;
 
 #ifdef ENABLE_MPI
     // Set up domain decomposition information
@@ -1765,6 +1764,7 @@ void ParticleData::initializeFromDistrSnapshot(const SnapshotParticleData<Real>&
     unsigned int start_tag_proc = std::accumulate(part_distribution.begin(), part_distribution.begin()+my_rank,0);
 
     unsigned int max_typeid = 0;
+    Scalar maxposx = 0, maxposy = 0, maxposz = 0, minposx = 0, minposy = 0, minposz = 0;
     printf("Rank %i, Distributed snapshot start_tag_proc %i\n",my_rank, start_tag_proc);
 
     std::cout << "Rank " << m_exec_conf->getRank() << " DistrSnapshot start init done " << snapshot.size << " " << getN()<< endl;
@@ -1825,6 +1825,7 @@ void ParticleData::initializeFromDistrSnapshot(const SnapshotParticleData<Real>&
     N_proc.resize(size, 0);
     printf("Done with First resizing\n");
 
+
     ArrayHandle<unsigned int> h_cart_ranks(m_decomposition->getCartRanks(),
                                            access_location::host,
                                            access_mode::read);
@@ -1845,11 +1846,11 @@ void ParticleData::initializeFromDistrSnapshot(const SnapshotParticleData<Real>&
         {
         unsigned int snap_idx = (unsigned int)(it - snapshot.pos.begin());
         // if requested, do not initialize constituent particles of bodies
-        if (ignore_bodies && snapshot.body[snap_idx] < MIN_FLOPPY
-            && snapshot.body[snap_idx] != snap_idx)
-            {//TODO ??? renumber global ids if here is a continue
-            continue;
-            }
+        // if (ignore_bodies && snapshot.body[snap_idx] < MIN_FLOPPY
+        //     && snapshot.body[snap_idx] != snap_idx)
+        //     {//TODO ??? renumber global ids if here is a continue
+        //     continue;
+        //     }
 
         // determine domain the particle is placed into
         Scalar3 pos = vec_to_scalar3(*it);
@@ -1937,8 +1938,17 @@ void ParticleData::initializeFromDistrSnapshot(const SnapshotParticleData<Real>&
 
         // determine max typeid on root rank
         max_typeid = std::max(max_typeid, snapshot.type[snap_idx]);
+        maxposx = std::max(maxposx, pos.x);
+        maxposy = std::max(maxposy, pos.y);
+        maxposz = std::max(maxposz, pos.z);
+        minposx = std::min(minposx, pos.x);
+        minposy = std::min(minposy, pos.y);
+        minposz = std::min(minposz, pos.z);
         }
     std::cout << "Rank " << m_exec_conf->getRank() << "max typeid " << max_typeid << std::endl;
+    std::cout << "Rank " << m_exec_conf->getRank() << "x: " << maxposx << " - " << minposx << std::endl;
+    std::cout << "Rank " << m_exec_conf->getRank() << "y: " << maxposy << " - " << minposy << std::endl;
+    std::cout << "Rank " << m_exec_conf->getRank() << "z: " << maxposz << " - " << minposz << std::endl;
     std::cout << "Rank " << m_exec_conf->getRank() << " DistrSnapshot done placing them in domain  " << snapshot.size << " " << getN() << " " << N_proc[my_rank] << endl;
     
 
@@ -2047,6 +2057,7 @@ void ParticleData::initializeFromDistrSnapshot(const SnapshotParticleData<Real>&
         }
 
     std::cout << "Rank " << m_exec_conf->getRank() << " DistrSnapshot done comm  " << snapshot.size << " " << getN() << " " << m_nparticles << endl;
+    MPI_Barrier(MPI_COMM_WORLD);
     // std::cout << "Rank " << m_exec_conf->getRank() << " max type " << std::max_element(mass.begin(), mass.end()) << std::endl;
 
     MPI_Waitall(17*size, send_req, MPI_STATUSES_IGNORE);
@@ -2075,6 +2086,9 @@ void ParticleData::initializeFromDistrSnapshot(const SnapshotParticleData<Real>&
 
     // resize particle data
     resize(m_nparticles);
+
+    std::cout << "Rank " << m_exec_conf->getRank() << " DistrSnapshot resized "<<  std::endl;
+    MPI_Barrier(MPI_COMM_WORLD);
 
     // Load particle data
     ArrayHandle<Scalar4> h_pos(m_pos, access_location::host, access_mode::overwrite);
@@ -2158,13 +2172,11 @@ void ParticleData::initializeFromDistrSnapshot(const SnapshotParticleData<Real>&
 
     // notify listeners about resorting of local particles
     notifyParticleSort();
-    printf("Done notifying particle sort\n");
     // zero the origin
     m_origin = make_scalar3(0, 0, 0);
     m_o_image = make_int3(0, 0, 0);
 
     unsigned int snapshot_size = m_nparticles;
-    printf("Done getting snapshot size %i\n", snapshot_size);
 
     Scalar max_typeid_test = 0;
     for (unsigned int idx = 0; idx < m_nparticles; idx++)
@@ -2174,8 +2186,6 @@ void ParticleData::initializeFromDistrSnapshot(const SnapshotParticleData<Real>&
             max_typeid_test = ctid;
         }
     }
-    std::cout << "Rank " << m_exec_conf->getRank() << " Max tid test " << max_typeid << endl;
-
 
     // Raise an exception if there are any invalid type ids. This is done here (instead of in the
     // loops above) to avoid MPI communication deadlocks when only some ranks have invalid types.
@@ -2191,6 +2201,7 @@ void ParticleData::initializeFromDistrSnapshot(const SnapshotParticleData<Real>&
           << m_type_mapping.size() << " types.";
         throw std::runtime_error(s.str());
         }
+    MPI_Barrier(MPI_COMM_WORLD);
     }
 #endif
 
