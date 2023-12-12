@@ -82,14 +82,6 @@ GSDReaderMPI::GSDReaderMPI(std::shared_ptr<const ExecutionConfiguration> exec_co
 
 GSDReaderMPI::~GSDReaderMPI()
     {
-// #ifdef ENABLE_MPI
-//     // if we are not the root processor, do not perform file I/O
-//     if (!m_exec_conf->isRoot())
-//         {
-//         return;
-//         }
-// #endif
-
     pgsd_close(&m_handle);
     }
 
@@ -351,14 +343,14 @@ void GSDReaderMPI::readParticles()
     uint32_t N_global = std::accumulate(part_distribution.begin(), part_distribution.end(),0);
 
     m_snapshot->particle_data.type_mapping = readTypes(m_frame, "particles/types");
+    MPI_Barrier(MPI_COMM_WORLD);
 
 
     // the snapshot already has default values, if a chunk is not found, the value
     // is already at the default, and the failed read is not a problem
     readChunk(&m_snapshot->particle_data.type[0], m_frame, "particles/typeid", N * 4, N_global, N, 1, offset, true);
-    MPI_Barrier(MPI_COMM_WORLD);
+    printf("rank %i max type, %i min type %i \n", rank, *std::max_element(m_snapshot->particle_data.type.begin(), m_snapshot->particle_data.type.end()), *std::min_element(m_snapshot->particle_data.type.begin(), m_snapshot->particle_data.type.end()));
     readChunk(&m_snapshot->particle_data.mass[0], m_frame, "particles/mass", N * 4, N_global, N, 1, offset, true);
-    MPI_Barrier(MPI_COMM_WORLD);
     readChunk(&m_snapshot->particle_data.slength[0], m_frame, "particles/slength", N * 4, N_global, N, 1, offset, true);
     MPI_Barrier(MPI_COMM_WORLD);
     // readChunk(&m_snapshot->particle_data.charge[0], m_frame, "particles/charge", N * 4, N_global, N, , offset, true);

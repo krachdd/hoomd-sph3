@@ -596,7 +596,6 @@ class Snapshot:
         set_properties(snap.constraints, pgsd_snap.constraints, ('N',),
                        ('group', 'value'))
 
-        print(f'Set Constraints Properties Done!')
 
         # Set box attribute
         if pgsd_snap.configuration.box is not None:

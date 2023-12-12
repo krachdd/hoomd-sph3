@@ -585,6 +585,8 @@ void GSDDumpWriterMPI::writeAttributes(GSDDumpWriterMPI::PGSDFrame& frame)
         writeTypeMapping("particles/types", frame.particle_data.type_mapping, frame);
         }
 
+
+    printf("GSDDumpWriterMPI frame.particle_data.type.size() %li\n", frame.particle_data.type.size());
     if (frame.particle_data.type.size() != 0)
         {
         assert(frame.particle_data.type.size() == N);
@@ -1629,7 +1631,7 @@ void GSDDumpWriterMPI::populateLocalFrame(GSDDumpWriterMPI::PGSDFrame& frame, ui
 
     MPI_Allreduce(MPI_IN_PLACE, &v, 1, MPI_LONG, MPI_BOR, m_exec_conf->getMPICommunicator());
 
-        frame.particle_data_present = std::bitset<n_pgsd_flags>(v);
+    frame.particle_data_present = std::bitset<n_pgsd_flags>(v);
 
     // Keep data in arrays only when they are not all default or this is a non-zero frame
     // and the zeroth frame is non-default. To not keep, resize the arrays back to 0.
