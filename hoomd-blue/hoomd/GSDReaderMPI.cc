@@ -237,12 +237,13 @@ std::vector<std::string> GSDReaderMPI::readTypes(uint64_t frame, const char* nam
     else
         {
         size_t m_N;
-        uint32_t m_M = 1;
+        uint32_t m_M;
         uint8_t m_type;
 
         if ( is_root() )
             {
             m_N = entry->N;
+            m_M = entry->M;
             m_type = entry->type;
             }
         MPI_Bcast(&m_N, 1, my_MPI_SIZE_T, 0, MPI_COMM_WORLD);
@@ -263,7 +264,7 @@ std::vector<std::string> GSDReaderMPI::readTypes(uint64_t frame, const char* nam
             size_t l = strnlen(&data[i * m_M], m_M);
             type_mapping.push_back(std::string(&data[i * m_M], l));
             }
-        printf("types %i\n", type_mapping.size());
+        printf("rank %i types %i: %s, %s\n",m_exec_conf->getRank(), type_mapping.size(), type_mapping[0].c_str(), type_mapping[1].c_str());
         return type_mapping;
         }
     }

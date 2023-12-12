@@ -583,6 +583,8 @@ class State:
     def _get_group(self, filter_):
         cls = filter_.__class__
         group_cache = self._groups
+        print("in getgroup filter_ {0}\n".format(filter_))
+
         if filter_ in group_cache[cls]:
             return group_cache[cls][filter_]
         else:

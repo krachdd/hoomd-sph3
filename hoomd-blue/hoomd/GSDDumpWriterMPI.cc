@@ -434,10 +434,6 @@ void GSDDumpWriterMPI::writeTypeMapping(std::string chunk, std::vector<std::stri
     {
     uint32_t N_global = m_group->getNumMembersGlobal();
     unsigned int rank = m_exec_conf->getRank();
-    // int part_offset = 0;
-    // part_offset = std::accumulate(frame.particle_data.part_distr.begin(), frame.particle_data.part_distr.begin()+rank, 0);
-
-    printf("GSDDumpWriterMPI: type mapping size %i\n", type_mapping.size());
 
     int max_len = 0;
     for (unsigned int i = 0; i < type_mapping.size(); i++)
@@ -445,28 +441,26 @@ void GSDDumpWriterMPI::writeTypeMapping(std::string chunk, std::vector<std::stri
         max_len = std::max(max_len, (int)type_mapping[i].size());
         }
     max_len += 1; // for null
-    printf("GSDDumpWriterMPI: max_len %i\n", max_len);
-    printf("GSDDumpWriterMPI: N_global %i\n", N_global);
 
-        {
-        m_exec_conf->msg->notice(10) << "PGSD: writing " << chunk << endl;
-        std::vector<char> types(max_len * type_mapping.size());
-        for (unsigned int i = 0; i < type_mapping.size(); i++)
-            strncpy(&types[max_len * i], type_mapping[i].c_str(), max_len);
-        int retval = pgsd_write_chunk(&m_handle,
-                                     chunk.c_str(),
-                                     PGSD_TYPE_UINT8,
-                                     type_mapping.size(),
-                                     max_len,
-                                     type_mapping.size(),
-                                     max_len,
-                                     0,
-                                     0,
-                                     false,
-                                     0,
-                                     (void*)&types[0]);
-        PGSDUtils::checkError(retval, m_fname);
-        }
+    m_exec_conf->msg->notice(10) << "PGSD: writing " << chunk << endl;
+    std::vector<char> types(max_len * type_mapping.size());
+    for (unsigned int i = 0; i < type_mapping.size(); i++){
+        strncpy(&types[max_len * i], type_mapping[i].c_str(), max_len);
+    }
+
+    int retval = pgsd_write_chunk(&m_handle,
+                                 chunk.c_str(),
+                                 PGSD_TYPE_UINT8,
+                                 type_mapping.size(),
+                                 max_len,
+                                 type_mapping.size(),
+                                 max_len,
+                                 0,
+                                 0,
+                                 false,
+                                 0,
+                                 (void*)&types[0]);
+    PGSDUtils::checkError(retval, m_fname);
     }
 
 /*! Write the data chunks configuration/step, configuration/box, and particles/N. If this is frame
@@ -799,8 +793,6 @@ void GSDDumpWriterMPI::writeMomenta(const GSDDumpWriterMPI::PGSDFrame& frame)
     std::vector<unsigned int> part_distribution(size);
     all_gather_v(N, part_distribution, MPI_COMM_WORLD);
     part_offset = std::accumulate(part_distribution.begin(), part_distribution.begin()+rank, 0);
-
-    printf("Write Momenta om rank %i\n", rank);
 
     if (frame.particle_data.vel.size() != 0)
         {
