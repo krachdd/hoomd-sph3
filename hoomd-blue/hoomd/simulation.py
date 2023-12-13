@@ -281,11 +281,9 @@ class Simulation(metaclass=Loggable):
         if self._state is not None:
             raise RuntimeError("Cannot initialize more than once\n")
         filename = _hoomd.mpi_bcast_str(filename, self.device._cpp_exec_conf)
-        print("create stsate frim pgsd bcast filename")
         # Grab snapshot and timestep
         reader = _hoomd.GSDReaderMPI(self.device._cpp_exec_conf, filename,
                                   abs(frame), frame < 0)
-        print("create state from pgsd: reader initialized")
         snapshot = Snapshot._from_cpp_snapshot(reader.getSnapshot(),
                                                self.device.communicator)
 

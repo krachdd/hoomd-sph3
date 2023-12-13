@@ -193,7 +193,6 @@ class PGSD(Writer):
                  logger=None):
 
         super().__init__(trigger)
-        print(f'Init PGSD Class')
         dynamic_validation = OnlyFrom([
             'attribute',
             'property',
@@ -236,7 +235,6 @@ class PGSD(Writer):
                           _defaults=dict(filter=filter, dynamic=dynamic)))
 
         self._logger = None if logger is None else _PGSDLogWriter(logger)
-        print(f'Done Init PGSD Class')
 
     def _attach_hook(self):
         self._cpp_obj = _hoomd.GSDDumpWriterMPI(

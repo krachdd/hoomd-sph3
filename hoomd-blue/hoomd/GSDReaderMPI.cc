@@ -31,18 +31,9 @@ GSDReaderMPI::GSDReaderMPI(std::shared_ptr<const ExecutionConfiguration> exec_co
     {
     m_snapshot = std::shared_ptr<SnapshotSystemData<float>>(new SnapshotSystemData<float>);
 
-// #ifdef ENABLE_MPI
-//     // if we are not the root processor, do not perform file I/O
-//     if (!m_exec_conf->isRoot())
-//         {
-//         return;
-//         }
-// #endif
-
     // open the GSD file in read mode
     m_exec_conf->msg->notice(3) << "data.pgsd_snapshot: open gsd file " << name << endl;
     int retval = pgsd_open(&m_handle, name.c_str(), PGSD_OPEN_READONLY);
-    printf("Rank: %i GSDReaderMPI: Check error after gsd open %i\n", m_exec_conf->getRank(), retval);
     PGSDUtils::checkError(retval, m_name);
 
     // validate schema
@@ -72,11 +63,8 @@ GSDReaderMPI::GSDReaderMPI(std::shared_ptr<const ExecutionConfiguration> exec_co
           << pgsd_get_nframes(&m_handle) << " frames.";
         throw runtime_error(s.str());
         }
-    printf("Read File HEader\n");
     readHeader();
-    printf("Read File Particles\n");
     readParticles();
-    printf("Read Topology\n");
     readTopology();
     }
 
@@ -111,34 +99,24 @@ bool GSDReaderMPI::readChunk(void* data,
     {
 
     const struct pgsd_index_entry* entry = pgsd_find_chunk(&m_handle, frame, name);
-    printf("Rank %i Chunck %s found\n", m_exec_conf->getRank(), name );
     bool empty_entry_indicator = false;
-    if (entry == NULL )
-        printf("Rank %i entry %s is NULL, frame %i:\n", m_exec_conf->getRank(), name, frame );
 
     if (entry == NULL && frame != 0 && is_root() )
         {
-        printf("entry is empty");
         empty_entry_indicator = true;
         }
     MPI_Bcast(&empty_entry_indicator, 1, MPI_C_BOOL, 0, MPI_COMM_WORLD);
-    printf("Rank %i Chunck %s communicated 0 \n", m_exec_conf->getRank(), name );
 
     if ( empty_entry_indicator == true)
         {
         entry = pgsd_find_chunk(&m_handle, 0, name);
-        printf("in second if clause");
         }
-
-    printf("Rank %i Chunck %s communicated 1\n", m_exec_conf->getRank(), name );
 
     empty_entry_indicator = false;
     if ( entry == NULL && is_root() )
         empty_entry_indicator = true;
 
     MPI_Bcast(&empty_entry_indicator, 1, MPI_C_BOOL, 0, MPI_COMM_WORLD);
-    printf("Rank %i Chunck %s communicated 2 \n", m_exec_conf->getRank(), name );
-
     if ( empty_entry_indicator == true )
         {
         m_exec_conf->msg->notice(10) << "data.pgsd_snapshot: empty entry -> chunk not found " << name << endl;
@@ -150,18 +128,13 @@ bool GSDReaderMPI::readChunk(void* data,
 
     if ( m_exec_conf->getRank() == 0 )
         {
-        printf("Rank %i Chunck %s before m_N \n", m_exec_conf->getRank(), name );
         m_N = entry->N;
-        printf("Rank %i Chunck %s m_N \n", m_exec_conf->getRank(), name );
         m_type = entry->type;
-        printf("Rank %i Chunck %s m_type \n", m_exec_conf->getRank(), name );
         }
 
-    printf("Rank %i Chunck %s communicated 3\n", m_exec_conf->getRank(), name );
     MPI_Barrier(MPI_COMM_WORLD);
     MPI_Bcast(&m_N, 1, my_MPI_SIZE_T, 0, MPI_COMM_WORLD);
     MPI_Bcast(&m_type, 1, MPI_UINT8_T, 0, MPI_COMM_WORLD);
-    printf("Rank %i Chunck %s communicated 4\n", m_exec_conf->getRank(), name );
 
     if ( cur_n != 0 && m_N != cur_n )
         {
@@ -242,8 +215,6 @@ std::vector<std::string> GSDReaderMPI::readTypes(uint64_t frame, const char* nam
         MPI_Bcast(&m_M, 1, my_MPI_SIZE_T, 0, MPI_COMM_WORLD);
         MPI_Bcast(&m_type, 1, MPI_UINT8_T, 0, MPI_COMM_WORLD);
         
-        printf("Rank: %i m_N %i, m_M %i, pgsd_sizeof_type((enum pgsd_type)m_type) %i\n", m_exec_conf->getRank(), m_N, m_M, pgsd_sizeof_type((enum pgsd_type)m_type));
-        
         size_t actual_size = m_N * m_M * pgsd_sizeof_type((enum pgsd_type)m_type);
         
         std::vector<char> data(actual_size);
@@ -256,7 +227,6 @@ std::vector<std::string> GSDReaderMPI::readTypes(uint64_t frame, const char* nam
             size_t l = strnlen(&data[i * m_M], m_M);
             type_mapping.push_back(std::string(&data[i * m_M], l));
             }
-        printf("rank %i types %i: %s, %s\n",m_exec_conf->getRank(), type_mapping.size(), type_mapping[0].c_str(), type_mapping[1].c_str());
         return type_mapping;
         }
     }
@@ -274,12 +244,9 @@ void GSDReaderMPI::readHeader()
     unsigned int cur_n = 0;
     readChunk(&m_timestep, m_frame, "configuration/step", 8, cur_n, N_local, M_local, 0, true);
     MPI_Barrier(MPI_COMM_WORLD);
-    printf("Frame %i\n", m_frame);
-    printf("Timestep %i\n", m_timestep);
     uint8_t dim = 3;
     readChunk(&dim, m_frame, "configuration/dimensions", 1, cur_n, N_local, M_local, 0, true);
     MPI_Barrier(MPI_COMM_WORLD);
-    printf("dim %i\n", dim);
 
     m_snapshot->dimensions = dim;
 
@@ -315,13 +282,7 @@ void GSDReaderMPI::readHeader()
         n++;
     }
 
-
-    // for(unsigned int i=0; i< rem; i++){
-    //     m_part_per_rank[i]++;
-    // }
-
     all_gather_v(n, m_part_per_rank, MPI_COMM_WORLD);
-    printf("Rank: %i N %i, parts rank %i\n", rank, N, m_part_per_rank[rank]);
 
     m_snapshot->particle_data.resize(n);
     }
@@ -331,7 +292,6 @@ void GSDReaderMPI::readHeader()
 void GSDReaderMPI::readParticles()
     {
     uint32_t N = m_snapshot->particle_data.size;
-    printf("Rank: %i N %i, parts rank %i\n", m_exec_conf->getRank(), N, m_part_per_rank[m_exec_conf->getRank()]);
 
     unsigned int rank = m_exec_conf->getRank();
     unsigned int size = m_exec_conf->getNRanksGlobal();
@@ -349,28 +309,11 @@ void GSDReaderMPI::readParticles()
     // the snapshot already has default values, if a chunk is not found, the value
     // is already at the default, and the failed read is not a problem
     readChunk(&m_snapshot->particle_data.type[0], m_frame, "particles/typeid", N * 4, N_global, N, 1, offset, true);
-    printf("rank %i max type, %i min type %i \n", rank, *std::max_element(m_snapshot->particle_data.type.begin(), m_snapshot->particle_data.type.end()), *std::min_element(m_snapshot->particle_data.type.begin(), m_snapshot->particle_data.type.end()));
     readChunk(&m_snapshot->particle_data.mass[0], m_frame, "particles/mass", N * 4, N_global, N, 1, offset, true);
     readChunk(&m_snapshot->particle_data.slength[0], m_frame, "particles/slength", N * 4, N_global, N, 1, offset, true);
-    MPI_Barrier(MPI_COMM_WORLD);
-    // readChunk(&m_snapshot->particle_data.charge[0], m_frame, "particles/charge", N * 4, N_global, N, , offset, true);
-    // readChunk(&m_snapshot->particle_data.diameter[0], m_frame, "particles/diameter", N * 4, N_global, N, , offset, true);
     readChunk(&m_snapshot->particle_data.body[0], m_frame, "particles/body", N * 4, N_global, N, 1, offset, true);
-    // readChunk(&m_snapshot->particle_data.inertia[0],
-    //           m_frame,
-    //           "particles/moment_inertia",
-    //           N * 12,
-    //           N_global, N, , offset, true);
     readChunk(&m_snapshot->particle_data.pos[0], m_frame, "particles/position", N * 12, N_global, N, 3, offset, true);
-    // readChunk(&m_snapshot->particle_data.orientation[0],
-    //           m_frame,
-    //           "particles/orientation",
-    //           N * 16,
-    //           N_global, N, , offset, true);
-    MPI_Barrier(MPI_COMM_WORLD);
     readChunk(&m_snapshot->particle_data.vel[0], m_frame, "particles/velocity", N * 12, N_global, N, 3, offset, true);
-
-    // readChunk(&m_snapshot->particle_data.dpe[0], m_frame, "particles/dpe", N * 12, N_global, N, , offset, true);
     readChunk(&m_snapshot->particle_data.density[0], m_frame, "particles/density", N * 4, N_global, N, 1, offset, true);
     readChunk(&m_snapshot->particle_data.pressure[0], m_frame, "particles/pressure", N * 4, N_global, N, 1, offset, true);
     readChunk(&m_snapshot->particle_data.energy[0], m_frame, "particles/energy", N * 4, N_global, N, 1, offset, true);
@@ -378,7 +321,6 @@ void GSDReaderMPI::readParticles()
     readChunk(&m_snapshot->particle_data.aux2[0], m_frame, "particles/auxiliary2", N * 12, N_global, N, 3, offset, true);
     readChunk(&m_snapshot->particle_data.aux3[0], m_frame, "particles/auxiliary3", N * 12, N_global, N, 3, offset, true);
     readChunk(&m_snapshot->particle_data.aux4[0], m_frame, "particles/auxiliary4", N * 12, N_global, N, 3, offset, true);
-    // readChunk(&m_snapshot->particle_data.angmom[0], m_frame, "particles/angmom", N * 16, N_global, N, , offset, true);
     readChunk(&m_snapshot->particle_data.image[0], m_frame, "particles/image", N * 12, N_global, N, 3, offset, true);
     }
 

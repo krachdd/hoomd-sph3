@@ -256,11 +256,7 @@ class State:
             simulation.device, snapshot._cpp_obj._global_box,
             domain_decomposition)
 
-        if distributed:
-            print("Initialize system with distributed snapshot.")
-
         if decomposition is not None:
-            print('Create System Definition')
             self._cpp_sys_def = _hoomd.SystemDefinition(
                 snapshot._cpp_obj, simulation.device._cpp_exec_conf,
                 decomposition, self.distributed)
@@ -583,7 +579,6 @@ class State:
     def _get_group(self, filter_):
         cls = filter_.__class__
         group_cache = self._groups
-        print("in getgroup filter_ {0}\n".format(filter_))
 
         if filter_ in group_cache[cls]:
             return group_cache[cls][filter_]
