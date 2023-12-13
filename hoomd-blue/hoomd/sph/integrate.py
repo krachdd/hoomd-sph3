@@ -307,14 +307,21 @@ class Integrator(_DynamicIntegrator):
                                          allow_none=True)))
 
         self.half_step_hook = half_step_hook
-        self.kernel     = kernel.cpp_smoothingkernel
-        self.eos        = eos.cpp_stateequation
-
+        # self.kernel     = kernel.cpp_smoothingkernel
+        # self.eos        = eos.cpp_stateequation
+        self.kernel     = kernel
+        self.eos        = eos
+        
+        print('Kernel:',kernel)
+        print('self.kernel: ', self.kernel)
+        print('self.kernel.name: ', self.kernel.name)
+        print('Kernel[self.kernel.name]: ', Kernel[self.kernel.name])
 
 
     def _attach_hook(self):
         # initialize the reflected c++ class
         # initialize the reflected c++ class
+        #self._cpp_baseclass_name = 'SPHIntegratorTwoStep' + '_' + Kernel[self.kernel] + '_' + EOS[self.eos]
         self._cpp_baseclass_name = 'SPHIntegratorTwoStep' + '_' + Kernel[self.kernel.name] + '_' + EOS[self.eos.name]
         base_cls = getattr(_sph, self._cpp_baseclass_name)
         self._cpp_base_obj = base_cls(
@@ -342,3 +349,7 @@ class Integrator(_DynamicIntegrator):
         """
         v = self._cpp_obj.computeLinearMomentum()
         return (v.x, v.y, v.z)
+
+# Dicts
+Kernel = {'_WendlandC2':'WC2','_WendlandC4':'WC4','_WendlandC6':'WC6','_Quintic':'Q','_CubicSpline':'CS'}
+EOS = {'_Linear':'L','_Tait':'T'}

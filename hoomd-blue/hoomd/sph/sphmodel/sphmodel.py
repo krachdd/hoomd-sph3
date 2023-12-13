@@ -793,6 +793,11 @@ class SuspensionFlow(SPHModelConstraint):
         self.accel_set = False
         self.params_set = False
 
+        print('self.kernel: ', self.kernel)
+        print('self.kernel.name: ', self.kernel.name)
+        print('Kernel[self.kernel.name]: ', Kernel[self.kernel.name])
+
+
         if self.str_densitymethod == str('SUMMATION'):
             self.cpp_densitymethod = hoomd.sph._sph.PhaseFlowDensityMethod.DENSITYSUMMATION
         elif self.str_densitymethod == str('CONTINUITY'):

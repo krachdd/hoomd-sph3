@@ -430,10 +430,16 @@ void export_SPHIntegratorTwoStep(pybind11::module& m, std::string name)
         // vermutlich templateproblem. Muss wohl für jede Möglichkeit erzeugt werden
     //pybind11::bind_vector<std::vector<std::shared_ptr<SPHIntegrationMethodTwoStep>>>( m, "IntegrationMethodList");
 
-    std::string IntegrationMethodListTemplate = "IntegrationMethodList" + name;
-    //std::cout << "IML:" << IntegrationMethodListTemplate << std::endl;
+    // std::string IntegrationMethodListTemplate = "IntegrationMethodList" + name;
+    // //std::cout << "IML:" << IntegrationMethodListTemplate << std::endl;
 
-    pybind11::bind_vector<std::vector<std::shared_ptr<SPHIntegrationMethodTwoStep>>>( m, IntegrationMethodListTemplate, pybind11::module_local());
+    // pybind11::bind_vector<std::vector<std::shared_ptr<SPHIntegrationMethodTwoStep>>>( m, IntegrationMethodListTemplate, pybind11::module_local());
+
+    // pybind11::bind_vector<std::vector<std::shared_ptr<SPHIntegrationMethodTwoStep>>>( m, "IntegrationMethodList");
+
+    // pybind11::bind_vector<std::vector<std::shared_ptr<SPHIntegrationMethodTwoStep>>>(m, (name.c_str()));
+    // // pybind11::bind_vector<std::vector<std::shared_ptr<SPHIntegrationMethodTwoStep>>>( m, ("IntegrationMethodList" + (KT_).name() + (SET_).name()).c_str());
+
 
     pybind11::class_<SPHIntegratorTwoStep<KT_, SET_>, Integrator, std::shared_ptr<SPHIntegratorTwoStep<KT_, SET_>>>(m, name.c_str())
         .def(pybind11::init<std::shared_ptr<SystemDefinition>,
@@ -447,6 +453,23 @@ void export_SPHIntegratorTwoStep(pybind11::module& m, std::string name)
                       // &SPHIntegratorTwoStep::setIntegrateRotationalDOF);
     }
     } // end namespace detail
+
+// void export_SPHIntegratorTwoStep(pybind11::module& m)
+//     {
+//     pybind11::bind_vector<std::vector<std::shared_ptr<SPHIntegrationMethodTwoStep>>>(
+//         m,
+//         "IntegrationMethodList");
+
+//     pybind11::class_<SPHIntegratorTwoStep, Integrator, std::shared_ptr<SPHIntegratorTwoStep>>(
+//         m,
+//         "SPHIntegratorTwoStep")
+//         .def(pybind11::init<std::shared_ptr<SystemDefinition>, Scalar>())
+//         .def_property_readonly("methods", &SPHIntegratorTwoStep::getIntegrationMethods);
+//         // .def_property("rigid", &SPHIntegratorTwoStep::getRigid, &SPHIntegratorTwoStep::setRigid)
+//         // .def_property("integrate_rotational_dof",
+//                       // &SPHIntegratorTwoStep::getIntegrateRotationalDOF,
+//                       // &SPHIntegratorTwoStep::setIntegrateRotationalDOF);
+//     }
 
 //! Explicit template instantiations
 template class PYBIND11_EXPORT SPHIntegratorTwoStep<wendlandc2, linear>;
