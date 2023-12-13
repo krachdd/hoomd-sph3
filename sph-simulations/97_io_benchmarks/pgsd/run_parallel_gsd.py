@@ -71,7 +71,7 @@ NX, NY, NZ = np.int32(params['nx']), np.int32(params['ny']), np.int32(params['nz
 LREF = NX * voxelsize
 # define model parameters
 densitymethod = 'CONTINUITY'
-steps = 11
+steps = 301
 
 DRHO = 0.01                        # %
 
@@ -104,8 +104,6 @@ model = hoomd.sph.sphmodel.SinglePhaseFlow(kernel = Kernel,
                                            nlist  = NList,
                                            fluidgroup_filter = filterFLUID,
                                            solidgroup_filter = filterSOLID)
-if device.communicator.rank == 0:
-    print("SetModelParameter on all ranks")
 
 model.mu = MU
 model.densitymethod = densitymethod
@@ -202,12 +200,6 @@ sim.operations.integrator = integrator
 
 if device.communicator.rank == 0:
     print(f'Starting Run at {dt_string}')
-
-with sim.state.cpu_local_snapshot as snap:
-    mmax = np.max(snap.particles.typeid[:])
-    mmin = np.min(snap.particles.typeid[:])
-    print(f'{mmax} and {mmin} tids particles on rank {device.communicator.rank}')
-
 
 sim.run(steps, write_at_start=True)
 
