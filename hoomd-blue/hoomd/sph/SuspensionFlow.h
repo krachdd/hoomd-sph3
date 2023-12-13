@@ -96,7 +96,7 @@ class PYBIND11_EXPORT SuspensionFlow : public SPHBaseClass<KT_, SET_>
         /*! Set the parameters
          * \param mu Dynamic viscosity
          */
-        virtual void setParams(Scalar mu, Scalar rhoS, Scalar f0);
+        virtual void setParams(Scalar mu, Scalar rho0_S, Scalar f0);
 
         //! Getter and Setter methods for density method
         DensityMethod getDensityMethod()

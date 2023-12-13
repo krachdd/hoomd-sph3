@@ -741,6 +741,8 @@ class SuspensionFlow(SPHModel):
 
         # get all params in line
         self.mu = self._param_dict['mu']
+        self.rho0_S = self._param_dict['rho0_S']
+        self.f0 = self._param_dict['f0']
         self.artificialviscosity = self._param_dict['artificialviscosity']
         self.alpha = self._param_dict['alpha']
         self.beta = self._param_dict['beta']
@@ -751,11 +753,14 @@ class SuspensionFlow(SPHModel):
         self.compute_solid_forces = self._param_dict['compute_solid_forces']
         self.compute_wall_forces = self._param_dict['compute_wall_forces']
 
+        # self.set_params(self.mu, self.rho0_S, self.f0)
+        # self.setdensitymethod(self.str_densitymethod)
+        # self.setviscositymethod(self.str_viscositymethod)
 
-        self.set_params(self.mu, self.rho0_S, self.f0)
+        self.set_params(self.mu,self.rho0_S,self.f0)
         self.setdensitymethod(self.str_densitymethod)
         self.setviscositymethod(self.str_viscositymethod)
-        
+
         if (self.artificialviscosity == True):
             self.activateArtificialViscosity(self.alpha, self.beta)
         else:
@@ -786,7 +791,7 @@ class SuspensionFlow(SPHModel):
 
     def set_params(self,mu,rho0_S,f0):
         # self.mu   = mu.item()   if isinstance(mu, np.generic)   else mu
-        self._cpp_obj.setParams(self.mu, self.rho0_S, self.f0)
+        self._cpp_obj.setParams(self.mu,self.rho0_S,self.f0)
         self.params_set = True
         self._param_dict.__setattr__('params_set', True)
 

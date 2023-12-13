@@ -149,6 +149,7 @@ void  SuspensionFlow<KT_, SET_>::activateShepardRenormalization(unsigned int she
 template<SmoothingKernelType KT_,StateEquationType SET_>
 void SuspensionFlow<KT_, SET_>::setParams(Scalar mu, Scalar rho0_S, Scalar f0)
     {
+    std::cout << "HEllo" << std::endl;
     m_mu   = mu;
     if (m_mu <= 0)
          {

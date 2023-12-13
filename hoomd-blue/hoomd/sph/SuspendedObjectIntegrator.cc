@@ -9,7 +9,7 @@ maintainer: dkrach, david.krach@mib.uni-stuttgart.de
 
 
 #ifdef ENABLE_MPI
-#include "hoosph/Communicator.h"
+#include "hoomd/Communicator.h"
 #endif
 
 using namespace std;
@@ -118,7 +118,7 @@ void SuspendedObjectIntegrator::ComputeTotalMass(bool print = false)
 
 #ifdef ENABLE_MPI
     // Reduce on all processors
-    MPI_Allreduce(MPI_IN_PLACE, &m_totalmass, 1, MPI_HOOSPH_SCALAR, MPI_SUM, m_exec_conf->getMPICommunicator());
+    MPI_Allreduce(MPI_IN_PLACE, &m_totalmass, 1, MPI_HOOMD_SCALAR, MPI_SUM, m_exec_conf->getMPICommunicator());
 #endif
 
     if ( print )
@@ -127,10 +127,6 @@ void SuspendedObjectIntegrator::ComputeTotalMass(bool print = false)
 
 void SuspendedObjectIntegrator::ComputeCenterOfMass(bool print = false)
     {
-    // profile this step
-    if (m_prof)
-        m_prof->push("Suspended Object Compute Center of Mass");
-
     // Read-Handle to velocity mass and position array
     ArrayHandle<Scalar4> h_pos(m_pdata->getPositions(), access_location::host, access_mode::read);
 
@@ -171,7 +167,7 @@ void SuspendedObjectIntegrator::ComputeCenterOfMass(bool print = false)
 
 #ifdef ENABLE_MPI
     // Reduce on all processors
-    MPI_Allreduce(MPI_IN_PLACE, &angles[0], 6, MPI_HOOSPH_SCALAR, MPI_SUM, m_exec_conf->getMPICommunicator());
+    MPI_Allreduce(MPI_IN_PLACE, &angles[0], 6, MPI_HOOMD_SCALAR, MPI_SUM, m_exec_conf->getMPICommunicator());
     MPI_Allreduce(MPI_IN_PLACE, &totalgroupN, 1, MPI_UNSIGNED, MPI_SUM, this->m_exec_conf->getMPICommunicator());
 #endif
 
@@ -199,10 +195,6 @@ void SuspendedObjectIntegrator::ComputeCenterOfMass(bool print = false)
         m_exec_conf->msg->notice(5) << "SuspendedObject center of mass y: " << m_centerofmass.y << endl;
         m_exec_conf->msg->notice(5) << "SuspendedObject center of mass z: " << m_centerofmass.z << endl;
         }
-
-    // done profiling
-    if (m_prof)
-        m_prof->pop();
     }
 
 void SuspendedObjectIntegrator::ComputeTranslationVelocity(bool print = false)
@@ -227,7 +219,7 @@ void SuspendedObjectIntegrator::ComputeTranslationVelocity(bool print = false)
 
 #ifdef ENABLE_MPI
     // Reduce on all processors
-    MPI_Allreduce(MPI_IN_PLACE, &translationvel[0], 3, MPI_HOOSPH_SCALAR, MPI_SUM, m_exec_conf->getMPICommunicator());
+    MPI_Allreduce(MPI_IN_PLACE, &translationvel[0], 3, MPI_HOOMD_SCALAR, MPI_SUM, m_exec_conf->getMPICommunicator());
 #endif
 
     // Set attribute
@@ -287,7 +279,7 @@ void SuspendedObjectIntegrator::ComputeMomentOfInertia(bool print = false)
 
 #ifdef ENABLE_MPI
     // Reduce on all processors
-    MPI_Allreduce(MPI_IN_PLACE, &J[0], 9, MPI_HOOSPH_SCALAR, MPI_SUM, m_exec_conf->getMPICommunicator());
+    MPI_Allreduce(MPI_IN_PLACE, &J[0], 9, MPI_HOOMD_SCALAR, MPI_SUM, m_exec_conf->getMPICommunicator());
 #endif
 
     // Compute inverse of moment of inertia tensor and store as class attribute
@@ -358,7 +350,7 @@ void SuspendedObjectIntegrator::ComputeAngularVelocity(bool print = false)
 
 #ifdef ENABLE_MPI
     // Reduce on all processors
-    MPI_Allreduce(MPI_IN_PLACE, &angmomentum[0], 3, MPI_HOOSPH_SCALAR, MPI_SUM, m_exec_conf->getMPICommunicator());
+    MPI_Allreduce(MPI_IN_PLACE, &angmomentum[0], 3, MPI_HOOMD_SCALAR, MPI_SUM, m_exec_conf->getMPICommunicator());
 #endif
 
     // Compute angular velocity using inverted moment of inertia tensor
@@ -380,13 +372,8 @@ void SuspendedObjectIntegrator::ComputeAngularVelocity(bool print = false)
 */
 void SuspendedObjectIntegrator::integrateStepOne(uint64_t timestep)
     {
-    unsigned int group_size = m_group->getNumMembers();
 
     m_exec_conf->msg->notice(9) << "SuspendedObjectIntegrator: Integrate Step one" << endl;
-
-    // profile this step
-    if (m_prof)
-        m_prof->push("Suspended Object Integrate Step 1");
 
     // Local copy of the simulation box
     const BoxDim& box = m_pdata->getGlobalBox();
@@ -438,9 +425,6 @@ void SuspendedObjectIntegrator::integrateStepOne(uint64_t timestep)
     // Recompute center of mass
     ComputeCenterOfMass();
 
-    // done profiling
-    if (m_prof)
-        m_prof->pop();
     }
 
 /*! \param timestep Current time step
@@ -449,11 +433,6 @@ void SuspendedObjectIntegrator::integrateStepOne(uint64_t timestep)
 void SuspendedObjectIntegrator::integrateStepTwo(uint64_t timestep)
     {
     m_exec_conf->msg->notice(9) << "SuspendedObjectIntegrator: Integrate Step two" << endl;
-    unsigned int group_size = m_group->getNumMembers();
-
-    // profile this step
-    if (m_prof)
-        m_prof->push("Suspended Object Integrate Step 2");
 
     // Local copy of the simulation box
     const BoxDim& box = m_pdata->getGlobalBox();
@@ -502,7 +481,7 @@ void SuspendedObjectIntegrator::integrateStepTwo(uint64_t timestep)
 
 #ifdef ENABLE_MPI
     // Reduce on all processors
-    MPI_Allreduce(MPI_IN_PLACE, &totalforcetorque[0], 6, MPI_HOOSPH_SCALAR, MPI_SUM, m_exec_conf->getMPICommunicator());
+    MPI_Allreduce(MPI_IN_PLACE, &totalforcetorque[0], 6, MPI_HOOMD_SCALAR, MPI_SUM, m_exec_conf->getMPICommunicator());
 #endif
 
     // Compute translational acceleration
@@ -547,10 +526,6 @@ void SuspendedObjectIntegrator::integrateStepTwo(uint64_t timestep)
         h_vel.data[j].y = m_translationvel.y + rot.y;
         h_vel.data[j].z = m_translationvel.z + rot.z;
         }
-
-    // done profiling
-    if (m_prof)
-        m_prof->pop();
     }
 
 namespace detail

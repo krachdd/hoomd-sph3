@@ -11,6 +11,15 @@ maintainer: dkrach, david.krach@mib.uni-stuttgart.de
 #ifndef __SUSPENDED_OBJECT_INTEGRATGOR_H__
 #define __SUSPENDED_OBJECT_INTEGRATGOR_H__
 
+#ifndef M_PI
+#define M_PI 3.14159265358979323846
+#endif
+
+#ifndef M_TWOPI
+#define M_TWOPI 6.28318530717958647692
+#endif
+
+
 /*! \file SuspendedObjectIntegrator.h
     \brief Declares the SuspendedObjectIntegrator class
 */
@@ -75,6 +84,31 @@ class PYBIND11_EXPORT SuspendedObjectIntegrator : public SPHIntegrationMethodTwo
     bool m_zero_force;  //!< True if the integration step should ignore computed forces
     bool m_densitymethod_set; //!< True if method was set
     DensityMethod m_density_method; //!< Density approach to use
+
+    Scalar  m_totalmass; //!< Total mass of object
+    Scalar3 m_centerofmass; //!< Center of mass vector
+    Scalar3 m_translationvel; //!< Translational velocity
+    Scalar3 m_translationaccel; //!< Translational acceleration
+    Scalar3 m_angularaccel; //!< Angular acceleration
+    Scalar  m_invJ[9]; //!< Inverted moment of inertia tensor
+    Scalar3 m_angularvel; //!< Angular velocity
+
+    // TODO make these virtual?
+    //! Compute total mass of suspended object
+    void ComputeTotalMass(bool print);
+
+    //! Compute center of mass of suspended object
+    void ComputeCenterOfMass(bool print);
+
+    //! Compute translational velocity of suspended object
+    void ComputeTranslationVelocity(bool print);
+
+    //! Compute moment of inertia tensor of suspended object
+    void ComputeMomentOfInertia(bool print);
+
+    //! Compute initial angular velocity of suspended object
+    void ComputeAngularVelocity(bool print);
+
 
     };
 

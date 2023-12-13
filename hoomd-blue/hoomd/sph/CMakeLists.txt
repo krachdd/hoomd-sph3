@@ -10,7 +10,7 @@ set(_${COMPONENT_NAME}_sources
     SPHIntegrationMethodTwoStep.cc
     VelocityVerlet.cc
     VelocityVerletBasic.cc
-#     SuspendedObjectIntegrator.cc
+    SuspendedObjectIntegrator.cc
 #     RigidBodyIntegrator.cc
 #     StateEquationsExport.cc
     StateEquations.cc
@@ -50,7 +50,7 @@ set(_${COMPONENT_NAME}_headers
 #     VelocityVerletGPU.h
 #     SinglePhaseFlowGPU.cuh         
     SPHBaseClass.h        
-#     SuspendedObjectIntegrator.h       
+    SuspendedObjectIntegrator.h       
     VelocityVerlet.h
     VelocityVerletBasic.h
     CustomForceCompute.h

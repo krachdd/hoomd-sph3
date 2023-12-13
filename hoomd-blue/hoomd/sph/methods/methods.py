@@ -806,6 +806,80 @@ class VelocityVerletBasic(Method):
         self._cpp_obj.setDensityMethod(self.DENSITYMETHODS[method])
 
         
+class SuspendedObjectIntegrator(Method):
+    r"""
+
+    Args:
+        filter (hoomd.filter.filter_like): Subset of particles on which to
+            apply this method.
+
+    Based on md-`NVE` integrates integrates translational degrees of freedom
+    using Velocity-Verlet.
+
+    Examples::
+
+    Attributes:
+        filter (hoomd.filter.filter_like): Subset of particles on which to
+            apply this method.
+    """
+
+    DENSITYMETHODS = {'SUMMATION':_sph.PhaseFlowDensityMethod.DENSITYSUMMATION,
+                      'CONTINUITY':_sph.PhaseFlowDensityMethod.DENSITYCONTINUITY}
+
+    VISCOSITYMETHODS = {'HARMONICAVERAGE':_sph.PhaseFlowViscosityMethod.HARMONICAVERAGE}
+
+    def __init__(self, filter, densitymethod):
+        # store metadata
+        param_dict = ParameterDict(filter=ParticleFilter,)
+        param_dict.update(dict(filter=filter, densitymethod=densitymethod))
+
+        # set defaults
+        self._param_dict.update(param_dict)
+
+        self.str_densitymethod = self._param_dict._dict["densitymethod"]
+
+        if self.str_densitymethod == str('SUMMATION'):
+            self.cpp_densitymethod = hoomd.sph._sph.PhaseFlowDensityMethod.DENSITYSUMMATION
+        elif self.str_densitymethod == str('CONTINUITY'):
+            self.cpp_densitymethod = hoomd.sph._sph.PhaseFlowDensityMethod.DENSITYCONTINUITY
+        else:
+            raise ValueError("Using undefined DensityMethod.")
+
+    def _attach_hook(self):
+        sim = self._simulation
+        # initialize the reflected c++ class
+        if isinstance(sim.device, hoomd.device.CPU):
+            self._cpp_obj = _sph.SuspendedObjectIntegrator(sim.state._cpp_sys_def,
+                                           sim.state._get_group(self.filter))
+        else:
+            self._cpp_obj = _sph.SuspendedObjectIntegratorGPU(sim.state._cpp_sys_def,
+                                              sim.state._get_group(self.filter))
+
+        # Reload density and viscosity methods from __dict__
+        self.str_densitymethod = self._param_dict._dict["densitymethod"]
+        if self.str_densitymethod == str('SUMMATION'):
+            self.cpp_densitymethod = hoomd.sph._sph.PhaseFlowDensityMethod.DENSITYSUMMATION
+        elif self.str_densitymethod == str('CONTINUITY'):
+            self.cpp_densitymethod = hoomd.sph._sph.PhaseFlowDensityMethod.DENSITYCONTINUITY
+        else:
+            raise ValueError("Using undefined DensityMethod.")
+
+        self.setdensitymethod(self.str_densitymethod)
+
+        # Attach param_dict and typeparam_dict
+        super()._attach_hook()
+
+    # @property
+    def densitymethod(self):
+        # Invert key mapping
+        invD = dict((v,k) for k, v in self.DENSITYMETHODS.iteritems())
+        return invD[self._cpp_obj.getDensityMethod()]
+
+    # @densitymethod.setter
+    def setdensitymethod(self, method):
+        if method not in self.DENSITYMETHODS:
+            raise ValueError("Undefined DensityMethod.")
+        self._cpp_obj.setDensityMethod(self.DENSITYMETHODS[method])
 
 
 # class Langevin(Method):
