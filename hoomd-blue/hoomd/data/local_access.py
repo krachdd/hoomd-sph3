@@ -84,6 +84,17 @@ class _LocalAccess(ABC):
 class ParticleLocalAccessBase(_LocalAccess):
     """Class for directly accessing HOOMD-blue particle data.
 
+    Note:
+        Changing some attributes (such as ``velocity`` and ``acceleration``)
+        may not alter the trajectory of the system as you would expect.
+        The `md.Integrator` is responsible for integrating the equations of
+        motion and manages the values in these arrays.
+
+    See Also:
+        * `hoomd.State`
+        * `hoomd.data.LocalSnapshot`
+        * `hoomd.data.LocalSnapshotGPU`
+
     Attributes:
         typeid ((N_particles) `hoomd.data.array` object of ``float``):
             The integer type of a particle.
@@ -133,15 +144,6 @@ class ParticleLocalAccessBase(_LocalAccess):
             Net virial on particle :math:`[\\mathrm{energy}]`.
         net_energy ((N_particles,) `hoomd.data.array` object of ``float``):
             Net energy of a particle :math:`[\\mathrm{energy}]`.
-
-    Note:
-        Changing some attributes (such as ``velocity`` and ``acceleration``)
-        may not alter the trajectory of the system as you would expect.
-        The `md.Integrator` is responsible for integrating the equations of
-        motion and manages the values in these arrays.
-
-    See Also:
-        `hoomd.State`
     """
 
     @property
@@ -213,6 +215,11 @@ class _GroupLocalAccess(_LocalAccess):
 class BondLocalAccessBase(_GroupLocalAccess):
     """Class for directly accessing HOOMD-blue bond data.
 
+    See Also:
+        * `hoomd.State`
+        * `hoomd.data.LocalSnapshot`
+        * `hoomd.data.LocalSnapshotGPU`
+
     Attributes:
         typeid ((N_bonds) `hoomd.data.array` object of ``int``):
             The integer type of a bond.
@@ -226,9 +233,6 @@ class BondLocalAccessBase(_GroupLocalAccess):
             The bond reverse tags. For a given bond tag ``tag``,
             ``i = bonds.rtag[tag]`` is the array index holding that
             bond.
-
-    See Also:
-        `hoomd.State`
     """
     _cpp_get_data_method_name = "getBondData"
 
@@ -302,6 +306,11 @@ class BondLocalAccessBase(_GroupLocalAccess):
 class ConstraintLocalAccessBase(_GroupLocalAccess):
     """Class for directly accessing HOOMD-blue constraint data.
 
+    See Also:
+        * `hoomd.State`
+        * `hoomd.data.LocalSnapshot`
+        * `hoomd.data.LocalSnapshotGPU`
+
     Attributes:
         value ((N_constraints) `hoomd.data.array` object of ``float``): The
             constaint value.
@@ -315,9 +324,6 @@ class ConstraintLocalAccessBase(_GroupLocalAccess):
             The constraint reverse tags. For a given constraint tag ``tag``,
             ``i = constraints.rtag[tag]`` is the array index holding that
             constraint.
-
-    See Also:
-        `hoomd.State`
     """
     _fields = {
         'value': 'getTypeVal',
