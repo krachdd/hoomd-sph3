@@ -248,8 +248,9 @@ class State:
     .. _Kamberaj 2005: http://dx.doi.org/10.1063/1.1906216
     """
 
-    def __init__(self, simulation, snapshot, domain_decomposition):
+    def __init__(self, simulation, snapshot, domain_decomposition, distributed = False):
         self._simulation = simulation
+        self.distributed = distributed
         snapshot._broadcast_box()
         decomposition = _create_domain_decomposition(
             simulation.device, snapshot._cpp_obj._global_box,
@@ -258,10 +259,19 @@ class State:
         if decomposition is not None:
             self._cpp_sys_def = _hoomd.SystemDefinition(
                 snapshot._cpp_obj, simulation.device._cpp_exec_conf,
-                decomposition)
+                decomposition, self.distributed)
         else:
-            self._cpp_sys_def = _hoomd.SystemDefinition(
-                snapshot._cpp_obj, simulation.device._cpp_exec_conf)
+            if distributed:
+                raise NotImplementedError('PGSD is not implemented for a single core usage!')
+            # to get a instance of SystemDefinition one would have to use
+            # self._cpp_sys_def = _hoomd.SystemDefinition(
+            #        snapshot._cpp_obj, simulation.device._cpp_exec_conf
+            #        None, self.distributed)
+            # is a TODO
+            else:
+                self._cpp_sys_def = _hoomd.SystemDefinition(
+                    snapshot._cpp_obj, simulation.device._cpp_exec_conf)
+
 
         # Necessary for local snapshot API. This is used to ensure two local
         # snapshots are not contexted at once.
@@ -569,6 +579,7 @@ class State:
     def _get_group(self, filter_):
         cls = filter_.__class__
         group_cache = self._groups
+
         if filter_ in group_cache[cls]:
             return group_cache[cls][filter_]
         else:
@@ -786,7 +797,6 @@ class State:
             len(particle_data.getDomainDecomposition().getCumulativeFractions(
                 dir)) - 1 for dir in range(3)
         ])
-
 
     def removeParticle(self, tag):
         """ Delete Particle by tag, needed to remove unnecessary solid particles """
