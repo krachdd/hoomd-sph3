@@ -112,12 +112,6 @@ z = z[offset:offset+n_particles_rank]
 positions = np.array((x.ravel(), y.ravel(), z.ravel())).T
 tids      = tids[offset:offset+n_particles_rank]
 
-print(f'rank {rank}: tids {tids}')
-
-
-print(f'{np.unique(tids)} unique tids')
-print(positions.shape)
-
 velocities = np.zeros((positions.shape[0], positions.shape[1]), dtype = np.float32)
 masses     = np.ones((positions.shape[0]), dtype = np.float32) * mass
 slengths   = np.ones((positions.shape[0]), dtype = np.float32) * slength
@@ -127,7 +121,8 @@ part_dist = np.zeros(size)
 a = n_particles_rank*np.ones(1)
 new_comm.Allgather([a, MPI.FLOAT], [part_dist, MPI.FLOAT])
 
-print(f'part_dist {part_dist}')
+if rank == 0:
+    print(f'[INFO]: Particle Distribution on {size} ranks: {part_dist}')
 
 # # create Snapshot 
 # # snapshot = hoomd.Snapshot(device.communicator)
@@ -146,13 +141,6 @@ snapshot.particles.density     = densities
 
 
 sim.create_state_from_snapshot(snapshot)
-
-with sim.state.cpu_local_snapshot as s:
-    my_N = len(s.particles.position)
-    unique_tids = np.unique(s.particles.typeid)
-print(f'Rank {rank} with {unique_tids} unique tids and size {my_N}')
-
-print('Done with: sim.create_state_from_snapshot(snapshot)')
 
 # # deletesolid_flag = params['delete_flag']
 # # if deletesolid_flag == 1:

@@ -263,12 +263,9 @@ class PGSD(Writer):
 
         The valid file modes for `write` are ``'wb'`` and ``'xb'``.
         """
-        print(f'Start write in PGSD.write, logger = {logger}')
-
         if mode != 'wb' and mode != 'xb':
             raise ValueError(f"Invalid PGSD.write file mode: {mode}")
 
-        print('Set writer to GSDDumpWriterMPI')
         # Last Argument is truncate -> is not implemented 
         writer = _hoomd.GSDDumpWriterMPI(state._cpp_sys_def, Periodic(1),
                                       str(filename), state._get_group(filter),
@@ -276,8 +273,7 @@ class PGSD(Writer):
 
         if logger is not None:
             # writer.log_writer = _PGSDLogWriter(logger)
-            raise NotImplementedError('Used normal logger!')
-        print("Constructing GSD DUMP writer done! starting analyse\n")
+            raise NotImplementedError('Use normal logger!')
         writer.analyze(state._simulation.timestep)
         writer.flush()
 

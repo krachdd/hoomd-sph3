@@ -1576,8 +1576,14 @@ void GSDDumpWriterMPI::populateLocalFrame(GSDDumpWriterMPI::PGSDFrame& frame, ui
 
     // All default only when all ranks are all default.
     MPI_Allreduce(MPI_IN_PLACE, &v, 1, MPI_LONG, MPI_BAND, m_exec_conf->getMPICommunicator());
-
     all_default = std::bitset<n_pgsd_flags>(v);
+
+    int avoid_unsorted_chaos_indicator = 0;
+    if ( m_nframes == 0 )
+        {
+        avoid_unsorted_chaos_indicator = 1;
+        m_present_at_zero = std::bitset<n_pgsd_flags>(v);
+        }
 
     // Present when any rank is present
     v = frame.particle_data_present.to_ulong();
@@ -1591,97 +1597,216 @@ void GSDDumpWriterMPI::populateLocalFrame(GSDDumpWriterMPI::PGSDFrame& frame, ui
     // !(!all_default || (nframes > 0 && m_nondefault["value"])) <=>
     // (all_default && !(nframes > 0 && m_nondefault["value"])
 
-    if (all_default[pgsd_flag::particles_position]
+
+    std::cout << "GSDDumpWriterMPI pos all default " << all_default[pgsd_flag::particles_position] <<  " m_nondefault " <<  m_nondefault["particles/position"] << " m_present_at_zero " << m_present_at_zero[pgsd_flag::particles_position] << std::endl;
+    if (!(all_default[pgsd_flag::particles_position]
+        && !(m_nframes > 0 && m_nondefault["particles/position"]))
+        && m_present_at_zero[pgsd_flag::particles_position])
+        {
+        avoid_unsorted_chaos_indicator = 1;
+        }
+
+    std::cout << "GSDDumpWriterMPI type all default " << all_default[pgsd_flag::particles_type] <<  " m_nondefault " <<  m_nondefault["particles/typeid"] << " m_present_at_zero " << m_present_at_zero[pgsd_flag::particles_type] << std::endl;
+    if (!(all_default[pgsd_flag::particles_type]
+        && !(m_nframes > 0 && m_nondefault["particles/typeid"]))
+        && m_present_at_zero[pgsd_flag::particles_type])
+        {
+        avoid_unsorted_chaos_indicator = 1;
+        }
+
+    if (!(all_default[pgsd_flag::particles_mass] && !(m_nframes > 0 && m_nondefault["particles/mass"]))
+        && m_present_at_zero[pgsd_flag::particles_mass]) 
+        {
+        avoid_unsorted_chaos_indicator = 1;
+        }
+
+    if (!(all_default[pgsd_flag::particles_slength]
+        && !(m_nframes > 0 && m_nondefault["particles/slength"]))
+        && m_present_at_zero[pgsd_flag::particles_slength])
+        {
+        avoid_unsorted_chaos_indicator = 1;
+        }
+
+    if (!(all_default[pgsd_flag::particles_density]
+        && !(m_nframes > 0 && m_nondefault["particles/density"]))
+        && m_present_at_zero[pgsd_flag::particles_density])
+        {
+        avoid_unsorted_chaos_indicator = 1;
+        }
+
+    if (!(all_default[pgsd_flag::particles_pressure]
+        && !(m_nframes > 0 && m_nondefault["particles/pressure"]))
+        && m_present_at_zero[pgsd_flag::particles_pressure]) 
+        {
+        avoid_unsorted_chaos_indicator = 1;
+        }
+
+    if (!(all_default[pgsd_flag::particles_energy]
+        && !(m_nframes > 0 && m_nondefault["particles/energy"]))
+        && m_present_at_zero[pgsd_flag::particles_energy])
+        {
+        avoid_unsorted_chaos_indicator = 1;
+        }
+
+    if (!(all_default[pgsd_flag::particles_body] && !(m_nframes > 0 && m_nondefault["particles/body"]))
+        && m_present_at_zero[pgsd_flag::particles_body])
+        {
+        avoid_unsorted_chaos_indicator = 1;
+        }
+
+    // momenta
+    if (!(all_default[pgsd_flag::particles_velocity]
+        && !(m_nframes > 0 && m_nondefault["particles/velocity"]))
+        && m_present_at_zero[pgsd_flag::particles_velocity])
+        {
+        avoid_unsorted_chaos_indicator = 1;
+        }
+
+    if (!(all_default[pgsd_flag::particles_aux1]
+        && !(m_nframes > 0 && m_nondefault["particles/aux1"]))
+        && m_present_at_zero[pgsd_flag::particles_aux1])
+        {
+        avoid_unsorted_chaos_indicator = 1;
+        }
+
+    if (!(all_default[pgsd_flag::particles_aux2]
+        && !(m_nframes > 0 && m_nondefault["particles/aux2"]))
+        && m_present_at_zero[pgsd_flag::particles_aux2])
+        {
+        avoid_unsorted_chaos_indicator = 1;
+        }
+
+    if (!(all_default[pgsd_flag::particles_aux3]
+        && !(m_nframes > 0 && m_nondefault["particles/aux3"]))
+        && m_present_at_zero[pgsd_flag::particles_aux3])
+        {
+        avoid_unsorted_chaos_indicator = 1;
+        }
+
+    std::cout << "GSDDumpWriterMPI type all aux4 " << all_default[pgsd_flag::particles_aux4] <<  " m_nondefault " <<  m_nondefault["particles/aux4"] << " m_present_at_zero " << m_present_at_zero[pgsd_flag::particles_aux4]<< std::endl;
+    if (!(all_default[pgsd_flag::particles_aux4]
+        && !(m_nframes > 0 && m_nondefault["particles/aux4"]))
+        && m_present_at_zero[pgsd_flag::particles_aux4])
+        {
+        avoid_unsorted_chaos_indicator = 1;
+        }
+
+    if (!(all_default[pgsd_flag::particles_image]
+        && !(m_nframes > 0 && m_nondefault["particles/image"]))
+        && m_present_at_zero[pgsd_flag::particles_image])
+        {
+        avoid_unsorted_chaos_indicator = 1;
+        }
+
+    MPI_Allreduce(MPI_IN_PLACE, &avoid_unsorted_chaos_indicator, 1, MPI_INT, MPI_MAX, m_exec_conf->getMPICommunicator());
+
+    printf("avoid chaos indicator %i", avoid_unsorted_chaos_indicator);
+
+
+
+
+
+
+
+
+
+
+    std::cout << "GSDDumpWriterMPI pos all default " << all_default[pgsd_flag::particles_position] <<  " m_nondefault " <<  m_nondefault["particles/position"] << " m_present_at_zero " << m_present_at_zero[pgsd_flag::particles_position] << std::endl;
+    if ((!m_present_at_zero[pgsd_flag::particles_position] || avoid_unsorted_chaos_indicator == 0)
         && !(m_nframes > 0 && m_nondefault["particles/position"]))
         {
         frame.particle_data.pos.resize(0);
         frame.particle_data_present[pgsd_flag::particles_position] = false;
         }
 
-    if (all_default[pgsd_flag::particles_type]
+    std::cout << "GSDDumpWriterMPI type all default " << m_present_at_zero[pgsd_flag::particles_type] <<  " m_nondefault " <<  m_nondefault["particles/typeid"] << " m_present_at_zero " << m_present_at_zero[pgsd_flag::particles_type] << std::endl;
+    if ((!m_present_at_zero[pgsd_flag::particles_type] || avoid_unsorted_chaos_indicator == 0)
         && !(m_nframes > 0 && m_nondefault["particles/typeid"]))
         {
         frame.particle_data.type.resize(0);
         frame.particle_data_present[pgsd_flag::particles_type] = false;
         }
 
-    if (all_default[pgsd_flag::particles_mass] && !(m_nframes > 0 && m_nondefault["particles/mass"]))
+    if ((!m_present_at_zero[pgsd_flag::particles_mass] || avoid_unsorted_chaos_indicator == 0) 
+        && !(m_nframes > 0 && m_nondefault["particles/mass"]))
         {
         frame.particle_data.mass.resize(0);
         frame.particle_data_present[pgsd_flag::particles_mass] = false;
         }
 
-    if (all_default[pgsd_flag::particles_slength]
+    if ((!m_present_at_zero[pgsd_flag::particles_slength] || avoid_unsorted_chaos_indicator == 0)
         && !(m_nframes > 0 && m_nondefault["particles/slength"]))
         {
         frame.particle_data.slength.resize(0);
         frame.particle_data_present[pgsd_flag::particles_slength] = false;
         }
 
-    if (all_default[pgsd_flag::particles_density]
+    if ((!m_present_at_zero[pgsd_flag::particles_density] || avoid_unsorted_chaos_indicator == 0)
         && !(m_nframes > 0 && m_nondefault["particles/density"]))
         {
         frame.particle_data.density.resize(0);
         frame.particle_data_present[pgsd_flag::particles_density] = false;
         }
 
-    if (all_default[pgsd_flag::particles_pressure]
+    if ((!m_present_at_zero[pgsd_flag::particles_pressure] || avoid_unsorted_chaos_indicator == 0)
         && !(m_nframes > 0 && m_nondefault["particles/pressure"]))
         {
         frame.particle_data.pressure.resize(0);
         frame.particle_data_present[pgsd_flag::particles_pressure] = false;
         }
 
-    if (all_default[pgsd_flag::particles_energy]
+    if ((!m_present_at_zero[pgsd_flag::particles_energy] || avoid_unsorted_chaos_indicator == 0)
         && !(m_nframes > 0 && m_nondefault["particles/energy"]))
         {
         frame.particle_data.energy.resize(0);
         frame.particle_data_present[pgsd_flag::particles_energy] = false;
         }
 
-    if (all_default[pgsd_flag::particles_body] && !(m_nframes > 0 && m_nondefault["particles/body"]))
+    if ((!m_present_at_zero[pgsd_flag::particles_body] || avoid_unsorted_chaos_indicator == 0)
+         && !(m_nframes > 0 && m_nondefault["particles/body"]))
         {
         frame.particle_data.body.resize(0);
         frame.particle_data_present[pgsd_flag::particles_body] = false;
         }
 
     // momenta
-    if (all_default[pgsd_flag::particles_velocity]
+    if ((!m_present_at_zero[pgsd_flag::particles_velocity] || avoid_unsorted_chaos_indicator == 0)
         && !(m_nframes > 0 && m_nondefault["particles/velocity"]))
         {
         frame.particle_data.vel.resize(0);
         frame.particle_data_present[pgsd_flag::particles_velocity] = false;
         }
 
-    if (all_default[pgsd_flag::particles_aux1]
+    if ((!m_present_at_zero[pgsd_flag::particles_aux1] || avoid_unsorted_chaos_indicator == 0)
         && !(m_nframes > 0 && m_nondefault["particles/aux1"]))
         {
         frame.particle_data.aux1.resize(0);
         frame.particle_data_present[pgsd_flag::particles_aux1] = false;
         }
 
-    if (all_default[pgsd_flag::particles_aux2]
+    if ((!m_present_at_zero[pgsd_flag::particles_aux2] || avoid_unsorted_chaos_indicator == 0)
         && !(m_nframes > 0 && m_nondefault["particles/aux2"]))
         {
         frame.particle_data.aux2.resize(0);
         frame.particle_data_present[pgsd_flag::particles_aux2] = false;
         }
 
-    if (all_default[pgsd_flag::particles_aux3]
+    if ((!m_present_at_zero[pgsd_flag::particles_aux3] || avoid_unsorted_chaos_indicator == 0)
         && !(m_nframes > 0 && m_nondefault["particles/aux3"]))
         {
         frame.particle_data.aux3.resize(0);
         frame.particle_data_present[pgsd_flag::particles_aux3] = false;
         }
 
-    if (all_default[pgsd_flag::particles_aux4]
+    std::cout << "GSDDumpWriterMPI type all aux4 " << m_present_at_zero[pgsd_flag::particles_aux4] <<  " m_nondefault " <<  m_nondefault["particles/aux4"] << " m_present_at_zero " << m_present_at_zero[pgsd_flag::particles_aux4]<< std::endl;
+    if ((!m_present_at_zero[pgsd_flag::particles_aux4] || avoid_unsorted_chaos_indicator == 0)
         && !(m_nframes > 0 && m_nondefault["particles/aux4"]))
         {
         frame.particle_data.aux4.resize(0);
         frame.particle_data_present[pgsd_flag::particles_aux4] = false;
         }
 
-    if (all_default[pgsd_flag::particles_image]
+    if ((!m_present_at_zero[pgsd_flag::particles_image] || avoid_unsorted_chaos_indicator == 0)
         && !(m_nframes > 0 && m_nondefault["particles/image"]))
         {
         frame.particle_data.image.resize(0);

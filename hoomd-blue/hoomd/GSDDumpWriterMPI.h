@@ -257,6 +257,8 @@ class PYBIND11_EXPORT GSDDumpWriterMPI : public Analyzer
     std::unordered_map<std::string, bool>
         m_nondefault; //!< Map of quantities (true when non-default in frame 0)
 
+    std::bitset<n_pgsd_flags> m_present_at_zero;
+
     /// Copy of the state properties local to this rank, in ascending tag order.
     PGSDFrame m_local_frame;
 

@@ -553,7 +553,6 @@ class Snapshot:
             for prop in properties:
                 # print(f'properties: {properties}, prop {prop}\n')
                 pgsd_prop = getattr(pgsd_snap_section, prop, None)
-                print(f'pgsd_prop: {pgsd_prop}')
                 if pgsd_prop is not None:
                     setattr(snap_section, prop, pgsd_prop)
             for prop in array_properties:
@@ -561,10 +560,6 @@ class Snapshot:
                 pgsd_prop = getattr(pgsd_snap_section, prop, None)
                 if pgsd_prop is not None:
                     getattr(snap_section, prop)[:] = pgsd_prop
-
-            print(f'Set Properties Done!')
-
-        # if communicator.rank == 0:
 
         pgsd_snap.validate()
 
@@ -604,8 +599,6 @@ class Snapshot:
                 box[2] = 0
             snap.configuration.box = box
 
-        print(f'Set Box  Done!')
-        # snap._broadcast_box()
         return snap
 
     @classmethod
