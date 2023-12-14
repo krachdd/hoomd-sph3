@@ -149,22 +149,23 @@ void  SuspensionFlow<KT_, SET_>::activateShepardRenormalization(unsigned int she
 template<SmoothingKernelType KT_,StateEquationType SET_>
 void SuspensionFlow<KT_, SET_>::setParams(Scalar mu, Scalar rho0_S, Scalar f0)
     {
-    std::cout << "HEllo" << std::endl;
     m_mu   = mu;
+    m_rhoS = rho0_S;
+    m_f0 = f0;
     if (m_mu <= 0)
          {
          this->m_exec_conf->msg->error() << "sph.models.SuspensionFlow: Dynamic viscosity has to be a positive real number" << std::endl;
          throw std::runtime_error("Error initializing SuspensionFlow.");
          }
-    m_rhoS = rho0_S;
+    //m_rhoS = rho0_S;
     if (m_rhoS <= 0)
         {
         this->m_exec_conf->msg->error() << "sph.models.SuspensionFlow: Solid density has to be a positive real number" << std::endl;
         throw std::runtime_error("Error initializing SuspensionFlow.");
         }
-
-    m_f0 = f0;
-    if (m_f0 <= 0)
+    //m_f0 = f0;
+    //if (m_f0 <= 0)
+    if (m_f0 < 0)
         {
         this->m_exec_conf->msg->error() << "sph.models.SuspensionFlow: Contact force magnitude has to be a positive real number" << std::endl;
         throw std::runtime_error("Error initializing SuspensionFlow.");
@@ -525,10 +526,10 @@ void SuspensionFlow<KT_, SET_>::compute_ndensity(uint64_t timestep)
         myHead = h_head_list.data[i];
         size = (unsigned int)h_n_neigh.data[i];
 
-        Scalar rhoi =  h_density.data[i];
+        //Scalar rhoi =  h_density.data[i];
 
-        Scalar w_sum = 0;
-        Scalar neighbors = 0;
+        //Scalar w_sum = 0;
+        //Scalar neighbors = 0;
 
         for (unsigned int j = 0; j < size; j++)
         {
@@ -989,7 +990,7 @@ void SuspensionFlow<KT_, SET_>::renormalize_density(uint64_t timestep)
    in the local variable m_centerofmasses.
  */
 template<SmoothingKernelType KT_,StateEquationType SET_>
-void SuspensionFlow<KT_, SET_>::compute_Centerofmasses(unsigned int timestep, bool print)
+void SuspensionFlow<KT_, SET_>::compute_Centerofmasses(uint64_t timestep, bool print)
     {
     this->m_exec_conf->msg->notice(5) << "Suspended Object Compute Center of Mass" << std::endl;
 
@@ -1126,7 +1127,7 @@ void SuspensionFlow<KT_, SET_>::compute_Centerofmasses(unsigned int timestep, bo
    in the local variable m_radi.
  */
 template<SmoothingKernelType KT_,StateEquationType SET_>
-void SuspensionFlow<KT_, SET_>::compute_equivalentRadii(unsigned int timestep, bool print)
+void SuspensionFlow<KT_, SET_>::compute_equivalentRadii(uint64_t timestep, bool print)
     {
     this->m_exec_conf->msg->notice(5) << "Suspended Object Compute equivalent radi" << std::endl;
 
@@ -1145,7 +1146,10 @@ void SuspensionFlow<KT_, SET_>::compute_equivalentRadii(unsigned int timestep, b
     // Local copy of the simulation box
     const BoxDim& box = this->m_pdata->getGlobalBox();
 
-    unsigned int myHead, size;
+    // unsigned int myHead, size;
+    unsigned int size;
+    size_t myHead;
+
 
     // Local variable to store things
     Scalar3 temp3;
@@ -1172,10 +1176,10 @@ void SuspensionFlow<KT_, SET_>::compute_equivalentRadii(unsigned int timestep, b
         Scalar typeID_COM = m_centerofmasses[i].w;
         
         // For mean distance to COM
-        Scalar meanradi = 0.0;
-        Scalar minradi = 100.0;
+        // Scalar meanradi = 0.0;
+        // Scalar minradi = 100.0;
         Scalar maxradi = 0.000001;
-        unsigned int containing_particles = 0;
+        // unsigned int containing_particles = 0;
         unsigned int typeID_j;
 
         // Loop over all solid particles ---> detecte those who belong to the subgroup
@@ -1228,7 +1232,7 @@ void SuspensionFlow<KT_, SET_>::compute_equivalentRadii(unsigned int timestep, b
 
                 // Calculate absolute and normalized distance
                 Scalar r = sqrt(rsq);
-                minradi = r; // ==========>>>>>>>>>>>>> TEST DELETE LATER
+                //minradi = r; // ==========>>>>>>>>>>>>> TEST DELETE LATER
 
                 // Add part to sum of radii
                 // meanradi = meanradi + r;
@@ -1282,7 +1286,7 @@ void SuspensionFlow<KT_, SET_>::compute_equivalentRadii(unsigned int timestep, b
    in the global variable aux2.
  */
 template<SmoothingKernelType KT_,StateEquationType SET_>
-void SuspensionFlow<KT_, SET_>::compute_repulsiveForce(unsigned int timestep, bool print)
+void SuspensionFlow<KT_, SET_>::compute_repulsiveForce(uint64_t timestep, bool print)
     {
 
     this->m_exec_conf->msg->notice(5) << "Suspended Object Compute Repulsive Forces" << std::endl;
@@ -1427,8 +1431,11 @@ void SuspensionFlow<KT_, SET_>::compute_repulsiveForce(unsigned int timestep, bo
                 if (m_walls)
                     {
                     bool foundcontact = false;
+
                     // Loop over all of the neighbors of this particle
-                    const unsigned int myHead = h_head_list.data[i];
+                    // const unsigned int myHead = h_head_list.data[i];
+                    // const unsigned int size = (unsigned int)h_n_neigh.data[k];
+                    const size_t myHead = h_head_list.data[i];
                     const unsigned int size = (unsigned int)h_n_neigh.data[k];
                     for (unsigned int f = 0; f < size; f++)
                         {

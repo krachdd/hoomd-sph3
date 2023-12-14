@@ -789,9 +789,9 @@ class SuspensionFlow(SPHModel):
     def _detach_hook(self):
         self.nlist._detach()
 
-    def set_params(self,mu,rho0_S,f0):
+    def set_params(self, mu, rho0_S, f0):
         # self.mu   = mu.item()   if isinstance(mu, np.generic)   else mu
-        self._cpp_obj.setParams(self.mu,self.rho0_S,self.f0)
+        self._cpp_obj.setParams(self.mu, self.rho0_S, self.f0)
         self.params_set = True
         self._param_dict.__setattr__('params_set', True)
 

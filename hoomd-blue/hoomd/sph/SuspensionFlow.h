@@ -321,27 +321,27 @@ class PYBIND11_EXPORT SuspensionFlow : public SPHBaseClass<KT_, SET_>
         /*! Helper function to calculate center of mass of solidtypes
         * \post Based on SuspendedObjectIntegrator
         */
-        void compute_Centerofmasses(unsigned int timestep, bool print);
+        void compute_Centerofmasses(uint64_t timestep, bool print);
 
          /*! Helper function to calculate equivalent radii of solidtypes
         * \post eqivalent radii stored in m_radi dependent on type id
         */
-        void compute_equivalentRadii(unsigned int timestep, bool print);
+        void compute_equivalentRadii(uint64_t timestep, bool print);
 
         /*! Helper function to calculate lubrication force between solids
         * \post Based on approach of Bian, Ellero, Vazquez
         */
-        void compute_lubrication(unsigned int timestep);
+        void compute_lubrication(uint64_t timestep);
 
         /*! Helper function to calculate repulsive force between solids
         * \post Based on approach of Bian, Ellero, Vazquez
         */
-        void compute_repulsiveForce(unsigned int timestep, bool print);
+        void compute_repulsiveForce(uint64_t timestep, bool print);
 
         /*! Helper function to sum lubrication force and repulsive force
         * \post Based on approach of Bian, Ellero, Vazquez
         */
-        void sum_contactforces(unsigned int timestep);
+        void sum_contactforces(uint64_t timestep);
 
         /*! Helper function where the actual force computation takes place
          * \pre Number densities and fictitious solid particle properties must be up-to-date

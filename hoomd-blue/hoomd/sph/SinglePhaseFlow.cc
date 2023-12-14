@@ -437,10 +437,10 @@ void SinglePhaseFlow<KT_, SET_>::compute_ndensity(uint64_t timestep)
         myHead = h_head_list.data[i];
         size = (unsigned int)h_n_neigh.data[i];
 
-        Scalar rhoi =  h_density.data[i];
+        //Scalar rhoi =  h_density.data[i];
 
-        Scalar w_sum = 0;
-        Scalar neighbors = 0;
+        //Scalar w_sum = 0;
+        //Scalar neighbors = 0;
 
         for (unsigned int j = 0; j < size; j++)
         {
