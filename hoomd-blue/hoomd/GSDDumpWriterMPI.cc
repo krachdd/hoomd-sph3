@@ -1700,29 +1700,25 @@ void GSDDumpWriterMPI::populateLocalFrame(GSDDumpWriterMPI::PGSDFrame& frame, ui
 
     MPI_Allreduce(MPI_IN_PLACE, &avoid_unsorted_chaos_indicator, 1, MPI_INT, MPI_MAX, m_exec_conf->getMPICommunicator());
 
-    printf("avoid chaos indicator %i", avoid_unsorted_chaos_indicator);
 
+    std::cout << "m_nframes " << m_nframes << std::endl;
+    std::cout << "avoid_unsorted_chaos_indicator " << avoid_unsorted_chaos_indicator << std::endl;
+    std::cout << "GSDDumpWriterMPI pos m_present_at_zero " << m_present_at_zero[pgsd_flag::particles_position] <<  " m_nondefault " <<  m_nondefault["particles/position"] << std::endl;
+    std::cout << "GSDDumpWriterMPI type m_present_at_zero " << m_present_at_zero[pgsd_flag::particles_type] <<  " m_nondefault " <<  m_nondefault["particles/typeid"] << std::endl;
+    std::cout << "GSDDumpWriterMPI aux4 m_present_at_zero " << m_present_at_zero[pgsd_flag::particles_aux4] <<  " m_nondefault " <<  m_nondefault["particles/aux4"] << std::endl;
 
-
-
-
-
-
-
-
-
-    std::cout << "GSDDumpWriterMPI pos all default " << all_default[pgsd_flag::particles_position] <<  " m_nondefault " <<  m_nondefault["particles/position"] << " m_present_at_zero " << m_present_at_zero[pgsd_flag::particles_position] << std::endl;
     if ((!m_present_at_zero[pgsd_flag::particles_position] || avoid_unsorted_chaos_indicator == 0)
         && !(m_nframes > 0 && m_nondefault["particles/position"]))
         {
+        std::cout << "Set pos to zero" << std::endl;
         frame.particle_data.pos.resize(0);
         frame.particle_data_present[pgsd_flag::particles_position] = false;
         }
 
-    std::cout << "GSDDumpWriterMPI type all default " << m_present_at_zero[pgsd_flag::particles_type] <<  " m_nondefault " <<  m_nondefault["particles/typeid"] << " m_present_at_zero " << m_present_at_zero[pgsd_flag::particles_type] << std::endl;
     if ((!m_present_at_zero[pgsd_flag::particles_type] || avoid_unsorted_chaos_indicator == 0)
         && !(m_nframes > 0 && m_nondefault["particles/typeid"]))
         {
+        std::cout << "Set type to zero" << std::endl;
         frame.particle_data.type.resize(0);
         frame.particle_data_present[pgsd_flag::particles_type] = false;
         }
@@ -1798,10 +1794,10 @@ void GSDDumpWriterMPI::populateLocalFrame(GSDDumpWriterMPI::PGSDFrame& frame, ui
         frame.particle_data_present[pgsd_flag::particles_aux3] = false;
         }
 
-    std::cout << "GSDDumpWriterMPI type all aux4 " << m_present_at_zero[pgsd_flag::particles_aux4] <<  " m_nondefault " <<  m_nondefault["particles/aux4"] << " m_present_at_zero " << m_present_at_zero[pgsd_flag::particles_aux4]<< std::endl;
     if ((!m_present_at_zero[pgsd_flag::particles_aux4] || avoid_unsorted_chaos_indicator == 0)
         && !(m_nframes > 0 && m_nondefault["particles/aux4"]))
         {
+        std::cout << "Set aux4 to zero" << std::endl;
         frame.particle_data.aux4.resize(0);
         frame.particle_data_present[pgsd_flag::particles_aux4] = false;
         }
