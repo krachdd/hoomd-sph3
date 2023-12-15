@@ -435,9 +435,14 @@ class SinglePhaseFlow(SPHModel):
     def setrcut(self, rcut):
         if rcut <= 0.0:
             raise ValueError("Rcut has to be > 0.0.")
-        self._cpp_obj.setRCut(('F', 'S'), rcut)
+        # For different TIDs
+        self._cpp_obj.setRCut(('F1', 'S'), rcut)
+        self._cpp_obj.setRCut(('F2', 'S'), rcut)
         self._cpp_obj.setRCut(('S', 'S'), rcut)
-        self._cpp_obj.setRCut(('F', 'F'), rcut)
+        self._cpp_obj.setRCut(('F1', 'F1'), rcut)
+        self._cpp_obj.setRCut(('F1', 'F2'), rcut)
+        self._cpp_obj.setRCut(('F2', 'F2'), rcut)
+
 
     # @property
     def densitymethod(self):
@@ -790,17 +795,13 @@ class SinglePhaseFlowNN(SPHModel):
     def setrcut(self, rcut):
         if rcut <= 0.0:
             raise ValueError("Rcut has to be > 0.0.")
-        self._cpp_obj.setRCut(('F', 'S'), rcut)
-        #self._cpp_obj.setRCut(('S', 'F'), rcut)
+        # For different TIDs
+        self._cpp_obj.setRCut(('F1', 'S'), rcut)
+        self._cpp_obj.setRCut(('F2', 'S'), rcut)
         self._cpp_obj.setRCut(('S', 'S'), rcut)
-        self._cpp_obj.setRCut(('F', 'F'), rcut)
-        ## For different TIDs
-        # self._cpp_obj.setRCut(('F1', 'S'), rcut)
-        # self._cpp_obj.setRCut(('F2', 'S'), rcut)
-        # self._cpp_obj.setRCut(('S', 'S'), rcut)
-        # self._cpp_obj.setRCut(('F1', 'F1'), rcut)
-        # self._cpp_obj.setRCut(('F1', 'F2'), rcut)
-        # self._cpp_obj.setRCut(('F2', 'F2'), rcut)
+        self._cpp_obj.setRCut(('F1', 'F1'), rcut)
+        self._cpp_obj.setRCut(('F1', 'F2'), rcut)
+        self._cpp_obj.setRCut(('F2', 'F2'), rcut)
 
     # @property
     def densitymethod(self):
