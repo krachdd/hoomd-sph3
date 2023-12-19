@@ -885,207 +885,6 @@ void GSDDumpWriterMPI::writeMomenta(const GSDDumpWriterMPI::PGSDFrame& frame)
         }
     }
 
-/*! \param bond Bond data snapshot
-    \param angle Angle data snapshot
-    \param dihedral Dihedral data snapshot
-    \param improper Improper data snapshot
-    \param constraint Constraint data snapshot
-    \param pair Special pair data snapshot
-
-    Write out all the snapshot data to the GSD file
-*/
-void GSDDumpWriterMPI::writeTopology(BondData::Snapshot& bond,
-                                  // AngleData::Snapshot& angle,
-                                  // DihedralData::Snapshot& dihedral,
-                                  // ImproperData::Snapshot& improper,
-                                  ConstraintData::Snapshot& constraint
-                                  // PairData::Snapshot& pair
-                                  )
-    {
-    // if (bond.size > 0)
-    //     {
-    //     m_exec_conf->msg->notice(10) << "PGSD: writing bonds/N" << endl;
-    //     uint32_t N = bond.size;
-    //     int retval = gsd_write_chunk(&m_handle, "bonds/N", PGSD_TYPE_UINT32, 1, 1, 0, (void*)&N);
-    //     PGSDUtils::checkError(retval, m_fname);
-
-    //     writeTypeMapping("bonds/types", bond.type_mapping);
-
-    //     m_exec_conf->msg->notice(10) << "PGSD: writing bonds/typeid" << endl;
-    //     retval = gsd_write_chunk(&m_handle,
-    //                              "bonds/typeid",
-    //                              PGSD_TYPE_UINT32,
-    //                              N,
-    //                              1,
-    //                              0,
-    //                              (void*)&bond.type_id[0]);
-    //     PGSDUtils::checkError(retval, m_fname);
-
-    //     m_exec_conf->msg->notice(10) << "PGSD: writing bonds/group" << endl;
-    //     retval = gsd_write_chunk(&m_handle,
-    //                              "bonds/group",
-    //                              PGSD_TYPE_UINT32,
-    //                              N,
-    //                              2,
-    //                              0,
-    //                              (void*)&bond.groups[0]);
-    //     PGSDUtils::checkError(retval, m_fname);
-    //     }
-    // // if (angle.size > 0)
-    // //     {
-    // //     m_exec_conf->msg->notice(10) << "PGSD: writing angles/N" << endl;
-    // //     uint32_t N = angle.size;
-    // //     int retval = gsd_write_chunk(&m_handle, "angles/N", PGSD_TYPE_UINT32, 1, 1, 0, (void*)&N);
-    // //     PGSDUtils::checkError(retval, m_fname);
-
-    // //     writeTypeMapping("angles/types", angle.type_mapping);
-
-    // //     m_exec_conf->msg->notice(10) << "PGSD: writing angles/typeid" << endl;
-    // //     retval = gsd_write_chunk(&m_handle,
-    // //                              "angles/typeid",
-    // //                              PGSD_TYPE_UINT32,
-    // //                              N,
-    // //                              1,
-    // //                              0,
-    // //                              (void*)&angle.type_id[0]);
-    // //     PGSDUtils::checkError(retval, m_fname);
-
-    // //     m_exec_conf->msg->notice(10) << "PGSD: writing angles/group" << endl;
-    // //     retval = gsd_write_chunk(&m_handle,
-    // //                              "angles/group",
-    // //                              PGSD_TYPE_UINT32,
-    // //                              N,
-    // //                              3,
-    // //                              0,
-    // //                              (void*)&angle.groups[0]);
-    // //     PGSDUtils::checkError(retval, m_fname);
-    // //     }
-    // // if (dihedral.size > 0)
-    // //     {
-    // //     m_exec_conf->msg->notice(10) << "PGSD: writing dihedrals/N" << endl;
-    // //     uint32_t N = dihedral.size;
-    // //     int retval = gsd_write_chunk(&m_handle, "dihedrals/N", PGSD_TYPE_UINT32, 1, 1, 0, (void*)&N);
-    // //     PGSDUtils::checkError(retval, m_fname);
-
-    // //     writeTypeMapping("dihedrals/types", dihedral.type_mapping);
-
-    // //     m_exec_conf->msg->notice(10) << "PGSD: writing dihedrals/typeid" << endl;
-    // //     retval = gsd_write_chunk(&m_handle,
-    // //                              "dihedrals/typeid",
-    // //                              PGSD_TYPE_UINT32,
-    // //                              N,
-    // //                              1,
-    // //                              0,
-    // //                              (void*)&dihedral.type_id[0]);
-    // //     PGSDUtils::checkError(retval, m_fname);
-
-    // //     m_exec_conf->msg->notice(10) << "PGSD: writing dihedrals/group" << endl;
-    // //     retval = gsd_write_chunk(&m_handle,
-    // //                              "dihedrals/group",
-    // //                              PGSD_TYPE_UINT32,
-    // //                              N,
-    // //                              4,
-    // //                              0,
-    // //                              (void*)&dihedral.groups[0]);
-    // //     PGSDUtils::checkError(retval, m_fname);
-    // //     }
-    // // if (improper.size > 0)
-    // //     {
-    // //     m_exec_conf->msg->notice(10) << "PGSD: writing impropers/N" << endl;
-    // //     uint32_t N = improper.size;
-    // //     int retval = gsd_write_chunk(&m_handle, "impropers/N", PGSD_TYPE_UINT32, 1, 1, 0, (void*)&N);
-    // //     PGSDUtils::checkError(retval, m_fname);
-
-    // //     writeTypeMapping("impropers/types", improper.type_mapping);
-
-    // //     m_exec_conf->msg->notice(10) << "PGSD: writing impropers/typeid" << endl;
-    // //     retval = gsd_write_chunk(&m_handle,
-    // //                              "impropers/typeid",
-    // //                              PGSD_TYPE_UINT32,
-    // //                              N,
-    // //                              1,
-    // //                              0,
-    // //                              (void*)&improper.type_id[0]);
-    // //     PGSDUtils::checkError(retval, m_fname);
-
-    // //     m_exec_conf->msg->notice(10) << "PGSD: writing impropers/group" << endl;
-    // //     retval = gsd_write_chunk(&m_handle,
-    // //                              "impropers/group",
-    // //                              PGSD_TYPE_UINT32,
-    // //                              N,
-    // //                              4,
-    // //                              0,
-    // //                              (void*)&improper.groups[0]);
-    // //     PGSDUtils::checkError(retval, m_fname);
-    // //     }
-
-    // if (constraint.size > 0)
-    //     {
-    //     m_exec_conf->msg->notice(10) << "PGSD: writing constraints/N" << endl;
-    //     uint32_t N = constraint.size;
-    //     int retval
-    //         = gsd_write_chunk(&m_handle, "constraints/N", PGSD_TYPE_UINT32, 1, 1, 0, (void*)&N);
-    //     PGSDUtils::checkError(retval, m_fname);
-
-    //     m_exec_conf->msg->notice(10) << "PGSD: writing constraints/value" << endl;
-    //         {
-    //         std::vector<float> data(N);
-    //         data.reserve(1); //! make sure we allocate
-    //         for (unsigned int i = 0; i < N; i++)
-    //             data[i] = float(constraint.val[i]);
-
-    //         retval = gsd_write_chunk(&m_handle,
-    //                                  "constraints/value",
-    //                                  PGSD_TYPE_FLOAT,
-    //                                  N,
-    //                                  1,
-    //                                  0,
-    //                                  (void*)&data[0]);
-    //         PGSDUtils::checkError(retval, m_fname);
-    //         }
-
-    //     m_exec_conf->msg->notice(10) << "PGSD: writing constraints/group" << endl;
-    //     retval = gsd_write_chunk(&m_handle,
-    //                              "constraints/group",
-    //                              PGSD_TYPE_UINT32,
-    //                              N,
-    //                              2,
-    //                              0,
-    //                              (void*)&constraint.groups[0]);
-    //     PGSDUtils::checkError(retval, m_fname);
-    // }
-
-    // if (pair.size > 0)
-    //     {
-    //     m_exec_conf->msg->notice(10) << "PGSD: writing pairs/N" << endl;
-    //     uint32_t N = pair.size;
-    //     int retval = gsd_write_chunk(&m_handle, "pairs/N", PGSD_TYPE_UINT32, 1, 1, 0, (void*)&N);
-    //     PGSDUtils::checkError(retval, m_fname);
-
-    //     writeTypeMapping("pairs/types", pair.type_mapping);
-
-    //     m_exec_conf->msg->notice(10) << "PGSD: writing pairs/typeid" << endl;
-    //     retval = gsd_write_chunk(&m_handle,
-    //                              "pairs/typeid",
-    //                              PGSD_TYPE_UINT32,
-    //                              N,
-    //                              1,
-    //                              0,
-    //                              (void*)&pair.type_id[0]);
-    //     PGSDUtils::checkError(retval, m_fname);
-
-    //     m_exec_conf->msg->notice(10) << "PGSD: writing pairs/group" << endl;
-    //     retval = gsd_write_chunk(&m_handle,
-    //                              "pairs/group",
-    //                              PGSD_TYPE_UINT32,
-    //                              N,
-    //                              2,
-    //                              0,
-    //                              (void*)&pair.groups[0]);
-    //     PGSDUtils::checkError(retval, m_fname);
-    //     }
-    }
-
 void GSDDumpWriterMPI::writeLogQuantities(pybind11::dict dict)
     {
     for (auto key_iter = dict.begin(); key_iter != dict.end(); ++key_iter)
@@ -1704,7 +1503,8 @@ void GSDDumpWriterMPI::populateLocalFrame(GSDDumpWriterMPI::PGSDFrame& frame, ui
     std::cout << "GSDDumpWriterMPI type m_present_at_zero " << m_present_at_zero[pgsd_flag::particles_type] <<  " m_nondefault " <<  m_nondefault["particles/typeid"] << std::endl;
     std::cout << "GSDDumpWriterMPI aux4 m_present_at_zero " << m_present_at_zero[pgsd_flag::particles_aux4] <<  " m_nondefault " <<  m_nondefault["particles/aux4"] << std::endl;
 
-    if ((!m_present_at_zero[pgsd_flag::particles_position] || avoid_unsorted_chaos_indicator == 0)
+
+    if ((m_present_at_zero[pgsd_flag::particles_position] || avoid_unsorted_chaos_indicator == 0)
         && !(m_nframes > 0 && m_nondefault["particles/position"]))
         {
         std::cout << "Set pos to zero" << std::endl;
@@ -1712,7 +1512,7 @@ void GSDDumpWriterMPI::populateLocalFrame(GSDDumpWriterMPI::PGSDFrame& frame, ui
         frame.particle_data_present[pgsd_flag::particles_position] = false;
         }
 
-    if ((!m_present_at_zero[pgsd_flag::particles_type] || avoid_unsorted_chaos_indicator == 0)
+    if ((m_present_at_zero[pgsd_flag::particles_type] || avoid_unsorted_chaos_indicator == 0)
         && !(m_nframes > 0 && m_nondefault["particles/typeid"]))
         {
         std::cout << "Set type to zero" << std::endl;
@@ -1720,42 +1520,42 @@ void GSDDumpWriterMPI::populateLocalFrame(GSDDumpWriterMPI::PGSDFrame& frame, ui
         frame.particle_data_present[pgsd_flag::particles_type] = false;
         }
 
-    if ((!m_present_at_zero[pgsd_flag::particles_mass] || avoid_unsorted_chaos_indicator == 0) 
+    if ((m_present_at_zero[pgsd_flag::particles_mass] || avoid_unsorted_chaos_indicator == 0) 
         && !(m_nframes > 0 && m_nondefault["particles/mass"]))
         {
         frame.particle_data.mass.resize(0);
         frame.particle_data_present[pgsd_flag::particles_mass] = false;
         }
 
-    if ((!m_present_at_zero[pgsd_flag::particles_slength] || avoid_unsorted_chaos_indicator == 0)
+    if ((m_present_at_zero[pgsd_flag::particles_slength] || avoid_unsorted_chaos_indicator == 0)
         && !(m_nframes > 0 && m_nondefault["particles/slength"]))
         {
         frame.particle_data.slength.resize(0);
         frame.particle_data_present[pgsd_flag::particles_slength] = false;
         }
 
-    if ((!m_present_at_zero[pgsd_flag::particles_density] || avoid_unsorted_chaos_indicator == 0)
+    if ((m_present_at_zero[pgsd_flag::particles_density] || avoid_unsorted_chaos_indicator == 0)
         && !(m_nframes > 0 && m_nondefault["particles/density"]))
         {
         frame.particle_data.density.resize(0);
         frame.particle_data_present[pgsd_flag::particles_density] = false;
         }
 
-    if ((!m_present_at_zero[pgsd_flag::particles_pressure] || avoid_unsorted_chaos_indicator == 0)
+    if ((m_present_at_zero[pgsd_flag::particles_pressure] || avoid_unsorted_chaos_indicator == 0)
         && !(m_nframes > 0 && m_nondefault["particles/pressure"]))
         {
         frame.particle_data.pressure.resize(0);
         frame.particle_data_present[pgsd_flag::particles_pressure] = false;
         }
 
-    if ((!m_present_at_zero[pgsd_flag::particles_energy] || avoid_unsorted_chaos_indicator == 0)
+    if ((m_present_at_zero[pgsd_flag::particles_energy] || avoid_unsorted_chaos_indicator == 0)
         && !(m_nframes > 0 && m_nondefault["particles/energy"]))
         {
         frame.particle_data.energy.resize(0);
         frame.particle_data_present[pgsd_flag::particles_energy] = false;
         }
 
-    if ((!m_present_at_zero[pgsd_flag::particles_body] || avoid_unsorted_chaos_indicator == 0)
+    if ((m_present_at_zero[pgsd_flag::particles_body] || avoid_unsorted_chaos_indicator == 0)
          && !(m_nframes > 0 && m_nondefault["particles/body"]))
         {
         frame.particle_data.body.resize(0);
@@ -1763,35 +1563,35 @@ void GSDDumpWriterMPI::populateLocalFrame(GSDDumpWriterMPI::PGSDFrame& frame, ui
         }
 
     // momenta
-    if ((!m_present_at_zero[pgsd_flag::particles_velocity] || avoid_unsorted_chaos_indicator == 0)
+    if ((m_present_at_zero[pgsd_flag::particles_velocity] || avoid_unsorted_chaos_indicator == 0)
         && !(m_nframes > 0 && m_nondefault["particles/velocity"]))
         {
         frame.particle_data.vel.resize(0);
         frame.particle_data_present[pgsd_flag::particles_velocity] = false;
         }
 
-    if ((!m_present_at_zero[pgsd_flag::particles_aux1] || avoid_unsorted_chaos_indicator == 0)
+    if ((m_present_at_zero[pgsd_flag::particles_aux1] || avoid_unsorted_chaos_indicator == 0)
         && !(m_nframes > 0 && m_nondefault["particles/aux1"]))
         {
         frame.particle_data.aux1.resize(0);
         frame.particle_data_present[pgsd_flag::particles_aux1] = false;
         }
 
-    if ((!m_present_at_zero[pgsd_flag::particles_aux2] || avoid_unsorted_chaos_indicator == 0)
+    if ((m_present_at_zero[pgsd_flag::particles_aux2] || avoid_unsorted_chaos_indicator == 0)
         && !(m_nframes > 0 && m_nondefault["particles/aux2"]))
         {
         frame.particle_data.aux2.resize(0);
         frame.particle_data_present[pgsd_flag::particles_aux2] = false;
         }
 
-    if ((!m_present_at_zero[pgsd_flag::particles_aux3] || avoid_unsorted_chaos_indicator == 0)
+    if ((m_present_at_zero[pgsd_flag::particles_aux3] || avoid_unsorted_chaos_indicator == 0)
         && !(m_nframes > 0 && m_nondefault["particles/aux3"]))
         {
         frame.particle_data.aux3.resize(0);
         frame.particle_data_present[pgsd_flag::particles_aux3] = false;
         }
 
-    if ((!m_present_at_zero[pgsd_flag::particles_aux4] || avoid_unsorted_chaos_indicator == 0)
+    if ((m_present_at_zero[pgsd_flag::particles_aux4] || avoid_unsorted_chaos_indicator == 0)
         && !(m_nframes > 0 && m_nondefault["particles/aux4"]))
         {
         std::cout << "Set aux4 to zero" << std::endl;
@@ -1799,7 +1599,7 @@ void GSDDumpWriterMPI::populateLocalFrame(GSDDumpWriterMPI::PGSDFrame& frame, ui
         frame.particle_data_present[pgsd_flag::particles_aux4] = false;
         }
 
-    if ((!m_present_at_zero[pgsd_flag::particles_image] || avoid_unsorted_chaos_indicator == 0)
+    if ((m_present_at_zero[pgsd_flag::particles_image] || avoid_unsorted_chaos_indicator == 0)
         && !(m_nframes > 0 && m_nondefault["particles/image"]))
         {
         frame.particle_data.image.resize(0);

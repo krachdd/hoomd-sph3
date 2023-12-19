@@ -44,12 +44,6 @@ class PYBIND11_EXPORT GSDDumpWriterMPI : public Analyzer
                   std::string mode = "ab",
                   bool truncate = false);
 
-    //! Control topology writes
-    void setWriteTopology(bool b)
-        {
-        m_write_topology = b;
-        }
-
     std::string getFilename()
         {
         return m_fname;
@@ -227,14 +221,6 @@ class PYBIND11_EXPORT GSDDumpWriterMPI : public Analyzer
     /// Populate local frame with data.
     void populateLocalFrame(PGSDFrame& frame, uint64_t timestep);
 
-// #ifdef ENABLE_MPI
-//     /// Copy of the state properties on all ranks, in ascending tag order globally.
-//     PGSDFrame m_global_frame;
-//     GatherTagOrder m_gather_tag_order;
-
-//     void gatherGlobalFrame(const PGSDFrame& local_frame);
-// #endif
-
     private:
     std::string m_fname;           //!< The file name we are writing to
     std::string m_mode;            //!< The file open mode
@@ -279,15 +265,6 @@ class PYBIND11_EXPORT GSDDumpWriterMPI : public Analyzer
 
     //! Write particle momenta
     void writeMomenta(const PGSDFrame& frame);
-
-    //! Write bond topology
-    void writeTopology(BondData::Snapshot& bond,
-                       // AngleData::Snapshot& angle,
-                       // DihedralData::Snapshot& dihedral,
-                       // ImproperData::Snapshot& improper,
-                       ConstraintData::Snapshot& constraint
-                       // PairData::Snapshot& pair
-                       );
 
     friend void export_GSDDumpWriterMPI(pybind11::module& m);
     };
