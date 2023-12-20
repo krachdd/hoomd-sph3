@@ -23,6 +23,7 @@ struct SolidFluidTypeBit
         FLUID = 1<<2,
         FLUID1 = FLUID<<1,
         FLUID2 = FLUID<<2,
+        SUSPENDED = FLUID<<2,
         //FLUID3 = FLUID<<3,
         //FLUID4 = FLUID<<4,
         //FLUID5 = FLUID<<5,
@@ -52,6 +53,12 @@ inline
 bool checkfluid2(const unsigned int* type_props, Scalar mytype)
     {
     return type_props[__scalar_as_int(mytype)] & SolidFluidTypeBit::FLUID2;
+    }
+
+inline
+bool checksuspended(const unsigned int* type_props, Scalar mytype)
+    {
+    return type_props[__scalar_as_int(mytype)] & SolidFluidTypeBit::SUSPENDED;
     }
 
 } // end namespace sph 

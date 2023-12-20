@@ -22,6 +22,7 @@ set(_${COMPONENT_NAME}_sources
     SmoothingKernel.cc
     CustomForceCompute.cc
     ComputeSPFBasicProperties.cc
+    ComputeSusFBasicProperties.cc
     HalfStepHook.cc
     ConstantForceCompute.cc
     )
@@ -55,6 +56,7 @@ set(_${COMPONENT_NAME}_headers
     VelocityVerletBasic.h
     CustomForceCompute.h
     ComputeSPFBasicProperties.h
+    ComputeSusFBasicProperties.h
     ComputeMechanicalProp.h
     EvaluationMethodDefinition.h
     ConstantForceCompute.h

@@ -415,8 +415,8 @@ class SinglePhaseFlow(SPHModel):
         if (self.compute_solid_forces == True):
             self.computeSolidForces()
 
-        if (self.compute_wall_forces == True):
-            self.computeWallForces()
+        # if (self.compute_wall_forces == True):
+        #     self.computeWallForces()
 
         self.setrcut(self.rcut)
 
@@ -570,6 +570,7 @@ class SuspensionFlow(SPHModel):
                  nlist,
                  fluidgroup_filter = None,
                  solidgroup_filter = None,
+                 suspendedgroup_filter = None,
                  densitymethod='SUMMATION',
                  viscositymethod='HARMONICAVERAGE'):
 
@@ -600,6 +601,7 @@ class SuspensionFlow(SPHModel):
         self._cpp_SuspensionFclass_name = 'SuspensionF' '_' + Kernel[self.kernel.name] + '_' + EOS[self.eos.name]
         self.fluidgroup_filter = fluidgroup_filter
         self.solidgroup_filter = solidgroup_filter
+        self.suspendedgroup_filter = suspendedgroup_filter       
         self.str_densitymethod = self._param_dict._dict["densitymethod"]
         self.str_viscositymethod = self._param_dict._dict["viscositymethod"]
         self.accel_set = False
@@ -685,6 +687,7 @@ class SuspensionFlow(SPHModel):
         cpp_sys_def = self._simulation.state._cpp_sys_def
         cpp_fluidgroup  = self._simulation.state._get_group(self.fluidgroup_filter)
         cpp_solidgroup  = self._simulation.state._get_group(self.solidgroup_filter)
+        cpp_suspendedgroup  = self._simulation.state._get_group(self.suspendedgroup_filter)
         cpp_kernel = self.kernel.cpp_smoothingkernel
         cpp_eos = self.eos.cpp_stateequation
         cpp_nlist =  self.nlist._cpp_obj
@@ -693,7 +696,7 @@ class SuspensionFlow(SPHModel):
         self.kernel.setNeighborList(self.nlist)
 
         self._cpp_obj = suspensionf_cls(cpp_sys_def, cpp_kernel, cpp_eos, cpp_nlist, cpp_fluidgroup, 
-                                cpp_solidgroup, self.cpp_densitymethod, self.cpp_viscositymethod)
+                                cpp_solidgroup, cpp_suspendedgroup, self.cpp_densitymethod, self.cpp_viscositymethod)
 
         # Set kernel parameters
         kappa = self.kernel.Kappa()
@@ -802,6 +805,9 @@ class SuspensionFlow(SPHModel):
         self._cpp_obj.setRCut(('F', 'S'), rcut)
         self._cpp_obj.setRCut(('S', 'S'), rcut)
         self._cpp_obj.setRCut(('F', 'F'), rcut)
+        self._cpp_obj.setRCut(('F', 'O'), rcut)
+        self._cpp_obj.setRCut(('O', 'S'), rcut)
+
 
     # @property
     def densitymethod(self):

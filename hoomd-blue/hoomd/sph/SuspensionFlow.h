@@ -75,6 +75,7 @@ class PYBIND11_EXPORT SuspensionFlow : public SPHBaseClass<KT_, SET_>
                         std::shared_ptr<nsearch::NeighborList> nlist,
                         std::shared_ptr<ParticleGroup> fluidgroup,
                         std::shared_ptr<ParticleGroup> solidgroup,
+                        std::shared_ptr<ParticleGroup> suspendedgroup,
                         DensityMethod   mdensitymethod=DENSITYSUMMATION,
                         ViscosityMethod mviscositymethod=HARMONICAVERAGE);
 
@@ -137,6 +138,7 @@ class PYBIND11_EXPORT SuspensionFlow : public SPHBaseClass<KT_, SET_>
             {
             m_compute_solid_forces = true;
             }
+
 
         /*! Set compute wall forces option to true. This is necessary if 
          *  if there are walls defined, then solid body IDs start with 1 instead of 0
@@ -234,6 +236,8 @@ class PYBIND11_EXPORT SuspensionFlow : public SPHBaseClass<KT_, SET_>
         // Shared pointers
         std::shared_ptr<ParticleGroup> m_fluidgroup; //!< Group of fluid particles
         std::shared_ptr<ParticleGroup> m_solidgroup; //!< Group of fluid particles
+        std::shared_ptr<ParticleGroup> m_suspendedgroup; //!< Group of fluid particles
+
 
         /// r_cut (not squared) given to the neighbor list
         std::shared_ptr<GlobalArray<Scalar>> m_r_cut_nlist;
@@ -265,11 +269,12 @@ class PYBIND11_EXPORT SuspensionFlow : public SPHBaseClass<KT_, SET_>
         // Auxiliary variables
         std::vector<unsigned int> m_fluidtypes; //!< Fluid type numbers
         std::vector<unsigned int> m_solidtypes; //!< Solid type numbers
+        std::vector<unsigned int> m_suspendedtypes; //!< Solid type numbers
         GPUArray<unsigned int> m_type_property_map; //!< to check if a particle type is solid or fluid
         std::vector<Scalar4> m_centerofmasses;  //!< Vector with center of mass and typeID for each solid body besides walls
         std::vector<Scalar3> m_repulsiveforces; //!< Vector with repulsive forces per solid body
         std::vector<Scalar3> m_velocities;      //!< Vector with velocities of solid bodies
-        unsigned int m_maxSolidID;              //!< maximum nuumber of solid bodies
+        unsigned int m_maxSuspendedID;              //!< maximum nuumber of solid bodies
         // >> fixed walls always typeID 0; fluid always typeID n (last)
         std::vector<Scalar> m_radii;            //!< Vector with equivalent radi of all solid bodies
         Scalar m_f0; //!< Magnitude of contact force
@@ -311,19 +316,26 @@ class PYBIND11_EXPORT SuspensionFlow : public SPHBaseClass<KT_, SET_>
         * \pre Solid normalization constant \sum_j w_ij must be computed and stored in density array
         * \post Fictitious particle properties are computed and stored in aux1 array
         */
-        void compute_noslip(uint64_t timestep);
+        void compute_noslipsolid(uint64_t timestep);
+
+        /*! Helper function to compute fictitious solid particle properties (pressures and velocities)
+        * \pre Ghost particle number densities (i.e. density array) must be up-to-date
+        * \pre Solid normalization constant \sum_j w_ij must be computed and stored in density array
+        * \post Fictitious particle properties are computed and stored in aux1 array
+        */
+        void compute_noslipsuspended(uint64_t timestep);
 
         /*! Helper function to apply Shepard density filter
         * \post Fluid particle densities are recomputed based on the Shepard renormalization
         */
         void renormalize_density(uint64_t timestep);
 
-        /*! Helper function to calculate center of mass of solidtypes
+        /*! Helper function to calculate center of mass of suspendedtypes
         * \post Based on SuspendedObjectIntegrator
         */
         void compute_Centerofmasses(uint64_t timestep, bool print);
 
-         /*! Helper function to calculate equivalent radii of solidtypes
+         /*! Helper function to calculate equivalent radii of m_maxSuspendedID
         * \post eqivalent radii stored in m_radi dependent on type id
         */
         void compute_equivalentRadii(uint64_t timestep, bool print);

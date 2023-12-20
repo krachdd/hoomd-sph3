@@ -25,9 +25,10 @@ SuspensionFlow<KT_, SET_>::SuspensionFlow(std::shared_ptr<SystemDefinition> sysd
                                  std::shared_ptr<nsearch::NeighborList> nlist,
                                  std::shared_ptr<ParticleGroup> fluidgroup,
                                  std::shared_ptr<ParticleGroup> solidgroup,
+                                 std::shared_ptr<ParticleGroup> suspendedgroup,                                 
                                  DensityMethod mdensitymethod,
                                  ViscosityMethod mviscositymethod)
-    : SPHBaseClass<KT_, SET_>(sysdef,skernel,equationofstate,nlist), m_fluidgroup(fluidgroup), m_solidgroup(solidgroup), m_typpair_idx(this->m_pdata->getNTypes())
+    : SPHBaseClass<KT_, SET_>(sysdef,skernel,equationofstate,nlist), m_fluidgroup(fluidgroup), m_solidgroup(solidgroup), m_suspendedgroup(suspendedgroup), m_typpair_idx(this->m_pdata->getNTypes())
       {
         this->m_exec_conf->msg->notice(5) << "Constructing SuspensionFlow" << std::endl;
 
@@ -57,6 +58,8 @@ SuspensionFlow<KT_, SET_>::SuspensionFlow(std::shared_ptr<SystemDefinition> sysd
         // Contruct type vectors
         this->constructTypeVectors(fluidgroup,&m_fluidtypes);
         this->constructTypeVectors(solidgroup,&m_solidtypes);
+        this->constructTypeVectors(suspendedgroup,&m_suspendedtypes);
+
 
         // all particle groups are based on the same particle data
         unsigned int num_types = this->m_sysdef->getParticleData()->getNTypes();
@@ -72,14 +75,17 @@ SuspensionFlow<KT_, SET_>::SuspensionFlow(std::shared_ptr<SystemDefinition> sysd
             for (unsigned int i = 0; i < m_solidtypes.size(); i++) {
                 h_type_property_map.data[m_solidtypes[i]] |= SolidFluidTypeBit::SOLID;
             }
+            for (unsigned int i = 0; i < m_suspendedtypes.size(); i++) {
+                h_type_property_map.data[m_suspendedtypes[i]] |= SolidFluidTypeBit::SUSPENDED;
+            }
         }
 
-        this->m_exec_conf->msg->notice(2) << "Computing SuspensionFlow::number of solids in m_solidtypes " << m_solidtypes.size() << std::endl;
+        this->m_exec_conf->msg->notice(2) << "Computing SuspensionFlow::number of solids in m_suspendedtypes " << m_suspendedtypes.size() << std::endl;
 
         // Init vectors for suspension model
         Scalar3 zeros3 = make_scalar3(0.0,0.0,0.0);
         Scalar4 zeros4 = make_scalar4(0.0,0.0,0.0,0.0);
-        for (unsigned int i = 0; i < m_solidtypes.size(); ++i)
+        for (unsigned int i = 0; i < m_suspendedtypes.size(); ++i)
             {
             m_centerofmasses.push_back(zeros4);
             m_repulsiveforces.push_back(zeros3);
@@ -536,8 +542,8 @@ void SuspensionFlow<KT_, SET_>::compute_ndensity(uint64_t timestep)
             // Index of neighbor
             unsigned int k = h_nlist.data[myHead + j];
 
-            if (checkfluid1(h_type_property_map.data, h_pos.data[k].w))
-                continue;
+            // if (checkfluid1(h_type_property_map.data, h_pos.data[k].w))
+            //     continue;
 
             // Access neighbor position
             Scalar3 pj;
@@ -609,7 +615,7 @@ void SuspensionFlow<KT_, SET_>::compute_pressure(uint64_t timestep)
  */
 
 template<SmoothingKernelType KT_,StateEquationType SET_>
-void SuspensionFlow<KT_, SET_>::compute_noslip(uint64_t timestep)
+void SuspensionFlow<KT_, SET_>::compute_noslipsolid(uint64_t timestep)
     {
     this->m_exec_conf->msg->notice(7) << "Computing SuspensionFlow::NoSlip NoPenetration" << std::endl;
 
@@ -638,8 +644,9 @@ void SuspensionFlow<KT_, SET_>::compute_noslip(uint64_t timestep)
     unsigned int group_size = this->m_solidgroup->getNumMembers();
     for (unsigned int group_idx = 0; group_idx < group_size; group_idx++)
         {
-        // Read particle index
+        // // Read particle index
         unsigned int i = this->m_solidgroup->getMemberIndex(group_idx);
+
 
         // Access the particle's position, velocity, mass and type
         Scalar3 pi;
@@ -841,6 +848,246 @@ void SuspensionFlow<KT_, SET_>::compute_noslip(uint64_t timestep)
 
     } // End compute noslip computation
 
+/*! Compute fictitious solid particle properties
+    This method updates fictitious solid particle pressures and velocities to account for
+    no-slip boundary conditions. Method follows Adami et. al. (2012).
+ */
+
+template<SmoothingKernelType KT_,StateEquationType SET_>
+void SuspensionFlow<KT_, SET_>::compute_noslipsuspended(uint64_t timestep)
+    {
+    this->m_exec_conf->msg->notice(7) << "Computing SuspensionFlow::NoSlip NoPenetration" << std::endl;
+
+    // Grab handles for particle and neighbor data
+    ArrayHandle<Scalar3> h_vf(this->m_pdata->getAuxiliaries1(), access_location::host,access_mode::readwrite);
+    ArrayHandle<Scalar4> h_pos(this->m_pdata->getPositions(), access_location::host, access_mode::read);
+    ArrayHandle<Scalar>  h_density(this->m_pdata->getDensities(), access_location::host, access_mode::readwrite);
+    ArrayHandle<Scalar>  h_pressure(this->m_pdata->getPressures(), access_location::host, access_mode::readwrite);
+    ArrayHandle<Scalar4> h_velocity(this->m_pdata->getVelocities(), access_location::host, access_mode::read);
+    ArrayHandle<Scalar3> h_accel(this->m_pdata->getAccelerations(), access_location::host, access_mode::read);
+    ArrayHandle<Scalar>  h_h(this->m_pdata->getSlengths(), access_location::host, access_mode::read);
+
+    // Grab handles for neighbor data
+    ArrayHandle<unsigned int> h_n_neigh(this->m_nlist->getNNeighArray(), access_location::host, access_mode::read);
+    ArrayHandle<unsigned int> h_nlist(this->m_nlist->getNListArray(), access_location::host, access_mode::read);
+    ArrayHandle<size_t> h_head_list(this->m_nlist->getHeadList(), access_location::host, access_mode::read);
+    ArrayHandle<unsigned int> h_type_property_map(this->m_type_property_map, access_location::host, access_mode::read);
+
+    // Local copy of the simulation box
+    const BoxDim& box = this->m_pdata->getGlobalBox();
+
+    unsigned int size;
+    size_t myHead;
+
+    // For all suspended particles
+
+    unsigned int group_size_suspended = this->m_suspendedgroup->getNumMembers();
+    for (unsigned int group_idx = 0; group_idx < group_size_suspended; group_idx++)
+        {
+        // // Read particle index
+        unsigned int i = this->m_suspendedgroup->getMemberIndex(group_idx);
+
+        // Access the particle's position, velocity, mass and type
+        Scalar3 pi;
+        pi.x = h_pos.data[i].x;
+        pi.y = h_pos.data[i].y;
+        pi.z = h_pos.data[i].z;
+
+        // Read acceleration of solid particle i if content is not NaN
+        Scalar3 accel_i = make_scalar3(0,0,0);
+        if ( h_accel.data[i].x != h_accel.data[i].x ||
+             h_accel.data[i].y != h_accel.data[i].y ||
+             h_accel.data[i].z != h_accel.data[i].z )
+            {
+            }
+        else
+            {
+            accel_i.x = h_accel.data[i].x;
+            accel_i.y = h_accel.data[i].y;
+            accel_i.z = h_accel.data[i].z;
+            }
+
+        // Initialize fictitious solid velocity vector
+        Scalar3 uf_c0 = make_scalar3(0, 0, 0);
+
+        // Initialize fictitious solid pressure scalar
+        Scalar pf_c0= Scalar(0);
+
+        // Initialize hydrostatic pressure contribution
+        Scalar3 ph_c0 = make_scalar3(0, 0, 0);
+
+        // Initialize reziprocal solid particle wise zeroth order normalisation constant 
+        Scalar wij_c0 = Scalar(0);
+
+        // Loop over all of the neighbors of this particle
+        // Count fluid neighbors before setting solid particle properties
+        unsigned int fluidneighbors = 0;
+
+        // Skip neighbor loop if this solid particle does not have fluid neighbors
+        bool solid_w_fluid_neigh = false;
+        myHead = h_head_list.data[i];
+        size = (unsigned int)h_n_neigh.data[i];
+        for (unsigned int j = 0; j < size; j++)
+            {
+            unsigned int k = h_nlist.data[myHead + j];
+            if ( checkfluid(h_type_property_map.data, h_pos.data[k].w) )
+                {
+                solid_w_fluid_neigh = true;
+                break;
+                }
+            }
+        if ( !(solid_w_fluid_neigh) )
+            {
+            // Set fictitious solid velocity to zero
+            h_vf.data[i].x = 0;
+            h_vf.data[i].y = 0;
+            h_vf.data[i].z = 0;
+            // If no fluid neighbors are present,
+            // Set pressure to background pressure
+            h_pressure.data[i] = this->m_eos->getBackgroundPressure();
+            // Density to rest density
+            h_density.data[i] = this->m_rho0;
+            continue;
+            }
+
+        myHead = h_head_list.data[i];
+        size = (unsigned int)h_n_neigh.data[i];
+        // loop over all neighbours of the solid particle
+        // effectivly, only fluid particles contribute to properties of the solid
+
+        for (unsigned int j = 0; j < size; j++)
+            {
+            // Index of neighbor (MEM TRANSFER: 1 scalar)
+            unsigned int k = h_nlist.data[myHead + j];
+
+            // Sanity check
+            assert(k < this->m_pdata->getN() + this->m_pdata->getNGhosts());
+
+            // If neighbor particle is solid, continue with next element in loop
+            // i.e. interpolations only apply to fluid particles
+            if ( checksolid(h_type_property_map.data, h_pos.data[k].w) )
+                continue;
+            else
+                fluidneighbors += 1;
+
+            // Access neighbor position
+            Scalar3 pj;
+            pj.x = h_pos.data[k].x;
+            pj.y = h_pos.data[k].y;
+            pj.z = h_pos.data[k].z;
+
+            // Compute distance vector (FLOPS: 3)
+            // in this case i is the solid particle, j its fluid neighbour
+            Scalar3 dx;
+            dx.x = pi.x - pj.x;
+            dx.y = pi.y - pj.y;
+            dx.z = pi.z - pj.z;
+
+            // Apply periodic boundary conditions (FLOPS: 9)
+            dx = box.minImage(dx);
+
+            // Calculate squared distance (FLOPS: 5)
+            Scalar rsq = dot(dx, dx);
+
+            // If particle distance is too large, skip this loop
+            if ( this->m_const_slength && rsq > this->m_rcutsq )
+                continue;
+
+            // Access neighbor velocity and mass
+            Scalar3 vj;
+            vj.x = h_velocity.data[k].x;
+            vj.y = h_velocity.data[k].y;
+            vj.z = h_velocity.data[k].z;
+
+            // Read particle k pressure
+            Scalar Pj = h_pressure.data[k];
+
+            // Calculate absolute and normalized distance
+            Scalar r = sqrt(rsq);
+
+            // Evaluate kernel function
+            Scalar wij = this->m_const_slength ? this->m_skernel->wij(m_ch,r) : this->m_skernel->wij(Scalar(0.5)*(h_h.data[i]+h_h.data[k]),r);
+
+            // Add contribution to solid fictitious velocity
+            uf_c0.x += vj.x*wij;
+            uf_c0.y += vj.y*wij;
+            uf_c0.z += vj.z*wij;
+
+            // Add contribution to solid fictitious pressure
+            pf_c0 += Pj*wij;
+
+            // Add contribution to hydrostatic pressure term
+            // this also includes a direction (included in dx)
+            // h_density is the density of the fluid and therefore a real density
+            ph_c0.x += h_density.data[k] * dx.x * wij;
+            ph_c0.y += h_density.data[k] * dx.y * wij;
+            ph_c0.z += h_density.data[k] * dx.z * wij;
+
+            wij_c0 += wij;
+
+            // if ( this->m_body_acceleration )
+            //     {
+
+            //     // ehemals rakulan
+
+            //     ph_c0.x += h_density.data[k] * dx.x * wij;
+            //     ph_c0.y += h_density.data[k] * dx.y * wij;
+            //     ph_c0.z += h_density.data[k] * dx.z * wij;
+
+            //     }
+            } // End neighbor loop
+
+        // Store fictitious solid particle velocity
+        // if (fluidneighbors > 0 && h_density.data[i] > 0 )
+        if (fluidneighbors > 0 && wij_c0 > 0 )
+            {
+            //  Compute zeroth order normalization constant
+            // Scalar norm_constant = 1./h_density.data[i];
+            Scalar norm_constant = 1./wij_c0;
+            // Set fictitious velocity
+            h_vf.data[i].x = 2.0 * h_velocity.data[i].x - norm_constant * uf_c0.x;
+            h_vf.data[i].y = 2.0 * h_velocity.data[i].y - norm_constant * uf_c0.y;
+            h_vf.data[i].z = 2.0 * h_velocity.data[i].z - norm_constant * uf_c0.z;
+            // compute fictitious pressure
+            // TODO: There is an addition necessary if the acceleration of the solid 
+            // phase is not constant, since there is no function that is updating it
+            // see ISSUE # 23
+            Scalar3 bodyforce = this->getAcceleration(timestep);
+            Scalar3 hp_factor;
+            hp_factor.x = bodyforce.x - accel_i.x;
+            hp_factor.y = bodyforce.y - accel_i.y;
+            hp_factor.z = bodyforce.z - accel_i.z;
+
+            ph_c0.x *= norm_constant;
+            ph_c0.y *= norm_constant;
+            ph_c0.z *= norm_constant;
+
+            h_pressure.data[i] = norm_constant * pf_c0 + dot(hp_factor , ph_c0);
+            // Compute solid densities by inverting equation of state
+            // Here: overwrite the normalisation constant
+            h_density.data[i] = this->m_eos->Density(h_pressure.data[i]);
+            }
+        else
+            {
+            // Set fictitious solid velocity to zero
+            h_vf.data[i].x = 0.0;
+            h_vf.data[i].y = 0.0;
+            h_vf.data[i].z = 0.0;
+
+            // If no fluid neighbors are present,
+            // Set pressure to background pressure
+            h_pressure.data[i] = this->m_eos->getBackgroundPressure();
+            // Density to rest density
+            // Here: overwrite the normalisation constant
+            h_density.data[i] = this->m_rho0;
+            }
+
+        } // End solid particle loop
+
+
+
+    } // End compute noslip computation
+
 
 /*! Perform Shepard density renormalization
  */
@@ -999,7 +1246,7 @@ void SuspensionFlow<KT_, SET_>::compute_Centerofmasses(uint64_t timestep, bool p
     // MPI_Comm_size(MPI_COMM_WORLD, &world_size);
 
     // Count solid types
-    m_maxSolidID = *max_element(m_solidtypes.begin(), m_solidtypes.end());
+    m_maxSuspendedID = *max_element(m_suspendedtypes.begin(), m_suspendedtypes.end());
 
     // Read-Handle to velocity mass and position array
     ArrayHandle<Scalar4> h_pos(this->m_pdata->getPositions(), access_location::host, access_mode::read);
@@ -1019,22 +1266,22 @@ void SuspensionFlow<KT_, SET_>::compute_Centerofmasses(uint64_t timestep, bool p
     if (m_walls)
         start = 1;
 
-    for (unsigned int i = start; i < m_solidtypes.size(); i++)
+    for (unsigned int i = start; i < m_suspendedtypes.size(); i++)
         {
         // Average position on unit circle
         Scalar angles[6] = {0,0,0,0,0,0};
 
         // Loop over all solid particles ---> detecte those who belong to the subgroup
-        unsigned int group_size = m_solidgroup->getNumMembers();
-        unsigned int solidtype_size = 0;
+        unsigned int group_size = m_suspendedgroup->getNumMembers();
+        unsigned int suspendedtype_size = 0;
             for (unsigned int group_idx = 0; group_idx < group_size; group_idx++)
                 {
                 // Read particle index
-                unsigned int j  = m_solidgroup->getMemberIndex(group_idx);
+                unsigned int j  = m_suspendedgroup->getMemberIndex(group_idx);
                 particle_typeID = __scalar_as_int(h_pos.data[j].w); 
-                if( particle_typeID == m_solidtypes[i] )
+                if( particle_typeID == m_suspendedtypes[i] )
                     {
-                    solidtype_size = solidtype_size+1;
+                    suspendedtype_size = suspendedtype_size+1;
                     Scalar3 pos = make_scalar3(h_pos.data[j].x, h_pos.data[j].y, h_pos.data[j].z);
 
                     // Compute mapped angles
@@ -1053,7 +1300,7 @@ void SuspensionFlow<KT_, SET_>::compute_Centerofmasses(uint64_t timestep, bool p
                 }
 
         // Count total number of particles in group
-        unsigned int totalgroupN = solidtype_size;
+        unsigned int totalgroupN = suspendedtype_size;
 
     #ifdef ENABLE_MPI
         MPI_Allreduce(MPI_IN_PLACE, &angles[0], 6, MPI_HOOMD_SCALAR, MPI_SUM, this->m_exec_conf->getMPICommunicator());
@@ -1079,15 +1326,15 @@ void SuspensionFlow<KT_, SET_>::compute_Centerofmasses(uint64_t timestep, bool p
             centerofmass.z = lo.z + ( atan2(-angles[5], -angles[4]) + Scalar(M_PI) ) * ( Ld.z / Scalar(M_TWOPI) );
         
         // Set typeID
-        centerofmass.w = m_solidtypes[i];
+        centerofmass.w = m_suspendedtypes[i];
 
         if ( print and timestep==1)
             {
-            this->m_exec_conf->msg->notice(2) << "SuspendedObject " << m_solidtypes[i] << " consists of " << totalgroupN << " slave particles" << endl;
-            this->m_exec_conf->msg->notice(2) << "SuspendedObject " << m_solidtypes[i] << " center of Mass x: " << centerofmass.x << endl;
-            this->m_exec_conf->msg->notice(2) << "SuspendedObject " << m_solidtypes[i] << " center of mass y: " << centerofmass.y << endl;
-            this->m_exec_conf->msg->notice(2) << "SuspendedObject " << m_solidtypes[i] << " center of mass z: " << centerofmass.z << endl;
-            this->m_exec_conf->msg->notice(2) << "SuspendedObject " << m_solidtypes[i] << " type ID: " << centerofmass.w << endl;
+            this->m_exec_conf->msg->notice(2) << "SuspendedObject " << m_suspendedtypes[i] << " consists of " << totalgroupN << " slave particles" << endl;
+            this->m_exec_conf->msg->notice(2) << "SuspendedObject " << m_suspendedtypes[i] << " center of Mass x: " << centerofmass.x << endl;
+            this->m_exec_conf->msg->notice(2) << "SuspendedObject " << m_suspendedtypes[i] << " center of mass y: " << centerofmass.y << endl;
+            this->m_exec_conf->msg->notice(2) << "SuspendedObject " << m_suspendedtypes[i] << " center of mass z: " << centerofmass.z << endl;
+            this->m_exec_conf->msg->notice(2) << "SuspendedObject " << m_suspendedtypes[i] << " type ID: " << centerofmass.w << endl;
             }
 
     #ifdef ENABLE_MPI
@@ -1108,14 +1355,14 @@ void SuspensionFlow<KT_, SET_>::compute_Centerofmasses(uint64_t timestep, bool p
 
         }
 
-    for (unsigned int i = start; i < m_solidtypes.size(); i++)
+    for (unsigned int i = start; i < m_suspendedtypes.size(); i++)
         {
         if ( print and timestep==1)
             {
-            this->m_exec_conf->msg->notice(2) << "SuspendedObject " << m_solidtypes[i] << " center of Mass x: " << m_centerofmasses[i].x << endl;
-            this->m_exec_conf->msg->notice(2) << "SuspendedObject " << m_solidtypes[i] << " center of mass y: " << m_centerofmasses[i].y << endl;
-            this->m_exec_conf->msg->notice(2) << "SuspendedObject " << m_solidtypes[i] << " center of mass z: " << m_centerofmasses[i].z << endl;
-            this->m_exec_conf->msg->notice(2) << "SuspendedObject " << m_solidtypes[i] << " type ID: " << m_centerofmasses[i].w << endl;
+            this->m_exec_conf->msg->notice(2) << "SuspendedObject " << m_suspendedtypes[i] << " center of Mass x: " << m_centerofmasses[i].x << endl;
+            this->m_exec_conf->msg->notice(2) << "SuspendedObject " << m_suspendedtypes[i] << " center of mass y: " << m_centerofmasses[i].y << endl;
+            this->m_exec_conf->msg->notice(2) << "SuspendedObject " << m_suspendedtypes[i] << " center of mass z: " << m_centerofmasses[i].z << endl;
+            this->m_exec_conf->msg->notice(2) << "SuspendedObject " << m_suspendedtypes[i] << " type ID: " << m_centerofmasses[i].w << endl;
             }
         }
 
@@ -1161,12 +1408,12 @@ void SuspensionFlow<KT_, SET_>::compute_equivalentRadii(uint64_t timestep, bool 
 
     if ( print and timestep==1)
         {
-        this->m_exec_conf->msg->notice(2) << "maximum number of solid bodies: " << m_maxSolidID << endl;
+        this->m_exec_conf->msg->notice(2) << "maximum number of solid bodies: " << m_maxSuspendedID << endl;
         this->m_exec_conf->msg->notice(2) << "Size of vector of equivalent radii: " << m_radii.size() << endl;
         }
 
     // Loop over all solid bodies --> if there are walls, they have to have the typeID 0 --> counter starts at 1
-    for (unsigned int i = start; i < m_solidtypes.size(); i++)
+    for (unsigned int i = start; i < m_suspendedtypes.size(); i++)
         {
         // Access COM position
         Scalar3  pi;
@@ -1183,11 +1430,11 @@ void SuspensionFlow<KT_, SET_>::compute_equivalentRadii(uint64_t timestep, bool 
         unsigned int typeID_j;
 
         // Loop over all solid particles ---> detecte those who belong to the subgroup
-        unsigned int group_size = m_solidgroup->getNumMembers();
+        unsigned int group_size = m_suspendedgroup->getNumMembers();
         for (unsigned int group_idx = 0; group_idx < group_size; group_idx++)
             {
             // Read particle index
-            unsigned int j  = m_solidgroup->getMemberIndex(group_idx);
+            unsigned int j  = m_suspendedgroup->getMemberIndex(group_idx);
             typeID_j = __scalar_as_int(h_pos.data[j].w);
 
             if (typeID_j == (start-1) or (typeID_j != typeID_COM))
@@ -1330,7 +1577,7 @@ void SuspensionFlow<KT_, SET_>::compute_repulsiveForce(uint64_t timestep, bool p
     const BoxDim& box = this->m_pdata->getGlobalBox();
 
     // Loop over all solid bodies --> if there are walls, they have to have the typeID 0 --> counter starts at 1
-    for (unsigned int i = start; i < m_solidtypes.size(); i++)
+    for (unsigned int i = start; i < m_suspendedtypes.size(); i++)
         {
         // Access COM position of solid i
         Scalar3  pi;
@@ -1342,7 +1589,7 @@ void SuspensionFlow<KT_, SET_>::compute_repulsiveForce(uint64_t timestep, bool p
 
         Scalar F_rep[3] = {0,0,0};
 
-        for (unsigned int j = start; j < m_solidtypes.size(); j++)
+        for (unsigned int j = start; j < m_suspendedtypes.size(); j++)
             {   
             if (i == j)
                 continue;
@@ -1412,10 +1659,10 @@ void SuspensionFlow<KT_, SET_>::compute_repulsiveForce(uint64_t timestep, bool p
         //     }
 
         // Loop over solid particles
-        unsigned int group_size = m_solidgroup->getNumMembers();
+        unsigned int group_size = m_suspendedgroup->getNumMembers();
         for (unsigned int group_idx = 0; group_idx < group_size; group_idx++)
             {
-            unsigned int k = m_solidgroup->getMemberIndex(group_idx);
+            unsigned int k = m_suspendedgroup->getMemberIndex(group_idx);
             Scalar typeID_k = __scalar_as_int(h_pos.data[k].w);
 
             // Solid-solid contact force
@@ -1621,6 +1868,216 @@ void SuspensionFlow<KT_, SET_>::forcecomputation(uint64_t timestep)
 
             // Determine neighbor type
             bool issolid = checksolid(h_type_property_map.data, h_pos.data[k].w);
+            bool issuspended = checksuspended(h_type_property_map.data, h_pos.data[k].w);
+            // If particle is another suspended particle continue (TODO: check if right)
+            // if ( issuspended )
+            //     continue;
+
+            // Compute distance vector (FLOPS: 3)
+            // Scalar3 dx = pi - pj;
+            Scalar3 dx;
+            dx.x = pi.x - pj.x;
+            dx.y = pi.y - pj.y;
+            dx.z = pi.z - pj.z;
+
+            // Apply periodic boundary conditions (FLOPS: 9)
+            dx = box.minImage(dx);
+
+            // Calculate squared distance (FLOPS: 5)
+            Scalar rsq = dot(dx, dx);
+
+            // If particle distance is too large, skip this loop
+            if ( m_const_slength && rsq > m_rcutsq )
+                continue;
+
+            // Access neighbor velocity; depends on fluid or fictitious solid particle
+            Scalar3 vj  = make_scalar3(0.0, 0.0, 0.0);
+            Scalar mj   = h_velocity.data[k].w;
+            if ( issolid || issuspended )
+                {
+                vj.x = h_vf.data[k].x;
+                vj.y = h_vf.data[k].y;
+                vj.z = h_vf.data[k].z;
+                }
+            else
+                {
+                vj.x = h_velocity.data[k].x;
+                vj.y = h_velocity.data[k].y;
+                vj.z = h_velocity.data[k].z;
+                }
+
+            Scalar rhoj = h_density.data[k];
+            Scalar Vj   = mj / rhoj;
+
+            // Read particle k pressure
+            Scalar Pj = h_pressure.data[k];
+
+            // Compute velocity difference
+            Scalar3 dv;
+            dv.x = vi.x - vj.x;
+            dv.y = vi.y - vj.y;
+            dv.z = vi.z - vj.z;
+
+            // Calculate absolute and normalized distance
+            Scalar r = sqrt(rsq);
+
+            // Mean smoothing length and denominator modifier
+            Scalar meanh  = m_const_slength ? m_ch : Scalar(0.5)*(h_h.data[i]+h_h.data[k]);
+            Scalar eps    = Scalar(0.1)*meanh;
+            Scalar epssqr = eps*eps;
+
+            // Kernel function derivative evaluation
+            Scalar dwdr   = this->m_skernel->dwijdr(meanh,r);
+            Scalar dwdr_r = dwdr/(r+eps);
+
+            // Evaluate inter-particle pressure forces
+            //temp0 = -((mi*mj)/(rhoj*rhoi))*(Pi+Pj);
+            //temp0 = -Vi*Vj*( Pi + Pj );
+            //temp0 = -mi*mj*(Pi+Pj)/(rhoi*rhoj);
+            //temp0 = -mi*mj*( Pi/(rhoi*rhoj) + Pj/(rhoj*rhoj) );
+            if ( m_density_method == DENSITYSUMMATION )
+            {
+                // Transport formulation proposed by Adami 2013
+                temp0 = -(Vi*Vi+Vj*Vj)*((rhoj*Pi+rhoi*Pj)/(rhoi+rhoj)); 
+            }
+            else if ( m_density_method == DENSITYCONTINUITY) 
+            { 
+                temp0 = -mi*mj*(Pi+Pj)/(rhoi*rhoj);
+            }
+
+            // Optionally add artificial viscosity
+            // Monaghan (1983) J. Comput. Phys. 52 (2) 374–389
+            // TODO: Hier Klammer?
+            if ( m_artificial_viscosity && (!issolid || !issuspended))
+                {
+                Scalar dotdvdx = dot(dv,dx);
+                if ( dotdvdx < Scalar(0) )
+                    {
+                    Scalar muij    = meanh*dotdvdx/(rsq+epssqr);
+                    Scalar meanrho = Scalar(0.5)*(rhoi+rhoj);
+                    temp0 += mi*mj*(m_avalpha*m_c*muij+m_avbeta*muij*muij)/meanrho;
+                    }
+                }
+
+            // Add contribution to suspended particle
+            h_force.data[i].x += temp0*dwdr_r*dx.x;
+            h_force.data[i].y += temp0*dwdr_r*dx.y;
+            h_force.data[i].z += temp0*dwdr_r*dx.z;
+
+            // // Add contribution to solid particle
+            // if ( issuspended && m_compute_solid_forces )
+            //     {
+            //     h_force.data[k].x -= (mj/mi)*temp0*dwdr_r*dx.x;
+            //     h_force.data[k].y -= (mj/mi)*temp0*dwdr_r*dx.y;
+            //     h_force.data[k].z -= (mj/mi)*temp0*dwdr_r*dx.z;
+            //     }
+
+            // Evaluate viscous interaction forces
+            temp0 = m_mu * (Vi*Vi+Vj*Vj) * dwdr_r;
+            h_force.data[i].x  += temp0*dv.x;
+            h_force.data[i].y  += temp0*dv.y;
+            h_force.data[i].z  += temp0*dv.z;
+
+            // // Add contribution to solid particle
+            // if ( issuspended && m_compute_solid_forces )
+            //     {
+            //     h_force.data[k].x -= (mj/mi)*temp0*dv.x;
+            //     h_force.data[k].y -= (mj/mi)*temp0*dv.y;
+            //     h_force.data[k].z -= (mj/mi)*temp0*dv.z;
+            //     }
+
+            // Evaluate rate of change of density if CONTINUITY approach is used
+            if ( m_density_method == DENSITYCONTINUITY )
+                {
+                if ( issolid || issuspended )
+                    {
+                    // Use physical advection velocity rather than fictitious velocity here
+                    vj.x = h_velocity.data[k].x;
+                    vj.y = h_velocity.data[k].y;
+                    vj.z = h_velocity.data[k].z;
+
+                    // Recompute velocity difference
+                    // dv = vi - vj;
+                    dv.x = vi.x - vj.x;
+                    dv.y = vi.y - vj.y;
+                    dv.z = vi.z - vj.z;
+                    //Vj = mj / m_rho0;
+                    }
+
+                // Compute density rate of change
+                // std::cout << "Compute density rate of change: rhoi " << rhoi << " Vj " << Vj << " dot(dv,dwdr_r*dx) " << dot(dv,dwdr_r*dx) << std::endl;
+                h_ratedpe.data[i].x += rhoi*Vj*dot(dv,dwdr_r*dx);
+                // std::cout << "Compute density rate of change: h_ratedpe.data[i].x " << h_ratedpe.data[i].x << std::endl;
+
+                //h_ratedpe.data[i].x += mj*dot(dv,dwdr_r*dx);
+
+                // Add density diffusion if requested
+                // Molteni and Colagrossi, Computer Physics Communications 180 (2009) 861–872
+                if ( (!issolid || !issuspended) && m_density_diffusion )
+                    h_ratedpe.data[i].x -= (Scalar(2)*m_ddiff*meanh*m_c*mj*(rhoi/rhoj-Scalar(1))*dot(dx,dwdr_r*dx))/(rsq+epssqr);
+                }
+
+            } // Closing Neighbor Loop
+
+        } // Closing Fluid Particle Loop
+
+    // for each suspended particle
+    unsigned int group_size_suspended = m_suspendedgroup->getNumMembers();
+    for (unsigned int group_idx = 0; group_idx < group_size_suspended; group_idx++)
+        {
+        // Read particle index
+        unsigned int i = m_suspendedgroup->getMemberIndex(group_idx);
+
+        // Access the particle's position, velocity, mass and type
+        Scalar3 pi;
+        pi.x = h_pos.data[i].x;
+        pi.y = h_pos.data[i].y;
+        pi.z = h_pos.data[i].z;
+
+        Scalar3 vi;
+        vi.x = h_velocity.data[i].x;
+        vi.y = h_velocity.data[i].y;
+        vi.z = h_velocity.data[i].z;
+        Scalar mi = h_velocity.data[i].w;
+
+        // Read particle i pressure
+        Scalar Pi = h_pressure.data[i];
+
+        // Read particle i density and volume
+        Scalar rhoi = h_density.data[i];
+        Scalar Vi   = mi / rhoi;
+
+        // // Total velocity of particle
+        Scalar vi_total = sqrt((vi.x * vi.x) + (vi.y * vi.y) + (vi.z * vi.z));
+
+        // Properties needed for adaptive timestep
+        if (i == 0) { max_vel = vi_total; }
+        else if (vi_total > max_vel) { max_vel = vi_total; }
+
+        // Loop over all of the neighbors of this particle
+        myHead = h_head_list.data[i];
+        size = (unsigned int)h_n_neigh.data[i];
+
+        for (unsigned int j = 0; j < size; j++)
+            {
+            // Index of neighbor (MEM TRANSFER: 1 scalar)
+            unsigned int k = h_nlist.data[myHead + j];
+
+            // Sanity check
+            assert(k < this->m_pdata->getN() + this->m_pdata->getNGhosts());
+
+            // Access neighbor position
+            Scalar3 pj;
+            pj.x = h_pos.data[k].x;
+            pj.y = h_pos.data[k].y;
+            pj.z = h_pos.data[k].z;
+
+            // TODO: Check if solid is valid but not suspended
+            // Determine neighbor type
+            bool issolid = checksolid(h_type_property_map.data, h_pos.data[k].w);
+            bool issuspended = checksuspended(h_type_property_map.data, h_pos.data[k].w);
+            if (issuspended)
+                continue;
 
             // Compute distance vector (FLOPS: 3)
             // Scalar3 dx = pi - pj;
@@ -1694,31 +2151,32 @@ void SuspensionFlow<KT_, SET_>::forcecomputation(uint64_t timestep)
             }
 
 
-            // Optionally add artificial viscosity
-            // Monaghan (1983) J. Comput. Phys. 52 (2) 374–389
-            if ( m_artificial_viscosity && !issolid )
-                {
-                Scalar dotdvdx = dot(dv,dx);
-                if ( dotdvdx < Scalar(0) )
-                    {
-                    Scalar muij    = meanh*dotdvdx/(rsq+epssqr);
-                    Scalar meanrho = Scalar(0.5)*(rhoi+rhoj);
-                    temp0 += mi*mj*(m_avalpha*m_c*muij+m_avbeta*muij*muij)/meanrho;
-                    }
-                }
+            // // TODO: hier überlegen
+            // // Optionally add artificial viscosity
+            // // Monaghan (1983) J. Comput. Phys. 52 (2) 374–389
+            // if ( m_artificial_viscosity && !issolid )
+            //     {
+            //     Scalar dotdvdx = dot(dv,dx);
+            //     if ( dotdvdx < Scalar(0) )
+            //         {
+            //         Scalar muij    = meanh*dotdvdx/(rsq+epssqr);
+            //         Scalar meanrho = Scalar(0.5)*(rhoi+rhoj);
+            //         temp0 += mi*mj*(m_avalpha*m_c*muij+m_avbeta*muij*muij)/meanrho;
+            //         }
+            //     }
 
             // Add contribution to fluid particle
             h_force.data[i].x += temp0*dwdr_r*dx.x;
             h_force.data[i].y += temp0*dwdr_r*dx.y;
             h_force.data[i].z += temp0*dwdr_r*dx.z;
 
-            // Add contribution to solid particle
-            if ( issolid && m_compute_solid_forces )
-                {
-                h_force.data[k].x -= (mj/mi)*temp0*dwdr_r*dx.x;
-                h_force.data[k].y -= (mj/mi)*temp0*dwdr_r*dx.y;
-                h_force.data[k].z -= (mj/mi)*temp0*dwdr_r*dx.z;
-                }
+            // // Add contribution to solid particle
+            // if ( issolid && m_compute_solid_forces )
+            //     {
+            //     h_force.data[k].x -= (mj/mi)*temp0*dwdr_r*dx.x;
+            //     h_force.data[k].y -= (mj/mi)*temp0*dwdr_r*dx.y;
+            //     h_force.data[k].z -= (mj/mi)*temp0*dwdr_r*dx.z;
+            //     }
 
             // Evaluate viscous interaction forces
             temp0 = m_mu * (Vi*Vi+Vj*Vj) * dwdr_r;
@@ -1726,62 +2184,62 @@ void SuspensionFlow<KT_, SET_>::forcecomputation(uint64_t timestep)
             h_force.data[i].y  += temp0*dv.y;
             h_force.data[i].z  += temp0*dv.z;
 
-            // Add contribution to solid particle
-            if ( issolid && m_compute_solid_forces )
-                {
-                h_force.data[k].x -= (mj/mi)*temp0*dv.x;
-                h_force.data[k].y -= (mj/mi)*temp0*dv.y;
-                h_force.data[k].z -= (mj/mi)*temp0*dv.z;
-                }
+            // // Add contribution to solid particle
+            // if ( issolid && m_compute_solid_forces )
+            //     {
+            //     h_force.data[k].x -= (mj/mi)*temp0*dv.x;
+            //     h_force.data[k].y -= (mj/mi)*temp0*dv.y;
+            //     h_force.data[k].z -= (mj/mi)*temp0*dv.z;
+            //     }
 
-            // Evaluate rate of change of density if CONTINUITY approach is used
-            if ( m_density_method == DENSITYCONTINUITY )
-                {
-                if ( issolid )
-                    {
-                    // Use physical advection velocity rather than fictitious velocity here
-                    vj.x = h_velocity.data[k].x;
-                    vj.y = h_velocity.data[k].y;
-                    vj.z = h_velocity.data[k].z;
+            // // Evaluate rate of change of density if CONTINUITY approach is used
+            // if ( m_density_method == DENSITYCONTINUITY )
+            //     {
+            //     if ( issolid )
+            //         {
+            //         // Use physical advection velocity rather than fictitious velocity here
+            //         vj.x = h_velocity.data[k].x;
+            //         vj.y = h_velocity.data[k].y;
+            //         vj.z = h_velocity.data[k].z;
 
-                    // Recompute velocity difference
-                    // dv = vi - vj;
-                    dv.x = vi.x - vj.x;
-                    dv.y = vi.y - vj.y;
-                    dv.z = vi.z - vj.z;
-                    //Vj = mj / m_rho0;
-                    }
+            //         // Recompute velocity difference
+            //         // dv = vi - vj;
+            //         dv.x = vi.x - vj.x;
+            //         dv.y = vi.y - vj.y;
+            //         dv.z = vi.z - vj.z;
+            //         //Vj = mj / m_rho0;
+            //         }
 
-                // Compute density rate of change
-                // std::cout << "Compute density rate of change: rhoi " << rhoi << " Vj " << Vj << " dot(dv,dwdr_r*dx) " << dot(dv,dwdr_r*dx) << std::endl;
-                h_ratedpe.data[i].x += rhoi*Vj*dot(dv,dwdr_r*dx);
-                // std::cout << "Compute density rate of change: h_ratedpe.data[i].x " << h_ratedpe.data[i].x << std::endl;
+            //     // Compute density rate of change
+            //     // std::cout << "Compute density rate of change: rhoi " << rhoi << " Vj " << Vj << " dot(dv,dwdr_r*dx) " << dot(dv,dwdr_r*dx) << std::endl;
+            //     h_ratedpe.data[i].x += rhoi*Vj*dot(dv,dwdr_r*dx);
+            //     // std::cout << "Compute density rate of change: h_ratedpe.data[i].x " << h_ratedpe.data[i].x << std::endl;
 
-                //h_ratedpe.data[i].x += mj*dot(dv,dwdr_r*dx);
+            //     //h_ratedpe.data[i].x += mj*dot(dv,dwdr_r*dx);
 
-                // Add density diffusion if requested
-                // Molteni and Colagrossi, Computer Physics Communications 180 (2009) 861–872
-                if ( !issolid && m_density_diffusion )
-                    h_ratedpe.data[i].x -= (Scalar(2)*m_ddiff*meanh*m_c*mj*(rhoi/rhoj-Scalar(1))*dot(dx,dwdr_r*dx))/(rsq+epssqr);
-                }
+            //     // Add density diffusion if requested
+            //     // Molteni and Colagrossi, Computer Physics Communications 180 (2009) 861–872
+            //     if ( !issolid && m_density_diffusion )
+            //         h_ratedpe.data[i].x -= (Scalar(2)*m_ddiff*meanh*m_c*mj*(rhoi/rhoj-Scalar(1))*dot(dx,dwdr_r*dx))/(rsq+epssqr);
+            //     }
 
             } // Closing Neighbor Loop
 
-        } // Closing Fluid Particle Loop
+        } // Closing Suspended Particle Loop
 
     m_timestep_list[5] = max_vel;
     // Add volumetric force (gravity)
     this->applyBodyForce(timestep, m_fluidgroup);
     if ( m_compute_solid_forces )
         {
-        this->applyBodyForce(timestep, m_solidgroup);
+        this->applyBodyForce(timestep, m_suspendedgroup);
 
         // for each particle in solid group
-        unsigned int group_size = m_solidgroup->getNumMembers();
+        unsigned int group_size = m_suspendedgroup->getNumMembers();
         for (unsigned int group_idx = 0; group_idx < group_size; group_idx++)
             {
             // Read particle index
-            unsigned int j = m_solidgroup->getMemberIndex(group_idx);
+            unsigned int j = m_suspendedgroup->getMemberIndex(group_idx);
 
             // Add contribution of contact force to total force
             h_force.data[j].x += h_conforce.data[j].x;
@@ -1790,7 +2248,10 @@ void SuspensionFlow<KT_, SET_>::forcecomputation(uint64_t timestep)
             }
         }
 
+
     }
+
+
 
 /*! Compute forces definition
 */
@@ -1851,7 +2312,12 @@ void SuspensionFlow<KT_, SET_>::computeForces(uint64_t timestep)
     // Compute particle pressures
     // Includes the computation of the density of solid particles
     // based on ficticios pressure p_i^\ast
-    compute_noslip(timestep);
+    compute_noslipsolid(timestep);
+
+    // Compute particle pressures
+    // Includes the computation of the density of solid particles
+    // based on ficticios pressure p_i^\ast
+    compute_noslipsuspended(timestep);
 
 #ifdef ENABLE_MPI
     // Update ghost particles
@@ -1890,6 +2356,7 @@ void export_SuspensionFlow(pybind11::module& m, std::string name)
                              std::shared_ptr<SmoothingKernel<KT_> >,
                              std::shared_ptr<StateEquation<SET_> >,
                              std::shared_ptr<nsearch::NeighborList>,
+                             std::shared_ptr<ParticleGroup>,
                              std::shared_ptr<ParticleGroup>,
                              std::shared_ptr<ParticleGroup>,
                              DensityMethod,

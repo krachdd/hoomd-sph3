@@ -440,6 +440,8 @@ void SuspendedObjectIntegrator::integrateStepTwo(uint64_t timestep)
     // Get array handles
     ArrayHandle<Scalar4> h_pos(m_pdata->getPositions(), access_location::host, access_mode::read);
     ArrayHandle<Scalar4> h_net_force(m_pdata->getNetForce(), access_location::host, access_mode::read);
+    ArrayHandle<Scalar3> h_av(m_pdata->getAuxiliaries3(), access_location::host,access_mode::readwrite);
+    ArrayHandle<Scalar3> h_tv(m_pdata->getAuxiliaries4(), access_location::host,access_mode::readwrite);
 
     // Initialize total force and torque vectors
     Scalar totalforcetorque[6] = {0,0,0,0,0,0};
@@ -505,6 +507,15 @@ void SuspendedObjectIntegrator::integrateStepTwo(uint64_t timestep)
     for (unsigned int group_idx = 0; group_idx < group_size; group_idx++)
         {
         unsigned int j = m_group->getMemberIndex(group_idx);
+
+        // Logging quick and dirty
+        h_av.data[j].x = m_angularvel.x;
+        h_av.data[j].y = m_angularvel.y;
+        h_av.data[j].z = m_angularvel.z;
+
+        h_tv.data[j].x = m_translationvel.x;
+        h_tv.data[j].y = m_translationvel.y;
+        h_tv.data[j].z = m_translationvel.z;
 
         // Read particle position and compute relative position
         Scalar3 pos = make_scalar3(h_pos.data[j].x, h_pos.data[j].y, h_pos.data[j].z);
