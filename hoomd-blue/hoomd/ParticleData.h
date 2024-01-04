@@ -1918,6 +1918,9 @@ class PYBIND11_EXPORT LocalParticleData : public GhostLocalDataAccess<Output, Pa
 
     // Output getNetVirial(GhostDataFlag flag)
     //     {
+	//		// Need pitch not particle numbers since GPUArrays can be padded for
+    //    	// faster data access.
+    //     size_t size = this->m_data.getNetVirial().getPitch();
     //     return this->template getLocalBuffer<Scalar, Scalar>(
     //         m_net_virial_handle,
     //         &ParticleData::getNetVirial,
@@ -1925,7 +1928,7 @@ class PYBIND11_EXPORT LocalParticleData : public GhostLocalDataAccess<Output, Pa
     //         true,
     //         6,
     //         0,
-    //         std::vector<size_t>({6 * sizeof(Scalar), sizeof(Scalar)}));
+    //         std::vector<size_t>({sizeof(Scalar), size * sizeof(Scalar)}));
     //     }
 
     Output getNetEnergy(GhostDataFlag flag)
