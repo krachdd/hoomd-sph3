@@ -1501,6 +1501,9 @@ void GSDDumpWriterMPI::populateLocalFrame(GSDDumpWriterMPI::PGSDFrame& frame, ui
     std::cout << "avoid_unsorted_chaos_indicator " << avoid_unsorted_chaos_indicator << std::endl;
     std::cout << "GSDDumpWriterMPI pos m_present_at_zero " << m_present_at_zero[pgsd_flag::particles_position] <<  " m_nondefault " <<  m_nondefault["particles/position"] << std::endl;
     std::cout << "GSDDumpWriterMPI type m_present_at_zero " << m_present_at_zero[pgsd_flag::particles_type] <<  " m_nondefault " <<  m_nondefault["particles/typeid"] << std::endl;
+    std::cout << "GSDDumpWriterMPI aux1 m_present_at_zero " << m_present_at_zero[pgsd_flag::particles_aux1] <<  " m_nondefault " <<  m_nondefault["particles/aux1"] << std::endl;
+    std::cout << "GSDDumpWriterMPI vel m_present_at_zero " << m_present_at_zero[pgsd_flag::particles_velocity] <<  " m_nondefault " <<  m_nondefault["particles/velocity"] << std::endl;
+    std::cout << "GSDDumpWriterMPI pressure m_present_at_zero " << m_present_at_zero[pgsd_flag::particles_pressure] <<  " m_nondefault " <<  m_nondefault["particles/pressure"] << std::endl;
     std::cout << "GSDDumpWriterMPI aux4 m_present_at_zero " << m_present_at_zero[pgsd_flag::particles_aux4] <<  " m_nondefault " <<  m_nondefault["particles/aux4"] << std::endl;
 
 
