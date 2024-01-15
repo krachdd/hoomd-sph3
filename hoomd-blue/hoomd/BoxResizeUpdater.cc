@@ -1,5 +1,6 @@
 // Copyright (c) 2009-2023 The Regents of the University of Michigan.
 // Part of HOOMD-blue, released under the BSD 3-Clause License.
+// Modified for HOOMD-SPH
 
 /*! \file BoxResizeUpdater.cc
     \brief Defines the BoxResizeUpdater class
@@ -69,7 +70,8 @@ BoxDim BoxResizeUpdater::getCurrentBox(uint64_t timestep)
     {
     Scalar min = m_variant->min();
     Scalar max = m_variant->max();
-    Scalar cur_value = (*m_variant)(timestep);
+    // Modified here with the .x
+    Scalar cur_value = (*m_variant)(timestep).x;
     Scalar scale = 0;
     if (cur_value == max)
         {

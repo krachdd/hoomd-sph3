@@ -805,7 +805,126 @@ class VelocityVerletBasic(Method):
             raise ValueError("Undefined DensityMethod.")
         self._cpp_obj.setDensityMethod(self.DENSITYMETHODS[method])
 
-        
+class RigidBodyIntegrator(Method):
+    r"""
+    Args:
+        filter (hoomd.filter.filter_like): Subset of particles on which to
+            apply this method.
+    Based on md-`NVE` updates particle positions of moving boundaries.
+    Examples::
+    Attributes:
+        filter (hoomd.filter.filter_like): Subset of particles on which to
+            apply this method.
+    """
+
+    # DENSITYMETHODS = {'SUMMATION':_sph.PhaseFlowDensityMethod.DENSITYSUMMATION,
+    #                   'CONTINUITY':_sph.PhaseFlowDensityMethod.DENSITYCONTINUITY}
+
+    # VISCOSITYMETHODS = {'HARMONICAVERAGE':_sph.PhaseFlowViscosityMethod.HARMONICAVERAGE}
+
+    # def __init__(self, filter, densitymethod):
+    #     # store metadata
+    #     param_dict = ParameterDict(filter=ParticleFilter,)
+    #     param_dict.update(dict(filter=filter, densitymethod=densitymethod))
+
+    #     # set defaults
+    #     self._param_dict.update(param_dict)
+
+    #     self.str_densitymethod = self._param_dict._dict["densitymethod"]
+
+    #     if self.str_densitymethod == str('SUMMATION'):
+    #         self.cpp_densitymethod = hoomd.sph._sph.PhaseFlowDensityMethod.DENSITYSUMMATION
+    #     elif self.str_densitymethod == str('CONTINUITY'):
+    #         self.cpp_densitymethod = hoomd.sph._sph.PhaseFlowDensityMethod.DENSITYCONTINUITY
+    #     else:
+    #         raise ValueError("Using undefined DensityMethod.")
+
+    # def __init__(self, filter, transvel, rotvel, pivotpnt, rotaxis):
+    #     # store metadata
+    #     param_dict = ParameterDict(filter=ParticleFilter,  transvel=transvel, rotvel=rotvel, pivotpnt=pivotpnt, rotaxis=rotaxis)
+    #     param_dict.update(dict(filter=filter, transvel=transvel, rotvel=rotvel, pivotpnt=pivotpnt, rotaxis=rotaxis))
+
+    def __init__(self, filter, transvel_x, transvel_y, transvel_z, rotvel, pivotpnt, rotaxis):
+        # store metadata
+        param_dict = ParameterDict(filter=ParticleFilter, transvel_x=Variant, transvel_y=Variant, transvel_z=Variant, rotvel=Variant, pivotpnt=pivotpnt, rotaxis=rotaxis)
+        param_dict.update(dict(filter=filter, transvel_x=transvel_x, transvel_y=transvel_y, transvel_z=transvel_z, rotvel=rotvel, pivotpnt=pivotpnt, rotaxis=rotaxis))
+
+
+        # set defaults
+        self._param_dict.update(param_dict)
+
+        # self.str_densitymethod = self._param_dict._dict["densitymethod"]
+
+        # if self.str_densitymethod == str('SUMMATION'):
+        #     self.cpp_densitymethod = hoomd.sph._sph.PhaseFlowDensityMethod.DENSITYSUMMATION
+        # elif self.str_densitymethod == str('CONTINUITY'):
+        #     self.cpp_densitymethod = hoomd.sph._sph.PhaseFlowDensityMethod.DENSITYCONTINUITY
+        # else:
+        #     raise ValueError("Using undefined DensityMethod.")
+
+        # # check input sanity
+        # if len(transvel) != 3:
+        #     raise ValueError("transvel need to be a list of 3 hoosph.variants or floats.")
+        # if len(rotvel) != 1:
+        #     raise ValueError("rotvel need to be a value of 1 hoosph.variant or float.")
+        # if len(pivotpnt) != 3:
+        #     raise ValueError("pivotpnt need to be a list of 3 hoosph.variants or floats.")
+        # if len(rotaxis) != 3:
+        #     raise ValueError("rotaxis need to be a list of 3 hoosph.variants or floats.")
+
+        # # setup the variant inputs
+        # transvel_x = hoomd.variant._setup_variant_input(transvel[0]);
+        # transvel_y = hoomd.variant._setup_variant_input(transvel[1]);
+        # transvel_z = hoomd.variant._setup_variant_input(transvel[2]);
+        # rotvel = hoomd.variant._setup_variant_input(rotvel);
+
+
+        # Store metadata
+        self.transvel_x = transvel_x
+        self.transvel_y = transvel_y
+        self.transvel_z = transvel_z
+        self.rotvel     = rotvel
+        self.pivotpnt_x = pivotpnt[0]
+        self.pivotpnt_y = pivotpnt[1]
+        self.pivotpnt_z = pivotpnt[2]
+        self.rotaxis_x  = rotaxis[0]
+        self.rotaxis_y  = rotaxis[1]
+        self.rotaxis_z  = rotaxis[2]
+
+    def _attach_hook(self):
+        sim = self._simulation
+        # initialize the reflected c++ class
+        self._cpp_obj = _sph.RigidBodyIntegrator(sim.state._cpp_sys_def,
+                                           sim.state._get_group(self.filter), 
+                                           self.transvel_x, self.transvel_y, self.transvel_z, self.rotvel,
+                                           self.pivotpnt_x, self.pivotpnt_y, self.pivotpnt_z,
+                                           self.rotaxis_x, self.rotaxis_y, self.rotaxis_z)
+
+        # # Reload density and viscosity methods from __dict__
+        # self.str_densitymethod = self._param_dict._dict["densitymethod"]
+        # if self.str_densitymethod == str('SUMMATION'):
+        #     self.cpp_densitymethod = hoomd.sph._sph.PhaseFlowDensityMethod.DENSITYSUMMATION
+        # elif self.str_densitymethod == str('CONTINUITY'):
+        #     self.cpp_densitymethod = hoomd.sph._sph.PhaseFlowDensityMethod.DENSITYCONTINUITY
+        # else:
+        #     raise ValueError("Using undefined DensityMethod.")
+
+        # self.setdensitymethod(self.str_densitymethod)
+
+        # Attach param_dict and typeparam_dict
+        super()._attach_hook()
+
+    # # @property
+    # def densitymethod(self):
+    #     # Invert key mapping
+    #     invD = dict((v,k) for k, v in self.DENSITYMETHODS.iteritems())
+    #     return invD[self._cpp_obj.getDensityMethod()]
+
+    # # @densitymethod.setter
+    # def setdensitymethod(self, method):
+    #     if method not in self.DENSITYMETHODS:
+    #         raise ValueError("Undefined DensityMethod.")
+    #     self._cpp_obj.setDensityMethod(self.DENSITYMETHODS[method])        
 
 
 # class Langevin(Method):
