@@ -258,7 +258,6 @@ class PYBIND11_EXPORT SuspensionFlow : public SPHBaseClass<KT_, SET_>
         // Physical variables
         Scalar m_rho0; //!< Rest density (Read from equation of state class)
         Scalar m_c; //!< Speed of sound (Read from equation of state class)
-        Scalar m_rhoS; //!< Rest density for solids (Read from equation of state class)
         Scalar m_kappa; //!< Kernel scaling factor (Read from kernel class)
         Scalar m_mu; //!< Viscosity ( Must be set by user )
         Scalar m_avalpha; //!< Volumetric diffusion coefficient for artificial viscosity operator
@@ -277,7 +276,8 @@ class PYBIND11_EXPORT SuspensionFlow : public SPHBaseClass<KT_, SET_>
         unsigned int m_maxSuspendedID;              //!< maximum nuumber of solid bodies
         // >> fixed walls always typeID 0; fluid always typeID n (last)
         std::vector<Scalar> m_radii;            //!< Vector with equivalent radi of all solid bodies
-        Scalar m_f0; //!< Magnitude of contact force
+        Scalar m_kc; //!< Spring stiffness of contact force
+        Scalar m_dc; //!< Damping constant of contact force
 
         // Flags
         bool m_const_slength; //!< True if using constant smoothing length
@@ -335,25 +335,25 @@ class PYBIND11_EXPORT SuspensionFlow : public SPHBaseClass<KT_, SET_>
         */
         void compute_Centerofmasses(uint64_t timestep, bool print);
 
-         /*! Helper function to calculate equivalent radii of m_maxSuspendedID
-        * \post eqivalent radii stored in m_radi dependent on type id
-        */
-        void compute_equivalentRadii(uint64_t timestep, bool print);
+        //  /*! Helper function to calculate equivalent radii of m_maxSuspendedID
+        // * \post eqivalent radii stored in m_radi dependent on type id
+        // */
+        // void compute_equivalentRadii(uint64_t timestep, bool print);
 
         /*! Helper function to calculate lubrication force between solids
         * \post Based on approach of Bian, Ellero, Vazquez
         */
         void compute_lubrication(uint64_t timestep);
 
-        /*! Helper function to calculate repulsive force between solids
-        * \post Based on approach of Bian, Ellero, Vazquez
-        */
-        void compute_repulsiveForce(uint64_t timestep, bool print);
+        // /*! Helper function to calculate repulsive force between solids
+        // * \post Based on approach of Bian, Ellero, Vazquez
+        // */
+        // void compute_repulsiveForce(uint64_t timestep, bool print);
 
-        /*! Helper function to sum lubrication force and repulsive force
-        * \post Based on approach of Bian, Ellero, Vazquez
-        */
-        void sum_contactforces(uint64_t timestep);
+        // /*! Helper function to sum lubrication force and repulsive force
+        // * \post Based on approach of Bian, Ellero, Vazquez
+        // */
+        // void sum_contactforces(uint64_t timestep);
 
         /*! Helper function where the actual force computation takes place
          * \pre Number densities and fictitious solid particle properties must be up-to-date

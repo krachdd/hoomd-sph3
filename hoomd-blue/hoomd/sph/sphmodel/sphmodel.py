@@ -580,8 +580,8 @@ class SuspensionFlow(SPHModel):
                           densitymethod = str('SUMMATION'),
                           viscositymethod = str('HARMONICAVERAGE'), 
                           mu = float(0.0), 
-                          rho0_S = float(0.0),
-                          f0 = float(0.0),
+                          kc = float(0.0),
+                          dc = float(0.0),
                           artificialviscosity = bool(True), 
                           alpha = float(0.2),
                           beta = float(0.0),
@@ -744,8 +744,8 @@ class SuspensionFlow(SPHModel):
 
         # get all params in line
         self.mu = self._param_dict['mu']
-        self.rho0_S = self._param_dict['rho0_S']
-        self.f0 = self._param_dict['f0']
+        self.kc = self._param_dict['kc']
+        self.dc = self._param_dict['dc']
         self.artificialviscosity = self._param_dict['artificialviscosity']
         self.alpha = self._param_dict['alpha']
         self.beta = self._param_dict['beta']
@@ -760,7 +760,7 @@ class SuspensionFlow(SPHModel):
         # self.setdensitymethod(self.str_densitymethod)
         # self.setviscositymethod(self.str_viscositymethod)
 
-        self.set_params(self.mu,self.rho0_S,self.f0)
+        self.set_params(self.mu, self.kc, self.dc)
         self.setdensitymethod(self.str_densitymethod)
         self.setviscositymethod(self.str_viscositymethod)
 
@@ -792,9 +792,9 @@ class SuspensionFlow(SPHModel):
     def _detach_hook(self):
         self.nlist._detach()
 
-    def set_params(self, mu, rho0_S, f0):
+    def set_params(self, mu, kc, dc):
         # self.mu   = mu.item()   if isinstance(mu, np.generic)   else mu
-        self._cpp_obj.setParams(self.mu, self.rho0_S, self.f0)
+        self._cpp_obj.setParams(self.mu, self.kc, self.dc)
         self.params_set = True
         self._param_dict.__setattr__('params_set', True)
 
@@ -805,9 +805,13 @@ class SuspensionFlow(SPHModel):
         self._cpp_obj.setRCut(('F', 'S'), rcut)
         self._cpp_obj.setRCut(('S', 'S'), rcut)
         self._cpp_obj.setRCut(('F', 'F'), rcut)
-        self._cpp_obj.setRCut(('F', 'O'), rcut)
-        self._cpp_obj.setRCut(('O', 'S'), rcut)
-
+        # self._cpp_obj.setRCut(('F', 'O'), rcut)
+        # self._cpp_obj.setRCut(('O', 'S'), rcut)
+        self._cpp_obj.setRCut(('A', 'B'), rcut)
+        self._cpp_obj.setRCut(('F', 'A'), rcut)
+        self._cpp_obj.setRCut(('A', 'S'), rcut)
+        self._cpp_obj.setRCut(('F', 'B'), rcut)
+        self._cpp_obj.setRCut(('B', 'S'), rcut)
 
     # @property
     def densitymethod(self):

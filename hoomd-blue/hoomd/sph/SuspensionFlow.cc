@@ -153,27 +153,24 @@ void  SuspensionFlow<KT_, SET_>::activateShepardRenormalization(unsigned int she
  */
 
 template<SmoothingKernelType KT_,StateEquationType SET_>
-void SuspensionFlow<KT_, SET_>::setParams(Scalar mu, Scalar rho0_S, Scalar f0)
+void SuspensionFlow<KT_, SET_>::setParams(Scalar mu, Scalar kc, Scalar dc)
     {
     m_mu   = mu;
-    m_rhoS = rho0_S;
-    m_f0 = f0;
+    m_kc = kc;
+    m_dc = dc;
     if (m_mu <= 0)
          {
          this->m_exec_conf->msg->error() << "sph.models.SuspensionFlow: Dynamic viscosity has to be a positive real number" << std::endl;
          throw std::runtime_error("Error initializing SuspensionFlow.");
          }
-    //m_rhoS = rho0_S;
-    if (m_rhoS <= 0)
+    if (kc < 0)
         {
-        this->m_exec_conf->msg->error() << "sph.models.SuspensionFlow: Solid density has to be a positive real number" << std::endl;
+        this->m_exec_conf->msg->error() << "sph.models.SuspensionFlow: Spring stiffness has to be a positive real number" << std::endl;
         throw std::runtime_error("Error initializing SuspensionFlow.");
         }
-    //m_f0 = f0;
-    //if (m_f0 <= 0)
-    if (m_f0 < 0)
+    if (dc < 0)
         {
-        this->m_exec_conf->msg->error() << "sph.models.SuspensionFlow: Contact force magnitude has to be a positive real number" << std::endl;
+        this->m_exec_conf->msg->error() << "sph.models.SuspensionFlow: Damping constant  has to be a positive real number" << std::endl;
         throw std::runtime_error("Error initializing SuspensionFlow.");
         }
     m_params_set = true;
@@ -347,41 +344,41 @@ void SuspensionFlow<KT_, SET_>::validateTypes(unsigned int typ1,
     }
 
 
-/*! \param typ1 First type index in the pair
-    \param typ2 Second type index in the pair
-    \param rcut Cutoff radius to set
-    \note When setting the value for (\a typ1, \a typ2), the parameter for (\a typ2, \a typ1) is
-   automatically set.
-*/
-template<SmoothingKernelType KT_,StateEquationType SET_>
-void SuspensionFlow<KT_, SET_>::setRcut(unsigned int typ1, unsigned int typ2, Scalar rcut)
-    {
-    validateTypes(typ1, typ2, "setting r_cut");
-        {
-        // store r_cut**2 for use internally
-        // ArrayHandle<Scalar> h_rcutsq(m_rcutsq, access_location::host, access_mode::readwrite);
-        // h_rcutsq.data[m_typpair_idx(typ1, typ2)] = rcut * rcut;
-        // h_rcutsq.data[m_typpair_idx(typ2, typ1)] = rcut * rcut;
+// /*! \param typ1 First type index in the pair
+//     \param typ2 Second type index in the pair
+//     \param rcut Cutoff radius to set
+//     \note When setting the value for (\a typ1, \a typ2), the parameter for (\a typ2, \a typ1) is
+//    automatically set.
+// */
+// template<SmoothingKernelType KT_,StateEquationType SET_>
+// void SuspensionFlow<KT_, SET_>::setRcut(unsigned int typ1, unsigned int typ2, Scalar rcut)
+//     {
+//     validateTypes(typ1, typ2, "setting r_cut");
+//         {
+//         // store r_cut**2 for use internally
+//         // ArrayHandle<Scalar> h_rcutsq(m_rcutsq, access_location::host, access_mode::readwrite);
+//         // h_rcutsq.data[m_typpair_idx(typ1, typ2)] = rcut * rcut;
+//         // h_rcutsq.data[m_typpair_idx(typ2, typ1)] = rcut * rcut;
 
-        // store r_cut unmodified for so the neighbor list knows what particles to include
-        ArrayHandle<Scalar> h_r_cut_nlist(*m_r_cut_nlist,
-                                          access_location::host,
-                                          access_mode::readwrite);
-        h_r_cut_nlist.data[m_typpair_idx(typ1, typ2)] = rcut;
-        h_r_cut_nlist.data[m_typpair_idx(typ2, typ1)] = rcut;
-        }
+//         // store r_cut unmodified for so the neighbor list knows what particles to include
+//         ArrayHandle<Scalar> h_r_cut_nlist(*m_r_cut_nlist,
+//                                           access_location::host,
+//                                           access_mode::readwrite);
+//         h_r_cut_nlist.data[m_typpair_idx(typ1, typ2)] = rcut;
+//         h_r_cut_nlist.data[m_typpair_idx(typ2, typ1)] = rcut;
+//         }
 
-    // notify the neighbor list that we have changed r_cut values
-    this->m_nlist->notifyRCutMatrixChange();
-    }
+//     // notify the neighbor list that we have changed r_cut values
+//     this->m_nlist->notifyRCutMatrixChange();
+//     }
 
-template<SmoothingKernelType KT_,StateEquationType SET_>
-void SuspensionFlow<KT_, SET_>::setRCutPython(pybind11::tuple types, Scalar r_cut)
-    {
-    auto typ1 = this->m_pdata->getTypeByName(types[0].cast<std::string>());
-    auto typ2 = this->m_pdata->getTypeByName(types[1].cast<std::string>());
-    setRcut(typ1, typ2, r_cut);
-    }
+// template<SmoothingKernelType KT_,StateEquationType SET_>
+// void SuspensionFlow<KT_, SET_>::setRCutPython(pybind11::tuple types, Scalar r_cut)
+//     {
+//     auto typ1 = this->m_pdata->getTypeByName(types[0].cast<std::string>());
+//     auto typ2 = this->m_pdata->getTypeByName(types[1].cast<std::string>());
+//     setRcut(typ1, typ2, r_cut);
+//     }
 
 
 /*! Mark solid particles to remove
@@ -1368,396 +1365,396 @@ void SuspensionFlow<KT_, SET_>::compute_Centerofmasses(uint64_t timestep, bool p
 
     }
 
-/*! Compute equivalent radi of solids in the system
- * This method computes and stores
-     - an equivalent radi of each type in the solidgroup
-   in the local variable m_radi.
- */
-template<SmoothingKernelType KT_,StateEquationType SET_>
-void SuspensionFlow<KT_, SET_>::compute_equivalentRadii(uint64_t timestep, bool print)
-    {
-    this->m_exec_conf->msg->notice(5) << "Suspended Object Compute equivalent radi" << std::endl;
+// /*! Compute equivalent radi of solids in the system
+//  * This method computes and stores
+//      - an equivalent radi of each type in the solidgroup
+//    in the local variable m_radi.
+//  */
+// template<SmoothingKernelType KT_,StateEquationType SET_>
+// void SuspensionFlow<KT_, SET_>::compute_equivalentRadii(uint64_t timestep, bool print)
+//     {
+//     this->m_exec_conf->msg->notice(5) << "Suspended Object Compute equivalent radi" << std::endl;
 
-    // Initialize fields
-    // ArrayHandle<Scalar> h_density(this->m_pdata->getDensities(), access_location::host, access_mode::read);
-    ArrayHandle<Scalar4> h_pos(this->m_pdata->getPositions(), access_location::host, access_mode::read);
-    ArrayHandle<Scalar4> h_velocity(this->m_pdata->getVelocities(), access_location::host, access_mode::read);
-    ArrayHandle<Scalar>  h_h(this->m_pdata->getSlengths(), access_location::host, access_mode::read);
+//     // Initialize fields
+//     // ArrayHandle<Scalar> h_density(this->m_pdata->getDensities(), access_location::host, access_mode::read);
+//     ArrayHandle<Scalar4> h_pos(this->m_pdata->getPositions(), access_location::host, access_mode::read);
+//     ArrayHandle<Scalar4> h_velocity(this->m_pdata->getVelocities(), access_location::host, access_mode::read);
+//     ArrayHandle<Scalar>  h_h(this->m_pdata->getSlengths(), access_location::host, access_mode::read);
 
-    // access the neighbor list
-    ArrayHandle<unsigned int> h_n_neigh(this->m_nlist->getNNeighArray(), access_location::host, access_mode::read);
-    ArrayHandle<unsigned int> h_nlist(this->m_nlist->getNListArray(), access_location::host, access_mode::read);
-    ArrayHandle<size_t> h_head_list(this->m_nlist->getHeadList(), access_location::host, access_mode::read);
-    ArrayHandle<unsigned int> h_type_property_map(this->m_type_property_map, access_location::host, access_mode::read);
+//     // access the neighbor list
+//     ArrayHandle<unsigned int> h_n_neigh(this->m_nlist->getNNeighArray(), access_location::host, access_mode::read);
+//     ArrayHandle<unsigned int> h_nlist(this->m_nlist->getNListArray(), access_location::host, access_mode::read);
+//     ArrayHandle<size_t> h_head_list(this->m_nlist->getHeadList(), access_location::host, access_mode::read);
+//     ArrayHandle<unsigned int> h_type_property_map(this->m_type_property_map, access_location::host, access_mode::read);
      
-    // Local copy of the simulation box
-    const BoxDim& box = this->m_pdata->getGlobalBox();
+//     // Local copy of the simulation box
+//     const BoxDim& box = this->m_pdata->getGlobalBox();
 
-    // unsigned int myHead, size;
-    unsigned int size;
-    size_t myHead;
+//     // unsigned int myHead, size;
+//     unsigned int size;
+//     size_t myHead;
 
 
-    // Local variable to store things
-    Scalar3 temp3;
+//     // Local variable to store things
+//     Scalar3 temp3;
 
-    // COMPUTE EQUIVALENT RADI FOR ALL BODIES
-    unsigned int start = 0;
-    if (m_walls)
-        start = 1;
+//     // COMPUTE EQUIVALENT RADI FOR ALL BODIES
+//     unsigned int start = 0;
+//     if (m_walls)
+//         start = 1;
 
-    if ( print and timestep==1)
-        {
-        this->m_exec_conf->msg->notice(2) << "maximum number of solid bodies: " << m_maxSuspendedID << endl;
-        this->m_exec_conf->msg->notice(2) << "Size of vector of equivalent radii: " << m_radii.size() << endl;
-        }
+//     if ( print and timestep==1)
+//         {
+//         this->m_exec_conf->msg->notice(2) << "maximum number of solid bodies: " << m_maxSuspendedID << endl;
+//         this->m_exec_conf->msg->notice(2) << "Size of vector of equivalent radii: " << m_radii.size() << endl;
+//         }
 
-    // Loop over all solid bodies --> if there are walls, they have to have the typeID 0 --> counter starts at 1
-    for (unsigned int i = start; i < m_suspendedtypes.size(); i++)
-        {
-        // Access COM position
-        Scalar3  pi;
-        pi.x = m_centerofmasses[i].x;
-        pi.y = m_centerofmasses[i].y;
-        pi.z = m_centerofmasses[i].z;
-        Scalar typeID_COM = m_centerofmasses[i].w;
+//     // Loop over all solid bodies --> if there are walls, they have to have the typeID 0 --> counter starts at 1
+//     for (unsigned int i = start; i < m_suspendedtypes.size(); i++)
+//         {
+//         // Access COM position
+//         Scalar3  pi;
+//         pi.x = m_centerofmasses[i].x;
+//         pi.y = m_centerofmasses[i].y;
+//         pi.z = m_centerofmasses[i].z;
+//         Scalar typeID_COM = m_centerofmasses[i].w;
         
-        // For mean distance to COM
-        // Scalar meanradi = 0.0;
-        // Scalar minradi = 100.0;
-        Scalar maxradi = 0.000001;
-        // unsigned int containing_particles = 0;
-        unsigned int typeID_j;
+//         // For mean distance to COM
+//         // Scalar meanradi = 0.0;
+//         // Scalar minradi = 100.0;
+//         Scalar maxradi = 0.000001;
+//         // unsigned int containing_particles = 0;
+//         unsigned int typeID_j;
 
-        // Loop over all solid particles ---> detecte those who belong to the subgroup
-        unsigned int group_size = m_suspendedgroup->getNumMembers();
-        for (unsigned int group_idx = 0; group_idx < group_size; group_idx++)
-            {
-            // Read particle index
-            unsigned int j  = m_suspendedgroup->getMemberIndex(group_idx);
-            typeID_j = __scalar_as_int(h_pos.data[j].w);
+//         // Loop over all solid particles ---> detecte those who belong to the subgroup
+//         unsigned int group_size = m_suspendedgroup->getNumMembers();
+//         for (unsigned int group_idx = 0; group_idx < group_size; group_idx++)
+//             {
+//             // Read particle index
+//             unsigned int j  = m_suspendedgroup->getMemberIndex(group_idx);
+//             typeID_j = __scalar_as_int(h_pos.data[j].w);
 
-            if (typeID_j == (start-1) or (typeID_j != typeID_COM))
-                continue;
+//             if (typeID_j == (start-1) or (typeID_j != typeID_COM))
+//                 continue;
 
-            // Only check radi for particles with fluid neighbors
-            // Loop over neighbors
-            bool solid_w_fluid_neigh = false;
-            myHead = h_head_list.data[j];
-            size = (unsigned int)h_n_neigh.data[j];
-            for (unsigned int k = 0; k < size; k++)
-                {
-                // Index of neighbor (MEM TRANSFER: 1 scalar)
-                unsigned int a = h_nlist.data[myHead + k];
+//             // Only check radi for particles with fluid neighbors
+//             // Loop over neighbors
+//             bool solid_w_fluid_neigh = false;
+//             myHead = h_head_list.data[j];
+//             size = (unsigned int)h_n_neigh.data[j];
+//             for (unsigned int k = 0; k < size; k++)
+//                 {
+//                 // Index of neighbor (MEM TRANSFER: 1 scalar)
+//                 unsigned int a = h_nlist.data[myHead + k];
 
-                // Check if neighbor is fluid
-                if ( checkfluid(h_type_property_map.data, h_pos.data[a].w) )
-                    {
-                    solid_w_fluid_neigh = true;
-                    //break;
-                    }
-                }
+//                 // Check if neighbor is fluid
+//                 if ( checkfluid(h_type_property_map.data, h_pos.data[a].w) )
+//                     {
+//                     solid_w_fluid_neigh = true;
+//                     //break;
+//                     }
+//                 }
 
-            // If fluid neighbors exist add part to mean radi
-            if (solid_w_fluid_neigh)
-                {
-                // Access the particle's position, velocity, mass and type
-                // Scalar3 pj = make_scalar3(h_pos.data[j].x, h_pos.data[j].y, h_pos.data[j].z);
-                Scalar3 pj;
-                pj.x = h_pos.data[j].x;
-                pj.y = h_pos.data[j].y;
-                pj.z = h_pos.data[j].z;
+//             // If fluid neighbors exist add part to mean radi
+//             if (solid_w_fluid_neigh)
+//                 {
+//                 // Access the particle's position, velocity, mass and type
+//                 // Scalar3 pj = make_scalar3(h_pos.data[j].x, h_pos.data[j].y, h_pos.data[j].z);
+//                 Scalar3 pj;
+//                 pj.x = h_pos.data[j].x;
+//                 pj.y = h_pos.data[j].y;
+//                 pj.z = h_pos.data[j].z;
 
-                // Compute distance vector
-                Scalar3 dx = pi - pj;
+//                 // Compute distance vector
+//                 Scalar3 dx = pi - pj;
 
-                // Apply periodic boundary conditions
-                dx = box.minImage(dx);
+//                 // Apply periodic boundary conditions
+//                 dx = box.minImage(dx);
 
-                // Calculate squared distance
-                Scalar rsq = dot(dx, dx);
+//                 // Calculate squared distance
+//                 Scalar rsq = dot(dx, dx);
 
-                // Calculate absolute and normalized distance
-                Scalar r = sqrt(rsq);
-                //minradi = r; // ==========>>>>>>>>>>>>> TEST DELETE LATER
+//                 // Calculate absolute and normalized distance
+//                 Scalar r = sqrt(rsq);
+//                 //minradi = r; // ==========>>>>>>>>>>>>> TEST DELETE LATER
 
-                // Add part to sum of radii
-                // meanradi = meanradi + r;
-                // containing_particles = containing_particles + 1;
-                // if (r < minradi)
-                //     minradi = r;
-                if (r > maxradi)
-                    maxradi = r;
+//                 // Add part to sum of radii
+//                 // meanradi = meanradi + r;
+//                 // containing_particles = containing_particles + 1;
+//                 // if (r < minradi)
+//                 //     minradi = r;
+//                 if (r > maxradi)
+//                     maxradi = r;
 
 
-                // If velocity for this group was not saved do it here =====> Necessary for other contact model (based on distance of surface particles) TODO NK
-                if (m_velocities[i].x == 0.0)
-                    {
-                    temp3.x = h_velocity.data[j].x;
-                    temp3.y = h_velocity.data[j].y;
-                    temp3.z = h_velocity.data[j].z;
-                    m_velocities[i] = temp3;
-                    }
+//                 // If velocity for this group was not saved do it here =====> Necessary for other contact model (based on distance of surface particles) TODO NK
+//                 if (m_velocities[i].x == 0.0)
+//                     {
+//                     temp3.x = h_velocity.data[j].x;
+//                     temp3.y = h_velocity.data[j].y;
+//                     temp3.z = h_velocity.data[j].z;
+//                     m_velocities[i] = temp3;
+//                     }
 
-                }
+//                 }
 
-            }
+//             }
 
-    // Reduce on all processors
-    #ifdef ENABLE_MPI
-        // MPI_Allreduce(MPI_IN_PLACE, &meanradi, 1, MPI_HOOMD_SCALAR, MPI_SUM, this->m_exec_conf->getMPICommunicator());
-        // MPI_Allreduce(MPI_IN_PLACE, &minradi, 1, MPI_HOOMD_SCALAR, MPI_MIN, this->m_exec_conf->getMPICommunicator());
-        MPI_Allreduce(MPI_IN_PLACE, &maxradi, 1, MPI_HOOMD_SCALAR, MPI_MAX, this->m_exec_conf->getMPICommunicator());
-        // MPI_Allreduce(MPI_IN_PLACE, &containing_particles, 1, MPI_UNSIGNED, MPI_SUM, this->m_exec_conf->getMPICommunicator());
-    #endif
+//     // Reduce on all processors
+//     #ifdef ENABLE_MPI
+//         // MPI_Allreduce(MPI_IN_PLACE, &meanradi, 1, MPI_HOOMD_SCALAR, MPI_SUM, this->m_exec_conf->getMPICommunicator());
+//         // MPI_Allreduce(MPI_IN_PLACE, &minradi, 1, MPI_HOOMD_SCALAR, MPI_MIN, this->m_exec_conf->getMPICommunicator());
+//         MPI_Allreduce(MPI_IN_PLACE, &maxradi, 1, MPI_HOOMD_SCALAR, MPI_MAX, this->m_exec_conf->getMPICommunicator());
+//         // MPI_Allreduce(MPI_IN_PLACE, &containing_particles, 1, MPI_UNSIGNED, MPI_SUM, this->m_exec_conf->getMPICommunicator());
+//     #endif
 
-        // Calculate form factor out of minradi and maxradi
-        // Scalar formfactor = (minradi+maxradi)/2.0;
-        // Calculate meanradi
-        // m_radii[i] = ((meanradi/containing_particles)+maxradi)/2.0;
-        m_radii[i] = maxradi;
+//         // Calculate form factor out of minradi and maxradi
+//         // Scalar formfactor = (minradi+maxradi)/2.0;
+//         // Calculate meanradi
+//         // m_radii[i] = ((meanradi/containing_particles)+maxradi)/2.0;
+//         m_radii[i] = maxradi;
 
-        if ( print and timestep==1)
-            {
-            this->m_exec_conf->msg->notice(2) << "Radi of solid body: " << typeID_COM << ": " << maxradi << endl;
-            }
+//         if ( print and timestep==1)
+//             {
+//             this->m_exec_conf->msg->notice(2) << "Radi of solid body: " << typeID_COM << ": " << maxradi << endl;
+//             }
 
-        }
+//         }
         
-    }
+//     }
 
 
-/*! Compute repulsive force due to contact of two solids based on Bian, Ellero, CompPhysComm (2014)
- * This method computes and stores
-     - the repulsive force of each type in the solidgroup
-   in the global variable aux2.
- */
-template<SmoothingKernelType KT_,StateEquationType SET_>
-void SuspensionFlow<KT_, SET_>::compute_repulsiveForce(uint64_t timestep, bool print)
-    {
+// /*! Compute repulsive force due to contact of two solids based on Bian, Ellero, CompPhysComm (2014)
+//  * This method computes and stores
+//      - the repulsive force of each type in the solidgroup
+//    in the global variable aux2.
+//  */
+// template<SmoothingKernelType KT_,StateEquationType SET_>
+// void SuspensionFlow<KT_, SET_>::compute_repulsiveForce(uint64_t timestep, bool print)
+//     {
 
-    this->m_exec_conf->msg->notice(5) << "Suspended Object Compute Repulsive Forces" << std::endl;
+//     this->m_exec_conf->msg->notice(5) << "Suspended Object Compute Repulsive Forces" << std::endl;
 
 
-    // Check input data, can be omitted if need be
-    //assert(h_conforce.data);
+//     // Check input data, can be omitted if need be
+//     //assert(h_conforce.data);
 
-    // Read-Handle to velocity mass and position array
-    ArrayHandle<Scalar4> h_pos(this->m_pdata->getPositions(), access_location::host, access_mode::read);
-    ArrayHandle<Scalar3> h_conforce(this->m_pdata->getAuxiliaries2(), access_location::host,access_mode::readwrite);
-    ArrayHandle<Scalar>  h_h(this->m_pdata->getSlengths(), access_location::host, access_mode::read);
+//     // Read-Handle to velocity mass and position array
+//     ArrayHandle<Scalar4> h_pos(this->m_pdata->getPositions(), access_location::host, access_mode::read);
+//     ArrayHandle<Scalar3> h_conforce(this->m_pdata->getAuxiliaries2(), access_location::host,access_mode::readwrite);
+//     ArrayHandle<Scalar>  h_h(this->m_pdata->getSlengths(), access_location::host, access_mode::read);
 
-    // access the neighbor list
-    ArrayHandle<unsigned int> h_n_neigh(this->m_nlist->getNNeighArray(), access_location::host, access_mode::read);
-    ArrayHandle<unsigned int> h_nlist(this->m_nlist->getNListArray(), access_location::host, access_mode::read);
-    ArrayHandle<size_t> h_head_list(this->m_nlist->getHeadList(), access_location::host, access_mode::read);
-    ArrayHandle<unsigned int> h_type_property_map(this->m_type_property_map, access_location::host, access_mode::read);
+//     // access the neighbor list
+//     ArrayHandle<unsigned int> h_n_neigh(this->m_nlist->getNNeighArray(), access_location::host, access_mode::read);
+//     ArrayHandle<unsigned int> h_nlist(this->m_nlist->getNListArray(), access_location::host, access_mode::read);
+//     ArrayHandle<size_t> h_head_list(this->m_nlist->getHeadList(), access_location::host, access_mode::read);
+//     ArrayHandle<unsigned int> h_type_property_map(this->m_type_property_map, access_location::host, access_mode::read);
 
-    // Zero data before calculation
-    memset((void*)h_conforce.data,0,sizeof(Scalar3)*this->m_pdata->getAuxiliaries2().getNumElements());
+//     // Zero data before calculation
+//     memset((void*)h_conforce.data,0,sizeof(Scalar3)*this->m_pdata->getAuxiliaries2().getNumElements());
 
-    // Handle data on multiple cores
-    int world_size;
-    MPI_Comm_size(MPI_COMM_WORLD, &world_size);
+//     // Handle data on multiple cores
+//     int world_size;
+//     MPI_Comm_size(MPI_COMM_WORLD, &world_size);
 
-    // Set start point if there are walls or not
-    unsigned int start = 0;
-    if (m_walls)
-        start = 1;
+//     // Set start point if there are walls or not
+//     unsigned int start = 0;
+//     if (m_walls)
+//         start = 1;
 
-    // Local variable to store things
-    Scalar temp0;
-    Scalar temp1;
-    Scalar r_ref;
-    Scalar F_total[3] = {0,0,0};
-    // Scalar dist = 100.0;
-    Scalar F_0 = m_f0;
+//     // Local variable to store things
+//     Scalar temp0;
+//     Scalar temp1;
+//     Scalar r_ref;
+//     Scalar F_total[3] = {0,0,0};
+//     // Scalar dist = 100.0;
+//     Scalar F_0 = m_f0;
 
-    // Local copy of the simulation box
-    const BoxDim& box = this->m_pdata->getGlobalBox();
+//     // Local copy of the simulation box
+//     const BoxDim& box = this->m_pdata->getGlobalBox();
 
-    // Loop over all solid bodies --> if there are walls, they have to have the typeID 0 --> counter starts at 1
-    for (unsigned int i = start; i < m_suspendedtypes.size(); i++)
-        {
-        // Access COM position of solid i
-        Scalar3  pi;
-        pi.x = m_centerofmasses[i].x;
-        pi.y = m_centerofmasses[i].y;
-        pi.z = m_centerofmasses[i].z;
-        Scalar typeID_i = m_centerofmasses[i].w;
-        Scalar radi_i = m_radii[i];
+//     // Loop over all solid bodies --> if there are walls, they have to have the typeID 0 --> counter starts at 1
+//     for (unsigned int i = start; i < m_suspendedtypes.size(); i++)
+//         {
+//         // Access COM position of solid i
+//         Scalar3  pi;
+//         pi.x = m_centerofmasses[i].x;
+//         pi.y = m_centerofmasses[i].y;
+//         pi.z = m_centerofmasses[i].z;
+//         Scalar typeID_i = m_centerofmasses[i].w;
+//         Scalar radi_i = m_radii[i];
 
-        Scalar F_rep[3] = {0,0,0};
+//         Scalar F_rep[3] = {0,0,0};
 
-        for (unsigned int j = start; j < m_suspendedtypes.size(); j++)
-            {   
-            if (i == j)
-                continue;
+//         for (unsigned int j = start; j < m_suspendedtypes.size(); j++)
+//             {   
+//             if (i == j)
+//                 continue;
             
-            // Access COM position of solid k
-            Scalar3  pj;
-            pj.x = m_centerofmasses[j].x;
-            pj.y = m_centerofmasses[j].y;
-            pj.z = m_centerofmasses[j].z;
-            Scalar radi_j = m_radii[j];
-            r_ref = (radi_i + radi_j)/Scalar(2.0);
-            // F_0   = r_ref; // F_0 should be in the range of the effective radius
+//             // Access COM position of solid k
+//             Scalar3  pj;
+//             pj.x = m_centerofmasses[j].x;
+//             pj.y = m_centerofmasses[j].y;
+//             pj.z = m_centerofmasses[j].z;
+//             Scalar radi_j = m_radii[j];
+//             r_ref = (radi_i + radi_j)/Scalar(2.0);
+//             // F_0   = r_ref; // F_0 should be in the range of the effective radius
 
-            // Compute distance vector
-            Scalar3 dx = pi - pj;
+//             // Compute distance vector
+//             Scalar3 dx = pi - pj;
 
-            // Apply periodic boundary conditions
-            dx = box.minImage(dx);
+//             // Apply periodic boundary conditions
+//             dx = box.minImage(dx);
 
-            // Calculate squared distance
-            Scalar rsq = dot(dx, dx);
+//             // Calculate squared distance
+//             Scalar rsq = dot(dx, dx);
 
-            // Calculate absolute and normalized distance
-            Scalar r = sqrt(rsq);
+//             // Calculate absolute and normalized distance
+//             Scalar r = sqrt(rsq);
 
-            // s from the theoretical model
-            Scalar dist = r - radi_i - radi_j;
+//             // s from the theoretical model
+//             Scalar dist = r - radi_i - radi_j;
 
-            // If particle distance is too large, skip this loop
-            // if (dist > 0.2*radi_i)
-            //     continue;
+//             // If particle distance is too large, skip this loop
+//             // if (dist > 0.2*radi_i)
+//             //     continue;
 
-            // tau from the theoretical model
-            temp0 = 1/(0.01*r_ref);
-            temp1 = (F_0 * temp0 * exp(-temp0*dist)) / (1 - exp(-temp0*dist));
+//             // tau from the theoretical model
+//             temp0 = 1/(0.01*r_ref);
+//             temp1 = (F_0 * temp0 * exp(-temp0*dist)) / (1 - exp(-temp0*dist));
 
-            // Only add contact force if distance is smaller than 20%  /// 10 %  of radi and F_rep > e-5
-            // Add F_rep in opposite direction of the vector between the centers of mass of two bodies
-            if (dist < 0.2*radi_j && sqrt(temp1*temp1) > 0.00001)
-                {
-                F_rep[0] =+ temp1*dx.x;
-                F_rep[1] =+ temp1*dx.y;
-                F_rep[2] =+ temp1*dx.z;
-                if (print and (sqrt(F_rep[0]*F_rep[0]+F_rep[1]*F_rep[1]+F_rep[2]*F_rep[2]))>0.0000001 and timestep%10)
-                    {
-                    this->m_exec_conf->msg->notice(2) << "Found contact between solid " << i << " and solid " << j <<"!" << endl;
-                    this->m_exec_conf->msg->notice(2) << "Contact force on solid particle "<< i << ": Fx = " << F_rep[0] << " Fy = " << F_rep[1] << ": Fz = " << F_rep[2] << endl;
-                    //this->m_exec_conf->msg->notice(2) << "Total contact force on solid particle "<< i << ": F_rep = " << (sqrt(F_rep[0]*F_rep[0]+F_rep[1]*F_rep[1]+F_rep[2]*F_rep[2])) << endl; 
-                    }
-                }
+//             // Only add contact force if distance is smaller than 20%  /// 10 %  of radi and F_rep > e-5
+//             // Add F_rep in opposite direction of the vector between the centers of mass of two bodies
+//             if (dist < 0.2*radi_j && sqrt(temp1*temp1) > 0.00001)
+//                 {
+//                 F_rep[0] =+ temp1*dx.x;
+//                 F_rep[1] =+ temp1*dx.y;
+//                 F_rep[2] =+ temp1*dx.z;
+//                 if (print and (sqrt(F_rep[0]*F_rep[0]+F_rep[1]*F_rep[1]+F_rep[2]*F_rep[2]))>0.0000001 and timestep%10)
+//                     {
+//                     this->m_exec_conf->msg->notice(2) << "Found contact between solid " << i << " and solid " << j <<"!" << endl;
+//                     this->m_exec_conf->msg->notice(2) << "Contact force on solid particle "<< i << ": Fx = " << F_rep[0] << " Fy = " << F_rep[1] << ": Fz = " << F_rep[2] << endl;
+//                     //this->m_exec_conf->msg->notice(2) << "Total contact force on solid particle "<< i << ": F_rep = " << (sqrt(F_rep[0]*F_rep[0]+F_rep[1]*F_rep[1]+F_rep[2]*F_rep[2])) << endl; 
+//                     }
+//                 }
 
-            } // end over solid bodies that might be in contact
+//             } // end over solid bodies that might be in contact
 
-    #ifdef ENABLE_MPI
-        MPI_Allreduce(&F_rep, &F_total, 3, MPI_HOOMD_SCALAR, MPI_SUM, this->m_exec_conf->getMPICommunicator());
-    #endif
+//     #ifdef ENABLE_MPI
+//         MPI_Allreduce(&F_rep, &F_total, 3, MPI_HOOMD_SCALAR, MPI_SUM, this->m_exec_conf->getMPICommunicator());
+//     #endif
 
-        // Handle data on multiple cores
-        F_total[0] = F_total[0]/world_size;
-        F_total[1] = F_total[1]/world_size;
-        F_total[2] = F_total[2]/world_size;
+//         // Handle data on multiple cores
+//         F_total[0] = F_total[0]/world_size;
+//         F_total[1] = F_total[1]/world_size;
+//         F_total[2] = F_total[2]/world_size;
 
-        // if (print and (sqrt(F_total[0]*F_total[0]+F_total[1]*F_total[1]+F_total[2]*F_total[2]))>0.0 and timestep%10 )
-        //     {
-        //     this->m_exec_conf->msg->notice(2) << "Total contact force on solid particle "<< i << ": Fx = " << F_total[0] << " Fy = " << F_total[1] << ": Fz = " << F_total[2] << endl; 
-        //     // this->m_exec_conf->msg->notice(2) << "Total contact force on solid particle "<< i << ": F_total = " << (sqrt(F_total[0]*F_total[0]+F_total[1]*F_total[1]+F_total[2]*F_total[2])) << endl; 
-        //     }
+//         // if (print and (sqrt(F_total[0]*F_total[0]+F_total[1]*F_total[1]+F_total[2]*F_total[2]))>0.0 and timestep%10 )
+//         //     {
+//         //     this->m_exec_conf->msg->notice(2) << "Total contact force on solid particle "<< i << ": Fx = " << F_total[0] << " Fy = " << F_total[1] << ": Fz = " << F_total[2] << endl; 
+//         //     // this->m_exec_conf->msg->notice(2) << "Total contact force on solid particle "<< i << ": F_total = " << (sqrt(F_total[0]*F_total[0]+F_total[1]*F_total[1]+F_total[2]*F_total[2])) << endl; 
+//         //     }
 
-        // Loop over solid particles
-        unsigned int group_size = m_suspendedgroup->getNumMembers();
-        for (unsigned int group_idx = 0; group_idx < group_size; group_idx++)
-            {
-            unsigned int k = m_suspendedgroup->getMemberIndex(group_idx);
-            Scalar typeID_k = __scalar_as_int(h_pos.data[k].w);
+//         // Loop over solid particles
+//         unsigned int group_size = m_suspendedgroup->getNumMembers();
+//         for (unsigned int group_idx = 0; group_idx < group_size; group_idx++)
+//             {
+//             unsigned int k = m_suspendedgroup->getMemberIndex(group_idx);
+//             Scalar typeID_k = __scalar_as_int(h_pos.data[k].w);
 
-            // Solid-solid contact force
-            // If type id of solid particle matches id of solid body, force is applied. Counterpart is applied when i gets to this id
-            if (typeID_k == typeID_i)
-                {
-                // Repulsive force
-                h_conforce.data[k].x =+ F_total[0];
-                h_conforce.data[k].y =+ F_total[1];
-                h_conforce.data[k].z =+ F_total[2];
+//             // Solid-solid contact force
+//             // If type id of solid particle matches id of solid body, force is applied. Counterpart is applied when i gets to this id
+//             if (typeID_k == typeID_i)
+//                 {
+//                 // Repulsive force
+//                 h_conforce.data[k].x =+ F_total[0];
+//                 h_conforce.data[k].y =+ F_total[1];
+//                 h_conforce.data[k].z =+ F_total[2];
 
-                // Wall contact force
-                if (m_walls)
-                    {
-                    bool foundcontact = false;
+//                 // Wall contact force
+//                 if (m_walls)
+//                     {
+//                     bool foundcontact = false;
 
-                    // Loop over all of the neighbors of this particle
-                    // const unsigned int myHead = h_head_list.data[i];
-                    // const unsigned int size = (unsigned int)h_n_neigh.data[k];
-                    const size_t myHead = h_head_list.data[i];
-                    const unsigned int size = (unsigned int)h_n_neigh.data[k];
-                    for (unsigned int f = 0; f < size; f++)
-                        {
+//                     // Loop over all of the neighbors of this particle
+//                     // const unsigned int myHead = h_head_list.data[i];
+//                     // const unsigned int size = (unsigned int)h_n_neigh.data[k];
+//                     const size_t myHead = h_head_list.data[i];
+//                     const unsigned int size = (unsigned int)h_n_neigh.data[k];
+//                     for (unsigned int f = 0; f < size; f++)
+//                         {
 
-                        // Index of neighbor 
-                        unsigned int g = h_nlist.data[myHead + f];
+//                         // Index of neighbor 
+//                         unsigned int g = h_nlist.data[myHead + f];
 
-                        // Sanity check
-                        assert(g < this->m_pdata->getN() + this->m_pdata->getNGhosts());
+//                         // Sanity check
+//                         assert(g < this->m_pdata->getN() + this->m_pdata->getNGhosts());
 
-                        // Determine neighbor type
-                        Scalar typeID_g = __scalar_as_int(h_pos.data[g].w);
+//                         // Determine neighbor type
+//                         Scalar typeID_g = __scalar_as_int(h_pos.data[g].w);
 
-                        if(foundcontact)
-                            continue;
+//                         if(foundcontact)
+//                             continue;
                         
-                        // Only compute wall force if neighbor is a wall particle (= typeID 0)
-                        if (typeID_g == 0)
-                            {
-                            // Access neighbor position
-                            Scalar3 pk;
-                            pk.x = h_pos.data[k].x;
-                            pk.y = h_pos.data[k].y;
-                            pk.z = h_pos.data[k].z;
+//                         // Only compute wall force if neighbor is a wall particle (= typeID 0)
+//                         if (typeID_g == 0)
+//                             {
+//                             // Access neighbor position
+//                             Scalar3 pk;
+//                             pk.x = h_pos.data[k].x;
+//                             pk.y = h_pos.data[k].y;
+//                             pk.z = h_pos.data[k].z;
 
-                            Scalar3 pg;
-                            pg.x = h_pos.data[g].x;
-                            pg.y = h_pos.data[g].y;
-                            pg.z = h_pos.data[g].z;
+//                             Scalar3 pg;
+//                             pg.x = h_pos.data[g].x;
+//                             pg.y = h_pos.data[g].y;
+//                             pg.z = h_pos.data[g].z;
 
-                            // Compute distance vector
-                            Scalar3 walldist = pg - pk;
+//                             // Compute distance vector
+//                             Scalar3 walldist = pg - pk;
 
-                            // Apply periodic boundary conditions
-                            walldist = box.minImage(walldist);
+//                             // Apply periodic boundary conditions
+//                             walldist = box.minImage(walldist);
 
-                            // Calculate squared distance
-                            Scalar wdistsq = dot(walldist, walldist);
+//                             // Calculate squared distance
+//                             Scalar wdistsq = dot(walldist, walldist);
 
-                            // Calculate absolute and normalized distance
-                            Scalar wd = sqrt(wdistsq);
+//                             // Calculate absolute and normalized distance
+//                             Scalar wd = sqrt(wdistsq);
 
-                            // If particle distance is too large, skip this loop
-                            if (wd > 0.2*radi_i)
-                                continue;
+//                             // If particle distance is too large, skip this loop
+//                             if (wd > 0.2*radi_i)
+//                                 continue;
 
-                            if (print and timestep%10 and (wd<0.0001))
-                                {
-                                this->m_exec_conf->msg->notice(2) << "Found wall contact!" << endl; 
-                                }
+//                             if (print and timestep%10 and (wd<0.0001))
+//                                 {
+//                                 this->m_exec_conf->msg->notice(2) << "Found wall contact!" << endl; 
+//                                 }
 
-                            // tau from the theoretical model
-                            temp0 = 1/(0.01*radi_i);
-                            temp1 = (0.1*F_0 * temp0 * exp(-temp0*wd)) / (1 - exp(-temp0*wd));
+//                             // tau from the theoretical model
+//                             temp0 = 1/(0.01*radi_i);
+//                             temp1 = (0.1*F_0 * temp0 * exp(-temp0*wd)) / (1 - exp(-temp0*wd));
 
-                            // Add repulsive force
-                            h_conforce.data[k].x =+ temp1*walldist.x;
-                            h_conforce.data[k].y =+ temp1*walldist.y;
-                            h_conforce.data[k].z =+ temp1*walldist.z;
+//                             // Add repulsive force
+//                             h_conforce.data[k].x =+ temp1*walldist.x;
+//                             h_conforce.data[k].y =+ temp1*walldist.y;
+//                             h_conforce.data[k].z =+ temp1*walldist.z;
 
-                            foundcontact = true;
+//                             foundcontact = true;
 
-                            }
+//                             }
 
-                        } // End neighbor loop
+//                         } // End neighbor loop
 
-                    } // End m_walls
+//                     } // End m_walls
 
-                } // End type_i == type_k    
+//                 } // End type_i == type_k    
 
-            } // end loop over solid particles
+//             } // end loop over solid particles
 
-        } // end loop over solid bodies
+//         } // end loop over solid bodies
 
-    }
+//     }
 
 /*! Perform force computation
  */
@@ -1790,7 +1787,7 @@ void SuspensionFlow<KT_, SET_>::forcecomputation(uint64_t timestep)
     ArrayHandle<Scalar>  h_density(this->m_pdata->getDensities(), access_location::host, access_mode::readwrite);
     ArrayHandle<Scalar>  h_pressure(this->m_pdata->getPressures(), access_location::host, access_mode::readwrite);
     ArrayHandle<Scalar3> h_vf(this->m_pdata->getAuxiliaries1(), access_location::host,access_mode::read);
-    ArrayHandle<Scalar3> h_conforce(this->m_pdata->getAuxiliaries2(), access_location::host,access_mode::read);
+    ArrayHandle<Scalar3> h_conforce(this->m_pdata->getAuxiliaries2(), access_location::host,access_mode::readwrite);
     ArrayHandle<Scalar>  h_h(this->m_pdata->getSlengths(), access_location::host, access_mode::read);
 
     // access the neighbor list
@@ -2028,6 +2025,8 @@ void SuspensionFlow<KT_, SET_>::forcecomputation(uint64_t timestep)
         // Read particle index
         unsigned int i = m_suspendedgroup->getMemberIndex(group_idx);
 
+        unsigned int typeid_i = __scalar_as_int(h_pos.data[i].w);
+
         // Access the particle's position, velocity, mass and type
         Scalar3 pi;
         pi.x = h_pos.data[i].x;
@@ -2072,12 +2071,16 @@ void SuspensionFlow<KT_, SET_>::forcecomputation(uint64_t timestep)
             pj.y = h_pos.data[k].y;
             pj.z = h_pos.data[k].z;
 
+            unsigned int typeid_j = __scalar_as_int(h_pos.data[k].w);
+
             // TODO: Check if solid is valid but not suspended
             // Determine neighbor type
             bool issolid = checksolid(h_type_property_map.data, h_pos.data[k].w);
             bool issuspended = checksuspended(h_type_property_map.data, h_pos.data[k].w);
-            if (issuspended)
+            if (issuspended && typeid_i == typeid_j)
                 continue;
+            // if (issuspended)
+            //     continue;
 
             // Compute distance vector (FLOPS: 3)
             // Scalar3 dx = pi - pj;
@@ -2131,6 +2134,56 @@ void SuspensionFlow<KT_, SET_>::forcecomputation(uint64_t timestep)
             Scalar eps    = Scalar(0.1)*meanh;
             Scalar epssqr = eps*eps;
 
+            // TODO: hier checken ob bei solid die anderen Kräfte mit reinmuessen
+            if (issolid || issuspended)
+            {   
+                // Scalar3 err;
+                // err.x = dx.x/r;
+                // err.y = dx.y/r;
+                // err.z = dx.z/r;
+                // Scalar dxdotv = dot(err, dv);
+                // // TODO: eventuell gar keine Berechnung wenn groesser als 0
+                // h_force.data[i].x -= std::min(0.0,m_kc*(r-meanh)+m_dc*(dxdotv))*(dx.x/r);
+                // h_force.data[i].y -= std::min(0.0,m_kc*(r-meanh)+m_dc*(dxdotv))*(dx.y/r);
+                // h_force.data[i].z -= std::min(0.0,m_kc*(r-meanh)+m_dc*(dxdotv))*(dx.z/r);
+                // h_conforce.data[i].x += std::min(0.0,m_kc*(r-meanh)+m_dc*(dxdotv))*(dx.x/r);
+                // h_conforce.data[i].x += std::min(0.0,m_kc*(r-meanh)+m_dc*(dxdotv))*(dx.y/r);
+                // h_conforce.data[i].x += std::min(0.0,m_kc*(r-meanh)+m_dc*(dxdotv))*(dx.z/r);
+                // //std::cout << "typeid_i" << typeid_i << "typeid_j" << typeid_j << std::endl;
+                // Scalar3 err;
+                // err.x = dx.x/r;
+                // err.y = dx.y/r;
+                // err.z = dx.z/r;
+                // //Scalar dxdotv = dot(err, dv);
+                // // TODO: eventuell gar keine Berechnung wenn groesser als 0
+                // h_force.data[i].x -= std::min(0.0,m_kc*(r-meanh)+m_dc*(err.x*dv.x))*err.x;
+                // h_force.data[i].y -= std::min(0.0,m_kc*(r-meanh)+m_dc*(err.y*dv.y))*err.y;
+                // h_force.data[i].z -= std::min(0.0,m_kc*(r-meanh)+m_dc*(err.z*dv.z))*err.z;
+                // h_conforce.data[i].x -= std::min(0.0,m_kc*(r-meanh)+m_dc*(err.x*dv.x))*err.x;
+                // h_conforce.data[i].x -= std::min(0.0,m_kc*(r-meanh)+m_dc*(err.y*dv.y))*err.y;
+                // h_conforce.data[i].x -= std::min(0.0,m_kc*(r-meanh)+m_dc*(err.z*dv.z))*err.z;
+                //std::cout << "typeid_i" << typeid_i << "typeid_j" << typeid_j << std::endl;
+                // std::cout << "m_rcut: " << m_rcut << std::endl;
+                // std::cout << "r:  " << r << std::endl;
+
+                Scalar3 err;
+                err.x = dx.x/r;
+                err.y = dx.y/r;
+                err.z = dx.z/r;
+                Scalar dxdotv = dot(err, dv);
+                // TODO: eventuell gar keine Berechnung wenn groesser als 0
+                h_force.data[i].x -= std::min(0.0,m_kc*(r-m_rcut)+m_dc*(dxdotv))*err.x;
+                h_force.data[i].y -= std::min(0.0,m_kc*(r-m_rcut)+m_dc*(dxdotv))*err.y;
+                h_force.data[i].z -= std::min(0.0,m_kc*(r-m_rcut)+m_dc*(dxdotv))*err.z;
+                h_conforce.data[i].x -= std::min(0.0,m_kc*(r-m_rcut)+m_dc*(dxdotv))*err.x;
+                h_conforce.data[i].x -= std::min(0.0,m_kc*(r-m_rcut)+m_dc*(dxdotv))*err.y;
+                h_conforce.data[i].x -= std::min(0.0,m_kc*(r-m_rcut)+m_dc*(dxdotv))*err.z;
+
+            }
+            if (issolid || issuspended)
+                continue; 
+
+
             // Kernel function derivative evaluation
             Scalar dwdr   = this->m_skernel->dwijdr(meanh,r);
             Scalar dwdr_r = dwdr/(r+eps);
@@ -2170,6 +2223,11 @@ void SuspensionFlow<KT_, SET_>::forcecomputation(uint64_t timestep)
             h_force.data[i].y += temp0*dwdr_r*dx.y;
             h_force.data[i].z += temp0*dwdr_r*dx.z;
 
+            h_conforce.data[i].x += temp0*dwdr_r*dx.x;
+            h_conforce.data[i].y += temp0*dwdr_r*dx.y;
+            h_conforce.data[i].z += temp0*dwdr_r*dx.z;
+
+
             // // Add contribution to solid particle
             // if ( issolid && m_compute_solid_forces )
             //     {
@@ -2183,6 +2241,11 @@ void SuspensionFlow<KT_, SET_>::forcecomputation(uint64_t timestep)
             h_force.data[i].x  += temp0*dv.x;
             h_force.data[i].y  += temp0*dv.y;
             h_force.data[i].z  += temp0*dv.z;
+
+            h_conforce.data[i].x += temp0*dv.x;
+            h_conforce.data[i].y += temp0*dv.y;
+            h_conforce.data[i].z += temp0*dv.z;
+
 
             // // Add contribution to solid particle
             // if ( issolid && m_compute_solid_forces )
@@ -2222,7 +2285,6 @@ void SuspensionFlow<KT_, SET_>::forcecomputation(uint64_t timestep)
             //     if ( !issolid && m_density_diffusion )
             //         h_ratedpe.data[i].x -= (Scalar(2)*m_ddiff*meanh*m_c*mj*(rhoi/rhoj-Scalar(1))*dot(dx,dwdr_r*dx))/(rsq+epssqr);
             //     }
-
             } // Closing Neighbor Loop
 
         } // Closing Suspended Particle Loop
@@ -2234,18 +2296,18 @@ void SuspensionFlow<KT_, SET_>::forcecomputation(uint64_t timestep)
         {
         this->applyBodyForce(timestep, m_suspendedgroup);
 
-        // for each particle in solid group
-        unsigned int group_size = m_suspendedgroup->getNumMembers();
-        for (unsigned int group_idx = 0; group_idx < group_size; group_idx++)
-            {
-            // Read particle index
-            unsigned int j = m_suspendedgroup->getMemberIndex(group_idx);
+        // // for each particle in suspended group
+        // unsigned int group_size = m_suspendedgroup->getNumMembers();
+        // for (unsigned int group_idx = 0; group_idx < group_size; group_idx++)
+        //     {
+        //     // Read particle index
+        //     unsigned int j = m_suspendedgroup->getMemberIndex(group_idx);
 
-            // Add contribution of contact force to total force
-            h_force.data[j].x += h_conforce.data[j].x;
-            h_force.data[j].y += h_conforce.data[j].y;
-            h_force.data[j].z += h_conforce.data[j].z;
-            }
+        //     // Add contribution of contact force to total force
+        //     h_force.data[j].x += h_conforce.data[j].x;
+        //     h_force.data[j].y += h_conforce.data[j].y;
+        //     h_force.data[j].z += h_conforce.data[j].z;
+        //     }
         }
 
 
@@ -2327,22 +2389,28 @@ void SuspensionFlow<KT_, SET_>::computeForces(uint64_t timestep)
     // Compute center of mass of solid bodies
     compute_Centerofmasses(timestep, true);
 
-    // Compute equivalent radi of solid bodies ============= >>> evtl als Vektor speichern (x,y,z)
-    compute_equivalentRadii(timestep, true);
+    // // Compute equivalent radi of solid bodies ============= >>> evtl als Vektor speichern (x,y,z)
+    // compute_equivalentRadii(timestep, true);
 
-    // Compute repulsive forces
-    compute_repulsiveForce(timestep, true);
+    // // Compute repulsive forces
+    // compute_repulsiveForce(timestep, true);
+
+//     // communicate repulsive forces
+// #ifdef ENABLE_MPI
+//     // Update ghost particles
+//     update_ghost_aux2(timestep);
+// #endif
+
+    // Execute the force computation
+    // This includes the computation of the density if 
+    // DENSITYCONTINUITY method is used
+    forcecomputation(timestep);
 
     // communicate repulsive forces
 #ifdef ENABLE_MPI
     // Update ghost particles
     update_ghost_aux2(timestep);
 #endif
-
-    // Execute the force computation
-    // This includes the computation of the density if 
-    // DENSITYCONTINUITY method is used
-    forcecomputation(timestep);
 
     }
 
