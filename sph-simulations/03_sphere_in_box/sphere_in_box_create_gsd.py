@@ -58,10 +58,10 @@ print(f'box_Lx: {box_Lx}')
 print(f'box_Ly: {box_Ly}')
 print(f'box_Lz: {box_Lz}')
 
-x, y, z = np.meshgrid(*(np.linspace(-box_Lx / 2, box_Lx / 2, Nx, endpoint=False),),
-                      *(np.linspace(-box_Ly / 2, box_Ly / 2, Ny, endpoint=False),),
-                      *(np.linspace(-box_Lz / 2, box_Lz / 2, Nz, endpoint=False),))
-
+# define meshgrid and add properties
+x, y, z = np.meshgrid(*(np.linspace(-box_lx / 2 + dx/2, box_lx / 2 - dx/2, nx, endpoint=True),),
+                      *(np.linspace(-box_ly / 2 + dx/2, box_ly / 2 - dx/2, ny, endpoint=True),),
+                      *(np.linspace(-box_lz / 2 + dx/2, box_lz / 2 - dx/2, nz, endpoint=True),))
 
 positions = np.array((x.ravel(), y.ravel(), z.ravel())).T
 

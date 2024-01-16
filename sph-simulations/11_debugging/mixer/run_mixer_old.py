@@ -66,21 +66,22 @@ fw  = innerR*0.1                          # [m]
 fh  = innerR*0.9                          # [m]
 
 # Angular velocity in rad/s and 1/s
-angvel_s = 1.0                           # 1/s
+angvel_s = 0.1                           # 1/s
 angvel   = angvel_s*(2*np.pi)            # rad/s
 
 # Characteristic length and velocity
-lref = innerR - fh                       # [m]
+#lref = innerR - fh                       # [m]
+lref = innerR
 refvel = angvel*innerD
 
 # Discretization parameters
 voxelsize           = innerD/float(num_length)
 dx                  = voxelsize
 specific_volume     = dx * dx * dx
-rho0                = 971.0              # [kg / m^3]
+rho0                = 1000.0              # [kg / m^3]
 #rho0                = 1000.0              # [kg / m^3]
 mass                = rho0 * specific_volume
-viscosity           = 0.00971            # [Pa s]
+viscosity           = 1.0            # [Pa s]
 #viscosity           = 0.1            # [Pa s]
 #gz                  = -0.981             # [m/s**2]
 gz = 0.0
@@ -165,7 +166,7 @@ velocityverlet = hoomd.sph.methods.VelocityVerletBasic(filter=filterfluid, densi
 #                                          rotaxis  = [0.0,0.0,1.0])
 
 rigidbodyintegrator = hoomd.sph.methods.RigidBodyIntegrator(filter=filterrigid, transvel_x = 0.0, transvel_y = 0.0, transvel_z = 0.0,
-                                          rotvel   = variant.Ramp(0.0, angvel_s, 0, 2000),
+                                          rotvel   = variant.Ramp(0.0, angvel_s, 0, 5000),
                                           pivotpnt = [0.0,0.0,0.0],
                                           rotaxis  = [0.0,0.0,1.0])
 
@@ -184,7 +185,7 @@ if device.communicator.rank == 0:
     print(f'Integrator Methods: {integrator.methods[:]}')
     print(f'Simulation Computes: {sim.operations.computes[:]}')
 
-gsd_trigger = hoomd.trigger.Periodic(1)
+gsd_trigger = hoomd.trigger.Periodic(10)
 gsd_writer = hoomd.write.GSD(filename=dumpname,
                              trigger=gsd_trigger,
                              mode='wb',

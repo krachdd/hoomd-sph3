@@ -58,9 +58,9 @@ box_lx, box_ly, box_lz = lx, ly, lz
 n_particles = nx * ny * nz 
 
 # define meshgrid and add properties
-x, y, z = np.meshgrid(*(np.linspace(-box_lx / 2, box_lx / 2, nx, endpoint=True),),
-                      *(np.linspace(-box_ly / 2, box_ly / 2, ny, endpoint=True),),
-                      *(np.linspace(-box_lz / 2, box_lz / 2, nz, endpoint=True),))
+x, y, z = np.meshgrid(*(np.linspace(-box_lx / 2 + dx/2, box_lx / 2 - dx/2, nx, endpoint=True),),
+                      *(np.linspace(-box_ly / 2 + dx/2, box_ly / 2 - dx/2, ny, endpoint=True),),
+                      *(np.linspace(-box_lz / 2 + dx/2, box_lz / 2 - dx/2, nz, endpoint=True),))
 
 positions = np.array((x.ravel(), y.ravel(), z.ravel())).T
 
@@ -99,10 +99,40 @@ snapshot.particles.velocity[:]   = vels
 sim.create_state_from_snapshot(snapshot)
 
 init_filename = f'parallel_plates_{nx}_{ny}_{nz}_vs_{voxelsize}_init.gsd'
+hoomd.write.GSD.write(state = sim.state, mode = 'wb', filename = init_filename)
+
+# with gsd.hoomd.open(name = init_filename, mode = 'wb') as f:
+#     f.append(snapshot)
+
+# # if device.communicator.rank == 0:
+# #     export_gsd2vtu.export_spf(init_filename)
+
+
+# sim.create_state_from_snapshot(snapshot)
+
+# # # Identify solid particles with zero charge and delete them ( redundant solid particles )
+# # tags    = []
+# # deleted = 0
+
+# # with sim.state.cpu_local_snapshot as snap:
+# #     for i in range(len(snap.particles.position)):
+# #         # print(data.particles.mass[i])
+# #         if snap.particles.typeid[i] == 3:
+# #             tags.append(snap.particles.tag[i])
+# #             #print('tag:',snap.particles.tag[i])
+# #             # print(f'Rank: {device.communicator.rank} -> Delete Particle {data.particles.tag[i]}')
+# #             deleted += 1
+
+# # # if device.communicator.rank == 0:
+# # for t in tags:
+# #     # print(f'Rank: {device.communicator.rank} --> Remove particle {t} of {deleted}')
+# #     sim.state.removeParticle(t)
+
+# init_filename = f'mixer_{nx}_{ny}_{nz}_vs_{voxelsize}_init.gsd'
 # hoomd.write.GSD.write(state = sim.state, mode = 'wb', filename = init_filename)
 
-with gsd.hoomd.open(name = init_filename, mode = 'wb') as f:
-    f.append(snapshot)
+# # with gsd.hoomd.open(name = init_filename, mode = 'wb') as f:
+# #     f.append(snapshot)
 
-# if device.communicator.rank == 0:
-#     export_gsd2vtu.export_spf(init_filename)
+if device.communicator.rank == 0:
+    export_gsd2vtu.export_spf(init_filename)

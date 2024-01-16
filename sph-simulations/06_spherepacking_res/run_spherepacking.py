@@ -25,6 +25,8 @@ infile = str(sys.argv[1])
 params = read_input_fromtxt.get_input_data_from_file(infile)
 
 FX    = np.float64(sys.argv[2])
+FY = 0.0
+FZ = 0.0
 # Fluid and particle properties
 voxelsize  = np.float64(params['vsize'])
 rawfilename = params['rawfilename']
@@ -143,7 +145,7 @@ reference_velocity = (Re * MU)/(RHO0 * reference_length)
 # reference_velocity = porosity * 
 # mydict['pestimate']*((mydict['lref']**2)/(8*options.mu))*options.rho0*options.fz
 
-dt = model.compute_dt(reference_length, FX, DX, DRHO)
+dt = model.compute_dt(reference_length, FX, DX, DRHO, FX, FY, FZ)
 
 integrator = hoomd.sph.Integrator(dt=dt)
 

@@ -47,9 +47,9 @@ refvel = angvel*innerD
 voxelsize           = innerD/float(num_length)
 dx                  = voxelsize
 specific_volume     = dx * dx * dx
-rho0                = 971.0              # [kg / m^3]
+rho0                = 1000.0              # [kg / m^3]
 mass                = rho0 * specific_volume
-viscosity           = 0.00971            # [Pa s]
+viscosity           = 1.0            # [Pa s]
 
 # get kernel properties
 kernel  = 'WendlandC4'
@@ -67,7 +67,7 @@ outerR = 0.5*outerD
 frsurf = 0.5*outerR      # m
 
 # get simulation box sizes etc.
-nx, ny, nz = int(num_length + (3*part_rcut)), int(num_length + (3*part_rcut)), int(0.2*num_length + (2*part_rcut))
+nx, ny, nz = int(num_length + (3*part_rcut)), int(num_length + (3*part_rcut)), int(num_length)
 lx, ly, lz = float(nx) * voxelsize, float(ny) * voxelsize, float(nz) * voxelsize
 # box dimensions
 box_lx, box_ly, box_lz = lx, ly, lz
@@ -143,7 +143,7 @@ for t in tags:
     # print(f'Rank: {device.communicator.rank} --> Remove particle {t} of {deleted}')
     sim.state.removeParticle(t)
 
-init_filename = f'mixer_original_{nx}_{ny}_{nz}_vs_{voxelsize}_init.gsd'
+init_filename = f'mixer_{nx}_{ny}_{nz}_vs_{voxelsize}_init.gsd'
 hoomd.write.GSD.write(state = sim.state, mode = 'wb', filename = init_filename)
 
 # with gsd.hoomd.open(name = init_filename, mode = 'wb') as f:

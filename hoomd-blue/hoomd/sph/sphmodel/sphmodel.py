@@ -233,7 +233,8 @@ class SinglePhaseFlow(SPHModel):
                           shepardrenormanlization = bool(False),
                           shepardfreq = int(30),
                           compute_solid_forces = bool(False),
-                          max_sl = float(0.0)
+                          max_sl = float(0.0),
+                          types  = list()
                           ))
 
 
@@ -392,6 +393,7 @@ class SinglePhaseFlow(SPHModel):
         self.shepardrenormanlization = self._param_dict['shepardrenormanlization']
         self.shepardfreq = self._param_dict['shepardfreq']
         self.compute_solid_forces = self._param_dict['compute_solid_forces']
+        self.types = self._param_dict['types']
 
         self.set_params(self.mu)
         self.setdensitymethod(self.str_densitymethod)
@@ -415,7 +417,7 @@ class SinglePhaseFlow(SPHModel):
         if (self.compute_solid_forces == True):
             self.computeSolidForces()
 
-        self.setrcut(self.rcut)
+        self.setrcut(self.rcut,self.types)
 
         self.setBodyAcceleration(self.gx, self.gy, self.gz, self.damp)
 
@@ -432,14 +434,18 @@ class SinglePhaseFlow(SPHModel):
         self._param_dict.__setattr__('params_set', True)
 
     # @rcut.setter
-    def setrcut(self, rcut):
+    def setrcut(self, rcut, types):
         if rcut <= 0.0:
             raise ValueError("Rcut has to be > 0.0.")
-        self._cpp_obj.setRCut(('F', 'S'), rcut)
-        self._cpp_obj.setRCut(('S', 'S'), rcut)
-        self._cpp_obj.setRCut(('F', 'F'), rcut)
-        self._cpp_obj.setRCut(('F', 'R'), rcut)
-
+        # self._cpp_obj.setRCut(('F', 'S'), rcut)
+        # self._cpp_obj.setRCut(('S', 'S'), rcut)
+        # self._cpp_obj.setRCut(('F', 'F'), rcut)
+        pairs = []
+        for i in range(len(types)):
+            for j in range(i, len(types)):
+                pairs.append((types[i], types[j]))
+                self._cpp_obj.setRCut((types[i], types[j]), rcut)
+        print(pairs)
 
     # @property
     def densitymethod(self):
@@ -492,11 +498,13 @@ class SinglePhaseFlow(SPHModel):
 
     def setBodyAcceleration(self,gx,gy,gz,damp=0):
         self.accel_set = True
+        print('self.accel_set: ', self.accel_set)
         self._param_dict.__setattr__('accel_set', True)
         # self.check_initialization();
         # self.gx   = gx.item() if isinstance(gx, np.generic) else gx
         # self.gy   = gy.item() if isinstance(gy, np.generic) else gy
         # self.gz   = gz.item() if isinstance(gz, np.generic) else gz
+        print('self.gx: ',self.gx, 'self.gy: ', self.gy, 'self.gz: ', self.gz)
         # self.damp = int(damp.item()) if isinstance(damp,np.generic) else int(damp)
         self.damp = abs(self.damp)
 
@@ -508,7 +516,7 @@ class SinglePhaseFlow(SPHModel):
         # self.cpp_force.setAcceleration(self.gx,self.gy,self.gz,self.damp)
         self._cpp_obj.setAcceleration(self.gx,self.gy,self.gz,self.damp)
 
-    def compute_dt(self, LREF, UREF, DX, DRHO=0.01, COURANT=0.25):
+    def compute_dt(self, LREF, UREF, DX, DRHO=0.01, COURANT=0.25, gx=0.0, gy=0.0, gz=0.0):
         # Input sanity
         if LREF == 0.0:
             raise ValueError('Reference length LREF may not be zero.')
@@ -521,10 +529,18 @@ class SinglePhaseFlow(SPHModel):
 
         # Compute required quantities
         # Magnitude of body force
-        if not self.accel_set:
-            GMAG = 0.0
-        else:
+        # if self.accel_set:
+        if (abs(gx) > 0.0 or abs(gy) > 0.0 or abs(gz) > 0.0):
             GMAG = np.sqrt(self.gx**2+self.gy**2+self.gz**2)
+        else:
+            GMAG = 0.0
+
+        # if not self.accel_set:
+        #     GMAG = 0.0
+        # else:
+        #     GMAG = np.sqrt(self.gx**2+self.gy**2+self.gz**2)
+        #     print('self.gx: ',self.gx, 'self.gy: ', self.gy, 'self.gz: ', self.gz)
+
         # Smoothing length
         H   = self._param_dict['max_sl']
         # Viscosity

@@ -63,6 +63,8 @@ rho0                = 1000.0
 mass                = rho0 * specific_volume
 viscosity           = 1.e-03            # [Pa s]
 fx                  = 0.1
+fy                  = 0.0
+fz                  = 0.0
 refvel              = fx * lref * lref * 0.25 / (viscosity/rho0)
 
 
@@ -127,7 +129,7 @@ maximum_smoothing_length = device.communicator.bcast_double(maximum_smoothing_le
 model.max_sl = maximum_smoothing_length
 
 # compute dt
-dt = model.compute_dt(lref, refvel, dx, drho)
+dt = model.compute_dt(lref, refvel, dx, drho, fx, fy, fz)
 
 
 integrator = hoomd.sph.Integrator(dt=dt)
@@ -149,7 +151,7 @@ if device.communicator.rank == 0:
     print(f'Integrator Methods: {integrator.methods[:]}')
     print(f'Simulation Computes: {sim.operations.computes[:]}')
 
-gsd_trigger = hoomd.trigger.Periodic(500)
+gsd_trigger = hoomd.trigger.Periodic(1000)
 gsd_writer = hoomd.write.GSD(filename=dumpname,
                              trigger=gsd_trigger,
                              mode='wb',

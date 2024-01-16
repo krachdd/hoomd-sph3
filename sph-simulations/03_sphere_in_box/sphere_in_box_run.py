@@ -38,6 +38,9 @@ LZ = LREF
 KERNEL  = 'WendlandC4'
 NL      = 100                       # INT
 # FX      = 0.1                      # m/s^2
+FX = 0.0
+FY = 0.0
+FZ = 0.0
 
 DX      = LREF/NL                  # m
 V       = DX*DX*DX                 # m^3
@@ -154,7 +157,7 @@ maximum_smoothing_length = device.communicator.bcast_double(maximum_smoothing_le
 model.max_sl = maximum_smoothing_length
 
 UREF = FX*LREF*LREF*0.25/(MU/RHO0)
-dt = model.compute_dt(LREF, UREF, DX, DRHO)
+dt = model.compute_dt(LREF, UREF, DX, DRHO, FX, FY, FZ)
 
 integrator = hoomd.sph.Integrator(dt=dt)
 

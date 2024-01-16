@@ -43,6 +43,8 @@ specific_volume     = dx * dx * dx
 rho0                = 1.0
 mass                = rho0 * specific_volume
 fx                  = 0.0                # [m/s]
+fy                  = 0.0
+fz                  = 0.0
 lidvel              = 1.0
 refvel              = lidvel
 viscosity           = (rho0 * lidvel * lref)/options.reynolds # [Pa s]
@@ -136,7 +138,7 @@ maximum_smoothing_length = device.communicator.bcast_double(maximum_smoothing_le
 model.max_sl = maximum_smoothing_length
 
 # compute dt
-dt = model.compute_dt(lref, refvel, dx, drho)
+dt = model.compute_dt(lref, refvel, dx, drho, fx, fy, fz)
 
 
 integrator = hoomd.sph.Integrator(dt=dt)
