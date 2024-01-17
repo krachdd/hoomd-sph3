@@ -7,10 +7,13 @@ SPH Implementation in
 - HOOMD-Blue 3.10.0 (as of 15.03.2023)
 - HOOMD-Blue 4.2.1 (as of 06.10.2023)
 - HOOMD-Blue 4.4.0 (as of 14.12.2023)
+- HOOMD-Blue 4.4.1 (as of 17.01.2024)
 
 GSD Version
 - GSD 2.8.0 (as of 27.02.2023)
 - GSD 3.2.0 (as of 06.10.2023)
+
+PGSD Version
 
 ## Libaries to install check HOOMD Webpage
 additional: cereal - A C++11 library for serialization
@@ -27,7 +30,7 @@ sudo apt install libcereal-dev
 - better internal separation of model, logger, and integrator
 - access to particle fields direct in python interface easily possible
 - generally more modularized (in all aspects of the model)
-- **HOOMD-Blue v4.4.0** instead of **HOOMD-Blue v1.8.2/v2.2.0**. Try to keep that up to date in the future
+- **HOOMD-Blue v4.4.1** instead of **HOOMD-Blue v1.8.2/v2.2.0**. Try to keep that up to date in the future
 
 ### Organizational apsects
 - differnt Loggers, physical models, integrators can be applied added additivly (use filters instead of groups)
