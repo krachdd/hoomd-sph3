@@ -164,7 +164,7 @@ void NeighborListStencil::buildNlist(uint64_t timestep)
         const unsigned int type_i = __scalar_as_int(h_pos.data[i].w);
         const unsigned int body_i = h_body.data[i];
         // const Scalar diam_i = h_diameter.data[i];
-        const Scalar diam_i = m_kappa*Scalar(2)*h_slength.data[i];
+        // const Scalar diam_i = m_kappa*Scalar(2)*h_slength.data[i];
 
         const unsigned int Nmax_i = h_Nmax.data[type_i];
         const size_t head_idx_i = h_head_list.data[i];

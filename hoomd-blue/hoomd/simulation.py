@@ -286,7 +286,7 @@ class Simulation(metaclass=Loggable):
                                   abs(frame), frame < 0)
         snapshot = Snapshot._from_cpp_snapshot(reader.getSnapshot(),
                                                self.device.communicator)
-
+        snapshot.dist = True
         step = reader.getTimeStep() if self.timestep is None else self.timestep
         self._state = State(self, snapshot, domain_decomposition, distributed = True)
 

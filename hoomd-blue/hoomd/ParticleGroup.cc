@@ -71,7 +71,6 @@ ParticleGroup::ParticleGroup(std::shared_ptr<SystemDefinition> sysdef,
       m_global_ptl_num_change(false), m_update_tags(false), m_warning_printed(false)
     {
     // check input
-    std::cout << "PARTICLE GROUP check input!" << std::endl;
     unsigned int max_tag = m_pdata->getMaximumTag();
     for (std::vector<unsigned int>::const_iterator it = member_tags.begin();
          it != member_tags.end();

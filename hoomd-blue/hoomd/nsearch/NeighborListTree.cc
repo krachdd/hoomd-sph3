@@ -303,7 +303,7 @@ void NeighborListTree::traverseTree()
         const unsigned int type_i = __scalar_as_int(postype_i.w);
         const unsigned int body_i = h_body.data[i];
         // const Scalar diam_i = h_diameter.data[i];
-        const Scalar diam_i = Scalar(2)*h_slength.data[i];
+        // const Scalar diam_i = Scalar(2)*h_slength.data[i];
 
         const unsigned int Nmax_i = h_Nmax.data[type_i];
         const size_t nlist_head_i = h_head_list.data[i];

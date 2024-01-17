@@ -87,11 +87,11 @@ class Snapshot:
     """
 
     def __init__(self, communicator=None):
+        self.dist = False
         if communicator is None:
             self.communicator = hoomd.communicator.Communicator()
         else:
             self.communicator = communicator
-
         self._cpp_obj = _hoomd.SnapshotSystemData_double()
 
     @property

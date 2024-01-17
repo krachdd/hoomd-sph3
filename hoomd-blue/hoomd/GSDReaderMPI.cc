@@ -8,6 +8,7 @@
 #include "hoomd/extern/pgsd.h"
 #include <sstream>
 #include <string.h>
+#include <math.h>
 
 #include <stdexcept>
 using namespace std;
@@ -274,11 +275,11 @@ void GSDReaderMPI::readHeader()
 
     m_part_per_rank.resize( nprocs );
 
-    unsigned int n = floor( N / nprocs );
+    unsigned int n = static_cast<unsigned int>(floor( N / static_cast<unsigned int>(nprocs) ));
     // std::fill(m_part_per_rank.begin(),m_part_per_rank.end(), n);
     unsigned int rem = N%nprocs;
     
-    if( rank < rem ){
+    if( static_cast<unsigned int>(rank) < rem ){
         n++;
     }
 
