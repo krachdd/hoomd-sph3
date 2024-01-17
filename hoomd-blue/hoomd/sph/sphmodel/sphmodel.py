@@ -788,7 +788,7 @@ class SinglePhaseFlowNN(SPHModel):
         if (self.compute_solid_forces == True):
             self.computeSolidForces()
 
-        self.setrcut(self.rcut)
+        self.setrcut(self.rcut,self.types)
 
         self.setBodyAcceleration(self.gx, self.gy, self.gz, self.damp)
 
@@ -805,9 +805,12 @@ class SinglePhaseFlowNN(SPHModel):
         self._param_dict.__setattr__('params_set', True)
 
     # @rcut.setter
-    def setrcut(self, rcut):
+    def setrcut(self, rcut, types):
         if rcut <= 0.0:
             raise ValueError("Rcut has to be > 0.0.")
+        # self._cpp_obj.setRCut(('F', 'S'), rcut)
+        # self._cpp_obj.setRCut(('S', 'S'), rcut)
+        # self._cpp_obj.setRCut(('F', 'F'), rcut)
         pairs = []
         for i in range(len(types)):
             for j in range(i, len(types)):
