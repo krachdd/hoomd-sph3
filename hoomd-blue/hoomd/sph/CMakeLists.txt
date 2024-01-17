@@ -10,13 +10,14 @@ set(_${COMPONENT_NAME}_sources
     SPHIntegrationMethodTwoStep.cc
     VelocityVerlet.cc
     VelocityVerletBasic.cc
-#     SuspendedObjectIntegrator.cc
+    SuspendedObjectIntegrator.cc
     RigidBodyIntegrator.cc
 #     StateEquationsExport.cc
     StateEquations.cc
     SPHBaseClass.cc
     SinglePhaseFlow.cc
     SinglePhaseFlowNN.cc
+    SuspensionFlow.cc
 #     TwoPhaseFlow.cc
 #     SmoothingKernelExport.cc
     SmoothingKernel.cc
@@ -34,7 +35,8 @@ set(_${COMPONENT_NAME}_headers
 #     TwoPhaseFlowGPU.cuh
 #     GeneralGPUFunctions.cuh
     SinglePhaseFlow.h 
-    SinglePhaseFlowNN.h         
+    SinglePhaseFlowNN.h  
+    SuspensionFlow.h       
     SPHIntegratorTwoStep.h            
 #     TwoPhaseFlowGPU.h
 #     RigidBodyIntegratorGPU.cuh     
@@ -51,7 +53,7 @@ set(_${COMPONENT_NAME}_headers
 #     VelocityVerletGPU.h
 #     SinglePhaseFlowGPU.cuh         
     SPHBaseClass.h        
-#     SuspendedObjectIntegrator.h       
+    SuspendedObjectIntegrator.h       
     VelocityVerlet.h
     VelocityVerletBasic.h
     CustomForceCompute.h

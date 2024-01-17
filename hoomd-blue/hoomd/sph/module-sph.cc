@@ -12,10 +12,11 @@ maintainer: dkrach, david.krach@mib.uni-stuttgart.de
 // #include "SPHIntegrationMethodTwoStep.h"
 #include "VelocityVerlet.h"
 #include "VelocityVerletBasic.h"
-// // #include "SuspendedObjectIntegrator.h"
 #include "RigidBodyIntegrator.h"
+#include "SuspendedObjectIntegrator.h"
 #include "SinglePhaseFlow.h"
 #include "SinglePhaseFlowNN.h"
+#include "SuspensionFlow.h"
 // // #include "TwoPhaseFlow.h"
 #include "CustomForceCompute.h"
 
@@ -52,7 +53,7 @@ namespace detail
     void export_SPHIntegrationMethodTwoStep(pybind11::module& m);
     // void export_VelocityVerlet(pybind11::module& m);
     // void export_SuspendedObjectIntegrator(pybind11::module& m);
-    void export_RigidBodyIntegrator(pybind11::module& m);
+    // void export_RigidBodyIntegrator(pybind11::module& m);
     // void export_SinglePhaseFlow(pybind11::module& m);
     // void export_StateEquations(pybind11::module& m);
     // void export_TwoPhaseFlow(pybind11::module& m);
@@ -70,6 +71,7 @@ namespace detail
 
     void export_ComputeSPFMechanicalProperties(pybind11::module& m);
     void export_ComputeSPFNNMechanicalProperties(pybind11::module& m);
+    void export_ComputeSusFMechanicalProperties(pybind11::module& m);
     // void export_LocalNeighborListDataHost(pybind11::module& m);
     void export_HalfStepHook(pybind11::module& m);
 
@@ -98,8 +100,8 @@ PYBIND11_MODULE(_sph, m){
     export_SPHIntegrationMethodTwoStep(m);
     export_VelocityVerlet(m);
     export_VelocityVerletBasic(m);
-    // export_SuspendedObjectIntegrator(m);
     export_RigidBodyIntegrator(m);
+    export_SuspendedObjectIntegrator(m);
     export_WendlandC2(m);
     export_WendlandC4(m);
     export_WendlandC6(m);
@@ -146,10 +148,22 @@ PYBIND11_MODULE(_sph, m){
     export_SinglePhaseFlowNN<cubicspline, linear>(m, "SinglePFNN_CS_L");
     export_SinglePhaseFlowNN<cubicspline, tait>(m, "SinglePFNN_CS_T");
 
+    export_SuspensionFlow<wendlandc2, linear>(m, "SuspensionF_WC2_L");
+    export_SuspensionFlow<wendlandc2, tait>(m, "SuspensionF_WC2_T");
+    export_SuspensionFlow<wendlandc4, linear>(m, "SuspensionF_WC4_L");
+    export_SuspensionFlow<wendlandc4, tait>(m, "SuspensionF_WC4_T");
+    export_SuspensionFlow<wendlandc6, linear>(m, "SuspensionF_WC6_L");
+    export_SuspensionFlow<wendlandc6, tait>(m, "SuspensionF_WC6_T");
+    export_SuspensionFlow<quintic, linear>(m, "SuspensionF_Q_L");
+    export_SuspensionFlow<quintic, tait>(m, "SuspensionF_Q_T");
+    export_SuspensionFlow<cubicspline, linear>(m, "SuspensionF_CS_L");
+    export_SuspensionFlow<cubicspline, tait>(m, "SuspensionF_CS_T");
+
     export_CustomForceCompute(m);
 
     export_ComputeSPFMechanicalProperties(m);
     export_ComputeSPFNNMechanicalProperties(m);
+    export_ComputeSusFMechanicalProperties(m);
 
     export_DensityMethod(m);
     export_ViscosityMethod(m);

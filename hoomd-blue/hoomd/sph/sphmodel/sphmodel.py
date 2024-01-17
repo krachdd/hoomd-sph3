@@ -934,6 +934,390 @@ class SinglePhaseFlowNN(SPHModel):
         else:
             return COURANT*np.min([DT_1,DT_2])
 
+class SuspensionFlow(SPHModel):
+    R""" SinglePhaseFlow solver
+    """
+    DENSITYMETHODS = {'SUMMATION':_sph.PhaseFlowDensityMethod.DENSITYSUMMATION,
+                      'CONTINUITY':_sph.PhaseFlowDensityMethod.DENSITYCONTINUITY}
+
+    VISCOSITYMETHODS = {'HARMONICAVERAGE':_sph.PhaseFlowViscosityMethod.HARMONICAVERAGE}
+
+    def __init__(self,
+                 kernel,
+                 eos,
+                 nlist,
+                 fluidgroup_filter = None,
+                 solidgroup_filter = None,
+                 suspendedgroup_filter = None,
+                 densitymethod='SUMMATION',
+                 viscositymethod='HARMONICAVERAGE'):
+
+        super().__init__(kernel, eos, nlist)
+
+        self._param_dict.update(ParameterDict(
+                          densitymethod = str('SUMMATION'),
+                          viscositymethod = str('HARMONICAVERAGE'), 
+                          mu = float(0.0), 
+                          kc = float(0.0),
+                          dc = float(0.0),
+                          artificialviscosity = bool(True), 
+                          alpha = float(0.2),
+                          beta = float(0.0),
+                          densitydiffusion = bool(False),
+                          ddiff = float(0.0),
+                          shepardrenormanlization = bool(False),
+                          shepardfreq = int(30),
+                          compute_solid_forces = bool(False),
+                          compute_wall_forces = bool(False),
+                          max_sl = float(0.0),
+                          types  = list()
+                          ))
+
+
+
+
+        # self._state = self._simulation.state
+        self._cpp_SuspensionFclass_name = 'SuspensionF' '_' + Kernel[self.kernel.name] + '_' + EOS[self.eos.name]
+        self.fluidgroup_filter = fluidgroup_filter
+        self.solidgroup_filter = solidgroup_filter
+        self.suspendedgroup_filter = suspendedgroup_filter       
+        self.str_densitymethod = self._param_dict._dict["densitymethod"]
+        self.str_viscositymethod = self._param_dict._dict["viscositymethod"]
+        self.accel_set = False
+        self.params_set = False
+
+        if self.str_densitymethod == str('SUMMATION'):
+            self.cpp_densitymethod = hoomd.sph._sph.PhaseFlowDensityMethod.DENSITYSUMMATION
+        elif self.str_densitymethod == str('CONTINUITY'):
+            self.cpp_densitymethod = hoomd.sph._sph.PhaseFlowDensityMethod.DENSITYCONTINUITY
+        else:
+            raise ValueError("Using undefined DensityMethod.")
+
+        if self.str_viscositymethod == str('HARMONICAVERAGE'):
+            self.cpp_viscositymethod = hoomd.sph._sph.PhaseFlowViscosityMethod.HARMONICAVERAGE
+        else:
+            raise ValueError("Using undefined ViscosityMethod.")
+
+
+        # IMPORTANT TO ADD CUDA! 
+        # create the c++ mirror class
+        # if isinstance(self._simulation.device, hoomd.device.CPU):
+        #     _cpp_class_name += 'GPU'
+
+
+        # print(self._cpp_class_name)
+        # cls = getattr(_sph, self._cpp_class_name)
+        # self._cpp_obj = ()
+
+        # self._attach()
+        # Check if group is associated
+        # if fluidgroup == None or solidgroup == None:
+        #     raise ValueError("SinglePhaseFlow: fluidgroup and solidgroup can not be None")
+        # else:
+        #     self.fluidgroup = fluidgroup
+        #     self.solidgroup = solidgroup
+        #     self.cpp_fluidgroup = fluidgroup.cpp_group
+        #     self.cpp_solidgroup = solidgroup.cpp_group
+
+        # # Check if given smoothing lengths are equal, if so
+        #     # set constant smoothing length flag in model class
+        # pdata = self._simulation.state._cpp_sys_def.getParticleData()
+        # globalN   = pdata.getNGlobal()
+
+        # self.consth = pdata.constSmoothingLength()
+
+        # if self.consth:
+        #     self.maxh = pdata.getSmoothingLength(0)
+        #     self._cpp_obj.setConstSmoothingLength(self.maxh)
+        # else:
+        #     self.maxh = pdata.getMaxSmoothingLength()
+
+    # def _add(self, simulation):
+    #     super()._add(simulation)
+
+    def _attach_hook(self):
+        if isinstance(self._simulation.device, hoomd.device.CPU):
+            suspensionf_cls = getattr(_sph, self._cpp_SuspensionFclass_name)
+        else:
+            print("GPU not implemented")
+
+        # check that some Particles are defined
+        if self._simulation.state._cpp_sys_def.getParticleData().getNGlobal() == 0:
+            self._simulation.device._cpp_msg.warning("No particles are defined.\n")
+        
+        # This should never happen, but leaving it in case the logic for adding
+        # missed some edge case.
+        if self.nlist._attached and self._simulation != self.nlist._simulation:
+            warnings.warn(
+                f"{self} object is creating a new equivalent neighbor list."
+                f" This is happending since the force is moving to a new "
+                f"simulation. Set a new nlist to suppress this warning.",
+                RuntimeWarning)
+            self.nlist = copy.deepcopy(self.nlist)
+        self.nlist._attach(self._simulation)
+        if isinstance(self._simulation.device, hoomd.device.CPU):
+            # self.nlist._cpp_obj.setStorageMode(_nsearch.NeighborList.storageMode.half)
+            self.nlist._cpp_obj.setStorageMode(_nsearch.NeighborList.storageMode.full)
+        # TODO: understand why _nsearch.NeighborList.storageMode.half makes wierd errors!
+
+        else:
+            self.nlist._cpp_obj.setStorageMode(_nsearch.NeighborList.storageMode.full)
+
+        cpp_sys_def = self._simulation.state._cpp_sys_def
+        cpp_fluidgroup  = self._simulation.state._get_group(self.fluidgroup_filter)
+        cpp_solidgroup  = self._simulation.state._get_group(self.solidgroup_filter)
+        cpp_suspendedgroup  = self._simulation.state._get_group(self.suspendedgroup_filter)
+        cpp_kernel = self.kernel.cpp_smoothingkernel
+        cpp_eos = self.eos.cpp_stateequation
+        cpp_nlist =  self.nlist._cpp_obj
+
+        # Set Kernel specific Kappa in cpp-Nlist
+        self.kernel.setNeighborList(self.nlist)
+
+        self._cpp_obj = suspensionf_cls(cpp_sys_def, cpp_kernel, cpp_eos, cpp_nlist, cpp_fluidgroup, 
+                                cpp_solidgroup, cpp_suspendedgroup, self.cpp_densitymethod, self.cpp_viscositymethod)
+
+        # Set kernel parameters
+        kappa = self.kernel.Kappa()
+        mycpp_kappa = self.kernel.cpp_smoothingkernel.getKernelKappa()
+
+        pdata = self._simulation.state._cpp_sys_def.getParticleData()
+        globalN = pdata.getNGlobal()
+
+        self.consth = pdata.constSmoothingLength()
+        if self.consth:
+            self.maxh = pdata.getSlength(0)
+            if (self._simulation.device.communicator.rank == 0):
+                print(f'Using constant Smooting Length: {self.maxh}')
+
+            self._cpp_obj.setConstSmoothingLength(self.maxh)
+        else: 
+            self.maxh      = pdata.getMaxSmoothingLength()
+            if (self._simulation.device.communicator.rank == 0):
+                print('Non-Constant Smooting length')
+        self.rcut = kappa * self.maxh
+
+        # print(f'self.rcut {self.rcut}')
+
+        # Set rcut in neigbour list
+        self._param_dict.update(ParameterDict(
+                          rcut = self.rcut, 
+                          max_sl = self.maxh
+                          ))
+
+        # Reload density and viscosity methods from __dict__
+        self.str_densitymethod = self._param_dict._dict["densitymethod"]
+        self.str_viscositymethod = self._param_dict._dict["viscositymethod"]
+
+        if self.str_densitymethod == str('SUMMATION'):
+            self.cpp_densitymethod = hoomd.sph._sph.PhaseFlowDensityMethod.DENSITYSUMMATION
+        elif self.str_densitymethod == str('CONTINUITY'):
+            self.cpp_densitymethod = hoomd.sph._sph.PhaseFlowDensityMethod.DENSITYCONTINUITY
+        else:
+            raise ValueError("Using undefined DensityMethod.")
+
+        if self.str_viscositymethod == str('HARMONICAVERAGE'):
+            self.cpp_viscositymethod = hoomd.sph._sph.PhaseFlowViscosityMethod.HARMONICAVERAGE
+        else:
+            raise ValueError("Using undefined ViscosityMethod.")
+
+        # get all params in line
+        self.mu = self._param_dict['mu']
+        self.kc = self._param_dict['kc']
+        self.dc = self._param_dict['dc']
+        self.artificialviscosity = self._param_dict['artificialviscosity']
+        self.alpha = self._param_dict['alpha']
+        self.beta = self._param_dict['beta']
+        self.densitydiffusion = self._param_dict['densitydiffusion']
+        self.ddiff = self._param_dict['ddiff']
+        self.shepardrenormanlization = self._param_dict['shepardrenormanlization']
+        self.shepardfreq = self._param_dict['shepardfreq']
+        self.compute_solid_forces = self._param_dict['compute_solid_forces']
+        self.compute_wall_forces = self._param_dict['compute_wall_forces']
+        self.types = self._param_dict['types']
+
+
+        # self.set_params(self.mu, self.rho0_S, self.f0)
+        # self.setdensitymethod(self.str_densitymethod)
+        # self.setviscositymethod(self.str_viscositymethod)
+
+        self.set_params(self.mu, self.kc, self.dc)
+        self.setdensitymethod(self.str_densitymethod)
+        self.setviscositymethod(self.str_viscositymethod)
+
+        if (self.artificialviscosity == True):
+            self.activateArtificialViscosity(self.alpha, self.beta)
+        else:
+            self.deactivateArtificialViscosity()
+        
+        if (self.densitydiffusion == True):
+            self.activateDensityDiffusion(self.ddiff)
+        else:
+            self.deactivateDensityDiffusion()
+        
+        if (self.shepardrenormanlization == True):
+            self.activateShepardRenormalization(self.shepardfreq)
+        else:
+            self.deactivateShepardRenormalization()
+        
+        if (self.compute_solid_forces == True):
+            self.computeSolidForces()
+
+        self.setrcut(self.rcut,self.types)
+
+        self.setBodyAcceleration(self.gx, self.gy, self.gz, self.damp)
+
+        # Attach param_dict and typeparam_dict
+        super()._attach_hook()
+
+    def _detach_hook(self):
+        self.nlist._detach()
+
+    def set_params(self, mu, kc, dc):
+        # self.mu   = mu.item()   if isinstance(mu, np.generic)   else mu
+        self._cpp_obj.setParams(self.mu, self.kc, self.dc)
+        self.params_set = True
+        self._param_dict.__setattr__('params_set', True)
+
+    # @rcut.setter
+    def setrcut(self, rcut):
+        if rcut <= 0.0:
+            raise ValueError("Rcut has to be > 0.0.")
+        # self._cpp_obj.setRCut(('F', 'S'), rcut)
+        # self._cpp_obj.setRCut(('S', 'S'), rcut)
+        # self._cpp_obj.setRCut(('F', 'F'), rcut)
+        # # self._cpp_obj.setRCut(('F', 'O'), rcut)
+        # # self._cpp_obj.setRCut(('O', 'S'), rcut)
+        # self._cpp_obj.setRCut(('A', 'B'), rcut)
+        # self._cpp_obj.setRCut(('F', 'A'), rcut)
+        # self._cpp_obj.setRCut(('A', 'S'), rcut)
+        # self._cpp_obj.setRCut(('F', 'B'), rcut)
+        # self._cpp_obj.setRCut(('B', 'S'), rcut)
+        pairs = []
+        for i in range(len(types)):
+            for j in range(i, len(types)):
+                pairs.append((types[i], types[j]))
+                self._cpp_obj.setRCut((types[i], types[j]), rcut)
+        print(pairs)
+
+    # @property
+    def densitymethod(self):
+        # Invert key mapping
+        invD = dict((v,k) for k, v in self.DENSITYMETHODS.iteritems())
+        return invD[self._cpp_obj.getDensityMethod()]
+
+    # @densitymethod.setter
+    def setdensitymethod(self, method):
+        if method not in self.DENSITYMETHODS:
+            raise ValueError("Undefined DensityMethod.")
+        self._cpp_obj.setDensityMethod(self.DENSITYMETHODS[method])
+
+    # @property
+    def viscositymethod(self):
+        # Invert key mapping
+        invD = dict((v,k) for k, v in self.VISCOSITYMETHODS.iteritems())
+        return invD[self._cpp_obj.getViscosityMethod()]
+
+    # @viscositymethod.setter
+    def setviscositymethod(self, method):
+        if method not in self.VISCOSITYMETHODS:
+            raise ValueError("Undefined ViscosityMethod.")
+        self._cpp_obj.setViscosityMethod(self.VISCOSITYMETHODS[method])
+
+    def activateArtificialViscosity(self, alpha, beta):
+        self.alpha   = alpha.item()  if isinstance(alpha, np.generic)   else alpha
+        self.beta    = beta.item()   if isinstance(beta, np.generic)   else beta
+        self._cpp_obj.activateArtificialViscosity(alpha, beta)
+
+    def deactivateArtificialViscosity(self):
+        self._cpp_obj.deactivateArtificialViscosity()
+
+    def activateDensityDiffusion(self, ddiff):
+        self.ddiff   = ddiff.item()   if isinstance(ddiff, np.generic)   else ddiff
+        self._cpp_obj.activateDensityDiffusion(ddiff)
+
+    def deactivateDensityDiffusion(self):
+        self._cpp_obj.deactivateDensityDiffusion()
+
+    def activateShepardRenormalization(self, shepardfreq=30):
+        self.shepardfreq   = shepardfreq.item()   if isinstance(shepardfreq, np.generic)   else shepardfreq
+        self._cpp_obj.activateShepardRenormalization(int(shepardfreq))
+
+    def deactivateShepardRenormalization(self):
+        self._cpp_obj.deactivateShepardRenormalization()
+
+    def computeSolidForces(self):
+        self._cpp_obj.computeSolidForces()
+
+    def computeWallForces(self):
+        self._cpp_obj.computeWallForces()
+
+    def setBodyAcceleration(self,gx,gy,gz,damp=0):
+        self.accel_set = True
+        self._param_dict.__setattr__('accel_set', True)
+        # self.check_initialization();
+        # self.gx   = gx.item() if isinstance(gx, np.generic) else gx
+        # self.gy   = gy.item() if isinstance(gy, np.generic) else gy
+        # self.gz   = gz.item() if isinstance(gz, np.generic) else gz
+        # self.damp = int(damp.item()) if isinstance(damp,np.generic) else int(damp)
+        self.damp = abs(self.damp)
+
+        if ( self.gx == 0 and self.gy == 0 and self.gz == 0):
+            warnings.warn(
+                f"{self} No body force applied.",
+                RuntimeWarning)
+
+        # self.cpp_force.setAcceleration(self.gx,self.gy,self.gz,self.damp)
+        self._cpp_obj.setAcceleration(self.gx,self.gy,self.gz,self.damp)
+
+    def compute_dt(self, LREF, UREF, DX, DRHO=0.01, COURANT=0.25, gx=0.0, gy=0.0, gz=0.0):
+        # Input sanity
+        if LREF == 0.0:
+            raise ValueError('Reference length LREF may not be zero.')
+        if DRHO == 0.0:
+            raise ValueError('Maximum density variation DRHO may not be zero.')
+        if DX <= 0.0:
+            raise ValueError('DX may not be zero or negative.')
+
+        UREF = np.abs(UREF)
+
+        # Compute required quantities
+        # Magnitude of body force        
+        if (abs(gx) > 0.0 or abs(gy) > 0.0 or abs(gz) > 0.0):
+            GMAG = np.sqrt(self.gx**2+self.gy**2+self.gz**2)
+        else:
+            GMAG = 0.0
+
+        # Smoothing length
+        H   = self._param_dict['max_sl']
+        # Viscosity
+        MU  = self._param_dict['mu']
+        # Rest density
+        RHO0 = self.eos.RestDensity
+
+        # Speed of sound
+        # CFL condition
+        C2_1 = UREF*UREF/DRHO
+        # Gravity waves condition
+        C2_2 = GMAG*LREF/DRHO
+        # Fourier condition
+        C2_3 = (MU*UREF)/(RHO0*LREF*DRHO)
+        # Maximum speed of sound
+        C = np.sqrt(np.max([C2_1,C2_2,C2_3]))
+        self.eos.set_speedofsound(C)
+
+        # CFL condition
+        # DT_1 = 0.25*H/C
+        DT_1 = 0.25*DX/C
+        # Fourier condition
+        DT_2 = (DX*DX*RHO0)/(8.0*MU)
+        if GMAG > 0.0:
+            # Gravity waves condition
+            DT_3 = np.sqrt(H/(16.0*GMAG))
+            return COURANT*np.min([DT_1,DT_2,DT_3])
+        else:
+            return COURANT*np.min([DT_1,DT_2])
+
 # Dicts
 Kernel = {'_WendlandC2':'WC2','_WendlandC4':'WC4','_WendlandC6':'WC6','_Quintic':'Q','_CubicSpline':'CS'}
 EOS = {'_Linear':'L','_Tait':'T'}
