@@ -427,7 +427,6 @@ void GSDDumpWriter::analyze(uint64_t timestep)
     {
     Analyzer::analyze(timestep);
     int retval;
-    bool root = true;
 
     // truncate the file if requested
     if (m_truncate)
@@ -575,8 +574,8 @@ void GSDDumpWriter::writeFrameHeader(const GSDDumpWriter::GSDFrame& frame)
 
     if (m_nframes == 0 || m_dynamic[gsd_flag::particles_N])
         {
-        m_exec_conf->msg->notice(10) << "GSD: writing particles/N" << endl;
         uint32_t N = m_group->getNumMembersGlobal();
+        m_exec_conf->msg->notice(10) << "GSD: writing particles/N: " << N << endl;
         retval = gsd_write_chunk(&m_handle, "particles/N", GSD_TYPE_UINT32, 1, 1, 0, (void*)&N);
         GSDUtils::checkError(retval, m_fname);
         }
@@ -589,6 +588,7 @@ void GSDDumpWriter::writeAttributes(const GSDDumpWriter::GSDFrame& frame)
     {
     uint32_t N = m_group->getNumMembersGlobal();
     int retval;
+    m_exec_conf->msg->notice(10) << "GSD: writing attributes: N " << N << endl;
 
     if (m_dynamic[gsd_flag::particles_types] || m_nframes == 0)
         {
@@ -707,6 +707,7 @@ void GSDDumpWriter::writeProperties(const GSDDumpWriter::GSDFrame& frame)
     {
     uint32_t N = m_group->getNumMembersGlobal();
     int retval;
+    m_exec_conf->msg->notice(10) << "GSD: writing properties: N " << N << endl;
 
     if (frame.particle_data.pos.size() != 0)
         {

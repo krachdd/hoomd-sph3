@@ -15,7 +15,9 @@
 #include "ForceConstraint.h"
 #include "GSDDequeWriter.h"
 #include "GSDDumpWriter.h"
+#include "GSDDumpWriterMPI.h"
 #include "GSDReader.h"
+#include "GSDReaderMPI.h"
 #include "HOOMDMath.h"
 #include "Initializers.h"
 #include "Integrator.h"
@@ -289,6 +291,7 @@ PYBIND11_MODULE(_hoomd, m)
 
     // initializers
     export_GSDReader(m);
+    export_GSDReaderMPI(m);
 
     // computes
     export_Autotuned(m);
@@ -312,6 +315,7 @@ PYBIND11_MODULE(_hoomd, m)
     export_PythonAnalyzer(m);
     // export_DCDDumpWriter(m);
     export_GSDDumpWriter(m);
+    export_GSDDumpWriterMPI(m);
     export_GSDDequeWriter(m);
 
     // updaters

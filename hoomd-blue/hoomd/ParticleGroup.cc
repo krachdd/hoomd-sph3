@@ -84,6 +84,7 @@ ParticleGroup::ParticleGroup(std::shared_ptr<SystemDefinition> sysdef,
             }
         }
 
+
 #ifdef ENABLE_MPI
     if (m_pdata->getDomainDecomposition())
         {
@@ -572,9 +573,10 @@ void ParticleGroup::rebuildIndexList()
                 cur_member++;
                 }
             }
-
         m_num_local_members = cur_member;
+
         assert(m_num_local_members <= m_member_tags.getNumElements());
+        
         }
 
     // index has been rebuilt
