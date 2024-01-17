@@ -16,11 +16,13 @@ set(_${COMPONENT_NAME}_sources
     StateEquations.cc
     SPHBaseClass.cc
     SinglePhaseFlow.cc
+    SinglePhaseFlowNN.cc
 #     TwoPhaseFlow.cc
 #     SmoothingKernelExport.cc
     SmoothingKernel.cc
     CustomForceCompute.cc
     ComputeSPFBasicProperties.cc
+    ComputeSPFNNBasicProperties.cc
     HalfStepHook.cc
     ConstantForceCompute.cc
     )
@@ -31,7 +33,8 @@ set(_${COMPONENT_NAME}_headers
     SPHIntegrationMethodTwoStep.h     
 #     TwoPhaseFlowGPU.cuh
 #     GeneralGPUFunctions.cuh
-    SinglePhaseFlow.h     
+    SinglePhaseFlow.h 
+    SinglePhaseFlowNN.h         
     SPHIntegratorTwoStep.h            
 #     TwoPhaseFlowGPU.h
 #     RigidBodyIntegratorGPU.cuh     
@@ -53,6 +56,7 @@ set(_${COMPONENT_NAME}_headers
     VelocityVerletBasic.h
     CustomForceCompute.h
     ComputeSPFBasicProperties.h
+    ComputeSPFNNBasicProperties.h
     ComputeMechanicalProp.h
     EvaluationMethodDefinition.h
     ConstantForceCompute.h

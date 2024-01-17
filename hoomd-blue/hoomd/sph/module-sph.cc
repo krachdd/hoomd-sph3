@@ -15,6 +15,7 @@ maintainer: dkrach, david.krach@mib.uni-stuttgart.de
 // // #include "SuspendedObjectIntegrator.h"
 #include "RigidBodyIntegrator.h"
 #include "SinglePhaseFlow.h"
+#include "SinglePhaseFlowNN.h"
 // // #include "TwoPhaseFlow.h"
 #include "CustomForceCompute.h"
 
@@ -68,6 +69,7 @@ namespace detail
     // void export_StateEquation_Linear(pybind11::module& m);
 
     void export_ComputeSPFMechanicalProperties(pybind11::module& m);
+    void export_ComputeSPFNNMechanicalProperties(pybind11::module& m);
     // void export_LocalNeighborListDataHost(pybind11::module& m);
     void export_HalfStepHook(pybind11::module& m);
 
@@ -133,9 +135,21 @@ PYBIND11_MODULE(_sph, m){
     export_SinglePhaseFlow<cubicspline, linear>(m, "SinglePF_CS_L");
     export_SinglePhaseFlow<cubicspline, tait>(m, "SinglePF_CS_T");
 
+    export_SinglePhaseFlowNN<wendlandc2, linear>(m, "SinglePFNN_WC2_L");
+    export_SinglePhaseFlowNN<wendlandc2, tait>(m, "SinglePFNN_WC2_T");
+    export_SinglePhaseFlowNN<wendlandc4, linear>(m, "SinglePFNN_WC4_L");
+    export_SinglePhaseFlowNN<wendlandc4, tait>(m, "SinglePFNN_WC4_T");
+    export_SinglePhaseFlowNN<wendlandc6, linear>(m, "SinglePFNN_WC6_L");
+    export_SinglePhaseFlowNN<wendlandc6, tait>(m, "SinglePFNN_WC6_T");
+    export_SinglePhaseFlowNN<quintic, linear>(m, "SinglePFNN_Q_L");
+    export_SinglePhaseFlowNN<quintic, tait>(m, "SinglePFNN_Q_T");
+    export_SinglePhaseFlowNN<cubicspline, linear>(m, "SinglePFNN_CS_L");
+    export_SinglePhaseFlowNN<cubicspline, tait>(m, "SinglePFNN_CS_T");
+
     export_CustomForceCompute(m);
 
     export_ComputeSPFMechanicalProperties(m);
+    export_ComputeSPFNNMechanicalProperties(m);
 
     export_DensityMethod(m);
     export_ViscosityMethod(m);
