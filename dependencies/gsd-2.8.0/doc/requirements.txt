@@ -1,6 +1,0 @@
-cython
-furo
-ipython
-numpy
-pandas
-sphinx

@@ -239,6 +239,61 @@ class Simulation(metaclass=Loggable):
 
         self._init_system(step)
 
+    def create_state_from_pgsd(self,
+                              filename,
+                              frame=-1,
+                              domain_decomposition=(None, None, None)):
+        """Create the simulation state from a GSD file.
+
+        Args:
+            filename (str): GSD file to read in parallel
+
+            frame (int): Index of the frame to read from the file. Negative
+                values index back from the last frame in the file.
+
+            domain_decomposition (tuple): Choose how to distribute the state
+                across MPI ranks with domain decomposition. Provide a tuple
+                of 3 integers indicating the number of evenly spaced domains in
+                the x, y, and z directions (e.g. ``(8,4,2)``). Provide a tuple
+                of 3 lists of floats to set the fraction of the simulation box
+                to include in each domain. The sum of each list of floats must
+                be 1.0 (e.g. ``([0.25, 0.75], [0.2, 0.8], [1.0])``).
+
+        When `timestep` is `None` before calling, `create_state_from_pgsd`
+        sets `timestep` to the value in the selected GSD frame in the file.
+
+        Note:
+            Set any or all of the ``domain_decomposition`` tuple elements to
+            `None` and `create_state_from_pgsd` will select a value that
+            minimizes the surface area between the domains (e.g.
+            ``(2,None,None)``). The domains are spaced evenly along each
+            automatically selected direction. The default value of ``(None,
+            None, None)`` will automatically select the number of domains in all
+            directions.
+
+        .. rubric:: Example:
+
+        .. code-block:: python
+
+            simulation.create_state_from_gsd(filename=gsd_filename)
+        """
+
+        if self._state is not None:
+            raise RuntimeError("Cannot initialize more than once\n")
+        filename = _hoomd.mpi_bcast_str(filename, self.device._cpp_exec_conf)
+        # Grab snapshot and timestep
+        reader = _hoomd.GSDReaderMPI(self.device._cpp_exec_conf, filename,
+                                  abs(frame), frame < 0)
+        snapshot = Snapshot._from_cpp_snapshot(reader.getSnapshot(),
+                                               self.device.communicator)
+
+        step = reader.getTimeStep() if self.timestep is None else self.timestep
+        self._state = State(self, snapshot, domain_decomposition, distributed = True)
+
+        reader.clearSnapshot()
+
+        self._init_system(step)
+
     def create_state_from_snapshot(self,
                                    snapshot,
                                    domain_decomposition=(None, None, None)):
@@ -300,6 +355,18 @@ class Simulation(metaclass=Loggable):
             snapshot = Snapshot.from_gsd_snapshot(snapshot,
                                                   self._device.communicator)
             self._state = State(self, snapshot, domain_decomposition)
+        # PGSD ---
+        elif _match_class_path(snapshot, 'pgsd.hoomd.Frame'):
+            # snapshot is gsd.hoomd.Frame (gsd 2.8+, 3.x)
+            snapshot = Snapshot.from_pgsd_frame(snapshot,
+                                               self._device.communicator)
+            self._state = State(self, snapshot, domain_decomposition, distributed = True)
+        elif _match_class_path(snapshot, 'pgsd.hoomd.Snapshot'):
+            # snapshot is gsd.hoomd.Snapshot (gsd 2.x)
+            snapshot = Snapshot.from_pgsd_snapshot(snapshot,
+                                                  self._device.communicator)
+            self._state = State(self, snapshot, domain_decomposition, distributed = True)
+        # PGSD ---
         else:
             raise TypeError(
                 "Snapshot must be a hoomd.Snapshot, gsd.hoomd.Snapshot, "
@@ -308,7 +375,6 @@ class Simulation(metaclass=Loggable):
         step = 0
         if self.timestep is not None:
             step = self.timestep
-
         self._init_system(step)
 
     @property

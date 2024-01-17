@@ -71,6 +71,7 @@ ParticleGroup::ParticleGroup(std::shared_ptr<SystemDefinition> sysdef,
       m_global_ptl_num_change(false), m_update_tags(false), m_warning_printed(false)
     {
     // check input
+    std::cout << "PARTICLE GROUP check input!" << std::endl;
     unsigned int max_tag = m_pdata->getMaximumTag();
     for (std::vector<unsigned int>::const_iterator it = member_tags.begin();
          it != member_tags.end();
@@ -83,6 +84,7 @@ ParticleGroup::ParticleGroup(std::shared_ptr<SystemDefinition> sysdef,
             throw std::runtime_error("Error creating ParticleGroup\n");
             }
         }
+
 
 #ifdef ENABLE_MPI
     if (m_pdata->getDomainDecomposition())
@@ -572,9 +574,10 @@ void ParticleGroup::rebuildIndexList()
                 cur_member++;
                 }
             }
-
         m_num_local_members = cur_member;
+
         assert(m_num_local_members <= m_member_tags.getNumElements());
+        
         }
 
     // index has been rebuilt

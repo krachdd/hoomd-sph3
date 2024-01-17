@@ -1,0 +1,1 @@
+rm -rf log*.log rlog*.log c2 c3 c4 c8 c2.gsd c3.gsd c4.gsd c8.gsd rc2 rc3 rc4 rc8 rc2.gsd rc3.gsd rc4.gsd rc8.gsd rm SPHERE3D_*.log SPHERE3D_*init.gsd
