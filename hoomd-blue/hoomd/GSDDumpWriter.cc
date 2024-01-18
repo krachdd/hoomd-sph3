@@ -1571,7 +1571,7 @@ void GSDDumpWriter::populateLocalFrame(GSDDumpWriter::GSDFrame& frame, uint64_t 
 
     if (N > 0 && (m_dynamic[gsd_flag::particles_aux3] || m_nframes == 0))
         {
-        ArrayHandle<Scalar3> h_aux3(m_pdata->getAuxiliaries2(),
+        ArrayHandle<Scalar3> h_aux3(m_pdata->getAuxiliaries3(),
                                        access_location::host,
                                        access_mode::read);
 
