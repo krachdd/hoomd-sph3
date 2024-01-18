@@ -1569,24 +1569,24 @@ void GSDDumpWriter::populateLocalFrame(GSDDumpWriter::GSDFrame& frame, uint64_t 
             }
         }
 
-    if (N > 0 && (m_dynamic[gsd_flag::particles_aux2] || m_nframes == 0))
+    if (N > 0 && (m_dynamic[gsd_flag::particles_aux3] || m_nframes == 0))
         {
-        ArrayHandle<Scalar3> h_aux2(m_pdata->getAuxiliaries2(),
+        ArrayHandle<Scalar3> h_aux3(m_pdata->getAuxiliaries2(),
                                        access_location::host,
                                        access_mode::read);
 
-        frame.particle_data_present[gsd_flag::particles_aux2] = true;
+        frame.particle_data_present[gsd_flag::particles_aux3] = true;
 
         for (unsigned int index : m_index)
             {
-            vec3<float> aux2 = vec3<float>(h_aux2.data[index]);
+            vec3<float> aux3 = vec3<float>(h_aux3.data[index]);
 
-            if (aux2 != vec3<float>(0, 0, 0))
+            if (aux3 != vec3<float>(0, 0, 0))
                 {
-                all_default[gsd_flag::particles_aux2] = false;
+                all_default[gsd_flag::particles_aux3] = false;
                 }
 
-            frame.particle_data.aux2.push_back(aux2);
+            frame.particle_data.aux3.push_back(aux2);
             }
         }
 
