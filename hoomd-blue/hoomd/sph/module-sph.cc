@@ -52,7 +52,7 @@ namespace detail
     void export_SPHIntegratorTwoStep(pybind11::module& m);
     void export_SPHIntegrationMethodTwoStep(pybind11::module& m);
     // void export_VelocityVerlet(pybind11::module& m);
-    // void export_SuspendedObjectIntegrator(pybind11::module& m);
+    void export_SuspendedObjectIntegrator(pybind11::module& m);
     // void export_RigidBodyIntegrator(pybind11::module& m);
     // void export_SinglePhaseFlow(pybind11::module& m);
     // void export_StateEquations(pybind11::module& m);

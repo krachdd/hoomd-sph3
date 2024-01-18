@@ -197,6 +197,7 @@ class SinglePhaseFlowNNBasicProperties(Compute):
         self._cpp_obj.compute(self._simulation.timestep)
         return self._cpp_obj.max_shearrate
 
+
 class SuspensionFlowBasicProperties(Compute):
     """Compute mechanical properties of a subset of the system.
 

@@ -199,9 +199,6 @@ class SPHModel(force.Force):
         return r_cut_dict;
 
 
-
-
-
 class SinglePhaseFlow(SPHModel):
     R""" SinglePhaseFlow solver
     """
@@ -514,7 +511,7 @@ class SinglePhaseFlow(SPHModel):
         # self.cpp_force.setAcceleration(self.gx,self.gy,self.gz,self.damp)
         self._cpp_obj.setAcceleration(self.gx,self.gy,self.gz,self.damp)
 
-    def compute_dt(self, LREF, UREF, DX, DRHO=0.01, COURANT=0.25, gx=0.0, gy=0.0, gz=0.0):
+    def compute_dt(self, LREF, UREF, DX, DRHO=0.01, gx=0.0, gy=0.0, gz=0.0, COURANT=0.25):
         # Input sanity
         if LREF == 0.0:
             raise ValueError('Reference length LREF may not be zero.')
@@ -885,7 +882,7 @@ class SinglePhaseFlowNN(SPHModel):
         # self.cpp_force.setAcceleration(self.gx,self.gy,self.gz,self.damp)
         self._cpp_obj.setAcceleration(self.gx,self.gy,self.gz,self.damp)
 
-    def compute_dt(self, LREF, UREF, DX, DRHO=0.01, COURANT=0.25, gx=0.0, gy=0.0, gz=0.0):
+    def compute_dt(self, LREF, UREF, DX, DRHO=0.01, gx=0.0, gy=0.0, gz=0.0, COURANT=0.25):
         # Input sanity
         if LREF == 0.0:
             raise ValueError('Reference length LREF may not be zero.')
@@ -1163,7 +1160,7 @@ class SuspensionFlow(SPHModel):
         if (self.compute_solid_forces == True):
             self.computeSolidForces()
 
-        self.setrcut(self.rcut,self.types)
+        self.setrcut(self.rcut, self.types)
 
         self.setBodyAcceleration(self.gx, self.gy, self.gz, self.damp)
 
@@ -1180,19 +1177,9 @@ class SuspensionFlow(SPHModel):
         self._param_dict.__setattr__('params_set', True)
 
     # @rcut.setter
-    def setrcut(self, rcut):
+    def setrcut(self, rcut, types):
         if rcut <= 0.0:
             raise ValueError("Rcut has to be > 0.0.")
-        # self._cpp_obj.setRCut(('F', 'S'), rcut)
-        # self._cpp_obj.setRCut(('S', 'S'), rcut)
-        # self._cpp_obj.setRCut(('F', 'F'), rcut)
-        # # self._cpp_obj.setRCut(('F', 'O'), rcut)
-        # # self._cpp_obj.setRCut(('O', 'S'), rcut)
-        # self._cpp_obj.setRCut(('A', 'B'), rcut)
-        # self._cpp_obj.setRCut(('F', 'A'), rcut)
-        # self._cpp_obj.setRCut(('A', 'S'), rcut)
-        # self._cpp_obj.setRCut(('F', 'B'), rcut)
-        # self._cpp_obj.setRCut(('B', 'S'), rcut)
         pairs = []
         for i in range(len(types)):
             for j in range(i, len(types)):
@@ -1270,7 +1257,7 @@ class SuspensionFlow(SPHModel):
         # self.cpp_force.setAcceleration(self.gx,self.gy,self.gz,self.damp)
         self._cpp_obj.setAcceleration(self.gx,self.gy,self.gz,self.damp)
 
-    def compute_dt(self, LREF, UREF, DX, DRHO=0.01, COURANT=0.25, gx=0.0, gy=0.0, gz=0.0):
+    def compute_dt(self, LREF, UREF, DX, DRHO=0.01, gx=0.0, gy=0.0, gz=0.0, COURANT=0.25):
         # Input sanity
         if LREF == 0.0:
             raise ValueError('Reference length LREF may not be zero.')
@@ -1287,7 +1274,6 @@ class SuspensionFlow(SPHModel):
             GMAG = np.sqrt(self.gx**2+self.gy**2+self.gz**2)
         else:
             GMAG = 0.0
-
         # Smoothing length
         H   = self._param_dict['max_sl']
         # Viscosity

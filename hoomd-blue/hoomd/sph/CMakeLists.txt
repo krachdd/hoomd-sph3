@@ -10,8 +10,8 @@ set(_${COMPONENT_NAME}_sources
     SPHIntegrationMethodTwoStep.cc
     VelocityVerlet.cc
     VelocityVerletBasic.cc
-    SuspendedObjectIntegrator.cc
     RigidBodyIntegrator.cc
+    SuspendedObjectIntegrator.cc
 #     StateEquationsExport.cc
     StateEquations.cc
     SPHBaseClass.cc
@@ -24,6 +24,7 @@ set(_${COMPONENT_NAME}_sources
     CustomForceCompute.cc
     ComputeSPFBasicProperties.cc
     ComputeSPFNNBasicProperties.cc
+    ComputeSusFBasicProperties.cc
     HalfStepHook.cc
     ConstantForceCompute.cc
     )
@@ -36,7 +37,7 @@ set(_${COMPONENT_NAME}_headers
 #     GeneralGPUFunctions.cuh
     SinglePhaseFlow.h 
     SinglePhaseFlowNN.h  
-    SuspensionFlow.h       
+    SuspensionFlow.h     
     SPHIntegratorTwoStep.h            
 #     TwoPhaseFlowGPU.h
 #     RigidBodyIntegratorGPU.cuh     
@@ -47,18 +48,19 @@ set(_${COMPONENT_NAME}_headers
 #     SolidFluidTypeBit.h   
 #     SuspendedObjectIntegratorGPU.cuh  
 #     VelocityVerletGPU.cuh
-    RigidBodyIntegrator.h          
+    RigidBodyIntegrator.h   
+    SuspendedObjectIntegrator.h              
 #     SPHBaseClass.cuh      
 #     SuspendedObjectIntegratorGPU.h    
 #     VelocityVerletGPU.h
 #     SinglePhaseFlowGPU.cuh         
     SPHBaseClass.h        
-    SuspendedObjectIntegrator.h       
     VelocityVerlet.h
     VelocityVerletBasic.h
     CustomForceCompute.h
     ComputeSPFBasicProperties.h
     ComputeSPFNNBasicProperties.h
+    ComputeSusFBasicProperties.h
     ComputeMechanicalProp.h
     EvaluationMethodDefinition.h
     ConstantForceCompute.h

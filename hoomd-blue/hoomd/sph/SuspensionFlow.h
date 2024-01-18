@@ -46,7 +46,6 @@ maintainer: dkrach, david.krach@mib.uni-stuttgart.de
 #ifndef __SuspensionFlow_H__
 #define __SuspensionFlow_H__
 
-
 #ifndef M_PI
 #define M_PI 3.14159265358979323846
 #endif
@@ -97,7 +96,7 @@ class PYBIND11_EXPORT SuspensionFlow : public SPHBaseClass<KT_, SET_>
         /*! Set the parameters
          * \param mu Dynamic viscosity
          */
-        virtual void setParams(Scalar mu, Scalar rho0_S, Scalar f0);
+        virtual void setParams(Scalar mu, Scalar kc, Scalar dc);
 
         //! Getter and Setter methods for density method
         DensityMethod getDensityMethod()
@@ -137,15 +136,6 @@ class PYBIND11_EXPORT SuspensionFlow : public SPHBaseClass<KT_, SET_>
         void computeSolidForces()
             {
             m_compute_solid_forces = true;
-            }
-
-
-        /*! Set compute wall forces option to true. This is necessary if 
-         *  if there are walls defined, then solid body IDs start with 1 instead of 0
-         */
-        void computeWallForces()
-            {
-            m_walls = true;
             }
 
         /*! Turn Monaghan type artificial viscosity option on.
@@ -215,9 +205,6 @@ class PYBIND11_EXPORT SuspensionFlow : public SPHBaseClass<KT_, SET_>
             flags[comm_flag::pressure] = 1; // Stores pressure
             flags[comm_flag::energy] = 0; // Stores density and pressure
             flags[comm_flag::auxiliary1] = 1; // Stores fictitious velocity
-            flags[comm_flag::auxiliary2] = 1; // Stores contact force
-            flags[comm_flag::auxiliary3] = 1; // Stores lubrication force
-            flags[comm_flag::auxiliary4] = 1; // Stores total contact force (contact + lubrication)
             flags[comm_flag::slength] = 1; // Stores smoothing length TODO is this needed
             // Add flags requested by base class
             flags |= ForceCompute::getRequestedCommFlags(timestep);
@@ -270,12 +257,8 @@ class PYBIND11_EXPORT SuspensionFlow : public SPHBaseClass<KT_, SET_>
         std::vector<unsigned int> m_solidtypes; //!< Solid type numbers
         std::vector<unsigned int> m_suspendedtypes; //!< Solid type numbers
         GPUArray<unsigned int> m_type_property_map; //!< to check if a particle type is solid or fluid
-        std::vector<Scalar4> m_centerofmasses;  //!< Vector with center of mass and typeID for each solid body besides walls
-        std::vector<Scalar3> m_repulsiveforces; //!< Vector with repulsive forces per solid body
-        std::vector<Scalar3> m_velocities;      //!< Vector with velocities of solid bodies
-        unsigned int m_maxSuspendedID;              //!< maximum nuumber of solid bodies
-        // >> fixed walls always typeID 0; fluid always typeID n (last)
-        std::vector<Scalar> m_radii;            //!< Vector with equivalent radi of all solid bodies
+        unsigned int m_maxSuspendedID;              //!< maximum nuumber of solid bodies        
+        std::vector<Scalar4> m_centerofmasses;  //!< Vector with center of mass and typeID for each solid body besides walls        
         Scalar m_kc; //!< Spring stiffness of contact force
         Scalar m_dc; //!< Damping constant of contact force
 
@@ -287,8 +270,6 @@ class PYBIND11_EXPORT SuspensionFlow : public SPHBaseClass<KT_, SET_>
         bool m_shepard_renormalization; //!< Set to true if Shepard type density reinitialization is to be used
         bool m_params_set; //!< True if parameters are set
         bool m_solid_removed; //!< True if solid Particles have been marked to remove 
-        bool m_walls; //!< True if there are walls defined, solid body IDs start with 1 instead of 0
-
 
         // Log parameters
         uint64_t m_log_computed_last_timestep; //!< Last time step where log quantities were computed
@@ -318,7 +299,7 @@ class PYBIND11_EXPORT SuspensionFlow : public SPHBaseClass<KT_, SET_>
         */
         void compute_noslipsolid(uint64_t timestep);
 
-        /*! Helper function to compute fictitious solid particle properties (pressures and velocities)
+        /*! Helper function to compute fictitious suspended particle properties (pressures and velocities)
         * \pre Ghost particle number densities (i.e. density array) must be up-to-date
         * \pre Solid normalization constant \sum_j w_ij must be computed and stored in density array
         * \post Fictitious particle properties are computed and stored in aux1 array
@@ -330,30 +311,16 @@ class PYBIND11_EXPORT SuspensionFlow : public SPHBaseClass<KT_, SET_>
         */
         void renormalize_density(uint64_t timestep);
 
+        // /*! Helper function to calculate center of mass of suspendedtypes
+        // * \post Based on SuspendedObjectIntegrator
+        // */
+        // void compute_Centerofmasses(uint64_t timestep, bool print);
+
+
         /*! Helper function to calculate center of mass of suspendedtypes
         * \post Based on SuspendedObjectIntegrator
         */
-        void compute_Centerofmasses(uint64_t timestep, bool print);
-
-        //  /*! Helper function to calculate equivalent radii of m_maxSuspendedID
-        // * \post eqivalent radii stored in m_radi dependent on type id
-        // */
-        // void compute_equivalentRadii(uint64_t timestep, bool print);
-
-        /*! Helper function to calculate lubrication force between solids
-        * \post Based on approach of Bian, Ellero, Vazquez
-        */
-        void compute_lubrication(uint64_t timestep);
-
-        // /*! Helper function to calculate repulsive force between solids
-        // * \post Based on approach of Bian, Ellero, Vazquez
-        // */
-        // void compute_repulsiveForce(uint64_t timestep, bool print);
-
-        // /*! Helper function to sum lubrication force and repulsive force
-        // * \post Based on approach of Bian, Ellero, Vazquez
-        // */
-        // void sum_contactforces(uint64_t timestep);
+        void compute_Centerofmasses(uint64_t timestep);
 
         /*! Helper function where the actual force computation takes place
          * \pre Number densities and fictitious solid particle properties must be up-to-date
@@ -379,12 +346,6 @@ class PYBIND11_EXPORT SuspensionFlow : public SPHBaseClass<KT_, SET_>
         * \post Ghost particle auxiliary array 1 is up-to-date
         */
         void update_ghost_aux1(uint64_t timestep);
-
-        /*! Helper function to set communication flags and update auxiliary array 2
-        * \param timestep The time step
-        * \post particle auxiliary array 2 is up-to-date
-        */
-        void update_ghost_aux2(uint64_t timestep);
 
         /*! Helper function to set communication flags and update auxiliary array 3
         * \param timestep The time step
