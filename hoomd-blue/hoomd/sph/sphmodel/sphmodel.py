@@ -506,7 +506,7 @@ class SinglePhaseFlow(SPHModel):
         # self.cpp_force.setAcceleration(self.gx,self.gy,self.gz,self.damp)
         self._cpp_obj.setAcceleration(self.gx,self.gy,self.gz,self.damp)
 
-    def compute_dt(self, LREF, UREF, DX, DRHO=0.01, COURANT=0.25):
+    def compute_dt(self, LREF, UREF, DX, DRHO=0.01, gx=0.0, gy=0.0, gz=0.0, COURANT=0.25):
         # Input sanity
         if LREF == 0.0:
             raise ValueError('Reference length LREF may not be zero.')
@@ -519,10 +519,11 @@ class SinglePhaseFlow(SPHModel):
 
         # Compute required quantities
         # Magnitude of body force
-        if not self.accel_set:
-            GMAG = 0.0
-        else:
+        if (abs(gx) > 0.0 or abs(gy) > 0.0 or abs(gz) > 0.0):
             GMAG = np.sqrt(self.gx**2+self.gy**2+self.gz**2)
+        else:
+            GMAG = 0.0
+
         # Smoothing length
         H   = self._param_dict['max_sl']
         # Viscosity
