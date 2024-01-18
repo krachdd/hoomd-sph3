@@ -1586,7 +1586,8 @@ void GSDDumpWriter::populateLocalFrame(GSDDumpWriter::GSDFrame& frame, uint64_t 
                 all_default[gsd_flag::particles_aux3] = false;
                 }
 
-            frame.particle_data.aux3.push_back(aux2);
+            frame.particle_data.aux3.push_back(aux3);
+
             }
         }
 

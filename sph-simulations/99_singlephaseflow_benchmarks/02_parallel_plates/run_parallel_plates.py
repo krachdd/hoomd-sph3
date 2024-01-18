@@ -127,7 +127,7 @@ maximum_smoothing_length = device.communicator.bcast_double(maximum_smoothing_le
 model.max_sl = maximum_smoothing_length
 
 # compute dt
-dt = model.compute_dt(lref, refvel, dx, drho)
+dt = model.compute_dt(lref, refvel, dx, drho, fx)
 
 
 integrator = hoomd.sph.Integrator(dt=dt)
