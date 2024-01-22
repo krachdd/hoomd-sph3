@@ -919,6 +919,7 @@ void SinglePhaseFlowTV<KT_, SET_>::forcecomputation(uint64_t timestep)
     ArrayHandle<Scalar>  h_pressure(this->m_pdata->getPressures(), access_location::host, access_mode::readwrite);
     ArrayHandle<Scalar3> h_vf(this->m_pdata->getAuxiliaries1(), access_location::host,access_mode::read);
     ArrayHandle<Scalar3> h_bpc(this->m_pdata->getAuxiliaries2(), access_location::host,access_mode::readwrite); // background pressure contribution to tv
+    ArrayHandle<Scalar3> h_tv(this->m_pdata->getAuxiliaries3(), access_location::host,access_mode::read); // transport velocity of the particle tv
     ArrayHandle<Scalar>  h_h(this->m_pdata->getSlengths(), access_location::host, access_mode::read);
     
     // access the neighbor list
@@ -938,7 +939,7 @@ void SinglePhaseFlowTV<KT_, SET_>::forcecomputation(uint64_t timestep)
     const BoxDim& box = this->m_pdata->getGlobalBox();
 
     // Local variable to store things
-    Scalar temp0 = 0;
+    Scalar temp0 = 0; 
 
     // maximum velocity variable for adaptive timestep
     double max_vel = 0.0;
@@ -967,6 +968,11 @@ void SinglePhaseFlowTV<KT_, SET_>::forcecomputation(uint64_t timestep)
         vi.z = h_velocity.data[i].z;
         Scalar mi = h_velocity.data[i].w;
 
+        Scalar3 tvi;
+        tvi.x = h_tv.data[i].x;
+        tvi.y = h_tv.data[i].y;
+        tvi.z = h_tv.data[i].z;
+
         // Read particle i pressure
         Scalar Pi = h_pressure.data[i];
 
@@ -976,6 +982,17 @@ void SinglePhaseFlowTV<KT_, SET_>::forcecomputation(uint64_t timestep)
 
         // // Total velocity of particle
         Scalar vi_total = sqrt((vi.x * vi.x) + (vi.y * vi.y) + (vi.z * vi.z));
+
+        // compute \mathbf{A}_i, artificial stress tensor of particle i 
+        Scalar A11i = rhoi * vi.x * ( tvi.x - vi.x );
+        Scalar A12i = rhoi * vi.x * ( tvi.y - vi.y );
+        Scalar A13i = rhoi * vi.x * ( tvi.z - vi.z );
+        Scalar A21i = rhoi * vi.y * ( tvi.x - vi.x );
+        Scalar A22i = rhoi * vi.y * ( tvi.y - vi.y );
+        Scalar A23i = rhoi * vi.y * ( tvi.z - vi.z );
+        Scalar A31i = rhoi * vi.z * ( tvi.x - vi.x );
+        Scalar A32i = rhoi * vi.z * ( tvi.y - vi.y );
+        Scalar A33i = rhoi * vi.z * ( tvi.z - vi.z );
 
         // Properties needed for adaptive timestep
         if (i == 0) { max_vel = vi_total; }
@@ -1037,6 +1054,23 @@ void SinglePhaseFlowTV<KT_, SET_>::forcecomputation(uint64_t timestep)
             Scalar rhoj = h_density.data[k];
             Scalar Vj   = mj / rhoj;
 
+            Scalar3 tvi;
+            tvj.x = h_tv.data[k].x;
+            tvj.y = h_tv.data[k].y;
+            tvj.z = h_tv.data[k].z;
+
+            // compute \mathbf{A}_j, artificial stress tensor of particle j 
+            Scalar A11j = rhoj * vj.x * ( tvj.x - vj.x );
+            Scalar A12j = rhoj * vj.x * ( tvj.y - vj.y );
+            Scalar A13j = rhoj * vj.x * ( tvj.z - vj.z );
+            Scalar A21j = rhoj * vj.y * ( tvj.x - vj.x );
+            Scalar A22j = rhoj * vj.y * ( tvj.y - vj.y );
+            Scalar A23j = rhoj * vj.y * ( tvj.z - vj.z );
+            Scalar A31j = rhoj * vj.z * ( tvj.x - vj.x );
+            Scalar A32j = rhoj * vj.z * ( tvj.y - vj.y );
+            Scalar A33j = rhoj * vj.z * ( tvj.z - vj.z );
+
+
             // Read particle k pressure
             Scalar Pj = h_pressure.data[k];
 
@@ -1087,12 +1121,12 @@ void SinglePhaseFlowTV<KT_, SET_>::forcecomputation(uint64_t timestep)
                     }
                 }
 
-            // Add contribution to fluid particle
+            // Add contribution to fluid particle; pressure interaction force
             h_force.data[i].x += temp0*dwdr_r*dx.x;
             h_force.data[i].y += temp0*dwdr_r*dx.y;
             h_force.data[i].z += temp0*dwdr_r*dx.z;
 
-            // Add contribution to solid particle
+            // Add contribution to solid particl; pressure interaction force
             if ( issolid && m_compute_solid_forces )
                 {
                 h_force.data[k].x -= (mj/mi)*temp0*dwdr_r*dx.x;
@@ -1106,13 +1140,23 @@ void SinglePhaseFlowTV<KT_, SET_>::forcecomputation(uint64_t timestep)
             h_force.data[i].y  += temp0*dv.y;
             h_force.data[i].z  += temp0*dv.z;
 
-            // Add contribution to solid particle
+            // Add contribution to solid particle; viscous interaction force
             if ( issolid && m_compute_solid_forces )
                 {
                 h_force.data[k].x -= (mj/mi)*temp0*dv.x;
                 h_force.data[k].y -= (mj/mi)*temp0*dv.y;
                 h_force.data[k].z -= (mj/mi)*temp0*dv.z;
                 }
+
+            // Evaluate and add artificial stress part
+            temp0 = 0.5 * (Vi*Vi+Vj*Vj) * dwdr_r;
+            Scalar A1ij = ( A11i + A11j ) * dx.x + ( A12i + A12j ) * dx.y + ( A13i + A13j ) * dx.z;
+            Scalar A2ij = ( A21i + A21j ) * dx.x + ( A22i + A22j ) * dx.y + ( A23i + A23j ) * dx.z;
+            Scalar A3ij = ( A31i + A31j ) * dx.x + ( A32i + A32j ) * dx.y + ( A33i + A33j ) * dx.z;
+
+            h_force.data[k].x += temp0 * A1ij; 
+            h_force.data[k].y += temp0 * A2ij; 
+            h_force.data[k].z += temp0 * A3ij; 
 
             // Evaluate background pressure contribution in aux2
             h_bpc.data[i].x -= (Vi*Vi+Vj*Vj) * this->m_eos->getBackgroundPressure()/m_i * dwdr_r * dx.x;
