@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 
 """----------------------------------------------------------
-maintainer: dkrach, david.krach@mib.uni-stuttgart.de
+maintainer: drostan, daniel.rostan@mib.uni-stuttgart.de
 -----------------------------------------------------------"""
 # ----- HEADER -----------------------------------------------
 import hoomd
@@ -24,32 +24,45 @@ device = hoomd.device.CPU(notice_level=2)
 # device = hoomd.device.CPU(notice_level=10)
 sim = hoomd.Simulation(device=device)
 
-# Fluid and particle properties
+# Discretization parameters
 num_length          = int(sys.argv[1])
-lref                = 0.001               # [m]
-voxelsize           = lref/float(num_length)
+lref                = 0.01              # m
+voxelsize           = lref/num_length
 dx                  = voxelsize
 specific_volume     = dx * dx * dx
-rho0                = 1000.0
+rho0                = 1920.0              # [kg / m^3]
 mass                = rho0 * specific_volume
-#fx                  = 0.1                # [m/s]
-viscosity           = 0.01               # [Pa s]
-lidvel              = 0.01
+viscosity0          = 0.5               # [Pa s]
+shearstress0        = 40.0
+m_model             = 50
 
+# Inner diameter and radius
+innerD = 0.25                              # [m]
+innerR = 0.5*innerD                       # [m]
 
-
+# Angular velocity in rad/s and 1/s
+angvel_s = 1.3333                           # 1/s
+angvel   = angvel_s*(2*np.pi)            # rad/s
 
 # get kernel properties
 kernel  = 'WendlandC4'
 slength = hoomd.sph.kernel.OptimalH[kernel]*dx       # m
 rcut    = hoomd.sph.kernel.Kappa[kernel]*slength     # m
 
+# types 
+types = ['F', 'S', 'R', 'D']
+
 # particles per Kernel Radius
 part_rcut  = math.ceil(rcut/dx) 
-part_depth = math.ceil(2.5 * hoomd.sph.kernel.Kappa[kernel] * rcut/dx) 
+Lx = innerD/voxelsize + 3*part_rcut
+Ly = lref/voxelsize + 3*part_rcut
+Lz = innerD/voxelsize + 3*part_rcut
+outerR = innerR + 2.0*part_rcut * voxelsize
+
 
 # get simulation box sizes etc.
-nx, ny, nz = int(num_length), int(num_length + (2*part_rcut)), int(part_depth)
+# nx, ny, nz = int(num_length + (3*part_rcut)), int(num_length + (3*part_rcut)), int(0.2*num_length + (3*part_rcut))
+nx, ny, nz = int(Lx), int(Ly), int(Lz)
 lx, ly, lz = float(nx) * voxelsize, float(ny) * voxelsize, float(nz) * voxelsize
 # box dimensions
 box_lx, box_ly, box_lz = lx, ly, lz
@@ -75,7 +88,7 @@ snapshot.configuration.box     = [box_lx, box_ly, box_lz] + [0, 0, 0]
 snapshot.particles.N           = n_particles
 snapshot.particles.position    = positions
 snapshot.particles.typeid      = [0] * n_particles
-snapshot.particles.types       = ['F', 'S']
+snapshot.particles.types       = types
 snapshot.particles.velocity    = velocities
 snapshot.particles.mass        = masses
 snapshot.particles.slength     = slengths
@@ -88,22 +101,44 @@ vels = snapshot.particles.velocity[:]
 for i in range(len(x)):
     xi,yi,zi  = x[i][0], x[i][1], x[i][2]
     tid[i]    = 0
-    # solid walls 
-    if ( yi < -0.5 * lref or yi > 0.5 * lref):
+    # solid outside boundary walls 
+    if (np.sqrt((xi)**2 + (zi)**2) > innerR):
         tid[i] = 1
+    # lower plate
+    if (yi < -0.5 * lref):
+        tid[i] = 1
+    # upper moving plate
     if (yi > 0.5 * lref):
-        vels[i][0] = lidvel
+        tid[i] = 2
+    # particles to delete
+    if (np.sqrt((xi)**2 + (zi)**2) > outerR):
+        tid[i] = 3
 
 snapshot.particles.typeid[:]     = tid
 snapshot.particles.velocity[:]   = vels
 
 sim.create_state_from_snapshot(snapshot)
 
-init_filename = f'couette_flow_{nx}_{ny}_{nz}_vs_{voxelsize}_init.gsd'
-hoomd.write.GSD.write(state = sim.state, mode = 'wb', filename = init_filename)
+# Identify solid particles with zero charge and delete them ( redundant solid particles )
+tags    = []
+deleted = 0
 
-# with gsd.hoomd.open(name = init_filename, mode = 'wb') as f:
-#     f.append(snapshot)
+with sim.state.cpu_local_snapshot as snap:
+    for i in range(len(snap.particles.position)):
+        # print(data.particles.mass[i])
+        if snap.particles.typeid[i] == 3:
+            tags.append(snap.particles.tag[i])
+            #print('tag:',snap.particles.tag[i])
+            # print(f'Rank: {device.communicator.rank} -> Delete Particle {data.particles.tag[i]}')
+            deleted += 1
+
+# if device.communicator.rank == 0:
+for t in tags:
+    # print(f'Rank: {device.communicator.rank} --> Remove particle {t} of {deleted}')
+    sim.state.removeParticle(t)
+
+init_filename = f'pp1_rheometer_closed_ramp_{nx}_{ny}_{nz}_vs_{voxelsize}_init.gsd'
+hoomd.write.GSD.write(state = sim.state, mode = 'wb', filename = init_filename)
 
 if device.communicator.rank == 0:
     export_gsd2vtu.export_spf(init_filename)

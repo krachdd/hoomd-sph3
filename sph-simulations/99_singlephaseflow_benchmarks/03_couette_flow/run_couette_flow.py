@@ -70,6 +70,7 @@ lidvel              = 0.01
 
 refvel = lidvel * lref * lref * 0.25 / (viscosity/rho0)
 
+types = ['F','S']
 
 # get kernel properties
 kernel  = 'WendlandC4'
@@ -110,6 +111,7 @@ model = hoomd.sph.sphmodel.SinglePhaseFlow(kernel = kernel_obj,
 if device.communicator.rank == 0:
     print("SetModelParameter on all ranks")
 
+model.types = types
 model.mu = viscosity
 model.densitymethod = densitymethod
 model.gx = fx

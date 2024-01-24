@@ -1220,8 +1220,8 @@ void SuspensionFlow<KT_, SET_>::compute_Centerofmasses(uint64_t timestep)
 
     // Loop over all solid bodies --> if there are walls, they have to have the typeID 0 --> counter starts at 1
     unsigned int start = 0;
-    if (m_walls)
-        start = 1;
+    // if (m_walls)
+    //     start = 1;
 
     for (unsigned int i = start; i < m_suspendedtypes.size(); i++)
         {
@@ -1285,14 +1285,14 @@ void SuspensionFlow<KT_, SET_>::compute_Centerofmasses(uint64_t timestep)
         // Set typeID
         centerofmass.w = m_suspendedtypes[i];
 
-        if ( print and timestep==1)
-            {
-            this->m_exec_conf->msg->notice(2) << "SuspendedObject " << m_suspendedtypes[i] << " consists of " << totalgroupN << " slave particles" << endl;
-            this->m_exec_conf->msg->notice(2) << "SuspendedObject " << m_suspendedtypes[i] << " center of Mass x: " << centerofmass.x << endl;
-            this->m_exec_conf->msg->notice(2) << "SuspendedObject " << m_suspendedtypes[i] << " center of mass y: " << centerofmass.y << endl;
-            this->m_exec_conf->msg->notice(2) << "SuspendedObject " << m_suspendedtypes[i] << " center of mass z: " << centerofmass.z << endl;
-            this->m_exec_conf->msg->notice(2) << "SuspendedObject " << m_suspendedtypes[i] << " type ID: " << centerofmass.w << endl;
-            }
+        // if ( print and timestep==1)
+        //     {
+        //     this->m_exec_conf->msg->notice(2) << "SuspendedObject " << m_suspendedtypes[i] << " consists of " << totalgroupN << " slave particles" << endl;
+        //     this->m_exec_conf->msg->notice(2) << "SuspendedObject " << m_suspendedtypes[i] << " center of Mass x: " << centerofmass.x << endl;
+        //     this->m_exec_conf->msg->notice(2) << "SuspendedObject " << m_suspendedtypes[i] << " center of mass y: " << centerofmass.y << endl;
+        //     this->m_exec_conf->msg->notice(2) << "SuspendedObject " << m_suspendedtypes[i] << " center of mass z: " << centerofmass.z << endl;
+        //     this->m_exec_conf->msg->notice(2) << "SuspendedObject " << m_suspendedtypes[i] << " type ID: " << centerofmass.w << endl;
+        //     }
 
     #ifdef ENABLE_MPI
         MPI_Allreduce(MPI_IN_PLACE, &centerofmass.x, 1, MPI_HOOMD_SCALAR, MPI_MAX, this->m_exec_conf->getMPICommunicator());
@@ -1312,16 +1312,16 @@ void SuspensionFlow<KT_, SET_>::compute_Centerofmasses(uint64_t timestep)
 
         }
 
-    for (unsigned int i = start; i < m_suspendedtypes.size(); i++)
-        {
-        if ( print and timestep==1)
-            {
-            this->m_exec_conf->msg->notice(2) << "SuspendedObject " << m_suspendedtypes[i] << " center of Mass x: " << m_centerofmasses[i].x << endl;
-            this->m_exec_conf->msg->notice(2) << "SuspendedObject " << m_suspendedtypes[i] << " center of mass y: " << m_centerofmasses[i].y << endl;
-            this->m_exec_conf->msg->notice(2) << "SuspendedObject " << m_suspendedtypes[i] << " center of mass z: " << m_centerofmasses[i].z << endl;
-            this->m_exec_conf->msg->notice(2) << "SuspendedObject " << m_suspendedtypes[i] << " type ID: " << m_centerofmasses[i].w << endl;
-            }
-        }
+    // for (unsigned int i = start; i < m_suspendedtypes.size(); i++)
+    //     {
+    //     if ( print and timestep==1)
+    //         {
+    //         this->m_exec_conf->msg->notice(2) << "SuspendedObject " << m_suspendedtypes[i] << " center of Mass x: " << m_centerofmasses[i].x << endl;
+    //         this->m_exec_conf->msg->notice(2) << "SuspendedObject " << m_suspendedtypes[i] << " center of mass y: " << m_centerofmasses[i].y << endl;
+    //         this->m_exec_conf->msg->notice(2) << "SuspendedObject " << m_suspendedtypes[i] << " center of mass z: " << m_centerofmasses[i].z << endl;
+    //         this->m_exec_conf->msg->notice(2) << "SuspendedObject " << m_suspendedtypes[i] << " type ID: " << m_centerofmasses[i].w << endl;
+    //         }
+    //     }
 
     }
 
