@@ -240,6 +240,37 @@ void SinglePhaseFlowTV<KT_, SET_>::update_ghost_aux1(uint64_t timestep)
     }
 
 template<SmoothingKernelType KT_,StateEquationType SET_>
+void SinglePhaseFlowTV<KT_, SET_>::update_ghost_aux123(uint64_t timestep)
+    {
+    this->m_exec_conf->msg->notice(7) << "Computing SinglePhaseFlowTV::Update Ghost aux123" << std::endl;
+
+#ifdef ENABLE_MPI
+    if (this->m_comm)
+        {
+        CommFlags flags(0);
+        flags[comm_flag::tag] = 0;
+        flags[comm_flag::position] = 0;
+        flags[comm_flag::velocity] = 0;
+        // flags[comm_flag::dpe] = 1;
+        flags[comm_flag::density] = 1;
+        flags[comm_flag::pressure] = 1;
+        flags[comm_flag::energy] = 0;
+        flags[comm_flag::auxiliary1] = 1; // ficticios velocity
+        flags[comm_flag::auxiliary2] = 2;
+        flags[comm_flag::auxiliary3] = 3;
+        flags[comm_flag::auxiliary4] = 0;
+        flags[comm_flag::body] = 0;
+        flags[comm_flag::image] = 0;
+        flags[comm_flag::net_force] = 0;
+        flags[comm_flag::net_ratedpe] = 0;
+        this->m_comm->setFlags(flags);
+        this->m_comm->beginUpdateGhosts(timestep);
+        this->m_comm->finishUpdateGhosts(timestep);
+        }
+#endif
+    }
+
+template<SmoothingKernelType KT_,StateEquationType SET_>
 void SinglePhaseFlowTV<KT_, SET_>::validateTypes(unsigned int typ1,
                                              unsigned int typ2,
                                              std::string action)
@@ -1273,6 +1304,11 @@ void SinglePhaseFlowTV<KT_, SET_>::computeForces(uint64_t timestep)
     // This includes the computation of the density if 
     // DENSITYCONTINUITY method is used
     forcecomputation(timestep);
+
+#ifdef ENABLE_MPI
+    // Update ghost particles
+    update_ghost_aux123(timestep);
+#endif
 
     }
 

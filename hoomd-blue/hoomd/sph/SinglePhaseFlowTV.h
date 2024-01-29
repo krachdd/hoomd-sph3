@@ -314,6 +314,12 @@ class PYBIND11_EXPORT SinglePhaseFlowTV : public SPHBaseClass<KT_, SET_>
         */
         void update_ghost_aux1(uint64_t timestep);
 
+        /*! Helper function to set communication flags and update ghosts auxiliary array 1
+        * \param timestep The time step
+        * \post Ghost particle auxiliary array 1, 2 and 3 is up-to-date
+        */
+        void update_ghost_aux123(uint64_t timestep);
+
     private:
 
     };
