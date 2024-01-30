@@ -1085,7 +1085,7 @@ void SinglePhaseFlowTV<KT_, SET_>::forcecomputation(uint64_t timestep)
             Scalar rhoj = h_density.data[k];
             Scalar Vj   = mj / rhoj;
 
-            Scalar3 tvi;
+            Scalar3 tvj;
             tvj.x = h_tv.data[k].x;
             tvj.y = h_tv.data[k].y;
             tvj.z = h_tv.data[k].z;
@@ -1190,9 +1190,9 @@ void SinglePhaseFlowTV<KT_, SET_>::forcecomputation(uint64_t timestep)
             h_force.data[k].z += temp0 * A3ij; 
 
             // Evaluate background pressure contribution in aux2
-            h_bpc.data[i].x -= (Vi*Vi+Vj*Vj) * this->m_eos->getBackgroundPressure()/m_i * dwdr_r * dx.x;
-            h_bpc.data[i].y -= (Vi*Vi+Vj*Vj) * this->m_eos->getBackgroundPressure()/m_i * dwdr_r * dx.y;
-            h_bpc.data[i].z -= (Vi*Vi+Vj*Vj) * this->m_eos->getBackgroundPressure()/m_i * dwdr_r * dx.z;
+            h_bpc.data[i].x -= (Vi*Vi+Vj*Vj) * this->m_eos->getBackgroundPressure()/mi * dwdr_r * dx.x;
+            h_bpc.data[i].y -= (Vi*Vi+Vj*Vj) * this->m_eos->getBackgroundPressure()/mi * dwdr_r * dx.y;
+            h_bpc.data[i].z -= (Vi*Vi+Vj*Vj) * this->m_eos->getBackgroundPressure()/mi * dwdr_r * dx.z;
 
             // Evaluate rate of change of density if CONTINUITY approach is used
             if ( m_density_method == DENSITYCONTINUITY )
@@ -1363,16 +1363,16 @@ template class PYBIND11_EXPORT SinglePhaseFlowTV<cubicspline, tait>;
 namespace detail
 {
 
-    template void export_SinglePhaseFlowTV<wendlandc2, linear>(pybind11::module& m, std::string name = "SinglePF_WC2_L");
-    template void export_SinglePhaseFlowTV<wendlandc2, tait>(pybind11::module& m, std::string name = "SinglePF_WC2_T");
-    template void export_SinglePhaseFlowTV<wendlandc4, linear>(pybind11::module& m, std::string name = "SinglePF_WC4_L");
-    template void export_SinglePhaseFlowTV<wendlandc4, tait>(pybind11::module& m, std::string name = "SinglePF_WC4_T");
-    template void export_SinglePhaseFlowTV<wendlandc6, linear>(pybind11::module& m, std::string name = "SinglePF_WC6_L");
-    template void export_SinglePhaseFlowTV<wendlandc6, tait>(pybind11::module& m, std::string name = "SinglePF_WC6_T");
-    template void export_SinglePhaseFlowTV<quintic, linear>(pybind11::module& m, std::string name = "SinglePF_Q_L");
-    template void export_SinglePhaseFlowTV<quintic, tait>(pybind11::module& m, std::string name = "SinglePF_Q_T");
-    template void export_SinglePhaseFlowTV<cubicspline, linear>(pybind11::module& m, std::string name = "SinglePF_CS_L");
-    template void export_SinglePhaseFlowTV<cubicspline, tait>(pybind11::module& m, std::string name = "SinglePF_CS_T");
+    template void export_SinglePhaseFlowTV<wendlandc2, linear>(pybind11::module& m, std::string name = "SinglePFTV_WC2_L");
+    template void export_SinglePhaseFlowTV<wendlandc2, tait>(pybind11::module& m, std::string name = "SinglePFTV_WC2_T");
+    template void export_SinglePhaseFlowTV<wendlandc4, linear>(pybind11::module& m, std::string name = "SinglePFTV_WC4_L");
+    template void export_SinglePhaseFlowTV<wendlandc4, tait>(pybind11::module& m, std::string name = "SinglePFTV_WC4_T");
+    template void export_SinglePhaseFlowTV<wendlandc6, linear>(pybind11::module& m, std::string name = "SinglePFTV_WC6_L");
+    template void export_SinglePhaseFlowTV<wendlandc6, tait>(pybind11::module& m, std::string name = "SinglePFTV_WC6_T");
+    template void export_SinglePhaseFlowTV<quintic, linear>(pybind11::module& m, std::string name = "SinglePFTV_Q_L");
+    template void export_SinglePhaseFlowTV<quintic, tait>(pybind11::module& m, std::string name = "SinglePFTV_Q_T");
+    template void export_SinglePhaseFlowTV<cubicspline, linear>(pybind11::module& m, std::string name = "SinglePFTV_CS_L");
+    template void export_SinglePhaseFlowTV<cubicspline, tait>(pybind11::module& m, std::string name = "SinglePFTV_CS_T");
 
 } // end namespace detail
 } // end namespace sph

@@ -101,6 +101,8 @@ void KickDriftKickTV::integrateStepOne(uint64_t timestep)
     ArrayHandle<Scalar3> h_accel(m_pdata->getAccelerations(), access_location::host, access_mode::read);
     ArrayHandle<Scalar3> h_dpedt(m_pdata->getDPEdts(), access_location::host, access_mode::read);
     ArrayHandle<Scalar4> h_pos(m_pdata->getPositions(), access_location::host, access_mode::readwrite);
+    ArrayHandle<Scalar3> h_bpc(this->m_pdata->getAuxiliaries2(), access_location::host,access_mode::read); // background pressure contribution to tv
+    ArrayHandle<Scalar3> h_tv(this->m_pdata->getAuxiliaries3(), access_location::host,access_mode::readwrite); // transport velocity of the particle tv
 
     // perform the first half step of velocity verlet
     // r(t+deltaT) = r(t) + v(t)*deltaT + (1/2)a(t)*deltaT^2
@@ -146,9 +148,22 @@ void KickDriftKickTV::integrateStepOne(uint64_t timestep)
 
         // David 
         // r(t+deltaT) = r(t) + v(t+deltaT/2)*deltaT
-        h_pos.data[j].x += h_vel.data[j].x*m_deltaT;
-        h_pos.data[j].y += h_vel.data[j].y*m_deltaT;
-        h_pos.data[j].z += h_vel.data[j].z*m_deltaT;
+        // h_pos.data[j].x += h_vel.data[j].x*m_deltaT;
+        // h_pos.data[j].y += h_vel.data[j].y*m_deltaT;
+        // h_pos.data[j].z += h_vel.data[j].z*m_deltaT;
+
+        // Advection Velocity
+        h_tv.data[j].x = h_vel.data[j].x + Scalar(1.0 / 2.0) * h_bpc.data[j].x * m_deltaT; 
+        h_tv.data[j].y = h_vel.data[j].y + Scalar(1.0 / 2.0) * h_bpc.data[j].y * m_deltaT; 
+        h_tv.data[j].z = h_vel.data[j].z + Scalar(1.0 / 2.0) * h_bpc.data[j].z * m_deltaT; 
+
+
+        // Update position with transport veloicity
+        // r(t+deltaT) = r(t) + v(t+deltaT/2)*deltaT
+        h_pos.data[j].x += h_tv.data[j].x*m_deltaT;
+        h_pos.data[j].y += h_tv.data[j].y*m_deltaT;
+        h_pos.data[j].z += h_tv.data[j].z*m_deltaT;
+
         }
 
     // particles may have been moved slightly outside the box by the above steps, wrap them back

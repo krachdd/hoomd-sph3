@@ -12,9 +12,11 @@ maintainer: dkrach, david.krach@mib.uni-stuttgart.de
 // #include "SPHIntegrationMethodTwoStep.h"
 #include "VelocityVerlet.h"
 #include "VelocityVerletBasic.h"
+#include "KickDriftKickTV.h"
 // // #include "SuspendedObjectIntegrator.h"
 // // #include "RigidBodyIntegrator.h"
 #include "SinglePhaseFlow.h"
+#include "SinglePhaseFlowTV.h"
 // // #include "TwoPhaseFlow.h"
 #include "CustomForceCompute.h"
 
@@ -96,6 +98,7 @@ PYBIND11_MODULE(_sph, m){
     export_SPHIntegrationMethodTwoStep(m);
     export_VelocityVerlet(m);
     export_VelocityVerletBasic(m);
+    export_KickDriftKickTV(m);
     // export_SuspendedObjectIntegrator(m);
     // export_RigidBodyIntegrator(m);
     export_WendlandC2(m);
@@ -132,6 +135,17 @@ PYBIND11_MODULE(_sph, m){
     export_SinglePhaseFlow<quintic, tait>(m, "SinglePF_Q_T");
     export_SinglePhaseFlow<cubicspline, linear>(m, "SinglePF_CS_L");
     export_SinglePhaseFlow<cubicspline, tait>(m, "SinglePF_CS_T");
+
+    export_SinglePhaseFlowTV<wendlandc2, linear>(m, "SinglePFTV_WC2_L");
+    export_SinglePhaseFlowTV<wendlandc2, tait>(m, "SinglePFTV_WC2_T");
+    export_SinglePhaseFlowTV<wendlandc4, linear>(m, "SinglePFTV_WC4_L");
+    export_SinglePhaseFlowTV<wendlandc4, tait>(m, "SinglePFTV_WC4_T");
+    export_SinglePhaseFlowTV<wendlandc6, linear>(m, "SinglePFTV_WC6_L");
+    export_SinglePhaseFlowTV<wendlandc6, tait>(m, "SinglePFTV_WC6_T");
+    export_SinglePhaseFlowTV<quintic, linear>(m, "SinglePFTV_Q_L");
+    export_SinglePhaseFlowTV<quintic, tait>(m, "SinglePFTV_Q_T");
+    export_SinglePhaseFlowTV<cubicspline, linear>(m, "SinglePFTV_CS_L");
+    export_SinglePhaseFlowTV<cubicspline, tait>(m, "SinglePFTV_CS_T");
 
     export_CustomForceCompute(m);
 
