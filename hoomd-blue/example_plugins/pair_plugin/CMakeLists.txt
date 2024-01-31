@@ -4,7 +4,7 @@ set(COMPONENT_NAME pair_plugin)
 
 # Check that the HOOMD build configuration supports plugin dependencies
 if(NOT BUILD_MD)
-    message(WARNING "The HOOMD build configuration does not support MD. Skipping build of "
+    message(STATUS "The HOOMD build configuration does not support MD. Skipping build of "
             "plugin component ${COMPONENT_NAME}.")
     return()
 endif()

@@ -4,7 +4,7 @@ set(COMPONENT_NAME shape_plugin)
 
 # Check that the HOOMD build configuration supports plugin dependencies
 if(NOT BUILD_HPMC)
-    message(WARNING "The HOOMD build configuration does not support HPMC. Skipping build of "
+    message(STATUS "The HOOMD build configuration does not support HPMC. Skipping build of "
             "plugin component ${COMPONENT_NAME}.")
     return()
 endif()
