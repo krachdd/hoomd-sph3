@@ -128,6 +128,58 @@ def export_spf(GSDfilename):
                       },
                   )
 
+
+def export_tvspf(GSDfilename):
+    """
+    filename: str
+    export basic fields plus aux1 where fictious velocity is stored
+
+    """
+    print(f'{os.path.basename(__file__)}: Export {GSDfilename} to .vtu')
+
+    t = import_trajectory(GSDfilename = GSDfilename)
+
+    # Run loop over all snapshots
+    count = 0
+    for snapshot in t:
+        count += 1
+       
+        pname = GSDfilename.replace('.gsd','')
+        
+        if not os.path.exists(pname):
+            os.makedirs(pname)
+            
+        # Define VTU export filename
+        filename = pname+'/'+pname+'_'+str(snapshot.configuration.step)
+        
+        vtk(filename, np.array(snapshot.particles.position.T[0]),
+                      np.array(snapshot.particles.position.T[1]),
+                      np.array(snapshot.particles.position.T[2]),
+            data = {'Velocity x'          :np.array(snapshot.particles.velocity.T[0]),
+                    'Velocity y'          :np.array(snapshot.particles.velocity.T[1]),
+                    'Velocity z'          :np.array(snapshot.particles.velocity.T[2]),
+                    'TypeId'              :np.array(snapshot.particles.typeid),
+                    'Slength'             :np.array(snapshot.particles.slength),
+                    'Mass'                :np.array(snapshot.particles.mass),
+                    'Density'             :np.array(snapshot.particles.density),
+                    'Pressure'            :np.array(snapshot.particles.pressure),
+                    'Energy'              :np.array(snapshot.particles.energy),
+                    'Ficticious Velx'     :np.array(snapshot.particles.auxiliary1.T[0]),
+                    'Ficticious Vely'     :np.array(snapshot.particles.auxiliary1.T[1]),
+                    'Ficticious Velz'     :np.array(snapshot.particles.auxiliary1.T[2]),
+                    'Backpressure corrx'      :np.array(snapshot.particles.auxiliary2.T[0]),
+                    'Backpressure corry'      :np.array(snapshot.particles.auxiliary2.T[1]),
+                    'Backpressure corrz'      :np.array(snapshot.particles.auxiliary2.T[2]),
+                    'Transport Velx'      :np.array(snapshot.particles.auxiliary3.T[0]),
+                    'Transport Vely'      :np.array(snapshot.particles.auxiliary3.T[1]),
+                    'Transport Velz'      :np.array(snapshot.particles.auxiliary3.T[2]),
+                    # 'Aux4x'      :np.array(snapshot.particles.auxiliary4.T[0]),
+                    # 'Aux4y'      :np.array(snapshot.particles.auxiliary4.T[1]),
+                    # 'Aux4z'      :np.array(snapshot.particles.auxiliary4.T[2]),
+                      },
+                  )
+
+
 def export_tpf(GSDfilename):
     """
     filename: str

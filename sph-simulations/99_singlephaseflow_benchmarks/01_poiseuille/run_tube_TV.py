@@ -20,20 +20,22 @@ import sys, os
 import gsd.hoomd
 # ------------------------------------------------------------
 
+
+
 device = hoomd.device.CPU(notice_level=2)
 # device = hoomd.device.CPU(notice_level=10)
 sim = hoomd.Simulation(device=device)
 
-filename = 'cylinder_bounded_body_force_144_112_17_vs_0.0008333333333333334_init.gsd'
+filename = str(sys.argv[2])
 
 if device.communicator.rank == 0:
     print(f'{os.path.basename(__file__)}: input file: {filename} ')
 
 dt_string = datetime.now().strftime("%Y-%m-%d-%H-%M-%S")
 logname  = filename.replace('_init.gsd', '')
-logname  = f'{logname}_run.log'
+logname  = f'{logname}_runTV.log'
 dumpname = filename.replace('_init.gsd', '')
-dumpname = f'{dumpname}_run.gsd'
+dumpname = f'{dumpname}_runTV.gsd'
 
 sim.create_state_from_gsd(filename = filename)
 
@@ -52,20 +54,21 @@ with sim.state.cpu_local_snapshot as snap:
     N = len(snap.particles.position)
     print(f'{N} particles on rank {device.communicator.rank}')
 
-# Fluid and particle properties
-D                   = 96
-lref                = 0.08               # [m]
-length              = 0.12
-voxelsize           = lref/D
-dx                  = voxelsize
-specific_volume     = dx * dx * dx
-rho0                = 1000.0
-mass                = rho0 * specific_volume
-radius              = 0.25 * lref
-fx                  = 2.5e-04                # [m/s]
-viscosity           = 0.1               # [Pa s] 
-refvel              = 1.2e-04
 
+# Fluid and particle properties
+
+num_length          = int(sys.argv[1])
+lref                = 0.001               # [m]
+radius              = 0.5 * lref          # [m]
+voxelsize           = lref/num_length     # [m]
+dx                  = voxelsize           # [m]
+specific_volume     = dx * dx * dx        # [m**3]
+rho0                = 1000.0              # [kg/m**3]
+mass                = rho0 * specific_volume # [kg]
+fx                  = 0.1                # [m/s**2]
+viscosity           = 0.01               # [Pa s]
+
+refvel = fx * lref * lref * 0.25 / (viscosity/rho0)
 
 # get kernel properties
 kernel  = 'WendlandC4'
@@ -74,7 +77,7 @@ rcut    = hoomd.sph.kernel.Kappa[kernel]*slength     # m
 
 # define model parameters
 densitymethod = 'SUMMATION'
-steps = 1000001
+steps = int(sys.argv[3])
 
 drho = 0.01                        # %
 
@@ -86,7 +89,7 @@ nlist = hoomd.nsearch.nlist.Cell(buffer = rcut*0.05, rebuild_check_delay = 1, ka
 
 # Equation of State
 eos = hoomd.sph.eos.Tait()
-eos.set_params(rho0, drho)
+eos.set_params(rho0,0.01)
 
 # Define groups/filters
 filterfluid  = hoomd.filter.Type(['F']) # is zero
@@ -98,7 +101,7 @@ with sim.state.cpu_local_snapshot as snap:
     print(f'{np.count_nonzero(snap.particles.typeid == 1)} solid particles on rank {device.communicator.rank}')
 
 # Set up SPH solver
-model = hoomd.sph.sphmodel.SinglePhaseFlow(kernel = kernel_obj,
+model = hoomd.sph.sphmodel.SinglePhaseFlowTV(kernel = kernel_obj,
                                            eos    = eos,
                                            nlist  = nlist,
                                            fluidgroup_filter = filterfluid,
@@ -134,7 +137,7 @@ dt = model.compute_dt(lref, refvel, dx, drho)
 integrator = hoomd.sph.Integrator(dt=dt)
 
 # VelocityVerlet = hoomd.sph.methods.VelocityVerlet(filter=filterFLUID, densitymethod = densitymethod)
-velocityverlet = hoomd.sph.methods.VelocityVerletBasic(filter=filterfluid, densitymethod = densitymethod)
+velocityverlet = hoomd.sph.methods.KickDriftKickTV(filter=filterfluid, densitymethod = densitymethod)
 
 integrator.methods.append(velocityverlet)
 integrator.forces.append(model)
@@ -164,13 +167,13 @@ logger.add(sim, quantities=['timestep', 'tps', 'walltime'])
 logger.add(spf_properties, quantities=['abs_velocity', 'num_particles', 'fluid_vel_x_sum', 'mean_density'])
 
 table = hoomd.write.Table(trigger=log_trigger, 
-                          logger=logger, max_header_len = 10)
+                          logger=logger, max_header_len = 5)
 sim.operations.writers.append(table)
 
 file = open(logname, mode='w+', newline='\n')
 table_file = hoomd.write.Table(output=file,
                                trigger=log_trigger,
-                               logger=logger, max_header_len = 10)
+                               logger=logger, max_header_len = 5)
 sim.operations.writers.append(table_file)
 
 sim.operations.integrator = integrator

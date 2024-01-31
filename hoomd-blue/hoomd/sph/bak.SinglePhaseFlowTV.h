@@ -34,17 +34,17 @@ maintainer: dkrach, david.krach@mib.uni-stuttgart.de
 #include "EvaluationMethodDefinition.h"
 
 
-/*! \file SinglePhaseFlow.h
+/*! \file SinglePhaseFlowTV.h
     \brief Contains code for the Quasi-incompressible Navier-Stokes solver
-          for Single-phase flow
+          for Single-phase flow using Adami type transport velocity
 */
 
 #ifdef __HIPCC__
 #error This header cannot be compiled by nvcc
 #endif
 
-#ifndef __SinglePhaseFlow_H__
-#define __SinglePhaseFlow_H__
+#ifndef __SinglePhaseFlowTV_H__
+#define __SinglePhaseFlowTV_H__
 
 
 namespace hoomd 
@@ -52,16 +52,16 @@ namespace hoomd
 namespace sph
 {
 
-//! Computes SinglePhaseFlow forces on each particle
+//! Computes SinglePhaseFlowTV forces on each particle
 /*!
 */
 template<SmoothingKernelType KT_,StateEquationType SET_>
-class PYBIND11_EXPORT SinglePhaseFlow : public SPHBaseClass<KT_, SET_>
+class PYBIND11_EXPORT SinglePhaseFlowTV : public SPHBaseClass<KT_, SET_>
     {
     public:
 
         //! Constructor
-        SinglePhaseFlow(std::shared_ptr<SystemDefinition> sysdef,
+        SinglePhaseFlowTV(std::shared_ptr<SystemDefinition> sysdef,
                         std::shared_ptr<SmoothingKernel<KT_> > skernel,
                         std::shared_ptr<StateEquation<SET_> > equationofstate,
                         std::shared_ptr<nsearch::NeighborList> nlist,
@@ -71,7 +71,7 @@ class PYBIND11_EXPORT SinglePhaseFlow : public SPHBaseClass<KT_, SET_>
                         ViscosityMethod mviscositymethod=HARMONICAVERAGE);
 
         //! Destructor
-        virtual ~SinglePhaseFlow();
+        virtual ~SinglePhaseFlowTV();
 
         //! Set the rcut for a single type pair
         virtual void setRcut(unsigned int typ1, unsigned int typ2, Scalar rcut);
@@ -177,7 +177,7 @@ class PYBIND11_EXPORT SinglePhaseFlow : public SPHBaseClass<KT_, SET_>
             }
 
         //! Computes forces
-        virtual void computeForces(uint64_t timestep);
+        void computeForces(uint64_t timestep);
 
     #ifdef ENABLE_MPI
         /// The system's communicator.
@@ -293,7 +293,7 @@ class PYBIND11_EXPORT SinglePhaseFlow : public SPHBaseClass<KT_, SET_>
          * \pre Number densities and fictitious solid particle properties must be up-to-date
          * \post h_force stores forces acting on fluid particles and .w component stores rate of change of density
          */
-        virtual void forcecomputation(uint64_t timestep);
+        void forcecomputation(uint64_t timestep);
 
         /*! Helper function to set communication flags and update ghosts densities
         * \param timestep The time step
@@ -314,6 +314,12 @@ class PYBIND11_EXPORT SinglePhaseFlow : public SPHBaseClass<KT_, SET_>
         */
         void update_ghost_aux1(uint64_t timestep);
 
+        /*! Helper function to set communication flags and update ghosts auxiliary array 1
+        * \param timestep The time step
+        * \post Ghost particle auxiliary array 1, 2 and 3 is up-to-date
+        */
+        void update_ghost_aux123(uint64_t timestep);
+
     private:
 
     };
@@ -322,10 +328,10 @@ class PYBIND11_EXPORT SinglePhaseFlow : public SPHBaseClass<KT_, SET_>
 namespace detail 
 {
 template<SmoothingKernelType KT_, StateEquationType SET_>
-void export_SinglePhaseFlow(pybind11::module& m, std::string name);
+void export_SinglePhaseFlowTV(pybind11::module& m, std::string name);
 
 } // end namespace detail
 } // end namespace sph
 } // end namespace hoomd
 
-#endif // __SinglePhaseFlow_H__
+#endif // __SinglePhaseFlowTV_H__

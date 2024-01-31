@@ -33,9 +33,9 @@ if device.communicator.rank == 0:
 
 dt_string = datetime.now().strftime("%Y-%m-%d-%H-%M-%S")
 logname  = filename.replace('_init.gsd', '')
-logname  = f'{logname}_run_{factorfx}.log'
+logname  = f'{logname}_run_TV_{factorfx}.log'
 dumpname = filename.replace('_init.gsd', '')
-dumpname = f'{dumpname}_run_{factorfx}.gsd'
+dumpname = f'{dumpname}_run_TV_{factorfx}.gsd'
 
 sim.create_state_from_gsd(filename = filename)
 
@@ -98,7 +98,7 @@ with sim.state.cpu_local_snapshot as snap:
     print(f'{np.count_nonzero(snap.particles.typeid == 1)} solid particles on rank {device.communicator.rank}')
 
 # Set up SPH solver
-model = hoomd.sph.sphmodel.SinglePhaseFlow(kernel = kernel_obj,
+model = hoomd.sph.sphmodel.SinglePhaseFlowTV(kernel = kernel_obj,
                                            eos    = eos,
                                            nlist  = nlist,
                                            fluidgroup_filter = filterfluid,
@@ -134,7 +134,7 @@ dt = model.compute_dt(lref, refvel, dx, drho)
 integrator = hoomd.sph.Integrator(dt=dt)
 
 # VelocityVerlet = hoomd.sph.methods.VelocityVerlet(filter=filterFLUID, densitymethod = densitymethod)
-velocityverlet = hoomd.sph.methods.VelocityVerletBasic(filter=filterfluid, densitymethod = densitymethod)
+velocityverlet = hoomd.sph.methods.KickDriftKickTV(filter=filterfluid, densitymethod = densitymethod)
 
 integrator.methods.append(velocityverlet)
 integrator.forces.append(model)
@@ -181,4 +181,4 @@ if device.communicator.rank == 0:
 sim.run(steps, write_at_start=True)
 
 if device.communicator.rank == 0:
-    export_gsd2vtu.export_spf(dumpname)
+    export_gsd2vtu.export_tvspf(dumpname)
