@@ -181,4 +181,4 @@ if device.communicator.rank == 0:
 sim.run(steps, write_at_start=True)
 
 if device.communicator.rank == 0:
-    export_gsd2vtu.export_spf(dumpname)
+    export_gsd2vtu.export_tvspf(dumpname)
