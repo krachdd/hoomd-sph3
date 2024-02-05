@@ -506,7 +506,7 @@ class SinglePhaseFlow(SPHModel):
         # self.cpp_force.setAcceleration(self.gx,self.gy,self.gz,self.damp)
         self._cpp_obj.setAcceleration(self.gx,self.gy,self.gz,self.damp)
 
-    def compute_dt(self, LREF, UREF, DX, DRHO=0.01, gx=0.0, gy=0.0, gz=0.0, COURANT=0.25):
+    def compute_dt(self, LREF, UREF, DX, DRHO=0.01, COURANT=0.25):
         # Input sanity
         if LREF == 0.0:
             raise ValueError('Reference length LREF may not be zero.')
@@ -519,7 +519,7 @@ class SinglePhaseFlow(SPHModel):
 
         # Compute required quantities
         # Magnitude of body force
-        if (abs(gx) > 0.0 or abs(gy) > 0.0 or abs(gz) > 0.0):
+        if (abs(self.gx) > 0.0 or abs(self.gy) > 0.0 or abs(self.gz) > 0.0):
             GMAG = np.sqrt(self.gx**2+self.gy**2+self.gz**2)
         else:
             GMAG = 0.0
@@ -823,7 +823,7 @@ class SinglePhaseFlowTV(SPHModel):
         # self.cpp_force.setAcceleration(self.gx,self.gy,self.gz,self.damp)
         self._cpp_obj.setAcceleration(self.gx,self.gy,self.gz,self.damp)
 
-    def compute_dt(self, LREF, UREF, DX, DRHO=0.01, gx=0.0, gy=0.0, gz=0.0, COURANT=0.25):
+    def compute_dt(self, LREF, UREF, DX, DRHO=0.01, COURANT=0.25):
         # Input sanity
         if LREF == 0.0:
             raise ValueError('Reference length LREF may not be zero.')
@@ -857,17 +857,24 @@ class SinglePhaseFlowTV(SPHModel):
         C2_3 = (MU*UREF)/(RHO0*LREF*DRHO)
         # Maximum speed of sound
         C = np.sqrt(np.max([C2_1,C2_2,C2_3]))
+        print(f'Speed of Sound: {C}')
         self.eos.set_speedofsound(C)
 
         # CFL condition
-        # DT_1 = 0.25*H/C
-        DT_1 = 0.25*DX/C
+        # DT_1 = H/C
+        DT_1 = DX/C
         # Fourier condition
         DT_2 = (DX*DX*RHO0)/(8.0*MU)
+        # Adami type 1 max flow speed
+        DT_4 = (H/(C+abs(UREF)))
+        # Adami type 2 viscous condition
+        DT_5 = (H**2/(MU/RHO0))
+
         if GMAG > 0.0:
             # Gravity waves condition
             DT_3 = np.sqrt(H/(16.0*GMAG))
-            return COURANT*np.min([DT_1,DT_2,DT_3])
+            print('dts: ', [DT_1, DT_2, DT_3, DT_4, DT_5])
+            return COURANT*np.min([DT_1, DT_2, DT_3, DT_4, DT_5])
         else:
             return COURANT*np.min([DT_1,DT_2])
 
