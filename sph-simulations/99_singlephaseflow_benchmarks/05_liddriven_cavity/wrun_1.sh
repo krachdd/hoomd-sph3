@@ -2,7 +2,7 @@
 #SBATCH --job-name=re1_ldc_bm      # Job name
 #SBATCH --mail-type=BEGIN,END,FAIL         # Mail events (NONE, BEGIN, END, FAIL, ALL)
 #SBATCH --mail-user=david.krach@mib.uni-stuttgart.de    # Where to send mail.  Set this to your email address
-#SBATCH --ntasks=64                 # Number of MPI tasks (i.e. processes)
+#SBATCH --ntasks=128                 # Number of MPI tasks (i.e. processes)
 #SBATCH --nodes=1                    # Maximum number of nodes to be allocated
 #SBATCH --distribution=cyclic:cyclic # Distribute tasks cyclically first among nodes and then among sockets within a node
 #SBATCH --mem=MaxMemPerNode          
@@ -29,4 +29,4 @@ echo "Number of Tasks Allocated      = $SLURM_NTASKS"
 echo "Number of Cores/Task Allocated = $SLURM_CPUS_PER_TASK"
 echo "JobID = $SLURM_JOB_ID"
 
-mpirun -np $SLURM_NTASKS  ./run_ldc.py --resolution=200 --reynolds=1 --steps=50001 --initgsd="liddrivencavity_208_208_17_vs_0.005_re_1.0_init.gsd"
+/usr/local.nfs/software/openmpi/4.1.4_gcc-11.3_cuda-11.7/bin/mpirun -np $SLURM_NTASKS  ./run_ldc.py --resolution=200 --reynolds=1 --steps=500001 --initgsd="liddrivencavity_208_208_17_vs_0.005_re_1.0_init.gsd"
