@@ -141,7 +141,7 @@ dt = 0.5 * model.compute_dt(LREF = 0.25*lref, UREF = refvel, DX = dx, DRHO = drh
 integrator = hoomd.sph.Integrator(dt=dt)
 
 # VelocityVerlet = hoomd.sph.methods.VelocityVerlet(filter=filterFLUID, densitymethod = densitymethod)
-velocityverlet = hoomd.sph.methods.KickDriftKickTV(filter=filterfluid, densitymethod = densitymethod)
+velocityverlet = hoomd.sph.methods.KickDriftKickTV(filter=filterfluid, densitymethod = densitymethod, limit = True, limit_val = 2* refvel)
 
 integrator.methods.append(velocityverlet)
 integrator.forces.append(model)

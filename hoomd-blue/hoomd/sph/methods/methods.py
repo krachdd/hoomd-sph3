@@ -829,15 +829,21 @@ class KickDriftKickTV(Method):
 
     VISCOSITYMETHODS = {'HARMONICAVERAGE':_sph.PhaseFlowViscosityMethod.HARMONICAVERAGE}
 
-    def __init__(self, filter, densitymethod):
+    def __init__(self, filter, densitymethod, vlimit = False, vlimit_val = 0.0, xlimit = False, xlimit_val = 0.0):
         # store metadata
         param_dict = ParameterDict(filter=ParticleFilter,)
-        param_dict.update(dict(filter=filter, densitymethod=densitymethod))
+        param_dict.update(dict(filter=filter, densitymethod=densitymethod, 
+                               vlimit = vlimit, vlimit_val = vlimit_val,
+                               xlimit = xlimit, xlimit_val = xlimit_val))
 
         # set defaults
         self._param_dict.update(param_dict)
 
         self.str_densitymethod = self._param_dict._dict["densitymethod"]
+        self.mvlimit = self._param_dict._dict["vlimit"]
+        self.mxlimit = self._param_dict._dict["xlimit"]
+        self.mvlimit_val = self._param_dict._dict["vlimit_val"]
+        self.mxlimit_val = self._param_dict._dict["xlimit_val"]
 
         if self.str_densitymethod == str('SUMMATION'):
             self.cpp_densitymethod = hoomd.sph._sph.PhaseFlowDensityMethod.DENSITYSUMMATION
@@ -856,6 +862,7 @@ class KickDriftKickTV(Method):
             self._cpp_obj = _sph.KickDriftKickTVGPU(sim.state._cpp_sys_def,
                                               sim.state._get_group(self.filter))
 
+        print("Define KickDriftKickTV")
         # Reload density and viscosity methods from __dict__
         self.str_densitymethod = self._param_dict._dict["densitymethod"]
         if self.str_densitymethod == str('SUMMATION'):
@@ -866,6 +873,14 @@ class KickDriftKickTV(Method):
             raise ValueError("Using undefined DensityMethod.")
 
         self.setdensitymethod(self.str_densitymethod)
+
+        if self.vlimit == True:
+            print("setvLimit")
+            self._cpp_obj.setvLimit(self.vlimit_val)
+
+        if self.xlimit == True:
+            print("setxLimit")
+            self._cpp_obj.setxLimit(self.xlimit_val)
 
         # Attach param_dict and typeparam_dict
         super()._attach_hook()
@@ -881,6 +896,28 @@ class KickDriftKickTV(Method):
         if method not in self.DENSITYMETHODS:
             raise ValueError("Undefined DensityMethod.")
         self._cpp_obj.setDensityMethod(self.DENSITYMETHODS[method])
+
+    # @property
+    def getvlimit(self):
+        return self._cpp_obj.getvLimit()
+
+    # @densitymethod.setter
+    def setvLimit(self, limit_val):
+        if vlimit_val > 0:
+            self._cpp_obj.setvLimit(vlimit_val)
+        else:
+            raise ValueError("vlimit_val must be positive.")
+
+    # @property
+    def getxlimit(self):
+        return self._cpp_obj.getxLimit()
+
+    # @densitymethod.setter
+    def setxLimit(self, xlimit_val):
+        if xlimit_val > 0:
+            self._cpp_obj.setxLimit(xlimit_val)
+        else:
+            raise ValueError("xlimit_val must be positive.")
 
 
 # class Langevin(Method):
