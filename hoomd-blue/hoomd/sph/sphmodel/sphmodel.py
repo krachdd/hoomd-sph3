@@ -836,13 +836,13 @@ class SinglePhaseFlowTV(SPHModel):
 
         # Compute required quantities
         # Magnitude of body force
-        if (abs(gx) > 0.0 or abs(gy) > 0.0 or abs(gz) > 0.0):
+        if (abs(self.gx) > 0.0 or abs(self.gy) > 0.0 or abs(self.gz) > 0.0):
             GMAG = np.sqrt(self.gx**2+self.gy**2+self.gz**2)
         else:
             GMAG = 0.0
 
         # Smoothing length
-        H   = self._param_dict['max_sl']
+        H = self._param_dict['max_sl']
         # Viscosity
         MU  = self._param_dict['mu']
         # Rest density

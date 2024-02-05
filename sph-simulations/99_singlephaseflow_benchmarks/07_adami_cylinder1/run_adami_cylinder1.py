@@ -74,7 +74,7 @@ rcut    = hoomd.sph.kernel.Kappa[kernel]*slength     # m
 
 # define model parameters
 densitymethod = 'SUMMATION'
-steps = 500001
+steps = 51
 
 drho = 0.01                        # %
 
@@ -128,8 +128,7 @@ maximum_smoothing_length = device.communicator.bcast_double(maximum_smoothing_le
 model.max_sl = maximum_smoothing_length
 
 # compute dt
-dt = model.compute_dt(lref, refvel, dx, drho)
-
+dt = model.compute_dt(LREF = lref, UREF = refvel, DX = dx, DRHO=drho)
 
 integrator = hoomd.sph.Integrator(dt=dt)
 
