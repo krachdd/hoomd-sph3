@@ -855,8 +855,10 @@ class SinglePhaseFlowTV(SPHModel):
         C2_2 = GMAG*LREF/DRHO
         # Fourier condition
         C2_3 = (MU*UREF)/(RHO0*LREF*DRHO)
+        # Adami type 
+        C2_4 = GMAG * LREF
         # Maximum speed of sound
-        C = np.sqrt(np.max([C2_1,C2_2,C2_3]))
+        C = np.sqrt(np.max([C2_1,C2_2,C2_3, 0.01*C2_4]))
         print(f'Speed of Sound: {C}')
         self.eos.set_speedofsound(C)
 

@@ -41,7 +41,7 @@ viscosity           = 0.1               # [Pa s]
 
 
 # get kernel properties
-kernel  = 'WendlandC4'
+kernel  = 'CubicSpline'
 slength = hoomd.sph.kernel.OptimalH[kernel]*dx       # m
 rcut    = hoomd.sph.kernel.Kappa[kernel]*slength     # m
 
@@ -59,9 +59,9 @@ box_lx, box_ly, box_lz = lx, ly, lz
 n_particles = nx * ny * nz 
 
 # define meshgrid and add properties
-x, y, z = np.meshgrid(*(np.linspace(-box_lx / 2, box_lx / 2, nx, endpoint=True),),
-                      *(np.linspace(-box_ly / 2, box_ly / 2, ny, endpoint=True),),
-                      *(np.linspace(-box_lz / 2, box_lz / 2, nz, endpoint=True),))
+x, y, z = np.meshgrid(*(np.linspace(-box_lx / 2 + (dx/2), box_lx / 2 - (dx/2), nx, endpoint=True),),
+                      *(np.linspace(-box_ly / 2 + (dx/2), box_ly / 2 - (dx/2), ny, endpoint=True),),
+                      *(np.linspace(-box_lz / 2 + (dx/2), box_lz / 2 - (dx/2), nz, endpoint=True),))
 
 positions = np.array((x.ravel(), y.ravel(), z.ravel())).T
 

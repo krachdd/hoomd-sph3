@@ -128,7 +128,7 @@ maximum_smoothing_length = device.communicator.bcast_double(maximum_smoothing_le
 model.max_sl = maximum_smoothing_length
 
 # compute dt
-dt = model.compute_dt(LREF = lref, UREF = refvel, DX = dx, DRHO=drho)
+dt = model.compute_dt(LREF = 0.25 * lref, UREF = refvel, DX = dx, DRHO = drho)
 
 integrator = hoomd.sph.Integrator(dt=dt)
 
@@ -179,5 +179,5 @@ if device.communicator.rank == 0:
 
 sim.run(steps, write_at_start=True)
 
-if device.communicator.rank == 0:
-    export_gsd2vtu.export_tvspf(dumpname)
+# if device.communicator.rank == 0:
+#     export_gsd2vtu.export_tvspf(dumpname)

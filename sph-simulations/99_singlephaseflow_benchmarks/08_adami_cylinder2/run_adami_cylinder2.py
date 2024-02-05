@@ -68,7 +68,7 @@ refvel              = 1.2e-04
 
 
 # get kernel properties
-kernel  = 'WendlandC4'
+kernel  = 'CubicSpline'
 slength = hoomd.sph.kernel.OptimalH[kernel]*dx       # m
 rcut    = hoomd.sph.kernel.Kappa[kernel]*slength     # m
 
@@ -128,8 +128,7 @@ maximum_smoothing_length = device.communicator.bcast_double(maximum_smoothing_le
 model.max_sl = maximum_smoothing_length
 
 # compute dt
-dt = model.compute_dt(lref, refvel, dx, drho)
-
+dt = model.compute_dt(LREF = 0.25*lref, UREF = refvel, DX = dx, DRHO = drho)
 
 integrator = hoomd.sph.Integrator(dt=dt)
 
@@ -150,7 +149,7 @@ if device.communicator.rank == 0:
     print(f'Integrator Methods: {integrator.methods[:]}')
     print(f'Simulation Computes: {sim.operations.computes[:]}')
 
-gsd_trigger = hoomd.trigger.Periodic(100)
+gsd_trigger = hoomd.trigger.Periodic(1000)
 gsd_writer = hoomd.write.GSD(filename=dumpname,
                              trigger=gsd_trigger,
                              mode='wb',
@@ -180,5 +179,5 @@ if device.communicator.rank == 0:
 
 sim.run(steps, write_at_start=True)
 
-if device.communicator.rank == 0:
-    export_gsd2vtu.export_tvspf(dumpname)
+# if device.communicator.rank == 0:
+#     export_gsd2vtu.export_tvspf(dumpname)
