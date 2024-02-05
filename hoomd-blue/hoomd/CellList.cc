@@ -465,9 +465,9 @@ void CellList::computeCellList()
         // if ((f.x < Scalar(-0.00001) || f.x >= Scalar(1.00001))
         //     || (f.y < Scalar(-0.00001) || f.y >= Scalar(1.00001))
         //     || (f.z < Scalar(-0.00001) || f.z >= Scalar(1.00001)))
-        if ((f.x < Scalar(-0.00005) || f.x >= Scalar(1.00005))
-            || (f.y < Scalar(-0.00005) || f.y >= Scalar(1.00005))
-            || (f.z < Scalar(-0.00005) || f.z >= Scalar(1.00005)))
+        if ((f.x < Scalar(-0.0001) || f.x >= Scalar(1.0001))
+            || (f.y < Scalar(-0.0001) || f.y >= Scalar(1.0001))
+            || (f.z < Scalar(-0.0001) || f.z >= Scalar(1.0001)))
             {
             // if a ghost particle is out of bounds, silently ignore it
             if (n < m_pdata->getN())
