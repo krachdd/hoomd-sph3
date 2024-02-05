@@ -414,8 +414,8 @@ void SinglePhaseFlow<KT_, SET_>::compute_ndensity(uint64_t timestep)
     Scalar ni;
 
     // Precompute self-density for homogeneous smoothing lengths
-    Scalar w0 = this->m_skernel->w0(m_ch);
-
+    Scalar w0 = this->m_skernel->w0(m_ch); 
+    
     // Particle loop
     // For each fluid particle
     unsigned int group_size = this->m_fluidgroup->getNumMembers();

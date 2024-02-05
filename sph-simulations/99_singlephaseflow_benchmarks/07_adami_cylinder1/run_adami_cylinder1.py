@@ -68,7 +68,7 @@ viscosity           = 0.001               # [Pa s]
 refvel = 5e-05 * factorfx
 
 # get kernel properties
-kernel  = 'CubicSpline'
+kernel  = 'WendlandC4'
 slength = hoomd.sph.kernel.OptimalH[kernel]*dx       # m
 rcut    = hoomd.sph.kernel.Kappa[kernel]*slength     # m
 

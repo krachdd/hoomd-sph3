@@ -41,7 +41,7 @@ see https://pysph.readthedocs.io/en/latest/reference/kernels.html
 */
 template<>
 SmoothingKernel<wendlandc4>::SmoothingKernel()
-    : m_kappa(Scalar(2.0)), m_self_density(Scalar(3.0)), m_alpha(Scalar(0.6154820064881891))
+    : m_kappa(Scalar(2.0)), m_self_density(Scalar(1.0)), m_alpha(Scalar(0.6154820064881891))
     {
     }
 template<>
@@ -148,6 +148,7 @@ Scalar SmoothingKernel<wendlandc2>::wij(const Scalar h, const Scalar rij)
     }
     return w;
 }
+
 /* checked DK 10/2022 */
 template<>
 Scalar SmoothingKernel<wendlandc4>::wij(const Scalar h, const Scalar rij)
@@ -157,7 +158,7 @@ Scalar SmoothingKernel<wendlandc4>::wij(const Scalar h, const Scalar rij)
         if ( q >= 0 && q <= 2.0)
             {
             // (alpha/h^D) * (1-0.5q)^6 * (35/12*q^2 +3*q + 1)
-            w = normalizationfactor(h)*pow(1.0-(0.5*q),6.0)*(2.9166666*q*q + 3.0*q + 1.0);
+            w = normalizationfactor(h)*pow((1.0-(0.5*q)),6)*(2.9166666*q*q + 3.0*q + 1.0);
             }
         return w;
 }
