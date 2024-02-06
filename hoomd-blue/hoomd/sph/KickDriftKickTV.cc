@@ -185,6 +185,27 @@ void KickDriftKickTV::integrateStepOne(uint64_t timestep)
         h_tv.data[j].z = h_vel.data[j].z + Scalar(1.0 / 2.0) * h_bpc.data[j].z * m_deltaT; 
 
 
+        Scalar dx = h_tv.data[j].x * m_deltaT;
+        Scalar dy = h_tv.data[j].y * m_deltaT;
+        Scalar dz = h_tv.data[j].z * m_deltaT;
+
+        // limit the movement of the particles
+        if (m_xlimit)
+            {
+            if (sqrt(dx*dx) > m_xlimit_val)
+                {
+                dx = m_xlimit_val;
+                }
+            if (sqrt(dy*dy) > m_xlimit_val)
+                {
+                dy = m_xlimit_val;
+                }
+            if (sqrt(dz*dz) > m_xlimit_val)
+                {
+                dz = m_xlimit_val;
+                }
+            }
+
         // Update position with transport veloicity
         // r(t+deltaT) = r(t) + v(t+deltaT/2)*deltaT
         h_pos.data[j].x += h_tv.data[j].x*m_deltaT;
