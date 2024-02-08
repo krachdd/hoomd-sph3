@@ -1,1 +1,1 @@
-rm -rf liddrivencavity_*
+rm -rf liddrivencavity_* log*.log

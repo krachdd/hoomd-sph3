@@ -21,7 +21,7 @@ namespace sph
 */
 KickDriftKickTV::KickDriftKickTV(std::shared_ptr<SystemDefinition> sysdef,
                        std::shared_ptr<ParticleGroup> group)
-    : SPHIntegrationMethodTwoStep(sysdef, group), m_limit(false), m_limit_val(1.0), m_zero_force(false)
+    : SPHIntegrationMethodTwoStep(sysdef, group), m_vlimit(false), m_vlimit_val(0.0), m_xlimit(false), m_xlimit_val(0.0), m_zero_force(false)
     {
     m_exec_conf->msg->notice(5) << "Constructing KickDriftKickTV" << endl;
     m_densitymethod_set = false;
@@ -38,30 +38,57 @@ KickDriftKickTV::~KickDriftKickTV()
     a distance larger than the limit in a single time step
 */
 
-pybind11::object KickDriftKickTV::getLimit()
+Scalar KickDriftKickTV::getxLimit()
     {
-    pybind11::object result;
-    if (m_limit)
+    Scalar result;
+    if (m_xlimit)
         {
-        result = pybind11::cast(m_limit_val);
+        result = m_xlimit_val;
         }
     else
         {
-        result = pybind11::none();
+        result = 0.0;
         }
     return result;
     }
 
-void KickDriftKickTV::setLimit(pybind11::object limit)
+Scalar KickDriftKickTV::getvLimit()
     {
-    if (limit.is_none())
+    Scalar result;
+    if (m_vlimit)
         {
-        m_limit = false;
+        result = m_vlimit_val;
         }
     else
         {
-        m_limit = true;
-        m_limit_val = pybind11::cast<Scalar>(limit);
+        result = 0.0;
+        }
+    return result;
+    }
+
+void KickDriftKickTV::setxLimit(Scalar xlimit)
+    {
+    if (xlimit <= 0.0)
+        {
+        m_xlimit = false;
+        }
+    else
+        {
+        m_xlimit = true;
+        m_xlimit_val = xlimit;
+        }
+    }
+
+void KickDriftKickTV::setvLimit(Scalar vlimit)
+    {
+    if (vlimit <= 0.0)
+        {
+        m_vlimit = false;
+        }
+    else
+        {
+        m_vlimit = true;
+        m_vlimit_val = vlimit;
         }
     }
 
@@ -118,15 +145,15 @@ void KickDriftKickTV::integrateStepOne(uint64_t timestep)
         // Scalar dy = h_vel.data[j].y * m_deltaT + Scalar(1.0 / 2.0) * h_accel.data[j].y * m_deltaT * m_deltaT;
         // Scalar dz = h_vel.data[j].z * m_deltaT + Scalar(1.0 / 2.0) * h_accel.data[j].z * m_deltaT * m_deltaT;
 
-        // limit the movement of the particles
-        // if (m_limit)
+        // // limit the movement of the particles
+        // if (m_xlimit)
         //     {
         //     Scalar len = sqrt(dx * dx + dy * dy + dz * dz);
-        //     if (len > m_limit_val)
+        //     if (len > m_xlimit_val)
         //         {
-        //         dx = dx / len * m_limit_val;
-        //         dy = dy / len * m_limit_val;
-        //         dz = dz / len * m_limit_val;
+        //         dx = dx / len * m_xlimit_val;
+        //         dy = dy / len * m_xlimit_val;
+        //         dz = dz / len * m_xlimit_val;
         //         }
         //     }
 
@@ -157,6 +184,27 @@ void KickDriftKickTV::integrateStepOne(uint64_t timestep)
         h_tv.data[j].y = h_vel.data[j].y + Scalar(1.0 / 2.0) * h_bpc.data[j].y * m_deltaT; 
         h_tv.data[j].z = h_vel.data[j].z + Scalar(1.0 / 2.0) * h_bpc.data[j].z * m_deltaT; 
 
+
+        Scalar dx = h_tv.data[j].x * m_deltaT;
+        Scalar dy = h_tv.data[j].y * m_deltaT;
+        Scalar dz = h_tv.data[j].z * m_deltaT;
+
+        // limit the movement of the particles
+        if (m_xlimit)
+            {
+            if (sqrt(dx*dx) > m_xlimit_val)
+                {
+                dx = m_xlimit_val;
+                }
+            if (sqrt(dy*dy) > m_xlimit_val)
+                {
+                dy = m_xlimit_val;
+                }
+            if (sqrt(dz*dz) > m_xlimit_val)
+                {
+                dz = m_xlimit_val;
+                }
+            }
 
         // Update position with transport veloicity
         // r(t+deltaT) = r(t) + v(t+deltaT/2)*deltaT
@@ -249,18 +297,22 @@ void KickDriftKickTV::integrateStepTwo(uint64_t timestep)
         h_vel.data[j].y += Scalar(1.0 / 2.0) * h_accel.data[j].y * m_deltaT;
         h_vel.data[j].z += Scalar(1.0 / 2.0) * h_accel.data[j].z * m_deltaT;
 
-        // // limit the movement of the particles
-        // if (m_limit)
-        //     {
-        //     Scalar vel = sqrt(h_vel.data[j].x * h_vel.data[j].x + h_vel.data[j].y * h_vel.data[j].y
-        //                       + h_vel.data[j].z * h_vel.data[j].z);
-        //     if ((vel * m_deltaT) > m_limit_val)
-        //         {
-        //         h_vel.data[j].x = h_vel.data[j].x / vel * m_limit_val / m_deltaT;
-        //         h_vel.data[j].y = h_vel.data[j].y / vel * m_limit_val / m_deltaT;
-        //         h_vel.data[j].z = h_vel.data[j].z / vel * m_limit_val / m_deltaT;
-        //         }
-        //     }
+        // limit the movement of the particles
+        if (m_vlimit)
+            {
+            Scalar vel = sqrt(h_vel.data[j].x * h_vel.data[j].x + h_vel.data[j].y * h_vel.data[j].y
+                              + h_vel.data[j].z * h_vel.data[j].z);
+            // if ((vel * m_deltaT) > m_limit_val)
+            if ( vel > m_vlimit_val )
+                {
+                // h_vel.data[j].x = h_vel.data[j].x / vel * m_limit_val / m_deltaT;
+                // h_vel.data[j].y = h_vel.data[j].y / vel * m_limit_val / m_deltaT;
+                // h_vel.data[j].z = h_vel.data[j].z / vel * m_limit_val / m_deltaT;
+                h_vel.data[j].x = m_vlimit_val;
+                h_vel.data[j].y = m_vlimit_val;
+                h_vel.data[j].z = m_vlimit_val;
+                }
+            }
         }
     }
 
@@ -274,7 +326,11 @@ void export_KickDriftKickTV(pybind11::module& m)
         .def(pybind11::init<std::shared_ptr<SystemDefinition>, std::shared_ptr<ParticleGroup>>())
         .def("getDensityMethod", &KickDriftKickTV::getDensityMethod)
         .def("setDensityMethod", &KickDriftKickTV::setDensityMethod)
-        .def_property("limit", &KickDriftKickTV::getLimit, &KickDriftKickTV::setLimit)
+        .def("getvLimit", &KickDriftKickTV::getvLimit)
+        .def("getxLimit", &KickDriftKickTV::getxLimit)
+        .def("setvLimit", &KickDriftKickTV::setvLimit)
+        .def("setxLimit", &KickDriftKickTV::setxLimit)
+        // .def_property("limit", &KickDriftKickTV::getLimit, &KickDriftKickTV::setLimit)
         .def_property("zero_force", &KickDriftKickTV::getZeroForce, &KickDriftKickTV::setZeroForce);
     }
     } // end namespace detail
