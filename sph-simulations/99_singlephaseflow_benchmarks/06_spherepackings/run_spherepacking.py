@@ -144,6 +144,9 @@ reference_velocity = (Re * MU)/(RHO0 * reference_length)
 
 dt = model.compute_dt(reference_length, FX, DX, DRHO)
 
+if device.communicator.rank == 0:
+    print(f'Speed of sound [m/s]: {model.get_speedofsound()}')
+
 integrator = hoomd.sph.Integrator(dt=dt)
 
 # VelocityVerlet = hoomd.sph.methods.VelocityVerlet(filter=filterFLUID, densitymethod = densitymethod)
