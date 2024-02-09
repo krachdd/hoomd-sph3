@@ -208,9 +208,9 @@ void KickDriftKickTV::integrateStepOne(uint64_t timestep)
 
         // Update position with transport veloicity
         // r(t+deltaT) = r(t) + v(t+deltaT/2)*deltaT
-        h_pos.data[j].x += h_tv.data[j].x*m_deltaT;
-        h_pos.data[j].y += h_tv.data[j].y*m_deltaT;
-        h_pos.data[j].z += h_tv.data[j].z*m_deltaT;
+        h_pos.data[j].x += dx;
+        h_pos.data[j].y += dy;
+        h_pos.data[j].z += dz;
 
         }
 
@@ -300,16 +300,16 @@ void KickDriftKickTV::integrateStepTwo(uint64_t timestep)
         // limit the movement of the particles
         if (m_vlimit)
             {
-            Scalar vel = sqrt(h_vel.data[j].x * h_vel.data[j].x + h_vel.data[j].y * h_vel.data[j].y
-                              + h_vel.data[j].z * h_vel.data[j].z);
-            // if ((vel * m_deltaT) > m_limit_val)
-            if ( vel > m_vlimit_val )
+            if ( sqrt( h_vel.data[j].x * h_vel.data[j].x ) > m_vlimit_val )
                 {
-                // h_vel.data[j].x = h_vel.data[j].x / vel * m_limit_val / m_deltaT;
-                // h_vel.data[j].y = h_vel.data[j].y / vel * m_limit_val / m_deltaT;
-                // h_vel.data[j].z = h_vel.data[j].z / vel * m_limit_val / m_deltaT;
                 h_vel.data[j].x = m_vlimit_val;
+                }
+            if ( sqrt( h_vel.data[j].y * h_vel.data[j].y ) > m_vlimit_val )
+                {
                 h_vel.data[j].y = m_vlimit_val;
+                }
+            if ( sqrt( h_vel.data[j].z * h_vel.data[j].z ) > m_vlimit_val )
+                {
                 h_vel.data[j].z = m_vlimit_val;
                 }
             }
