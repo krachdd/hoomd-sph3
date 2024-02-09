@@ -862,7 +862,6 @@ class KickDriftKickTV(Method):
             self._cpp_obj = _sph.KickDriftKickTVGPU(sim.state._cpp_sys_def,
                                               sim.state._get_group(self.filter))
 
-        print("Define KickDriftKickTV")
         # Reload density and viscosity methods from __dict__
         self.str_densitymethod = self._param_dict._dict["densitymethod"]
         if self.str_densitymethod == str('SUMMATION'):
@@ -875,11 +874,9 @@ class KickDriftKickTV(Method):
         self.setdensitymethod(self.str_densitymethod)
 
         if self.vlimit == True:
-            print("setvLimit")
             self._cpp_obj.setvLimit(self.vlimit_val)
 
         if self.xlimit == True:
-            print("setxLimit")
             self._cpp_obj.setxLimit(self.xlimit_val)
 
         # Attach param_dict and typeparam_dict

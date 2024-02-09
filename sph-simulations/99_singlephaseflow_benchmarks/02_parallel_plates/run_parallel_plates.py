@@ -129,6 +129,8 @@ model.max_sl = maximum_smoothing_length
 # compute dt
 dt = model.compute_dt(lref, refvel, dx, drho, fx)
 
+if device.communicator.rank == 0:
+    print(f'Speed of sound [m/s]: {model.get_speedofsound()}')
 
 integrator = hoomd.sph.Integrator(dt=dt)
 

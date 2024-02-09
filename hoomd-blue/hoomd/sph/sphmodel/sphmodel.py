@@ -499,12 +499,14 @@ class SinglePhaseFlow(SPHModel):
         self.damp = abs(self.damp)
 
         if ( self.gx == 0 and self.gy == 0 and self.gz == 0):
-            warnings.warn(
-                f"{self} No body force applied.",
-                RuntimeWarning)
+            if ( self._simulation.device.communicator.rank == 0 ):
+                print(f'{self._cpp_SPFclass_name} does NOT use a body force!' )
 
         # self.cpp_force.setAcceleration(self.gx,self.gy,self.gz,self.damp)
         self._cpp_obj.setAcceleration(self.gx,self.gy,self.gz,self.damp)
+
+    def get_speedofsound(self):
+        return self.eos.SpeedOfSound
 
     def compute_dt(self, LREF, UREF, DX, DRHO=0.01, COURANT=0.25):
         # Input sanity
@@ -816,12 +818,14 @@ class SinglePhaseFlowTV(SPHModel):
         self.damp = abs(self.damp)
 
         if ( self.gx == 0 and self.gy == 0 and self.gz == 0):
-            warnings.warn(
-                f"{self} No body force applied.",
-                RuntimeWarning)
+            if ( self._simulation.device.communicator.rank == 0 ):
+                print(f'{self._cpp_SPFclass_name} does NOT use a body force!' )
 
         # self.cpp_force.setAcceleration(self.gx,self.gy,self.gz,self.damp)
         self._cpp_obj.setAcceleration(self.gx,self.gy,self.gz,self.damp)
+
+    def get_speedofsound(self):
+        return self.eos.SpeedOfSound
 
     def compute_dt(self, LREF, UREF, DX, DRHO=0.01, COURANT=0.25):
         # Input sanity
@@ -859,7 +863,6 @@ class SinglePhaseFlowTV(SPHModel):
         C2_4 = GMAG * LREF
         # Maximum speed of sound
         C = np.sqrt(np.max([C2_1,C2_2,C2_3, 0.01*C2_4]))
-        print(f'Speed of Sound: {C}')
         self.eos.set_speedofsound(C)
 
         # CFL condition
@@ -875,7 +878,6 @@ class SinglePhaseFlowTV(SPHModel):
         if GMAG > 0.0:
             # Gravity waves condition
             DT_3 = np.sqrt(H/(16.0*GMAG))
-            print('dts: ', [DT_1, DT_2, DT_3, DT_4, DT_5])
             return COURANT*np.min([DT_1, DT_2, DT_3, DT_4, DT_5])
         else:
             return COURANT*np.min([DT_1,DT_2])
