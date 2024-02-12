@@ -35,14 +35,14 @@ parser.add_option("-R","--reynolds"      ,type=float,dest="reynolds"    ,default
 
 # Fluid and particle properties
 num_length          = options.resolution
-lref                = 1.0               # [m]
+lref                = 0.1               # [m]
 voxelsize           = lref/float(num_length)
 dx                  = voxelsize
 specific_volume     = dx * dx * dx
-rho0                = 1.0
+rho0                = 10.0
 mass                = rho0 * specific_volume
 fx                  = 0.1                # [m/s]
-lidvel              = 1.0
+lidvel              = 0.1
 
 viscosity           = (rho0 * lidvel * lref)/options.reynolds # [Pa s]
 

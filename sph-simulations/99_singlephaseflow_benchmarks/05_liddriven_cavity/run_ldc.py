@@ -36,11 +36,11 @@ parser.add_option("-R","--reynolds"      ,type=float,dest="reynolds"    ,default
 
 # Fluid and particle properties
 num_length          = options.resolution
-lref                = 1.0               # [m]
+lref                = 0.1               # [m]
 voxelsize           = lref/float(num_length)
 dx                  = voxelsize
 specific_volume     = dx * dx * dx
-rho0                = 1.0
+rho0                = 10.0
 mass                = rho0 * specific_volume
 fx                  = 0.0                # [m/s]
 lidvel              = 1.0
@@ -120,10 +120,12 @@ model.gx = fx
 model.damp = 5000
 # model.artificialviscosity = True
 model.artificialviscosity = True 
-model.alpha = 0.2
-model.beta = 0.0
-model.densitydiffusion = False
-model.shepardrenormanlization = False
+model.alpha = 0.4
+model.beta = 0.2
+model.densitydiffusion = True
+model.ddiff = 0.2
+model.shepardrenormanlization = True
+model.shepardfreq = 2
 
 maximum_smoothing_length = 0.0
 # Call get_snapshot on all ranks.
@@ -168,7 +170,7 @@ gsd_writer = hoomd.write.GSD(filename=dumpname,
                              )
 sim.operations.writers.append(gsd_writer)
 
-log_trigger = hoomd.trigger.Periodic(100)
+log_trigger = hoomd.trigger.Periodic(1)
 logger = hoomd.logging.Logger(categories=['scalar', 'string'])
 logger.add(sim, quantities=['timestep', 'tps', 'walltime'])
 logger.add(spf_properties, quantities=['abs_velocity', 'num_particles', 'fluid_vel_x_sum', 'mean_density'])
