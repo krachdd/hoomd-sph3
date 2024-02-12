@@ -18,6 +18,7 @@ set(_${COMPONENT_NAME}_sources
     SinglePhaseFlow.cc
     SinglePhaseFlowNN.cc
     SuspensionFlow.cc
+    SuspensionFlowSpringDamp.cc
 #     TwoPhaseFlow.cc
 #     SmoothingKernelExport.cc
     SmoothingKernel.cc
@@ -37,7 +38,8 @@ set(_${COMPONENT_NAME}_headers
 #     GeneralGPUFunctions.cuh
     SinglePhaseFlow.h 
     SinglePhaseFlowNN.h  
-    SuspensionFlow.h     
+    SuspensionFlow.h   
+    SuspensionFlowSpringDamp.h       
     SPHIntegratorTwoStep.h            
 #     TwoPhaseFlowGPU.h
 #     RigidBodyIntegratorGPU.cuh     

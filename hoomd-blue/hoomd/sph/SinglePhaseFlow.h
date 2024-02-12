@@ -295,6 +295,12 @@ class PYBIND11_EXPORT SinglePhaseFlow : public SPHBaseClass<KT_, SET_>
          */
         void forcecomputation(uint64_t timestep);
 
+        /*! Helper function where the actual force computation takes place
+         * \pre Number densities and fictitious solid particle properties must be up-to-date
+         * \post h_force stores forces acting on fluid particles and .w component stores rate of change of density
+         */
+        void forcecomputationsolids(uint64_t timestep);
+
         /*! Helper function to set communication flags and update ghosts densities
         * \param timestep The time step
         * \post Ghost particle density array is up-to-date

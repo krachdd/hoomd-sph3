@@ -140,7 +140,6 @@ void SuspendedObjectIntegrator::ComputeCenterOfMass(bool print = false)
     // Average position on unit circle
     Scalar angles[6] = {0,0,0,0,0,0};
 
-
     // Loop over group index
     unsigned int group_size  = m_group->getNumMembers();
     for (unsigned int group_idx = 0; group_idx < group_size; group_idx++)
@@ -195,6 +194,12 @@ void SuspendedObjectIntegrator::ComputeCenterOfMass(bool print = false)
         m_exec_conf->msg->notice(5) << "SuspendedObject center of mass y: " << m_centerofmass.y << endl;
         m_exec_conf->msg->notice(5) << "SuspendedObject center of mass z: " << m_centerofmass.z << endl;
         }
+
+
+    // std::cout << "m_centerofmass.x: " << m_centerofmass.x << std::endl;
+    // std::cout << "m_centerofmass.y: " << m_centerofmass.y << std::endl;
+    // std::cout << "m_centerofmass.z: " << m_centerofmass.z << std::endl;
+
     }
 
 void SuspendedObjectIntegrator::ComputeTranslationVelocity(bool print = false)
@@ -423,7 +428,7 @@ void SuspendedObjectIntegrator::integrateStepOne(uint64_t timestep)
 #endif
 
     // Recompute center of mass
-    ComputeCenterOfMass();
+    ComputeCenterOfMass(timestep);
 
     }
 
@@ -509,13 +514,25 @@ void SuspendedObjectIntegrator::integrateStepTwo(uint64_t timestep)
         unsigned int j = m_group->getMemberIndex(group_idx);
 
         // Logging quick and dirty
+
+        if (group_idx == 0)
+        {
+        h_av.data[j].x = m_centerofmass.x;
+        h_av.data[j].y = m_centerofmass.y;
+        h_av.data[j].z = m_centerofmass.z;
+        }
+        if (group_idx == 1)
+        {
         h_av.data[j].x = m_angularvel.x;
         h_av.data[j].y = m_angularvel.y;
         h_av.data[j].z = m_angularvel.z;
-
-        h_tv.data[j].x = m_translationvel.x;
-        h_tv.data[j].y = m_translationvel.y;
-        h_tv.data[j].z = m_translationvel.z;
+        }
+        if (group_idx == 2)
+        {
+        h_av.data[j].x = m_translationvel.x;
+        h_av.data[j].y = m_translationvel.y;
+        h_av.data[j].z = m_translationvel.z;
+        }
 
         // Read particle position and compute relative position
         Scalar3 pos = make_scalar3(h_pos.data[j].x, h_pos.data[j].y, h_pos.data[j].z);

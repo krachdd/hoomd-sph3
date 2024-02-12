@@ -34,11 +34,19 @@ class PYBIND11_EXPORT VelocityVerletBasic : public SPHIntegrationMethodTwoStep
     VelocityVerletBasic(std::shared_ptr<SystemDefinition> sysdef, std::shared_ptr<ParticleGroup> group);
     virtual ~VelocityVerletBasic();
 
+    // //! Get the movement limit
+    // pybind11::object getLimit();
+
+    // //! Sets the movement limit
+    // void setLimit(pybind11::object limit);
+
     //! Get the movement limit
-    pybind11::object getLimit();
+    Scalar getvLimit();
+    //Scalar getxLimit();
 
     //! Sets the movement limit
-    void setLimit(pybind11::object limit);
+    void setvLimit(Scalar vlimit);
+    //void setxLimit(Scalar xlimit);
 
     //! Get zero force
     bool getZeroForce();
@@ -67,8 +75,12 @@ class PYBIND11_EXPORT VelocityVerletBasic : public SPHIntegrationMethodTwoStep
         }
 
     protected:
-    bool m_limit;       //!< True if we should limit the distance a particle moves in one step
-    Scalar m_limit_val; //!< The maximum distance a particle is to move in one step
+    //bool m_limit;       //!< True if we should limit the distance a particle moves in one step
+    //Scalar m_limit_val; //!< The maximum distance a particle is to move in one step
+    bool m_vlimit;       //!< True if we should limit the distance a particle moves in one step
+    Scalar m_vlimit_val; //!< The maximum distance a particle is to move in one step
+    //bool m_xlimit;       //!< True if we should limit the distance a particle moves in one step
+    //Scalar m_xlimit_val; //!< The maximum distance a particle is to move in one step
     bool m_zero_force;  //!< True if the integration step should ignore computed forces
     bool m_densitymethod_set; //!< True if method was set
     DensityMethod m_density_method; //!< Density approach to use

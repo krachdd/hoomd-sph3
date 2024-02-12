@@ -417,7 +417,7 @@ void SinglePhaseFlow<KT_, SET_>::compute_ndensity(uint64_t timestep)
     Scalar w0 = this->m_skernel->w0(m_ch);
 
     // Particle loop
-    // For each fluid particle
+    // For each fluid particle (only fluid particles)
     unsigned int group_size = this->m_fluidgroup->getNumMembers();
     for (unsigned int group_idx = 0; group_idx < group_size; group_idx++)
     {
@@ -1059,7 +1059,6 @@ void SinglePhaseFlow<KT_, SET_>::forcecomputation(uint64_t timestep)
             //temp0 = -mi*mj*( Pi/(rhoi*rhoj) + Pj/(rhoj*rhoj) );
             if ( m_density_method == DENSITYSUMMATION )
             {
-                // Transport formulation proposed by Adami 2013
                 temp0 = -(Vi*Vi+Vj*Vj)*((rhoj*Pi+rhoi*Pj)/(rhoi+rhoj)); 
             }
             else if ( m_density_method == DENSITYCONTINUITY) 
@@ -1086,27 +1085,11 @@ void SinglePhaseFlow<KT_, SET_>::forcecomputation(uint64_t timestep)
             h_force.data[i].y += temp0*dwdr_r*dx.y;
             h_force.data[i].z += temp0*dwdr_r*dx.z;
 
-            // Add contribution to solid particle
-            if ( issolid && m_compute_solid_forces )
-                {
-                h_force.data[k].x -= (mj/mi)*temp0*dwdr_r*dx.x;
-                h_force.data[k].y -= (mj/mi)*temp0*dwdr_r*dx.y;
-                h_force.data[k].z -= (mj/mi)*temp0*dwdr_r*dx.z;
-                }
-
             // Evaluate viscous interaction forces
             temp0 = m_mu * (Vi*Vi+Vj*Vj) * dwdr_r;
             h_force.data[i].x  += temp0*dv.x;
             h_force.data[i].y  += temp0*dv.y;
             h_force.data[i].z  += temp0*dv.z;
-
-            // Add contribution to solid particle
-            if ( issolid && m_compute_solid_forces )
-                {
-                h_force.data[k].x -= (mj/mi)*temp0*dv.x;
-                h_force.data[k].y -= (mj/mi)*temp0*dv.y;
-                h_force.data[k].z -= (mj/mi)*temp0*dv.z;
-                }
 
             // Evaluate rate of change of density if CONTINUITY approach is used
             if ( m_density_method == DENSITYCONTINUITY )
@@ -1148,6 +1131,210 @@ void SinglePhaseFlow<KT_, SET_>::forcecomputation(uint64_t timestep)
     this->applyBodyForce(timestep, m_fluidgroup);
     if ( m_compute_solid_forces )
         this->applyBodyForce(timestep, m_solidgroup);
+
+    }
+
+/*! Perform force computation on solids
+ */
+
+template<SmoothingKernelType KT_,StateEquationType SET_>
+void SinglePhaseFlow<KT_, SET_>::forcecomputationsolids(uint64_t timestep)
+    {
+
+    if ( m_density_method == DENSITYSUMMATION )
+        this->m_exec_conf->msg->notice(7) << "Computing SinglePhaseFlow::Forces using SUMMATION approach " << m_density_method << endl;
+    else if ( m_density_method == DENSITYCONTINUITY )
+        this->m_exec_conf->msg->notice(7) << "Computing SinglePhaseFlow::Forces using CONTINUITY approach " << m_density_method << endl;
+
+    // Grab handles for particle data
+    // Access mode overwrite implies that data does not need to be read in
+    ArrayHandle<Scalar4> h_force(this->m_force,access_location::host, access_mode::readwrite);
+
+    // Check input data, can be omitted if need be
+    assert(h_force.data);
+
+    // // Zero data before force calculation
+    // memset((void*)h_force.data,0,sizeof(Scalar4)*this->m_force.getNumElements());
+
+    // access the particle data
+    ArrayHandle<Scalar4> h_pos(this->m_pdata->getPositions(), access_location::host, access_mode::read);
+    ArrayHandle<Scalar4> h_velocity(this->m_pdata->getVelocities(), access_location::host, access_mode::read);
+    ArrayHandle<Scalar>  h_density(this->m_pdata->getDensities(), access_location::host, access_mode::readwrite);
+    ArrayHandle<Scalar>  h_pressure(this->m_pdata->getPressures(), access_location::host, access_mode::readwrite);
+    ArrayHandle<Scalar3> h_vf(this->m_pdata->getAuxiliaries1(), access_location::host,access_mode::read);
+    ArrayHandle<Scalar>  h_h(this->m_pdata->getSlengths(), access_location::host, access_mode::read);
+
+    // access the neighbor list
+    ArrayHandle<unsigned int> h_n_neigh(this->m_nlist->getNNeighArray(), access_location::host, access_mode::read);
+    ArrayHandle<unsigned int> h_nlist(this->m_nlist->getNListArray(), access_location::host, access_mode::read);
+    // ArrayHandle<unsigned int> h_head_list(this->m_nlist->getHeadList(), access_location::host, access_mode::read);
+    ArrayHandle<size_t> h_head_list(this->m_nlist->getHeadList(), access_location::host, access_mode::read);
+    ArrayHandle<unsigned int> h_type_property_map(this->m_type_property_map, access_location::host, access_mode::read);
+
+    // Check input data
+    assert(h_pos.data != NULL);
+
+    unsigned int size;
+    size_t myHead;
+
+    // Local copy of the simulation box
+    const BoxDim& box = this->m_pdata->getGlobalBox();
+
+    // Local variable to store things
+    Scalar temp0 = 0;
+
+    // for each solid particle
+    unsigned int group_size = m_solidgroup->getNumMembers();
+    for (unsigned int group_idx = 0; group_idx < group_size; group_idx++)
+        {
+        // Read particle index
+        unsigned int i = m_solidgroup->getMemberIndex(group_idx);
+
+        h_force.data[i].x = Scalar(0.0);
+        h_force.data[i].y = Scalar(0.0);
+        h_force.data[i].z = Scalar(0.0);
+
+        // Access the particle's position, velocity, mass and type
+        Scalar3 pi;
+        pi.x = h_pos.data[i].x;
+        pi.y = h_pos.data[i].y;
+        pi.z = h_pos.data[i].z;
+
+        // Acces no-slip BC ficitious velocity
+        Scalar3 vi;
+        vi.x = h_vf.data[i].x;
+        vi.y = h_vf.data[i].y;
+        vi.z = h_vf.data[i].z;
+        Scalar mi = h_velocity.data[i].w;
+
+        // Read particle i pressure
+        Scalar Pi = h_pressure.data[i];
+
+        // Read particle i density and volume
+        Scalar rhoi = h_density.data[i];
+        Scalar Vi   = mi / rhoi;
+
+        // Loop over all of the neighbors of this particle
+        myHead = h_head_list.data[i];
+        size = (unsigned int)h_n_neigh.data[i];
+
+        for (unsigned int j = 0; j < size; j++)
+            {
+            // Index of neighbor (MEM TRANSFER: 1 scalar)
+            unsigned int k = h_nlist.data[myHead + j];
+
+            // Sanity check
+            assert(k < this->m_pdata->getN() + this->m_pdata->getNGhosts());
+
+            // Determine neighbor type
+            bool issolid = checksolid(h_type_property_map.data, h_pos.data[k].w);
+            // If also solid continue
+            if ( issolid )
+                continue;
+
+            // Access neighbor position
+            Scalar3 pj;
+            pj.x = h_pos.data[k].x;
+            pj.y = h_pos.data[k].y;
+            pj.z = h_pos.data[k].z;
+
+            // Compute distance vector (FLOPS: 3)
+            // Scalar3 dx = pi - pj;
+            Scalar3 dx;
+            dx.x = pi.x - pj.x;
+            dx.y = pi.y - pj.y;
+            dx.z = pi.z - pj.z;
+
+            // Apply periodic boundary conditions (FLOPS: 9)
+            dx = box.minImage(dx);
+
+            // Calculate squared distance (FLOPS: 5)
+            Scalar rsq = dot(dx, dx);
+
+            // If particle distance is too large, skip this loop
+            if ( m_const_slength && rsq > m_rcutsq )
+                continue;
+
+            // Access neighbor velocity
+            Scalar3 vj  = make_scalar3(0.0, 0.0, 0.0);
+            Scalar mj   = h_velocity.data[k].w;
+            vj.x = h_velocity.data[k].x;
+            vj.y = h_velocity.data[k].y;
+            vj.z = h_velocity.data[k].z;
+
+            Scalar rhoj = h_density.data[k];
+            Scalar Vj   = mj / rhoj;
+
+            // Read particle k pressure
+            Scalar Pj = h_pressure.data[k];
+
+            // Compute velocity difference
+            Scalar3 dv;
+            dv.x = vi.x - vj.x;
+            dv.y = vi.y - vj.y;
+            dv.z = vi.z - vj.z;
+
+            // Calculate absolute and normalized distance
+            Scalar r = sqrt(rsq);
+
+            // Mean smoothing length and denominator modifier
+            Scalar meanh  = m_const_slength ? m_ch : Scalar(0.5)*(h_h.data[i]+h_h.data[k]);
+            Scalar eps    = Scalar(0.1)*meanh;
+            Scalar epssqr = eps*eps;
+
+            // Kernel function derivative evaluation
+            Scalar dwdr   = this->m_skernel->dwijdr(meanh,r);
+            Scalar dwdr_r = dwdr/(r+eps);
+
+            // Evaluate inter-particle pressure forces
+            //temp0 = -((mi*mj)/(rhoj*rhoi))*(Pi+Pj);
+            //temp0 = -Vi*Vj*( Pi + Pj );
+            //temp0 = -mi*mj*(Pi+Pj)/(rhoi*rhoj);
+            //temp0 = -mi*mj*( Pi/(rhoi*rhoj) + Pj/(rhoj*rhoj) );
+            if ( m_density_method == DENSITYSUMMATION )
+            {
+                // Transport formulation proposed by Adami 2013
+                temp0 = -(Vi*Vi+Vj*Vj)*((rhoj*Pi+rhoi*Pj)/(rhoi+rhoj)); 
+            }
+            else if ( m_density_method == DENSITYCONTINUITY) 
+            { 
+                temp0 = -mi*mj*(Pi+Pj)/(rhoi*rhoj);
+            }
+
+            // TODO: Kommt hier (mj/mi) mit rein
+
+            // Add contribution to solid particle
+            h_force.data[i].x += temp0*dwdr_r*dx.x;
+            h_force.data[i].y += temp0*dwdr_r*dx.y;
+            h_force.data[i].z += temp0*dwdr_r*dx.z;
+
+            // // Add contribution to solid particle
+            // if ( issolid && m_compute_solid_forces )
+            //     {
+            //     h_force.data[k].x -= (mj/mi)*temp0*dwdr_r*dx.x;
+            //     h_force.data[k].y -= (mj/mi)*temp0*dwdr_r*dx.y;
+            //     h_force.data[k].z -= (mj/mi)*temp0*dwdr_r*dx.z;
+            //     }
+
+            // Evaluate viscous interaction forces
+            temp0 = m_mu * (Vi*Vi+Vj*Vj) * dwdr_r;
+            h_force.data[i].x  += temp0*dv.x;
+            h_force.data[i].y  += temp0*dv.y;
+            h_force.data[i].z  += temp0*dv.z;
+
+            // // Add contribution to solid particle
+            // if ( issolid && m_compute_solid_forces )
+            //     {
+            //     h_force.data[k].x -= (mj/mi)*temp0*dv.x;
+            //     h_force.data[k].y -= (mj/mi)*temp0*dv.y;
+            //     h_force.data[k].z -= (mj/mi)*temp0*dv.z;
+            //     }
+
+            } // Closing Neighbor Loop
+
+        } // Closing Fluid Particle Loop
+
+    //  this->applyBodyForce(timestep, m_solidgroup);
 
     }
 
@@ -1218,6 +1405,12 @@ void SinglePhaseFlow<KT_, SET_>::computeForces(uint64_t timestep)
     // This includes the computation of the density if 
     // DENSITYCONTINUITY method is used
     forcecomputation(timestep);
+
+    if (m_compute_solid_forces)
+        {
+        // Execute the force computation on the solids
+        forcecomputationsolids(timestep);
+        }
 
     }
 

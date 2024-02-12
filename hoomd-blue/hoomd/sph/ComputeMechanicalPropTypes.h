@@ -63,6 +63,12 @@ struct suspensionflow_logger_index
         translationvel_x,
         translationvel_y,
         translationvel_z,
+        com_x,
+        com_y,
+        com_z,
+        sum_force_x,
+        sum_force_y,
+        sum_force_z,
         num_quantities // final element to count number of quantities
         };
     };

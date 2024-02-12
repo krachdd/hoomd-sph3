@@ -234,6 +234,77 @@ class PYBIND11_EXPORT ComputeSusFBasicProperties : public Compute
         return h_properties.data[suspensionflow_logger_index::translationvel_z];
         }
 
+    Scalar getXCenterOfMass()
+        {
+#ifdef ENABLE_MPI
+        if (!m_properties_reduced)
+            reduceProperties();
+#endif
+
+        // return only translational component if the flags are not valid
+        ArrayHandle<Scalar> h_properties(m_properties, access_location::host, access_mode::read);
+        return h_properties.data[suspensionflow_logger_index::com_x];
+        }
+
+    Scalar getYCenterOfMass()
+        {
+#ifdef ENABLE_MPI
+        if (!m_properties_reduced)
+            reduceProperties();
+#endif
+
+        // return only translational component if the flags are not valid
+        ArrayHandle<Scalar> h_properties(m_properties, access_location::host, access_mode::read);
+        return h_properties.data[suspensionflow_logger_index::com_y];
+        }
+
+    Scalar getZCenterOfMass()
+        {
+#ifdef ENABLE_MPI
+        if (!m_properties_reduced)
+            reduceProperties();
+#endif
+
+        // return only translational component if the flags are not valid
+        ArrayHandle<Scalar> h_properties(m_properties, access_location::host, access_mode::read);
+        return h_properties.data[suspensionflow_logger_index::com_z];
+        }
+
+    Scalar getSumForcesX()
+        {
+#ifdef ENABLE_MPI
+        if (!m_properties_reduced)
+            reduceProperties();
+#endif
+
+        // return only translational component if the flags are not valid
+        ArrayHandle<Scalar> h_properties(m_properties, access_location::host, access_mode::read);
+        return h_properties.data[suspensionflow_logger_index::sum_force_x];
+        }
+
+    Scalar getSumForcesY()
+        {
+#ifdef ENABLE_MPI
+        if (!m_properties_reduced)
+            reduceProperties();
+#endif
+
+        // return only translational component if the flags are not valid
+        ArrayHandle<Scalar> h_properties(m_properties, access_location::host, access_mode::read);
+        return h_properties.data[suspensionflow_logger_index::sum_force_y];
+        }
+
+    Scalar getSumForcesZ()
+        {
+#ifdef ENABLE_MPI
+        if (!m_properties_reduced)
+            reduceProperties();
+#endif
+
+        // return only translational component if the flags are not valid
+        ArrayHandle<Scalar> h_properties(m_properties, access_location::host, access_mode::read);
+        return h_properties.data[suspensionflow_logger_index::sum_force_z];
+        }
 
     protected:
     std::shared_ptr<ParticleGroup> m_group; //!< Group to compute properties for
@@ -250,6 +321,7 @@ class PYBIND11_EXPORT ComputeSusFBasicProperties : public Compute
 
     //! Reduce properties over MPI
     virtual void reduceProperties();
+    virtual void reducePropertiesMax();
 #endif
     };
 

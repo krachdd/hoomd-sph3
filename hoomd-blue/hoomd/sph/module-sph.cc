@@ -17,6 +17,7 @@ maintainer: dkrach, david.krach@mib.uni-stuttgart.de
 #include "SinglePhaseFlow.h"
 #include "SinglePhaseFlowNN.h"
 #include "SuspensionFlow.h"
+#include "SuspensionFlowSpringDamp.h"
 // // #include "TwoPhaseFlow.h"
 #include "CustomForceCompute.h"
 
@@ -158,6 +159,18 @@ PYBIND11_MODULE(_sph, m){
     export_SuspensionFlow<quintic, tait>(m, "SuspensionF_Q_T");
     export_SuspensionFlow<cubicspline, linear>(m, "SuspensionF_CS_L");
     export_SuspensionFlow<cubicspline, tait>(m, "SuspensionF_CS_T");
+
+    export_SuspensionFlowSpringDamp<wendlandc2, linear>(m, "SuspensionFSD_WC2_L");
+    export_SuspensionFlowSpringDamp<wendlandc2, tait>(m, "SuspensionFSD_WC2_T");
+    export_SuspensionFlowSpringDamp<wendlandc4, linear>(m, "SuspensionFSD_WC4_L");
+    export_SuspensionFlowSpringDamp<wendlandc4, tait>(m, "SuspensionFSD_WC4_T");
+    export_SuspensionFlowSpringDamp<wendlandc6, linear>(m, "SuspensionFSD_WC6_L");
+    export_SuspensionFlowSpringDamp<wendlandc6, tait>(m, "SuspensionFSD_WC6_T");
+    export_SuspensionFlowSpringDamp<quintic, linear>(m, "SuspensionFSD_Q_L");
+    export_SuspensionFlowSpringDamp<quintic, tait>(m, "SuspensionFSD_Q_T");
+    export_SuspensionFlowSpringDamp<cubicspline, linear>(m, "SuspensionFSD_CS_L");
+    export_SuspensionFlowSpringDamp<cubicspline, tait>(m, "SuspensionFSD_CS_T");
+
 
     export_CustomForceCompute(m);
 

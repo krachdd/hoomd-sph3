@@ -315,3 +315,39 @@ class SuspensionFlowBasicProperties(Compute):
         """Sum of Fluid Particle velocity in xdir """
         self._cpp_obj.compute(self._simulation.timestep)
         return self._cpp_obj.translationvel_z
+
+    @log(requires_run=True)
+    def com_x(self):
+        """Center of Mass X of solid aggregate """
+        self._cpp_obj.compute(self._simulation.timestep)
+        return self._cpp_obj.com_x
+
+    @log(requires_run=True)
+    def com_y(self):
+        """Center of Mass Y of solid aggregate """
+        self._cpp_obj.compute(self._simulation.timestep)
+        return self._cpp_obj.com_y
+
+    @log(requires_run=True)
+    def com_z(self):
+        """Center of Mass Y of solid aggregate """
+        self._cpp_obj.compute(self._simulation.timestep)
+        return self._cpp_obj.com_z
+
+    @log(requires_run=True)
+    def sum_force_x(self):
+        """Center of Mass Y of solid aggregate """
+        self._cpp_obj.compute(self._simulation.timestep)
+        return self._cpp_obj.sum_force_x
+
+    @log(requires_run=True)
+    def sum_force_y(self):
+        """Center of Mass Y of solid aggregate """
+        self._cpp_obj.compute(self._simulation.timestep)
+        return self._cpp_obj.sum_force_y
+
+    @log(requires_run=True)
+    def sum_force_z(self):
+        """Center of Mass Y of solid aggregate """
+        self._cpp_obj.compute(self._simulation.timestep)
+        return self._cpp_obj.sum_force_z

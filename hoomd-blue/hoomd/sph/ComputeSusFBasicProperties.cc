@@ -88,6 +88,7 @@ void ComputeSusFBasicProperties::computeProperties()
     // PDataFlags flags = m_pdata->getFlags();
 
     // access the particle data
+    ArrayHandle<Scalar4> h_force(m_pdata->getNetForce(),access_location::host, access_mode::read);
     ArrayHandle<Scalar4> h_vel(m_pdata->getVelocities(), access_location::host, access_mode::read);
     ArrayHandle<Scalar> h_density(m_pdata->getDensities(), access_location::host, access_mode::read);
     ArrayHandle<Scalar3> h_av(m_pdata->getAuxiliaries3(), access_location::host,access_mode::read);
@@ -116,11 +117,37 @@ void ComputeSusFBasicProperties::computeProperties()
     double translationvel_x = 0.0;
     double translationvel_y = 0.0;
     double translationvel_z = 0.0;
+    double com_x = 0.0;
+    double com_y = 0.0;
+    double com_z = 0.0;
+    double sum_force_x = 0.0;
+    double sum_force_y = 0.0;
+    double sum_force_z = 0.0;
+
 
     for (unsigned int group_idx = 0; group_idx < group_size; group_idx++)
     {
         // Read particle index
         unsigned int j = m_group->getMemberIndex(group_idx);
+
+        if (group_idx == 0)
+        {
+            com_x = h_av.data[j].x;
+            com_y = h_av.data[j].y;
+            com_z = h_av.data[j].z;
+        }
+        if (group_idx == 1)
+        {
+            angularvel_x = h_av.data[j].x;
+            angularvel_y = h_av.data[j].y;
+            angularvel_z = h_av.data[j].z;
+        }
+        if (group_idx == 2)
+        {
+            translationvel_x = h_av.data[j].x;
+            translationvel_y = h_av.data[j].y;
+            translationvel_z = h_av.data[j].z;
+        }
 
 
         // Sum velocities
@@ -129,12 +156,15 @@ void ComputeSusFBasicProperties::computeProperties()
         fluid_vel_z_sum += h_vel.data[j].z;
         abs_velocity  += sqrt(h_vel.data[j].x * h_vel.data[j].x + h_vel.data[j].y * h_vel.data[j].y + h_vel.data[j].z * h_vel.data[j].z);
         sum_density     += h_density.data[j];
-        angularvel_x = h_av.data[j].x;
-        angularvel_y = h_av.data[j].y;
-        angularvel_z = h_av.data[j].z;
-        translationvel_x = h_tv.data[j].x;
-        translationvel_y = h_tv.data[j].y;
-        translationvel_z = h_tv.data[j].z;
+        // angularvel_x = h_av.data[j].x;
+        // angularvel_y = h_av.data[j].y;
+        // angularvel_z = h_av.data[j].z;
+        // translationvel_x = h_tv.data[j].x;
+        // translationvel_y = h_tv.data[j].y;
+        // translationvel_z = h_tv.data[j].z;
+        sum_force_x += h_force.data[j].x;
+        sum_force_y += h_force.data[j].y;
+        sum_force_z += h_force.data[j].z;
 
     }
 
@@ -150,6 +180,12 @@ void ComputeSusFBasicProperties::computeProperties()
     h_properties.data[suspensionflow_logger_index::translationvel_x]    = Scalar(translationvel_x);
     h_properties.data[suspensionflow_logger_index::translationvel_y]    = Scalar(translationvel_y);
     h_properties.data[suspensionflow_logger_index::translationvel_z]    = Scalar(translationvel_z);
+    h_properties.data[suspensionflow_logger_index::com_x]    = Scalar(com_x);
+    h_properties.data[suspensionflow_logger_index::com_y]    = Scalar(com_y);
+    h_properties.data[suspensionflow_logger_index::com_z]    = Scalar(com_z);
+    h_properties.data[suspensionflow_logger_index::sum_force_x]    = Scalar(sum_force_x);
+    h_properties.data[suspensionflow_logger_index::sum_force_y]    = Scalar(sum_force_y);
+    h_properties.data[suspensionflow_logger_index::sum_force_z]    = Scalar(sum_force_z);
 
 
     // h_properties.data[suspensionflow_logger_index::dt_adapt] = Scalar(adaptive_tstep);
@@ -180,6 +216,25 @@ void ComputeSusFBasicProperties::reduceProperties()
     }
 #endif
 
+#ifdef ENABLE_MPI
+void ComputeSusFBasicProperties::reducePropertiesMax()
+    {
+    if (m_properties_reduced)
+        return;
+
+    // reduce properties
+    ArrayHandle<Scalar> h_properties(m_properties, access_location::host, access_mode::readwrite);
+    MPI_Allreduce(MPI_IN_PLACE,
+                  h_properties.data,
+                  suspensionflow_logger_index::num_quantities,
+                  MPI_HOOMD_SCALAR,
+                  MPI_MAX,
+                  m_exec_conf->getMPICommunicator());
+
+    m_properties_reduced = true;
+    }
+#endif
+
 namespace detail
     {
 void export_ComputeSusFMechanicalProperties(pybind11::module& m)
@@ -198,7 +253,13 @@ void export_ComputeSusFMechanicalProperties(pybind11::module& m)
         .def_property_readonly("angularvel_z", &ComputeSusFBasicProperties::getAngularZVelocity) 
         .def_property_readonly("translationvel_x", &ComputeSusFBasicProperties::getTranslationalXVelocity)
         .def_property_readonly("translationvel_y", &ComputeSusFBasicProperties::getTranslationalYVelocity)
-        .def_property_readonly("translationvel_z", &ComputeSusFBasicProperties::getTranslationalZVelocity);      
+        .def_property_readonly("translationvel_z", &ComputeSusFBasicProperties::getTranslationalZVelocity)
+        .def_property_readonly("com_x", &ComputeSusFBasicProperties::getXCenterOfMass)
+        .def_property_readonly("com_y", &ComputeSusFBasicProperties::getYCenterOfMass)
+        .def_property_readonly("com_z", &ComputeSusFBasicProperties::getZCenterOfMass)
+        .def_property_readonly("sum_force_x", &ComputeSusFBasicProperties::getSumForcesX)
+        .def_property_readonly("sum_force_y", &ComputeSusFBasicProperties::getSumForcesY)
+        .def_property_readonly("sum_force_z", &ComputeSusFBasicProperties::getSumForcesZ);      
     }
 
     } // end namespace detail

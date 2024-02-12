@@ -34,7 +34,7 @@ maintainer: dkrach, david.krach@mib.uni-stuttgart.de
 #include "EvaluationMethodDefinition.h"
 
 
-/*! \file SuspensionFlow.h
+/*! \file SuspensionFlowSpringDamp.h
     \brief Contains code for the Quasi-incompressible Navier-Stokes solver
           for Single-phase flow
 */
@@ -43,8 +43,8 @@ maintainer: dkrach, david.krach@mib.uni-stuttgart.de
 #error This header cannot be compiled by nvcc
 #endif
 
-#ifndef __SuspensionFlow_H__
-#define __SuspensionFlow_H__
+#ifndef __SuspensionFlowSpringDamp_H__
+#define __SuspensionFlowSpringDamp_H__
 
 #ifndef M_PI
 #define M_PI 3.14159265358979323846
@@ -59,16 +59,16 @@ namespace hoomd
 namespace sph
 {
 
-//! Computes SuspensionFlow forces on each particle
+//! Computes SuspensionFlowSpringDamp forces on each particle
 /*!
 */
 template<SmoothingKernelType KT_,StateEquationType SET_>
-class PYBIND11_EXPORT SuspensionFlow : public SPHBaseClass<KT_, SET_>
+class PYBIND11_EXPORT SuspensionFlowSpringDamp : public SPHBaseClass<KT_, SET_>
     {
     public:
 
         //! Constructor
-        SuspensionFlow(std::shared_ptr<SystemDefinition> sysdef,
+        SuspensionFlowSpringDamp(std::shared_ptr<SystemDefinition> sysdef,
                         std::shared_ptr<SmoothingKernel<KT_> > skernel,
                         std::shared_ptr<StateEquation<SET_> > equationofstate,
                         std::shared_ptr<nsearch::NeighborList> nlist,
@@ -79,7 +79,7 @@ class PYBIND11_EXPORT SuspensionFlow : public SPHBaseClass<KT_, SET_>
                         ViscosityMethod mviscositymethod=HARMONICAVERAGE);
 
         //! Destructor
-        virtual ~SuspensionFlow();
+        virtual ~SuspensionFlowSpringDamp();
 
         //! Set the rcut for a single type pair
         virtual void setRcut(unsigned int typ1, unsigned int typ2, Scalar rcut);
@@ -96,7 +96,7 @@ class PYBIND11_EXPORT SuspensionFlow : public SPHBaseClass<KT_, SET_>
         /*! Set the parameters
          * \param mu Dynamic viscosity
          */
-        virtual void setParams(Scalar mu, Scalar rhoS, Scalar f0);
+        virtual void setParams(Scalar mu, Scalar rhoS, Scalar kc, Scalar dc, Scalar dx);
 
         //! Getter and Setter methods for density method
         DensityMethod getDensityMethod()
@@ -257,11 +257,13 @@ class PYBIND11_EXPORT SuspensionFlow : public SPHBaseClass<KT_, SET_>
         std::vector<unsigned int> m_solidtypes; //!< Solid type numbers
         std::vector<unsigned int> m_suspendedtypes; //!< Solid type numbers
         GPUArray<unsigned int> m_type_property_map; //!< to check if a particle type is solid or fluid
-        unsigned int m_maxSuspendedID;              //!< maximum nuumber of solid bodies        
-        std::vector<Scalar4> m_centerofmasses;  //!< Vector with center of mass and typeID for each solid body besides walls  
-        std::vector<Scalar3> m_repulsiveforces; //!< Vector with repulsive forces per solid body     
-        std::vector<Scalar3> m_velocities;      //!< Vector with velocities of solid bodies 
-        Scalar m_f0; //!< Spring stiffness of contact force
+        // unsigned int m_maxSuspendedID;              //!< maximum nuumber of solid bodies        
+        // std::vector<Scalar4> m_centerofmasses;  //!< Vector with center of mass and typeID for each solid body besides walls  
+        // std::vector<Scalar3> m_repulsiveforces; //!< Vector with repulsive forces per solid body     
+        // std::vector<Scalar3> m_velocities;      //!< Vector with velocities of solid bodies 
+        Scalar m_kc; //!< Spring stiffness of contact force
+        Scalar m_dc; //!< Damping factor of contact force
+        Scalar m_dx; //!< Initial distance of particles
         Scalar m_rhoS; //!< Solid density
         std::vector<Scalar> m_radii;            //!< Vector with equivalent radi of all solid bodies
 
@@ -319,21 +321,6 @@ class PYBIND11_EXPORT SuspensionFlow : public SPHBaseClass<KT_, SET_>
         // */
         // void compute_Centerofmasses(uint64_t timestep, bool print);
 
-        /*! Helper function to calculate center of mass of suspendedtypes
-        * \post Based on SuspendedObjectIntegrator
-        */
-        void compute_Centerofmasses(uint64_t timestep);
-
-        /*! Helper function to calculate equivalent radii of solidtypes
-        * \post eqivalent radii stored in m_radi dependent on type id
-        */
-        void compute_equivalentRadii(uint64_t timestep);
-
-        /*! Helper function to calculate repulsive force between solids
-        * \post Based on approach of Bian, Ellero, Vazquez
-        */
-        void compute_repulsiveForce(uint64_t timestep);
-
         /*! Helper function where the actual force computation takes place
          * \pre Number densities and fictitious solid particle properties must be up-to-date
          * \post h_force stores forces acting on fluid particles and .w component stores rate of change of density
@@ -358,18 +345,11 @@ class PYBIND11_EXPORT SuspensionFlow : public SPHBaseClass<KT_, SET_>
         */
         void update_ghost_density_pressure(uint64_t timestep);
 
-
         /*! Helper function to set communication flags and update ghosts auxiliary array 1
         * \param timestep The time step
         * \post Ghost particle auxiliary array 1 is up-to-date
         */
         void update_ghost_aux1(uint64_t timestep);
-
-        /*! Helper function to set communication flags and update ghosts auxiliary array 1
-        * \param timestep The time step
-        * \post Ghost particle auxiliary array 1 is up-to-date
-        */
-        void update_ghost_aux2(uint64_t timestep);
 
         /*! Helper function to set communication flags and update auxiliary array 3
         * \param timestep The time step
@@ -385,10 +365,10 @@ class PYBIND11_EXPORT SuspensionFlow : public SPHBaseClass<KT_, SET_>
 namespace detail 
 {
 template<SmoothingKernelType KT_, StateEquationType SET_>
-void export_SuspensionFlow(pybind11::module& m, std::string name);
+void export_SuspensionFlowSpringDamp(pybind11::module& m, std::string name);
 
 } // end namespace detail
 } // end namespace sph
 } // end namespace hoomd
 
-#endif // __SuspensionFlow_H__
+#endif // __SuspensionFlowSpringDamp_H__

@@ -21,7 +21,7 @@ namespace sph
 */
 VelocityVerletBasic::VelocityVerletBasic(std::shared_ptr<SystemDefinition> sysdef,
                        std::shared_ptr<ParticleGroup> group)
-    : SPHIntegrationMethodTwoStep(sysdef, group), m_limit(false), m_limit_val(1.0), m_zero_force(false)
+    : SPHIntegrationMethodTwoStep(sysdef, group), m_vlimit(false), m_vlimit_val(0.0), m_zero_force(false)
     {
     m_exec_conf->msg->notice(5) << "Constructing VelocityVerletBasic" << endl;
     m_densitymethod_set = false;
@@ -38,30 +38,57 @@ VelocityVerletBasic::~VelocityVerletBasic()
     a distance larger than the limit in a single time step
 */
 
-pybind11::object VelocityVerletBasic::getLimit()
+// Scalar VelocityVerletBasic::getxLimit()
+//     {
+//     Scalar result;
+//     if (m_xlimit)
+//         {
+//         result = m_xlimit_val;
+//         }
+//     else
+//         {
+//         result = 0.0;
+//         }
+//     return result;
+//     }
+
+Scalar VelocityVerletBasic::getvLimit()
     {
-    pybind11::object result;
-    if (m_limit)
+    Scalar result;
+    if (m_vlimit)
         {
-        result = pybind11::cast(m_limit_val);
+        result = m_vlimit_val;
         }
     else
         {
-        result = pybind11::none();
+        result = 0.0;
         }
     return result;
     }
 
-void VelocityVerletBasic::setLimit(pybind11::object limit)
+// void VelocityVerletBasic::setxLimit(Scalar xlimit)
+//     {
+//     if (xlimit <= 0.0)
+//         {
+//         m_xlimit = false;
+//         }
+//     else
+//         {
+//         m_xlimit = true;
+//         m_xlimit_val = xlimit;
+//         }
+//     }
+
+void VelocityVerletBasic::setvLimit(Scalar vlimit)
     {
-    if (limit.is_none())
+    if (vlimit <= 0.0)
         {
-        m_limit = false;
+        m_vlimit = false;
         }
     else
         {
-        m_limit = true;
-        m_limit_val = pybind11::cast<Scalar>(limit);
+        m_vlimit = true;
+        m_vlimit_val = vlimit;
         }
     }
 
@@ -139,16 +166,69 @@ void VelocityVerletBasic::integrateStepOne(uint64_t timestep)
         // DK: Energy change can be ignored
         // h_dpe.data[j].z += Scalar(1.0/2.0)*h_dpedt.data[j].z*m_deltaT;
 
-        // Original HOOMD Velocity Verlet Two Step NVE
-        h_vel.data[j].x += Scalar(1.0 / 2.0) * h_accel.data[j].x * m_deltaT;
-        h_vel.data[j].y += Scalar(1.0 / 2.0) * h_accel.data[j].y * m_deltaT;
-        h_vel.data[j].z += Scalar(1.0 / 2.0) * h_accel.data[j].z * m_deltaT;
+        // // Original HOOMD Velocity Verlet Two Step NVE
+        // h_vel.data[j].x += Scalar(1.0 / 2.0) * h_accel.data[j].x * m_deltaT;
+        // h_vel.data[j].y += Scalar(1.0 / 2.0) * h_accel.data[j].y * m_deltaT;
+        // h_vel.data[j].z += Scalar(1.0 / 2.0) * h_accel.data[j].z * m_deltaT;
 
+        Scalar3 vel_temp;
+        vel_temp.x = h_vel.data[j].x + Scalar(1.0 / 2.0) * h_accel.data[j].x * m_deltaT;
+        vel_temp.y = h_vel.data[j].y + Scalar(1.0 / 2.0) * h_accel.data[j].y * m_deltaT;
+        vel_temp.z = h_vel.data[j].z + Scalar(1.0 / 2.0) * h_accel.data[j].z * m_deltaT;
+
+        // h_vel.data[j].x += Scalar(1.0 / 2.0) * h_accel.data[j].x * m_deltaT;
+        // h_vel.data[j].y += Scalar(1.0 / 2.0) * h_accel.data[j].y * m_deltaT;
+        // h_vel.data[j].z += Scalar(1.0 / 2.0) * h_accel.data[j].z * m_deltaT;
+
+        bool no_pos_update = false;
+
+        // limit the movement of the particles
+        if (m_vlimit)
+            {
+            Scalar vel = sqrt(vel_temp.x * vel_temp.x + vel_temp.y * vel_temp.y
+                              + vel_temp.z * vel_temp.z);
+            // if ((vel * m_deltaT) > m_limit_val)
+            if ( vel > m_vlimit_val )
+                {
+                // h_vel.data[j].x = h_vel.data[j].x / vel * m_limit_val / m_deltaT;
+                // h_vel.data[j].y = h_vel.data[j].y / vel * m_limit_val / m_deltaT;
+                // h_vel.data[j].z = h_vel.data[j].z / vel * m_limit_val / m_deltaT;
+                vel_temp.x = h_vel.data[j].x;
+                vel_temp.x = h_vel.data[j].y;
+                vel_temp.x = h_vel.data[j].z;
+                no_pos_update = true;
+                }
+            }
+            
+        h_vel.data[j].x = vel_temp.x;
+        h_vel.data[j].y = vel_temp.y;
+        h_vel.data[j].z = vel_temp.z;
+
+        // // limit the movement of the particles
+        // if (m_xlimit)
+        //     {
+        //     if (sqrt(dx*dx) > m_xlimit_val)
+        //         {
+        //         dx = m_xlimit_val;
+        //         }
+        //     if (sqrt(dy*dy) > m_xlimit_val)
+        //         {
+        //         dy = m_xlimit_val;
+        //         }
+        //     if (sqrt(dz*dz) > m_xlimit_val)
+        //         {
+        //         dz = m_xlimit_val;
+        //         }
+        //     }
+
+        if (!no_pos_update)
+        {
         // David 
         // r(t+deltaT) = r(t) + v(t+deltaT/2)*deltaT
         h_pos.data[j].x += h_vel.data[j].x*m_deltaT;
         h_pos.data[j].y += h_vel.data[j].y*m_deltaT;
         h_pos.data[j].z += h_vel.data[j].z*m_deltaT;
+        }
         }
 
     // particles may have been moved slightly outside the box by the above steps, wrap them back
@@ -230,10 +310,36 @@ void VelocityVerletBasic::integrateStepTwo(uint64_t timestep)
         // Original HOOMD Velocity Verlet Two Step NVE
         // then, update the velocity
         // v(t+deltaT) = v(t+deltaT/2) + 1/2 * a(t+deltaT) deltaT
-        h_vel.data[j].x += Scalar(1.0 / 2.0) * h_accel.data[j].x * m_deltaT;
-        h_vel.data[j].y += Scalar(1.0 / 2.0) * h_accel.data[j].y * m_deltaT;
-        h_vel.data[j].z += Scalar(1.0 / 2.0) * h_accel.data[j].z * m_deltaT;
 
+        Scalar3 vel_temp;
+        vel_temp.x = h_vel.data[j].x + Scalar(1.0 / 2.0) * h_accel.data[j].x * m_deltaT;
+        vel_temp.y = h_vel.data[j].y + Scalar(1.0 / 2.0) * h_accel.data[j].y * m_deltaT;
+        vel_temp.z = h_vel.data[j].z + Scalar(1.0 / 2.0) * h_accel.data[j].z * m_deltaT;
+
+        // h_vel.data[j].x += Scalar(1.0 / 2.0) * h_accel.data[j].x * m_deltaT;
+        // h_vel.data[j].y += Scalar(1.0 / 2.0) * h_accel.data[j].y * m_deltaT;
+        // h_vel.data[j].z += Scalar(1.0 / 2.0) * h_accel.data[j].z * m_deltaT;
+
+        // limit the movement of the particles
+        if (m_vlimit)
+            {
+            Scalar vel = sqrt(vel_temp.x * vel_temp.x + vel_temp.y * vel_temp.y
+                              + vel_temp.z * vel_temp.z);
+            // if ((vel * m_deltaT) > m_limit_val)
+            if ( vel > m_vlimit_val )
+                {
+                // h_vel.data[j].x = h_vel.data[j].x / vel * m_limit_val / m_deltaT;
+                // h_vel.data[j].y = h_vel.data[j].y / vel * m_limit_val / m_deltaT;
+                // h_vel.data[j].z = h_vel.data[j].z / vel * m_limit_val / m_deltaT;
+                vel_temp.x = h_vel.data[j].x;
+                vel_temp.x = h_vel.data[j].y;
+                vel_temp.x = h_vel.data[j].z;
+                }
+            }
+
+        h_vel.data[j].x = vel_temp.x;
+        h_vel.data[j].y = vel_temp.y;
+        h_vel.data[j].z = vel_temp.z;
         // // limit the movement of the particles
         // if (m_limit)
         //     {
@@ -259,7 +365,11 @@ void export_VelocityVerletBasic(pybind11::module& m)
         .def(pybind11::init<std::shared_ptr<SystemDefinition>, std::shared_ptr<ParticleGroup>>())
         .def("getDensityMethod", &VelocityVerletBasic::getDensityMethod)
         .def("setDensityMethod", &VelocityVerletBasic::setDensityMethod)
-        .def_property("limit", &VelocityVerletBasic::getLimit, &VelocityVerletBasic::setLimit)
+        .def("getvLimit", &VelocityVerletBasic::getvLimit)
+        //.def("getxLimit", &VelocityVerletBasic::getxLimit)
+        .def("setvLimit", &VelocityVerletBasic::setvLimit)
+        //.def("setxLimit", &VelocityVerletBasicw::setxLimit)
+        //.def_property("limit", &VelocityVerletBasic::getLimit, &VelocityVerletBasic::setLimit)
         .def_property("zero_force", &VelocityVerletBasic::getZeroForce, &VelocityVerletBasic::setZeroForce);
     }
     } // end namespace detail
