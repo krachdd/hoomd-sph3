@@ -4,5 +4,4 @@ export PYTHONPATH=$PYTHONPATH:${GIT_SRC}/hoomd-blue/build
 export PYTHONPATH=$PYTHONPATH:${GIT_SRC}/dependencies/gsd-sph/gsd-3.2.0/build
 export PYTHONPATH=$PYTHONPATH:${GIT_SRC}/dependencies/pgsd-sph/pgsd-3.2.0/build
 export PYTHONPATH=$PYTHONPATH:${GIT_SRC}/helper_modules/gsd2vtu
-export PYTHONPATH=$PYTHONPATH:${GIT_SRC}/helper_modules/delete_solid_sphparticles
-export PYTHONPATH=$PYTHONPATH:${GIT_SRC}/helper_modules/read_input_from_txt
+export PYTHONPATH=$PYTHONPATH:${GIT_SRC}/helper_modules/

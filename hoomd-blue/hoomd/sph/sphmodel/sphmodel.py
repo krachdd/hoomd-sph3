@@ -508,7 +508,17 @@ class SinglePhaseFlow(SPHModel):
     def get_speedofsound(self):
         return self.eos.SpeedOfSound
 
-    def compute_dt(self, LREF, UREF, DX, DRHO=0.01, COURANT=0.25):
+    def set_speedofsound(self, c):
+        self.eos.set_speedofsound(c)
+
+    def get_GMAG(self):
+        # Magnitude of body force
+        if (abs(self.gx) > 0.0 or abs(self.gy) > 0.0 or abs(self.gz) > 0.0):
+            return  np.sqrt(self.gx**2+self.gy**2+self.gz**2)
+        else:
+            return 0.0
+
+    def compute_speedofsound(self, LREF, UREF, DX, DRHO, H, MU, RHO0):
         # Input sanity
         if LREF == 0.0:
             raise ValueError('Reference length LREF may not be zero.')
@@ -519,43 +529,62 @@ class SinglePhaseFlow(SPHModel):
 
         UREF = np.abs(UREF)
 
-        # Compute required quantities
-        # Magnitude of body force
-        if (abs(self.gx) > 0.0 or abs(self.gy) > 0.0 or abs(self.gz) > 0.0):
-            GMAG = np.sqrt(self.gx**2+self.gy**2+self.gz**2)
-        else:
-            GMAG = 0.0
-
-        # Smoothing length
-        H   = self._param_dict['max_sl']
-        # Viscosity
-        MU  = self._param_dict['mu']
-        # Rest density
-        RHO0 = self.eos.RestDensity
-
+        C_a = []
         # Speed of sound
         # CFL condition
-        C2_1 = UREF*UREF/DRHO
+        C_a.append(UREF*UREF/DRHO)
         # Gravity waves condition
-        C2_2 = GMAG*LREF/DRHO
+        C_a.append(self.get_GMAG()*LREF/DRHO)
         # Fourier condition
-        C2_3 = (MU*UREF)/(RHO0*LREF*DRHO)
+        C_a.append((MU*UREF)/(RHO0*LREF*DRHO))
         # Maximum speed of sound
-        C = np.sqrt(np.max([C2_1,C2_2,C2_3]))
+        
+        C_a = np.asarray(C_a)
+        conditions = ['CFL-condition', 'Gravity_waves-condition', 'Fourier-condition']
+        condition = [conditions[i] for i in np.where(C_a == C_a.max())[0]]
+        C = np.sqrt(np.max(C_a))
+
+        # Set speed of sound
         self.eos.set_speedofsound(C)
 
+        return C, condition
+
+
+    def compute_dt(self, LREF, UREF, DX, DRHO, H, MU, RHO0, COURANT=0.25):
+        # Input sanity
+        if LREF == 0.0:
+            raise ValueError('Reference length LREF may not be zero.')
+        if DRHO == 0.0:
+            raise ValueError('Maximum density variation DRHO may not be zero.')
+        if DX <= 0.0:
+            raise ValueError('DX may not be zero or negative.')
+        if H != self._param_dict['max_sl']:
+            raise ValueError('Given H not equal to stored H self._param_dict[max_sl]!')
+        if MU != self._param_dict['mu']:
+            raise ValueError('Given MU not equal to stored MU self._param_dict[mu]!')
+        if RHO0 != self.eos.RestDensity:
+            raise ValueError('Given RHO0 not equal to stored RHO0 self.eos.RestDensity!')
+        
+        UREF = np.abs(UREF)
+
+        C = self.get_speedofsound()
+
+        DT_a = []
         # CFL condition
         # DT_1 = 0.25*H/C
-        DT_1 = 0.25*DX/C
+        DT_a.append(DX/C)
         # Fourier condition
-        DT_2 = (DX*DX*RHO0)/(8.0*MU)
-        if GMAG > 0.0:
+        DT_a.append((DX*DX*RHO0)/(8.0*MU))
+        
+        if self.get_GMAG() > 0.0:
             # Gravity waves condition
-            DT_3 = np.sqrt(H/(16.0*GMAG))
-            return COURANT*np.min([DT_1,DT_2,DT_3])
-        else:
-            return COURANT*np.min([DT_1,DT_2])
+            DT_a.append(np.sqrt(H/(16.0*self.get_GMAG())))
+        DT_a = np.asarray(DT_a)
+        conditions = ['CFL-condition', 'Fourier-condition', 'Gravity_waves-condition']
+        condition = [conditions[i] for i in np.where(DT_a == DT_a.min())[0]]
+        DT = COURANT * np.min(DT_a)
 
+        return DT, condition
 
 
 class SinglePhaseFlowTV(SPHModel):
@@ -827,7 +856,17 @@ class SinglePhaseFlowTV(SPHModel):
     def get_speedofsound(self):
         return self.eos.SpeedOfSound
 
-    def compute_dt(self, LREF, UREF, DX, DRHO=0.01, COURANT=0.25):
+    def set_speedofsound(self, c):
+        self.eos.set_speedofsound(c)
+
+    def get_GMAG(self):
+        # Magnitude of body force
+        if (abs(self.gx) > 0.0 or abs(self.gy) > 0.0 or abs(self.gz) > 0.0):
+            return  np.sqrt(self.gx**2+self.gy**2+self.gz**2)
+        else:
+            return 0.0
+
+    def compute_speedofsound(self, LREF, UREF, DX, DRHO, H, MU, RHO0):
         # Input sanity
         if LREF == 0.0:
             raise ValueError('Reference length LREF may not be zero.')
@@ -838,51 +877,70 @@ class SinglePhaseFlowTV(SPHModel):
 
         UREF = np.abs(UREF)
 
-        # Compute required quantities
-        # Magnitude of body force
-        if (abs(self.gx) > 0.0 or abs(self.gy) > 0.0 or abs(self.gz) > 0.0):
-            GMAG = np.sqrt(self.gx**2+self.gy**2+self.gz**2)
-        else:
-            GMAG = 0.0
-
-        # Smoothing length
-        H = self._param_dict['max_sl']
-        # Viscosity
-        MU  = self._param_dict['mu']
-        # Rest density
-        RHO0 = self.eos.RestDensity
-
+        C_a = []
         # Speed of sound
         # CFL condition
-        C2_1 = UREF*UREF/DRHO
+        C_a.append(UREF*UREF/DRHO)
         # Gravity waves condition
-        C2_2 = GMAG*LREF/DRHO
+        C_a.append(self.get_GMAG()*LREF/DRHO)
         # Fourier condition
-        C2_3 = (MU*UREF)/(RHO0*LREF*DRHO)
+        C_a.append((MU*UREF)/(RHO0*LREF*DRHO))
         # Adami type 
-        C2_4 = GMAG * LREF
+        C_a.append(0.01 * self.get_GMAG() * LREF)
+
         # Maximum speed of sound
-        C = np.sqrt(np.max([C2_1,C2_2,C2_3, 0.01*C2_4]))
+        C_a = np.asarray(C_a)
+        conditions = ['CFL-condition', 'Gravity_waves-condition', 'Fourier-condition', 'Adami-condition']
+        condition = [conditions[i] for i in np.where(C_a == C_a.max())[0]]
+        C = np.sqrt(np.max(C_a))
+
+        # Set speed of sound
         self.eos.set_speedofsound(C)
 
+        return C, condition
+
+
+    def compute_dt(self, LREF, UREF, DX, DRHO, H, MU, RHO0, COURANT=0.25):
+        # Input sanity
+        if LREF == 0.0:
+            raise ValueError('Reference length LREF may not be zero.')
+        if DRHO == 0.0:
+            raise ValueError('Maximum density variation DRHO may not be zero.')
+        if DX <= 0.0:
+            raise ValueError('DX may not be zero or negative.')
+        if H != self._param_dict['max_sl']:
+            raise ValueError('Given H not equal to stored H self._param_dict[max_sl]!')
+        if MU != self._param_dict['mu']:
+            raise ValueError('Given MU not equal to stored MU self._param_dict[mu]!')
+        if RHO0 != self.eos.RestDensity:
+            raise ValueError('Given RHO0 not equal to stored RHO0 self.eos.RestDensity!')
+        
+        UREF = np.abs(UREF)
+
+        C = self.get_speedofsound()
+
+        DT_a = []
         # CFL condition
-        # DT_1 = H/C
-        DT_1 = DX/C
+        # DT_1 = 0.25*H/C
+        DT_a.append(DX/C)
         # Fourier condition
-        DT_2 = (DX*DX*RHO0)/(8.0*MU)
-        # Adami type 1 max flow speed
-        DT_4 = (H/(C+abs(UREF)))
-        # Adami type 2 viscous condition
-        DT_5 = (H**2/(MU/RHO0))
+        DT_a.append((DX*DX*RHO0)/(8.0*MU))
+        # Adami max flow
+        DT_a.append(H/(C+abs(UREF)))
+        # Adami viscous condition
+        DT_a.append(H**2/(MU/RHO0))
 
-        if GMAG > 0.0:
+        if self.get_GMAG() > 0.0:
             # Gravity waves condition
-            DT_3 = np.sqrt(H/(16.0*GMAG))
-            return COURANT*np.min([DT_1, DT_2, DT_3, DT_4, DT_5])
-        else:
-            return COURANT*np.min([DT_1,DT_2])
+            DT_a.append(np.sqrt(H/(16.0*self.get_GMAG())))
+        
+        DT_a = np.asarray(DT_a)
+        conditions = ['CFL-condition', 'Fourier-condition', 'Adami_max_flow-condition', 'Adami_viscous-condition' 'Gravity_waves-condition']
+        condition = [conditions[i] for i in np.where(DT_a == DT_a.min())[0]]
+        
+        DT = COURANT * np.min(DT_a)
 
-
+        return DT, condition
 
 
 # Dicts
