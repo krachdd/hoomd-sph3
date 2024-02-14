@@ -29,7 +29,7 @@ sim = hoomd.Simulation(device=device)
 parser = OptionParser()
 parser.add_option("-n","--resolution"     ,type=int  ,dest="resolution"  ,default=100)
 parser.add_option("-S","--initgsd"        ,type=str,  dest="initgsd"     ,default=None)
-parser.add_option("-i","--steps"          ,type=int  ,dest="steps"       ,default=20001)
+parser.add_option("-i","--steps"          ,type=int  ,dest="steps"       ,default=200)
 parser.add_option("-R","--reynolds"      ,type=float,dest="reynolds"    ,default=10)
 (options, args) = parser.parse_args()
 
@@ -43,7 +43,7 @@ dx                  = voxelsize                                 # [ m ]
 specific_volume     = dx * dx * dx                              # [ m^3 ]
 rho0                = 1.0                                       # [ kg/m^3 ]
 mass                = rho0 * specific_volume                    # [ kg ]
-fx                  = 0.0                                       # [ m/s ]
+fx                  = 0.0                                       # [ m/s^2 ]
 lidvel              = 1.0                                       # [ m/s ]
 viscosity           = (rho0 * lidvel * lref)/options.reynolds   # [ Pa s ]
 drho                = 0.05                                      # [ % ]
@@ -57,7 +57,7 @@ rcut    = hoomd.sph.kernel.Kappa[kernel]*slength                # [ m ]
 
 # define model parameters
 densitymethod = 'SUMMATION'
-steps = options.steps
+steps = options.steps * 1000 + 1
 
 if device.communicator.rank == 0:
     print(f'{os.path.basename(__file__)}: input file: {options.initgsd} ')
@@ -82,7 +82,7 @@ nlist = hoomd.nsearch.nlist.Cell(buffer = rcut*0.05, rebuild_check_delay = 1, ka
 
 # Equation of State
 eos = hoomd.sph.eos.Linear()
-eos.set_params(rho0,drho)
+eos.set_params( rho0 , backpress )
 
 # Define groups/filters
 filterfluid  = hoomd.filter.Type(['F']) # is zero
@@ -131,6 +131,7 @@ if c < cfactor * refvel:
     model.set_speedofsound(cfactor * refvel)
     if device.communicator.rank == 0:
         print(f'Increase Speed of Sound to adami condition: {cfactor} * revel: {model.get_speedofsound()}')
+
 # compute dt
 dt, dt_condition = model.compute_dt(LREF = lref, UREF = refvel, 
                                           DX = dx, DRHO = drho, H = maximum_smoothing_length, 
@@ -167,7 +168,7 @@ gsd_writer = hoomd.write.GSD(filename=dumpname,
                              )
 sim.operations.writers.append(gsd_writer)
 
-log_trigger = hoomd.trigger.Periodic(1)
+log_trigger = hoomd.trigger.Periodic(100)
 logger = hoomd.logging.Logger(categories=['scalar', 'string'])
 logger.add(sim, quantities=['timestep', 'tps', 'walltime'])
 logger.add(spf_properties, quantities=['abs_velocity', 'num_particles', 'fluid_vel_x_sum', 'mean_density'])

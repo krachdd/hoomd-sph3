@@ -43,8 +43,8 @@ viscosity           = rho0 * lref * refvel/Re
 
 # get kernel properties
 kernel  = 'WendlandC4'
-slength = hoomd.sph.kernel.OptimalH[kernel]*dx       # m
-rcut    = hoomd.sph.kernel.Kappa[kernel]*slength     # m
+slength = hoomd.sph.kernel.OptimalH[kernel]*dx                  # [ m ]
+rcut    = hoomd.sph.kernel.Kappa[kernel]*slength                # [ m ]
 
 # particles per Kernel Radius
 part_rcut  = math.ceil(rcut/dx) 

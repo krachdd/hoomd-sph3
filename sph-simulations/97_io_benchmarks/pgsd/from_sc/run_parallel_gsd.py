@@ -41,21 +41,8 @@ dumpname = f'{dumpname}_run_gsd.gsd'
 sim.create_state_from_pgsd(filename = filename)
 MPI.COMM_WORLD.Barrier()
 
-# Print the domain decomposition.
-domain_decomposition = sim.state.domain_decomposition
-if device.communicator.rank == 0:
-    print(f'Domain Decomposition: {domain_decomposition}')
-
-# Print the location of the split planes.
-split_fractions = sim.state.domain_decomposition_split_fractions
-if device.communicator.rank == 0:
-    print(f'Locations of SplitPlanes: {split_fractions}')
-
-# Print the number of particles on each rank.
-with sim.state.cpu_local_snapshot as snap:
-    N = len(snap.particles.position)
-    print(f'{N} particles on rank {device.communicator.rank}')
-
+if SHOW_DECOMP_INFO:
+    sph_info.print_decomp_info(sim, device)
 
 # # Define necessary parameters
 # # Fluid and particle properties

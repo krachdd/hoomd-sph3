@@ -12,9 +12,8 @@ import numpy as np
 import math
 # import itertools
 from datetime import datetime
-import export_gsd2vtu 
-import read_input_fromtxt
-import delete_solids_initial_timestep
+import export_gsd2vtu, delete_solids_initial_timestep 
+import sph_info, sph_helper, read_input_fromtxt
 import sys, os
 
 import gsd.hoomd
@@ -27,26 +26,29 @@ device = hoomd.device.CPU(notice_level=2)
 sim = hoomd.Simulation(device=device)
 
 # Fluid and particle properties
-num_length          = int(sys.argv[1])
-lref                = 0.001               # [m]
-voxelsize           = lref/num_length
-dx                  = voxelsize
-specific_volume     = dx * dx * dx
-rho0                = 1000.0
-mass                = rho0 * specific_volume
-# refvel              = 10
-fx                  = 0.1                # [m/s]
-viscosity           = 0.01               # [Pa s]
-
+SHOW_PROC_PART_INFO = False
+SHOW_DECOMP_INFO    = False
+num_length          = int(sys.argv[1])                          # [ - ]
+lref                = 0.001                                     # [ m ]
+voxelsize           = lref/float(num_length)                    # [ m ]
+dx                  = voxelsize                                 # [ m ]
+specific_volume     = dx * dx * dx                              # [ m^3 ]
+rho0                = 1000.0                                    # [ kg/m^3 ]
+mass                = rho0 * specific_volume                    # [ kg ]
+fx                  = 0.1                                       # [ m/s^2 ]
+viscosity           = 0.01                                      # [ Pa s ]
+drho                = 0.01                                      # [ % ]
+backpress           = 0.01                                      # [ - ]
+lidvel              = 0.01                                      # [ m/s ]
+refvel              = lidvel * lref**2 * 0.25 / (viscosity/rho0)# [ m/s ]
 
 # get kernel properties
 kernel  = 'WendlandC4'
-slength = hoomd.sph.kernel.OptimalH[kernel]*dx       # m
-rcut    = hoomd.sph.kernel.Kappa[kernel]*slength     # m
+slength = hoomd.sph.kernel.OptimalH[kernel]*dx                  # [ m ]
+rcut    = hoomd.sph.kernel.Kappa[kernel]*slength                # [ m ]
 
 # particles per Kernel Radius
 part_rcut  = math.ceil(rcut/dx) 
-# part_depth = math.ceil(2.5 * hoomd.sph.kernel.Kappa[kernel] * rcut/dx) 
 
 # get simulation box sizes etc.
 nx, ny, nz = int(num_length), int(num_length + (3*part_rcut)), int(num_length + (3*part_rcut))

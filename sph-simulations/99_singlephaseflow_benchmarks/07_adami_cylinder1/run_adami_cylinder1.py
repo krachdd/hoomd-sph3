@@ -12,9 +12,8 @@ import numpy as np
 import math
 # import itertools
 from datetime import datetime
-import export_gsd2vtu 
-import read_input_fromtxt
-import delete_solids_initial_timestep
+import export_gsd2vtu, delete_solids_initial_timestep 
+import sph_info, sph_helper, read_input_fromtxt
 import sys, os
 
 import gsd.hoomd
@@ -25,8 +24,6 @@ device = hoomd.device.CPU(notice_level=2)
 sim = hoomd.Simulation(device=device)
 
 filename = 'cylinder_body_force_100_100_17_vs_0.001_init.gsd'
-
-factorfx = float(sys.argv[1])
 
 if device.communicator.rank == 0:
     print(f'{os.path.basename(__file__)}: input file: {filename} ')
@@ -39,44 +36,34 @@ dumpname = f'{dumpname}_run_TV_{factorfx}.gsd'
 
 sim.create_state_from_gsd(filename = filename)
 
-# Print the domain decomposition.
-domain_decomposition = sim.state.domain_decomposition
-if device.communicator.rank == 0:
-    print(f'Domain Decomposition: {domain_decomposition}')
+if SHOW_DECOMP_INFO:
+    sph_info.print_decomp_info(sim, device)
 
-# Print the location of the split planes.
-split_fractions = sim.state.domain_decomposition_split_fractions
-if device.communicator.rank == 0:
-    print(f'Locations of SplitPlanes: {split_fractions}')
-
-# Print the number of particles on each rank.
-with sim.state.cpu_local_snapshot as snap:
-    N = len(snap.particles.position)
-    print(f'{N} particles on rank {device.communicator.rank}')
-
-
-D                   = 100
-lref                = 0.1               # [m]
-voxelsize           = lref/D
-dx                  = voxelsize
-specific_volume     = dx * dx * dx
-rho0                = 1000.0
-mass                = rho0 * specific_volume
-radius              = 0.02
-fx                  = factorfx * 1.5e-07                # [m/s]
-viscosity           = 0.001               # [Pa s] 
-refvel = 5e-05 * factorfx
+# Fluid and particle properties
+SHOW_PROC_PART_INFO = False
+SHOW_DECOMP_INFO    = False
+num_length          = 100                                       # [ - ]
+lref                = 0.1                                     # [ m ]
+radius              = 0.02                                      # [ m ]
+voxelsize           = lref/float(num_length)                    # [ m ]
+dx                  = voxelsize                                 # [ m ]
+specific_volume     = dx * dx * dx                              # [ m^3 ]
+rho0                = 1000.0                                    # [ kg/m^3 ]
+mass                = rho0 * specific_volume                    # [ kg ]
+fx                  = 1.5e-07                                   # [ m/s^2 ]
+viscosity           = 0.001                                     # [ Pa s ]
+drho                = 0.01                                      # [ % ]
+backpress           = 0.01                                      # [ - ]
+refvel              = 5e-05                                     # [ m/s ]
 
 # get kernel properties
 kernel  = 'WendlandC4'
-slength = hoomd.sph.kernel.OptimalH[kernel]*dx       # m
-rcut    = hoomd.sph.kernel.Kappa[kernel]*slength     # m
+slength = hoomd.sph.kernel.OptimalH[kernel]*dx                  # [ m ]
+rcut    = hoomd.sph.kernel.Kappa[kernel]*slength                # [ m ]
 
 # define model parameters
 densitymethod = 'SUMMATION'
 steps = 50001
-
-drho = 0.01                        # %
 
 kernel_obj = hoomd.sph.kernel.Kernels[kernel]()
 kappa      = kernel_obj.Kappa()
@@ -110,35 +97,35 @@ model.mu = viscosity
 model.densitymethod = densitymethod
 model.gx = fx
 model.damp = 1000
-# model.artificialviscosity = True
 model.artificialviscosity = True 
 model.alpha = 0.2
 model.beta = 0.0
 model.densitydiffusion = False
 model.shepardrenormanlization = False
 
-maximum_smoothing_length = 0.0
-# Call get_snapshot on all ranks.
-snapshot = sim.state.get_snapshot()
-# Access particle data on rank 0 only.
-if snapshot.communicator.rank == 0:
-    maximum_smoothing_length = np.max(snapshot.particles.slength)
+maximum_smoothing_length = sph_helper.set_max_sl(sim, device, snapshot, model)
 
-maximum_smoothing_length = device.communicator.bcast_double(maximum_smoothing_length)
-model.max_sl = maximum_smoothing_length
-
-# compute dt
-dt = model.compute_dt(LREF = 0.25 * lref, UREF = refvel, DX = dx, DRHO = drho)
+c, c_condition = model.compute_speedofsound(LREF = lref, UREF = refvel, 
+                                            DX = dx, DRHO = drho, H = maximum_smoothing_length, 
+                                            MU = viscosity, RHO0 = rho0)
 
 if device.communicator.rank == 0:
-    print(f'Speed of sound [m/s]: {model.get_speedofsound()}')
+    print(f'Speed of sound [m/s]: {c}, Used: {c_condition}')
+
+# compute dt
+dt, dt_condition = model.compute_dt(LREF = lref, UREF = refvel, 
+                                          DX = dx, DRHO = drho, H = maximum_smoothing_length, 
+                                          MU = viscosity, RHO0 = rho0)
+
+if device.communicator.rank == 0:
+    print(f'Timestep size [s]: {dt}, Used: {dt_condition}')
 
 integrator = hoomd.sph.Integrator(dt=dt)
 
 # VelocityVerlet = hoomd.sph.methods.VelocityVerlet(filter=filterFLUID, densitymethod = densitymethod)
-velocityverlet = hoomd.sph.methods.KickDriftKickTV(filter=filterfluid, densitymethod = densitymethod)
+kdktv = hoomd.sph.methods.KickDriftKickTV(filter=filterfluid, densitymethod = densitymethod)
 
-integrator.methods.append(velocityverlet)
+integrator.methods.append(kdktv)
 integrator.forces.append(model)
 
 compute_filter_all = hoomd.filter.All()
@@ -147,7 +134,6 @@ spf_properties = hoomd.sph.compute.SinglePhaseFlowBasicProperties(compute_filter
 sim.operations.computes.append(spf_properties)
 
 if device.communicator.rank == 0:
-    print(f'Computed Time step: {dt}')
     print(f'Integrator Forces: {integrator.forces[:]}')
     print(f'Integrator Methods: {integrator.methods[:]}')
     print(f'Simulation Computes: {sim.operations.computes[:]}')

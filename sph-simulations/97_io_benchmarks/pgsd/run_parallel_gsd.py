@@ -41,21 +41,8 @@ dumpname = f'{dumpname}_run_gsd.gsd'
 sim.create_state_from_pgsd(filename = filename)
 MPI.COMM_WORLD.Barrier()
 
-# Print the domain decomposition.
-domain_decomposition = sim.state.domain_decomposition
-if device.communicator.rank == 0:
-    print(f'Domain Decomposition: {domain_decomposition}')
-
-# Print the location of the split planes.
-split_fractions = sim.state.domain_decomposition_split_fractions
-if device.communicator.rank == 0:
-    print(f'Locations of SplitPlanes: {split_fractions}')
-
-# Print the number of particles on each rank.
-with sim.state.cpu_local_snapshot as snap:
-    N = len(snap.particles.position)
-    print(f'{N} particles on rank {device.communicator.rank}')
-
+if SHOW_DECOMP_INFO:
+    sph_info.print_decomp_info(sim, device)
 
 # Define necessary parameters
 # Fluid and particle properties
@@ -73,7 +60,6 @@ LREF = NX * voxelsize
 densitymethod = 'CONTINUITY'
 steps = 101
 
-DRHO = 0.01                        # %
 
 # get kernel properties
 KERNEL  = params['kernel']
@@ -116,15 +102,6 @@ model.beta = 0.0
 model.densitydiffusion = False
 model.shepardrenormanlization = False 
 
-
-
-
-# Access the local snapshot, this is not ideal! 
-# with sim.state.cpu_local_snapshot as snap:
-#     model.max_sl = np.max(snap.particles.slength[:])
-    # fluid_particle_ratio = np.count_nonzero(snap.particles.typeid[:] == 0)/(len(snap.particles.mass[:]))
-
-
 maximum_smoothing_length = 0.0
 # Call get_snapshot on all ranks.
 snapshot = sim.state.get_snapshot()
@@ -161,7 +138,6 @@ spf_properties = hoomd.sph.compute.SinglePhaseFlowBasicProperties(compute_filter
 sim.operations.computes.append(spf_properties)
 
 if device.communicator.rank == 0:
-    print(f'Computed Time step: {dt}')
     print(f'Integrator Forces: {integrator.forces[:]}')
     print(f'Integrator Methods: {integrator.methods[:]}')
     print(f'Simulation Computes: {sim.operations.computes[:]}')
