@@ -171,7 +171,7 @@ sim.operations.writers.append(gsd_writer)
 log_trigger = hoomd.trigger.Periodic(100)
 logger = hoomd.logging.Logger(categories=['scalar', 'string'])
 logger.add(sim, quantities=['timestep', 'tps', 'walltime'])
-logger.add(spf_properties, quantities=['abs_velocity', 'num_particles', 'fluid_vel_x_sum', 'mean_density'])
+logger.add(spf_properties, quantities=['abs_velocity', 'num_particles', 'fluid_vel_x_sum', 'mean_density', 'e_kin_fluid'])
 
 table = hoomd.write.Table(trigger=log_trigger, 
                           logger=logger, max_header_len = 10)

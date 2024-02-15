@@ -23,7 +23,8 @@ struct singlephaseflow_logger_index
         sum_fluid_velocity_y,   //!< Index for the sum of fluid y-velocity in the GPUArray
         sum_fluid_velocity_z,   //!< Index for the sum of fluid z-velocity in the GPUArray
         sum_fluid_density,      //!< Index for the mean fluid particle density
-        abs_velocity,           //!< Index for the overall kinetic energy of the system
+        abs_velocity,           //!< Index for the overall absolute velocity per particle
+        e_kin_fluid,            //!< Index for the overall kinetic energy of the system
         num_quantities // final element to count number of quantities
         };
     };

@@ -63,6 +63,12 @@ class SinglePhaseFlowBasicProperties(Compute):
         return self._cpp_obj.abs_velocity
 
     @log(requires_run=True)
+    def e_kin_fluid(self):
+        """Kinetic energy of the subset """
+        self._cpp_obj.compute(self._simulation.timestep)
+        return self._cpp_obj.e_kin_fluid
+
+    @log(requires_run=True)
     def num_particles(self):
         """Number of particles :math:`N` in the subset."""
         return self._cpp_obj.num_particles

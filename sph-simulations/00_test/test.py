@@ -196,7 +196,7 @@ logger.add(sim, quantities=['timestep', 'tps', 'walltime', 'timestep_size'])
 # logger[('custom', 'ETA')] = (lambda: str(datet.timedelta(seconds=((sim.final_timestep - sim.timestep) / (1e-9 + sim.tps) ))), 'scalar')
 logger[('custom', 'RE')] = (lambda: RHO0 * spf_properties.abs_velocity * LREF / (MU * spf_properties.num_particles), 'scalar')
 
-logger.add(spf_properties, quantities=['abs_velocity', 'num_particles', 'fluid_vel_x_sum', 'mean_density'])
+logger.add(spf_properties, quantities=['abs_velocity', 'num_particles', 'fluid_vel_x_sum', 'mean_density', 'e_kin_fluid'])
 table = hoomd.write.Table(trigger=log_trigger, 
                           logger=logger, max_header_len = 10)
 # file = open('log.txt', mode='x', newline='\n')

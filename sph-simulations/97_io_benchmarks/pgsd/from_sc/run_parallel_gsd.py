@@ -172,7 +172,7 @@ if SHOW_DECOMP_INFO:
 # log_trigger = hoomd.trigger.Periodic(1)
 # logger = hoomd.logging.Logger(categories=['scalar', 'string'])
 # logger.add(sim, quantities=['timestep', 'tps', 'walltime'])
-# logger.add(spf_properties, quantities=['abs_velocity', 'num_particles', 'fluid_vel_x_sum', 'mean_density'])
+# logger.add(spf_properties, quantities=['abs_velocity', 'num_particles', 'fluid_vel_x_sum', 'mean_density', 'e_kin_fluid'])
 # logger[('custom', 'RE')] = (lambda: RHO0 * spf_properties.abs_velocity * LREF / (MU), 'scalar')
 # logger[('custom', 'k_1[1e-9]')] = (lambda: (MU / (RHO0 * FX)) * (spf_properties.abs_velocity) * porosity *1.0e9, 'scalar')
 # table = hoomd.write.Table(trigger=log_trigger, 
