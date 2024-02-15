@@ -64,9 +64,9 @@ if device.communicator.rank == 0:
 
 dt_string = datetime.now().strftime("%Y-%m-%d-%H-%M-%S")
 logname  = options.initgsd.replace('_init.gsd', '')
-logname  = f'{logname}_run.log'
+logname  = f'{logname}_runTV.log'
 dumpname = options.initgsd.replace('_init.gsd', '')
-dumpname = f'{dumpname}_run.gsd'
+dumpname = f'{dumpname}_runTV.gsd'
 
 sim.create_state_from_gsd(filename = options.initgsd)
 

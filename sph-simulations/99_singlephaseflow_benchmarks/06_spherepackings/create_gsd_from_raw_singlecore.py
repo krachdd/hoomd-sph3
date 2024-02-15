@@ -12,8 +12,8 @@ import itertools
 import gsd.hoomd
 import os
 import array 
-import delete_solids_initial_timestep
-import read_input_fromtxt
+import export_gsd2vtu, delete_solids_initial_timestep 
+import sph_info, sph_helper, read_input_fromtxt
 
 
 device = hoomd.device.CPU(notice_level=2)
@@ -27,7 +27,6 @@ print(params)
 
 SHOW_PROC_PART_INFO = False
 SHOW_DECOMP_INFO    = False
-num_length          = int(sys.argv[1])                          # [ - ]
 lref                = 0.1                                       # [ m ]
 voxelsize           = np.float64(params['vsize'])               # [ m ]
 dx                  = voxelsize                                 # [ m ]
@@ -77,7 +76,7 @@ positions = np.array((x.ravel(), y.ravel(), z.ravel())).T
 velocities = np.zeros((positions.shape[0], positions.shape[1]), dtype = np.float32)
 masses     = np.ones((positions.shape[0]), dtype = np.float32) * mass
 slengths   = np.ones((positions.shape[0]), dtype = np.float32) * slength
-y    = np.ones((positions.shape[0]), dtype = np.float32) * rho0
+density    = np.ones((positions.shape[0]), dtype = np.float32) * rho0
 # dpes       = np.zeros((positions.shape[0], positions.shape[1]), dtype = np.float32)
 # add densities
 # for i in range(len(dpes)): dpes[i][0] = rho0

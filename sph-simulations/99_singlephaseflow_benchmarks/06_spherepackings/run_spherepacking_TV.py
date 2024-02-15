@@ -30,20 +30,20 @@ rawfilename = params['rawfilename']
 filename = rawfilename.replace('.raw', '_init.gsd')
 dt_string = datetime.now().strftime("%Y-%m-%d-%H-%M-%S")
 logname  = filename.replace('_init.gsd', '')
-logname  = f'{logname}_run_{FX}_{dt_string}.log'
+logname  = f'{logname}_run_{FX}_{dt_string}_TV.log'
 dumpname = filename.replace('_init.gsd', '')
-dumpname = f'{dumpname}_run_{FX}.gsd'
+dumpname = f'{dumpname}_run_{FX}_TV.gsd'
 
 sim.create_state_from_gsd(filename = filename)
 
 
-if SHOW_DECOMP_INFO:
-    sph_info.print_decomp_info(sim, device)
 
 # Define necessary parameters
 # Fluid and particle properties
 SHOW_PROC_PART_INFO = False
 SHOW_DECOMP_INFO    = False
+if SHOW_DECOMP_INFO:
+    sph_info.print_decomp_info(sim, device)
 lref                = 0.001                                     # [ m ]
 voxelsize           = np.float64(params['vsize'])               # [ m ]
 dx                  = voxelsize                                 # [ m ]
@@ -72,8 +72,8 @@ Re = 0.01
 refvel = (Re * viscosity)/(rho0 * lref)
 
 # define model parameters
-densitymethod = 'CONTINUITY'
-steps = 20001
+densitymethod = 'SUMMATION'
+steps = 30001
 
 # Neighbor list
 NList = hoomd.nsearch.nlist.Cell(buffer = rcut*0.05, rebuild_check_delay = 1, kappa = kappa)
@@ -92,7 +92,7 @@ with sim.state.cpu_local_snapshot as snap:
     print(f'{np.count_nonzero(snap.particles.typeid == 1)} solid particles on rank {device.communicator.rank}')
 
 # Set up SPH solver
-model = hoomd.sph.sphmodel.SinglePhaseFlow(kernel = kernel_obj,
+model = hoomd.sph.sphmodel.SinglePhaseFlowTV(kernel = kernel_obj,
                                            eos    = eos,
                                            nlist  = NList,
                                            fluidgroup_filter = filterFLUID,
@@ -130,9 +130,9 @@ if device.communicator.rank == 0:
 integrator = hoomd.sph.Integrator(dt=dt)
 
 # VelocityVerlet = hoomd.sph.methods.VelocityVerlet(filter=filterFLUID, densitymethod = densitymethod)
-velocityverlet = hoomd.sph.methods.VelocityVerletBasic(filter=filterFLUID, densitymethod = densitymethod)
+kdktv = hoomd.sph.methods.KickDriftKickTV(filter=filterFLUID, densitymethod = densitymethod)
 
-integrator.methods.append(velocityverlet)
+integrator.methods.append(kdktv)
 integrator.forces.append(model)
 
 compute_filter_all = hoomd.filter.All()
