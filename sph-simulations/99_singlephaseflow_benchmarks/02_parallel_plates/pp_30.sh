@@ -29,4 +29,4 @@ echo "Number of Tasks Allocated      = $SLURM_NTASKS"
 echo "Number of Cores/Task Allocated = $SLURM_CPUS_PER_TASK"
 echo "JobID = $SLURM_JOB_ID"
 
-/usr/local.nfs/software/openmpi/4.1.4_gcc-11.3_cuda-11.7/bin/mpirun -np $SLURM_NTASKS  ./run_parallel_plates_TV.py 30parallel_plates_30_42_17_vs_3.3333333333333335e-05_init.gsd 500001 
+/usr/local.nfs/software/openmpi/4.1.4_gcc-11.3_cuda-11.7/bin/mpirun -np $SLURM_NTASKS  ./run_parallel_plates_TV.py 30 parallel_plates_30_42_17_vs_3.3333333333333335e-05_init.gsd 500001 
