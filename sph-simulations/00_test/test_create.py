@@ -34,7 +34,6 @@ V       = DX*DX*DX                 # m^3
 
 RHO0 = 1000.0                      # kg / m^3
 M    = RHO0*V                      # kg
-DRHO = 0.01                        # %
 MU   = 0.01                        # Pa s
 
 H       = hoomd.sph.kernel.OptimalH[KERNEL]*DX       # m

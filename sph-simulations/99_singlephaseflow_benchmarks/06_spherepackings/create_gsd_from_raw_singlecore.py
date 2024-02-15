@@ -12,8 +12,8 @@ import itertools
 import gsd.hoomd
 import os
 import array 
-import delete_solids_initial_timestep
-import read_input_fromtxt
+import export_gsd2vtu, delete_solids_initial_timestep 
+import sph_info, sph_helper, read_input_fromtxt
 
 
 device = hoomd.device.CPU(notice_level=2)
@@ -25,18 +25,24 @@ infile = str(sys.argv[1])
 params = read_input_fromtxt.get_input_data_from_file(infile)
 print(params)
 
-# Fluid and particle properties
-voxelsize  = np.float64(params['vsize'])
-DX   = voxelsize
-V    = DX * DX * DX
-RHO0 = np.float64(params['fdensity'])
-MU   = np.float64(params['fviscosity'])
-M    = RHO0 * V
+SHOW_PROC_PART_INFO = False
+SHOW_DECOMP_INFO    = False
+lref                = 0.1                                       # [ m ]
+voxelsize           = np.float64(params['vsize'])               # [ m ]
+dx                  = voxelsize                                 # [ m ]
+specific_volume     = dx * dx * dx                              # [ m^3 ]
+rho0                = np.float64(params['fdensity'])            # [ kg/m^3 ]
+mass                = rho0 * specific_volume                    # [ kg ]
+fx                  = 0.1                                       # [ m/s^2 ]
+viscosity           = np.float64(params['fviscosity'])          # [ Pa s ]
+drho                = 0.01                                      # [ % ]
+backpress           = 0.01                                      # [ - ]
+refvel              = fx * lref**2 * 0.25 / (viscosity/rho0)    # [ m/s ]
 
 # get kernel properties
-KERNEL  = params['kernel']
-H       = hoomd.sph.kernel.OptimalH[KERNEL]*DX       # m
-RCUT    = hoomd.sph.kernel.Kappa[KERNEL]*H           # m
+kernel  = params['kernel']
+slength = hoomd.sph.kernel.OptimalH[kernel]*dx                  # [ m ]
+rcut    = hoomd.sph.kernel.Kappa[kernel]*slength                # [ m ]
 
 # get simulation box sizes etc.
 NX, NY, NZ = np.int32(params['nx']), np.int32(params['ny']), np.int32(params['nz']) 
@@ -68,12 +74,12 @@ x, y, z = np.meshgrid(*(np.linspace(-box_Lx / 2, box_Lx / 2, NX, endpoint=False)
 positions = np.array((x.ravel(), y.ravel(), z.ravel())).T
 
 velocities = np.zeros((positions.shape[0], positions.shape[1]), dtype = np.float32)
-masses     = np.ones((positions.shape[0]), dtype = np.float32) * M
-slengths   = np.ones((positions.shape[0]), dtype = np.float32) * H
-density    = np.ones((positions.shape[0]), dtype = np.float32) * RHO0
+masses     = np.ones((positions.shape[0]), dtype = np.float32) * mass
+slengths   = np.ones((positions.shape[0]), dtype = np.float32) * slength
+density    = np.ones((positions.shape[0]), dtype = np.float32) * rho0
 # dpes       = np.zeros((positions.shape[0], positions.shape[1]), dtype = np.float32)
 # add densities
-# for i in range(len(dpes)): dpes[i][0] = RHO0
+# for i in range(len(dpes)): dpes[i][0] = rho0
 
 # create Snapshot 
 snapshot = hoomd.Snapshot(device.communicator)
@@ -92,7 +98,7 @@ sim.create_state_from_snapshot(snapshot)
 deletesolid_flag = params['delete_flag']
 if deletesolid_flag == 1:
     print(f'Delete solid particles')
-    sim, ndel_particles = delete_solids_initial_timestep.delete_solids(sim, device, KERNEL, 0.000001, MU, DX, RHO0)
+    sim, ndel_particles = delete_solids_initial_timestep.delete_solids(sim, device, kernel, 0.000001, viscosity, dx, rho0)
     N_particles = N_particles - ndel_particles
 
 init_filename = rawfile.replace('.raw', '_init.gsd')

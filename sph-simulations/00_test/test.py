@@ -60,7 +60,6 @@ V       = DX*DX*DX                 # m^3
 
 RHO0 = 1000.0                      # kg / m^3
 M    = RHO0*V                      # kg
-DRHO = 0.01                        # %
 MU   = 0.01                        # Pa s
 
 UREF = FX*LREF*LREF*0.25/(MU/RHO0)
@@ -92,21 +91,8 @@ sim.create_state_from_gsd(filename = filename)
 
     
 
-# Print the domain decomposition.
-domain_decomposition = sim.state.domain_decomposition
-if device.communicator.rank == 0:
-    print(f'Domain Decomposition: {domain_decomposition}')
-
-# Print the location of the split planes.
-split_fractions = sim.state.domain_decomposition_split_fractions
-if device.communicator.rank == 0:
-    print(f'Locations of SplitPlanes: {split_fractions}')
-
-# Print the number of particles on each rank.
-with sim.state.cpu_local_snapshot as snap:
-    N = len(snap.particles.position)
-    print(f'{N} particles on rank {device.communicator.rank}')
-
+if SHOW_DECOMP_INFO:
+    sph_info.print_decomp_info(sim, device)
 # Kernel
 KERNEL  = 'WendlandC4'
 H       = hoomd.sph.kernel.OptimalH[KERNEL]*DX       # m
@@ -210,7 +196,7 @@ logger.add(sim, quantities=['timestep', 'tps', 'walltime', 'timestep_size'])
 # logger[('custom', 'ETA')] = (lambda: str(datet.timedelta(seconds=((sim.final_timestep - sim.timestep) / (1e-9 + sim.tps) ))), 'scalar')
 logger[('custom', 'RE')] = (lambda: RHO0 * spf_properties.abs_velocity * LREF / (MU * spf_properties.num_particles), 'scalar')
 
-logger.add(spf_properties, quantities=['abs_velocity', 'num_particles', 'fluid_vel_x_sum', 'mean_density'])
+logger.add(spf_properties, quantities=['abs_velocity', 'num_particles', 'fluid_vel_x_sum', 'mean_density', 'e_kin_fluid'])
 table = hoomd.write.Table(trigger=log_trigger, 
                           logger=logger, max_header_len = 10)
 # file = open('log.txt', mode='x', newline='\n')

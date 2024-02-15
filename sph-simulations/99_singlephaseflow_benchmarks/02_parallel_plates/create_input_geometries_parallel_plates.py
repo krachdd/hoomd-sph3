@@ -12,9 +12,8 @@ import numpy as np
 import math
 # import itertools
 from datetime import datetime
-import export_gsd2vtu 
-import read_input_fromtxt
-import delete_solids_initial_timestep
+import export_gsd2vtu, delete_solids_initial_timestep 
+import sph_info, sph_helper, read_input_fromtxt
 import sys, os
 
 import gsd.hoomd
@@ -27,21 +26,22 @@ device = hoomd.device.CPU(notice_level=2)
 sim = hoomd.Simulation(device=device)
 
 # Fluid and particle properties
-num_length          = int(sys.argv[1])
-lref                = 0.001               # [m]
-voxelsize           = lref/num_length
-dx                  = voxelsize
-specific_volume     = dx * dx * dx
-rho0                = 1000.0
-mass                = rho0 * specific_volume
-# refvel              = 10
-fx                  = 0.1                # [m/s]
-viscosity           = 0.01               # [Pa s]
+num_length          = int(sys.argv[1])                          # [ - ]
+lref                = 0.001                                     # [ m ]
+voxelsize           = lref/float(num_length)                    # [ m ]
+dx                  = voxelsize                                 # [ m ]
+specific_volume     = dx * dx * dx                              # [ m^3 ]
+rho0                = 1000.0                                    # [ kg/m^3 ]
+mass                = rho0 * specific_volume                    # [ kg ]
+fx                  = 0.1                                       # [ m/s^2 ]
+viscosity           = 1e-03                                     # [ Pa s ]
+drho                = 0.05                                      # [ % ]
+backpress           = 0.01                                      # [ - ]
 
 # get kernel properties
 kernel  = 'WendlandC4'
-slength = hoomd.sph.kernel.OptimalH[kernel]*dx       # m
-rcut    = hoomd.sph.kernel.Kappa[kernel]*slength     # m
+slength = hoomd.sph.kernel.OptimalH[kernel]*dx                  # [ m ]
+rcut    = hoomd.sph.kernel.Kappa[kernel]*slength                # [ m ]
 
 # particles per Kernel Radius
 part_rcut  = math.ceil(rcut/dx) 
@@ -100,7 +100,7 @@ sim.create_state_from_snapshot(snapshot)
 init_filename = f'parallel_plates_{nx}_{ny}_{nz}_vs_{voxelsize}_init.gsd'
 # hoomd.write.GSD.write(state = sim.state, mode = 'wb', filename = init_filename)
 
-with gsd.hoomd.open(name = init_filename, mode = 'wb') as f:
+with gsd.hoomd.open(name = init_filename, mode = 'w') as f:
     f.append(snapshot)
 
 # if device.communicator.rank == 0:

@@ -12,9 +12,8 @@ import numpy as np
 import math
 # import itertools
 from datetime import datetime
-import export_gsd2vtu 
-import read_input_fromtxt
-import delete_solids_initial_timestep
+import export_gsd2vtu, delete_solids_initial_timestep 
+import sph_info, sph_helper, read_input_fromtxt
 import sys, os
 
 import gsd.hoomd
@@ -41,8 +40,8 @@ viscosity           = 0.01               # [Pa s]
 
 # get kernel properties
 kernel  = 'WendlandC4'
-slength = hoomd.sph.kernel.OptimalH[kernel]*dx       # m
-rcut    = hoomd.sph.kernel.Kappa[kernel]*slength     # m
+slength = hoomd.sph.kernel.OptimalH[kernel]*dx                  # [ m ]
+rcut    = hoomd.sph.kernel.Kappa[kernel]*slength                # [ m ]
 
 # particles per Kernel Radius
 part_rcut  = math.ceil(rcut/dx) 
@@ -106,7 +105,7 @@ sim.create_state_from_snapshot(snapshot)
 init_filename = f'cylinder_body_force_{nx}_{ny}_{nz}_vs_{voxelsize}_init.gsd'
 # hoomd.write.GSD.write(state = sim.state, mode = 'wb', filename = init_filename)
 
-with gsd.hoomd.open(name = init_filename, mode = 'wb') as f:
+with gsd.hoomd.open(name = init_filename, mode = 'w') as f:
     f.append(snapshot)
 
 # if device.communicator.rank == 0:

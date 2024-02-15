@@ -37,21 +37,8 @@ dumpname = f'{dumpname}_run_{FX}.gsd'
 sim.create_state_from_gsd(filename = filename)
 
 
-# Print the domain decomposition.
-domain_decomposition = sim.state.domain_decomposition
-if device.communicator.rank == 0:
-    print(f'Domain Decomposition: {domain_decomposition}')
-
-# Print the location of the split planes.
-split_fractions = sim.state.domain_decomposition_split_fractions
-if device.communicator.rank == 0:
-    print(f'Locations of SplitPlanes: {split_fractions}')
-
-# Print the number of particles on each rank.
-with sim.state.cpu_local_snapshot as snap:
-    N = len(snap.particles.position)
-    print(f'{N} particles on rank {device.communicator.rank}')
-
+if SHOW_DECOMP_INFO:
+    sph_info.print_decomp_info(sim, device)
 # Define necessary parameters
 # Fluid and particle properties
 voxelsize  = np.float64(params['vsize'])
@@ -68,7 +55,6 @@ LREF = NX * voxelsize
 densitymethod = 'CONTINUITY'
 steps = 10001
 
-DRHO = 0.01                        # %
 
 # get kernel properties
 KERNEL  = params['kernel']
@@ -158,7 +144,6 @@ spf_properties = hoomd.sph.compute.SinglePhaseFlowBasicProperties(compute_filter
 sim.operations.computes.append(spf_properties)
 
 if device.communicator.rank == 0:
-    print(f'Computed Time step: {dt}')
     print(f'Integrator Forces: {integrator.forces[:]}')
     print(f'Integrator Methods: {integrator.methods[:]}')
     print(f'Simulation Computes: {sim.operations.computes[:]}')
@@ -180,7 +165,7 @@ sim.operations.writers.append(gsd_writer)
 log_trigger = hoomd.trigger.Periodic(100)
 logger = hoomd.logging.Logger(categories=['scalar', 'string'])
 logger.add(sim, quantities=['timestep', 'tps', 'walltime'])
-logger.add(spf_properties, quantities=['abs_velocity', 'num_particles', 'fluid_vel_x_sum', 'mean_density'])
+logger.add(spf_properties, quantities=['abs_velocity', 'num_particles', 'fluid_vel_x_sum', 'mean_density', 'e_kin_fluid'])
 logger[('custom', 'RE')] = (lambda: RHO0 * spf_properties.abs_velocity * LREF / (MU), 'scalar')
 logger[('custom', 'k_1[1e-9]')] = (lambda: (MU / (RHO0 * FX)) * (spf_properties.abs_velocity) * porosity *1.0e9, 'scalar')
 table = hoomd.write.Table(trigger=log_trigger, 

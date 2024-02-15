@@ -12,9 +12,8 @@ import numpy as np
 import math
 # import itertools
 from datetime import datetime
-import export_gsd2vtu 
-import read_input_fromtxt
-import delete_solids_initial_timestep
+import export_gsd2vtu, delete_solids_initial_timestep 
+import sph_info, sph_helper, read_input_fromtxt
 import os, sys
 from optparse import OptionParser
 
@@ -34,22 +33,21 @@ parser.add_option("-R","--reynolds"      ,type=float,dest="reynolds"    ,default
 (options, args) = parser.parse_args()
 
 # Fluid and particle properties
-num_length          = options.resolution
-lref                = 1.0               # [m]
-voxelsize           = lref/float(num_length)
-dx                  = voxelsize
-specific_volume     = dx * dx * dx
-rho0                = 1.0
-mass                = rho0 * specific_volume
-fx                  = 0.1                # [m/s]
-lidvel              = 1.0
-
-viscosity           = (rho0 * lidvel * lref)/options.reynolds # [Pa s]
+num_length          = options.resolution                        # [ - ]
+lref                = 1.0                                       # [ m ]
+voxelsize           = lref/float(num_length)                    # [ m ]
+dx                  = voxelsize                                 # [ m ]
+specific_volume     = dx * dx * dx                              # [ m^3 ]
+rho0                = 1.0                                       # [ kg/m^3 ]
+mass                = rho0 * specific_volume                    # [ kg ]
+fx                  = 0.0                                       # [ m/s ]
+lidvel              = 1.0                                       # [ m/s ]
+viscosity           = (rho0 * lidvel * lref)/options.reynolds   # [ Pa s ]
 
 # get kernel properties
 kernel  = 'WendlandC4'
-slength = hoomd.sph.kernel.OptimalH[kernel]*dx       # m
-rcut    = hoomd.sph.kernel.Kappa[kernel]*slength     # m
+slength = hoomd.sph.kernel.OptimalH[kernel]*dx                  # [ m ]
+rcut    = hoomd.sph.kernel.Kappa[kernel]*slength                # [ m ]
 
 # particles per Kernel Radius
 part_rcut  = math.ceil(rcut/dx) 

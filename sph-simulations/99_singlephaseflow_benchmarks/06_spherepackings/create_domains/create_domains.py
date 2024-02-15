@@ -38,10 +38,12 @@ for i in range(len(types)):
         lref = 1e-03
         print(rank, types[i], resolutions[k], lporosity)
         fn = create_raw_files.create_spherepacking( types[i], lporosity, lref, resolutions[k] , nx = 1, ny = 1, nz = 1)
-        ifn = prepare_simulations.create_sph_input_file(fn, 'WendlandC4',  lref/resolutions[k], resolutions[k], resolutions[k], resolutions[k], lporosity)
+        ifn = prepare_simulations.create_sph_input_file(fn, 'WendlandC4',  
+                                lref/resolutions[k], resolutions[k], resolutions[k], resolutions[k], 
+                                lporosity)
         if resolutions[k] == 60:
-            cores = 27
-        else:
             cores = 64
-        prepare_simulations.create_slurm_file_sph(f'sp_{types[i]}_{lporosity}_{resolutions[k]}', cores, 1, './run_spherepacking.py', ifn, ifn, partition = 'cpu-long', time = '10:00:00')
+        else:
+            cores = 128
+        prepare_simulations.create_slurm_file_sph(f'sp_{types[i]}_{lporosity}_{resolutions[k]}', cores, 1, './run_spherepacking_TV.py', ifn, ifn, partition = 'cpu', time = '24:00:00')
         

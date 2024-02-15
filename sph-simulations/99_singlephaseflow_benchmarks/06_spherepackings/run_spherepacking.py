@@ -11,8 +11,8 @@ from hoomd.sph import _sph
 import numpy as np
 # import itertools
 from datetime import datetime
-import export_gsd2vtu 
-import read_input_fromtxt
+import export_gsd2vtu, delete_solids_initial_timestep 
+import sph_info, sph_helper, read_input_fromtxt
 
 # ------------------------------------------------------------
 
@@ -37,52 +37,50 @@ dumpname = f'{dumpname}_run_{FX}.gsd'
 sim.create_state_from_gsd(filename = filename)
 
 
-# Print the domain decomposition.
-domain_decomposition = sim.state.domain_decomposition
-if device.communicator.rank == 0:
-    print(f'Domain Decomposition: {domain_decomposition}')
-
-# Print the location of the split planes.
-split_fractions = sim.state.domain_decomposition_split_fractions
-if device.communicator.rank == 0:
-    print(f'Locations of SplitPlanes: {split_fractions}')
-
-# Print the number of particles on each rank.
-with sim.state.cpu_local_snapshot as snap:
-    N = len(snap.particles.position)
-    print(f'{N} particles on rank {device.communicator.rank}')
+if SHOW_DECOMP_INFO:
+    sph_info.print_decomp_info(sim, device)
 
 # Define necessary parameters
 # Fluid and particle properties
-voxelsize  = np.float64(params['vsize'])
-DX   = voxelsize
-V    = DX * DX * DX
-RHO0 = np.float64(params['fdensity'])
-MU   = np.float64(params['fviscosity'])
-M    = RHO0 * V
-porosity = np.float64(params['porosity'])
+SHOW_PROC_PART_INFO = False
+SHOW_DECOMP_INFO    = False
+lref                = 0.001                                     # [ m ]
+voxelsize           = np.float64(params['vsize'])               # [ m ]
+dx                  = voxelsize                                 # [ m ]
+specific_volume     = dx * dx * dx                              # [ m^3 ]
+rho0                = np.float64(params['fdensity'])            # [ kg/m^3 ]
+mass                = rho0 * specific_volume                    # [ kg ]
+fx                  = 0.1                                       # [ m/s^2 ]
+viscosity           = np.float64(params['fviscosity'])          # [ Pa s ]
+drho                = 0.01                                      # [ % ]
+backpress           = 0.01                                      # [ - ]
+refvel              = fx * lref**2 * 0.25 / (viscosity/rho0)    # [ m/s ]
+porosity            = np.float64(params['porosity'])            # [ - ]
+
+# get kernel properties
+kernel  = params['kernel']
+slength = hoomd.sph.kernel.OptimalH[kernel]*dx                  # [ m ]
+rcut    = hoomd.sph.kernel.Kappa[kernel]*slength                # [ m ]
+
+kernel_obj = hoomd.sph.kernel.Kernels[kernel]()
+kappa      = kernel_obj.Kappa()
+
 # get simulation box sizes etc.
 NX, NY, NZ = np.int32(params['nx']), np.int32(params['ny']), np.int32(params['nz']) 
-LREF = NX * voxelsize
+lref = NX * voxelsize
+Re = 0.01
+refvel = (Re * viscosity)/(rho0 * lref)
+
 # define model parameters
 densitymethod = 'CONTINUITY'
 steps = 20001
 
-DRHO = 0.01                        # %
-
-# get kernel properties
-KERNEL  = params['kernel']
-H       = hoomd.sph.kernel.OptimalH[KERNEL]*DX       # m
-RCUT    = hoomd.sph.kernel.Kappa[KERNEL]*H           # m
-Kernel = hoomd.sph.kernel.Kernels[KERNEL]()
-Kappa  = Kernel.Kappa()
-
 # Neighbor list
-NList = hoomd.nsearch.nlist.Cell(buffer = RCUT*0.05, rebuild_check_delay = 1, kappa = Kappa)
+NList = hoomd.nsearch.nlist.Cell(buffer = rcut*0.05, rebuild_check_delay = 1, kappa = kappa)
 
 # Equation of State
-EOS = hoomd.sph.eos.Tait()
-EOS.set_params(RHO0,0.1)
+eos = hoomd.sph.eos.Tait()
+eos.set_params( rho0, backpress )
 
 # Define groups/filters
 filterFLUID  = hoomd.filter.Type(['F']) # is zero
@@ -94,65 +92,47 @@ with sim.state.cpu_local_snapshot as snap:
     print(f'{np.count_nonzero(snap.particles.typeid == 1)} solid particles on rank {device.communicator.rank}')
 
 # Set up SPH solver
-model = hoomd.sph.sphmodel.SinglePhaseFlow(kernel = Kernel,
-                                           eos    = EOS,
+model = hoomd.sph.sphmodel.SinglePhaseFlow(kernel = kernel_obj,
+                                           eos    = eos,
                                            nlist  = NList,
                                            fluidgroup_filter = filterFLUID,
                                            solidgroup_filter = filterSOLID)
 if device.communicator.rank == 0:
     print("SetModelParameter on all ranks")
 
-model.mu = MU
+model.mu = viscosity
 model.densitymethod = densitymethod
-model.gx = FX
+model.gx = fx
 model.damp = 5000
-# model.artificialviscosity = True
 model.artificialviscosity = True 
 model.alpha = 0.2
 model.beta = 0.0
 model.densitydiffusion = False
 model.shepardrenormanlization = False 
 
+maximum_smoothing_length = sph_helper.set_max_sl(sim, device, snapshot, model)
 
-
-
-# Access the local snapshot, this is not ideal! 
-# with sim.state.cpu_local_snapshot as snap:
-#     model.max_sl = np.max(snap.particles.slength[:])
-    # fluid_particle_ratio = np.count_nonzero(snap.particles.typeid[:] == 0)/(len(snap.particles.mass[:]))
-
-
-maximum_smoothing_length = 0.0
-# Call get_snapshot on all ranks.
-snapshot = sim.state.get_snapshot()
-# Access particle data on rank 0 only.
-if snapshot.communicator.rank == 0:
-    maximum_smoothing_length = np.max(snapshot.particles.slength)
-    # total_number_fluid_particles = snapshot.particles.N
-maximum_smoothing_length = device.communicator.bcast_double(maximum_smoothing_length)
-model.max_sl = maximum_smoothing_length
-
-
-reference_length = NX * DX
-# reference_length = NX * DX
-# Compute reference_velocity via Reynolds number definition
-Re = 0.01
-reference_velocity = (Re * MU)/(RHO0 * reference_length)
-# Compute reference_velocity via permeability
-# reference_velocity = porosity * 
-# mydict['pestimate']*((mydict['lref']**2)/(8*options.mu))*options.rho0*options.fz
-
-dt = model.compute_dt(reference_length, FX, DX, DRHO)
+c, c_condition = model.compute_speedofsound(LREF = lref, UREF = refvel, 
+                                            DX = dx, DRHO = drho, H = maximum_smoothing_length, 
+                                            MU = viscosity, RHO0 = rho0)
 
 if device.communicator.rank == 0:
-    print(f'Speed of sound [m/s]: {model.get_speedofsound()}')
+    print(f'Speed of sound [m/s]: {c}, Used: {c_condition}')
+
+# compute dt
+dt, dt_condition = model.compute_dt(LREF = lref, UREF = refvel, 
+                                          DX = dx, DRHO = drho, H = maximum_smoothing_length, 
+                                          MU = viscosity, RHO0 = rho0)
+
+if device.communicator.rank == 0:
+    print(f'Timestep size [s]: {dt}, Used: {dt_condition}')
 
 integrator = hoomd.sph.Integrator(dt=dt)
 
 # VelocityVerlet = hoomd.sph.methods.VelocityVerlet(filter=filterFLUID, densitymethod = densitymethod)
-VelocityVerlet = hoomd.sph.methods.VelocityVerletBasic(filter=filterFLUID, densitymethod = densitymethod)
+velocityverlet = hoomd.sph.methods.VelocityVerletBasic(filter=filterFLUID, densitymethod = densitymethod)
 
-integrator.methods.append(VelocityVerlet)
+integrator.methods.append(velocityverlet)
 integrator.forces.append(model)
 
 compute_filter_all = hoomd.filter.All()
@@ -161,7 +141,6 @@ spf_properties = hoomd.sph.compute.SinglePhaseFlowBasicProperties(compute_filter
 sim.operations.computes.append(spf_properties)
 
 if device.communicator.rank == 0:
-    print(f'Computed Time step: {dt}')
     print(f'Integrator Forces: {integrator.forces[:]}')
     print(f'Integrator Methods: {integrator.methods[:]}')
     print(f'Simulation Computes: {sim.operations.computes[:]}')
@@ -183,9 +162,9 @@ sim.operations.writers.append(gsd_writer)
 log_trigger = hoomd.trigger.Periodic(100)
 logger = hoomd.logging.Logger(categories=['scalar', 'string'])
 logger.add(sim, quantities=['timestep', 'tps', 'walltime'])
-logger.add(spf_properties, quantities=['abs_velocity', 'num_particles', 'fluid_vel_x_sum', 'mean_density'])
-logger[('custom', 'RE')] = (lambda: RHO0 * spf_properties.abs_velocity * LREF / (MU), 'scalar')
-logger[('custom', 'k_1[1e-9]')] = (lambda: (MU / (RHO0 * FX)) * (spf_properties.abs_velocity) * porosity *1.0e9, 'scalar')
+logger.add(spf_properties, quantities=['abs_velocity', 'num_particles', 'fluid_vel_x_sum', 'mean_density', 'e_kin_fluid'])
+logger[('custom', 'RE')] = (lambda: rho0 * spf_properties.abs_velocity * lref / (viscosity), 'scalar')
+logger[('custom', 'k_1[1e-9]')] = (lambda: (viscosity / (rho0 * fx)) * (spf_properties.abs_velocity) * porosity *1.0e9, 'scalar')
 table = hoomd.write.Table(trigger=log_trigger, 
                           logger=logger, max_header_len = 10)
 sim.operations.writers.append(table)
@@ -203,5 +182,5 @@ if device.communicator.rank == 0:
 
 sim.run(steps, write_at_start=True)
 
-if device.communicator.rank == 0:
-    export_gsd2vtu.export_spf(dumpname)
+# if device.communicator.rank == 0:
+#     export_gsd2vtu.export_spf(dumpname)

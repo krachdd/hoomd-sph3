@@ -88,7 +88,7 @@ void ComputeSPFBasicProperties::computeProperties()
     // PDataFlags flags = m_pdata->getFlags();
 
     // access the particle data
-    ArrayHandle<Scalar4> h_vel(m_pdata->getVelocities(), access_location::host, access_mode::read);
+    ArrayHandle<Scalar4> h_velocity(m_pdata->getVelocities(), access_location::host, access_mode::read);
     ArrayHandle<Scalar> h_density(m_pdata->getDensities(), access_location::host, access_mode::read);
 
     // ArrayHandle<unsigned int> h_body(m_pdata->getBodies(),
@@ -106,7 +106,8 @@ void ComputeSPFBasicProperties::computeProperties()
     double fluid_vel_z_sum  = 0.0;
     double sum_density      = 0.0;
     // double fluid_prtl = 0;
-    double abs_velocity = 0.0;
+    double abs_velocity     = 0.0;
+    double e_kin_fluid      = 0.0;
     // double adaptive_tstep = 0.0;
     
     for (unsigned int group_idx = 0; group_idx < group_size; group_idx++)
@@ -116,20 +117,22 @@ void ComputeSPFBasicProperties::computeProperties()
 
 
         // Sum velocities
-        fluid_vel_x_sum += h_vel.data[j].x;
-        fluid_vel_y_sum += h_vel.data[j].y;
-        fluid_vel_z_sum += h_vel.data[j].z;
-        abs_velocity  += sqrt(h_vel.data[j].x * h_vel.data[j].x + h_vel.data[j].y * h_vel.data[j].y + h_vel.data[j].z * h_vel.data[j].z);
+        fluid_vel_x_sum += h_velocity.data[j].x;
+        fluid_vel_y_sum += h_velocity.data[j].y;
+        fluid_vel_z_sum += h_velocity.data[j].z;
+        abs_velocity  += sqrt(h_velocity.data[j].x * h_velocity.data[j].x + h_velocity.data[j].y * h_velocity.data[j].y + h_velocity.data[j].z * h_velocity.data[j].z);
         sum_density     += h_density.data[j];
+        // Sum kinematic energy
+        e_kin_fluid += abs( 0.5 * h_velocity.data[j].w * abs_velocity * abs_velocity );
     }
 
     ArrayHandle<Scalar> h_properties(m_properties, access_location::host, access_mode::overwrite);
     h_properties.data[singlephaseflow_logger_index::sum_fluid_velocity_x]  = Scalar(fluid_vel_x_sum);
     h_properties.data[singlephaseflow_logger_index::sum_fluid_velocity_y]  = Scalar(fluid_vel_y_sum);
     h_properties.data[singlephaseflow_logger_index::sum_fluid_velocity_z]  = Scalar(fluid_vel_z_sum);
-    h_properties.data[singlephaseflow_logger_index::sum_fluid_density]    = Scalar(sum_density);
-    // h_properties.data[singlephaseflow_logger_index::total_fluid_particles] = Scalar(fluid_prtl);
-    h_properties.data[singlephaseflow_logger_index::abs_velocity]        = Scalar(abs_velocity);
+    h_properties.data[singlephaseflow_logger_index::sum_fluid_density]     = Scalar(sum_density);
+    h_properties.data[singlephaseflow_logger_index::abs_velocity]          = Scalar(abs_velocity);
+    h_properties.data[singlephaseflow_logger_index::e_kin_fluid]           = Scalar(e_kin_fluid);
     // h_properties.data[singlephaseflow_logger_index::dt_adapt] = Scalar(adaptive_tstep);
 
 #ifdef ENABLE_MPI
@@ -166,6 +169,7 @@ void export_ComputeSPFMechanicalProperties(pybind11::module& m)
         .def(pybind11::init<std::shared_ptr<SystemDefinition>, std::shared_ptr<ParticleGroup>>())
         .def_property_readonly("num_particles", &ComputeSPFBasicProperties::getNumParticles)
         .def_property_readonly("abs_velocity", &ComputeSPFBasicProperties::getAbsoluteVelocity)
+        .def_property_readonly("e_kin_fluid", &ComputeSPFBasicProperties::getEkinFluid)
         .def_property_readonly("fluid_vel_x_sum", &ComputeSPFBasicProperties::getSumFluidXVelocity)
         .def_property_readonly("fluid_vel_y_sum", &ComputeSPFBasicProperties::getSumFluidYVelocity)
         .def_property_readonly("fluid_vel_z_sum", &ComputeSPFBasicProperties::getSumFluidZVelocity)
