@@ -86,7 +86,7 @@ with sim.state.cpu_local_snapshot as snap:
     print(f'{np.count_nonzero(snap.particles.typeid == 1)} solid particles on rank {device.communicator.rank}')
 
 # Set up SPH solver
-model = hoomd.sph.sphmodel.SinglePhaseFlow(kernel = kernel_obj,
+model = hoomd.sph.sphmodel.SinglePhaseFlowTV(kernel = kernel_obj,
                                            eos    = eos,
                                            nlist  = nlist,
                                            fluidgroup_filter = filterfluid,
@@ -124,9 +124,9 @@ if device.communicator.rank == 0:
 integrator = hoomd.sph.Integrator(dt=dt)
 
 # VelocityVerlet = hoomd.sph.methods.VelocityVerlet(filter=filterFLUID, densitymethod = densitymethod)
-velocityverlet = hoomd.sph.methods.VelocityVerletBasic(filter=filterfluid, densitymethod = densitymethod)
+kdktv = hoomd.sph.methods.KickDriftKickTV(filter=filterfluid, densitymethod = densitymethod)
 
-integrator.methods.append(velocityverlet)
+integrator.methods.append(kdktv)
 integrator.forces.append(model)
 
 compute_filter_all = hoomd.filter.All()
