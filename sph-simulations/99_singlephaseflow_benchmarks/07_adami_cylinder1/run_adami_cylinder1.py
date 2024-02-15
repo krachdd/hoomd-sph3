@@ -30,9 +30,9 @@ if device.communicator.rank == 0:
 
 dt_string = datetime.now().strftime("%Y-%m-%d-%H-%M-%S")
 logname  = filename.replace('_init.gsd', '')
-logname  = f'{logname}_run_TV_{factorfx}.log'
+logname  = f'{logname}_run_TV.log'
 dumpname = filename.replace('_init.gsd', '')
-dumpname = f'{dumpname}_run_TV_{factorfx}.gsd'
+dumpname = f'{dumpname}_run_TV.gsd'
 
 sim.create_state_from_gsd(filename = filename)
 
@@ -62,7 +62,7 @@ rcut    = hoomd.sph.kernel.Kappa[kernel]*slength                # [ m ]
 
 # define model parameters
 densitymethod = 'SUMMATION'
-steps = 50001
+steps = 100001
 
 kernel_obj = hoomd.sph.kernel.Kernels[kernel]()
 kappa      = kernel_obj.Kappa()
@@ -137,7 +137,7 @@ if device.communicator.rank == 0:
     print(f'Integrator Methods: {integrator.methods[:]}')
     print(f'Simulation Computes: {sim.operations.computes[:]}')
 
-gsd_trigger = hoomd.trigger.Periodic(100)
+gsd_trigger = hoomd.trigger.Periodic(1000)
 gsd_writer = hoomd.write.GSD(filename=dumpname,
                              trigger=gsd_trigger,
                              mode='wb',

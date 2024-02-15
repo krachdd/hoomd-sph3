@@ -51,7 +51,7 @@ part_rcut  = math.ceil(rcut/dx)
 part_depth = math.ceil(2.5 * hoomd.sph.kernel.Kappa[kernel] * rcut/dx) 
 
 # get simulation box sizes etc.
-nx, ny, nz = int(D*3./2.), int(D + 4 * part_rcut), int(part_depth)
+nx, ny, nz = int(num_length*3./2.), int(num_length + 4 * part_rcut), int(part_depth)
 lx, ly, lz = float(nx) * voxelsize, float(ny) * voxelsize, float(nz) * voxelsize
 # box dimensions
 box_lx, box_ly, box_lz = lx, ly, lz

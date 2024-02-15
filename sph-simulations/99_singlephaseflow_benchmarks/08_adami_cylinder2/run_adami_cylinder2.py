@@ -64,7 +64,7 @@ rcut    = hoomd.sph.kernel.Kappa[kernel]*slength                # [ m ]
 
 # define model parameters
 densitymethod = 'SUMMATION'
-steps = 1000001
+steps = 200001
 
 kernel_obj = hoomd.sph.kernel.Kernels[kernel]()
 kappa      = kernel_obj.Kappa()

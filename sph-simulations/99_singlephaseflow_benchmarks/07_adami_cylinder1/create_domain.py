@@ -29,7 +29,7 @@ sim = hoomd.Simulation(device=device)
 SHOW_PROC_PART_INFO = False
 SHOW_DECOMP_INFO    = False
 num_length          = 100                                       # [ - ]
-lref                = 0.001                                     # [ m ]
+lref                = 0.1                                     # [ m ]
 radius              = 0.02                                      # [ m ]
 voxelsize           = lref/float(num_length)                    # [ m ]
 dx                  = voxelsize                                 # [ m ]
