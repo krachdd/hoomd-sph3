@@ -6,7 +6,7 @@
 #SBATCH --nodes=1                    # Maximum number of nodes to be allocated
 #SBATCH --distribution=cyclic:cyclic # Distribute tasks cyclically first among nodes and then among sockets within a node
 #SBATCH --mem=MaxMemPerNode          
-#SBATCH --time=3:23:00:00              # Wall time limit (days-hrs:min:sec)
+#SBATCH --time=3-23:00:00              # Wall time limit (days-hrs:min:sec)
 #SBATCH --output=05_100_10_%j.log     # Path to the standard output and error files relative to the working directory
 #SBATCH --partition=cpu-long             # put the job into the cpu partition
 
