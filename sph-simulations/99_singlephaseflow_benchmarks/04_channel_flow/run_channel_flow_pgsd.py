@@ -38,12 +38,11 @@ dumpname = f'{dumpname}_run.gsd'
 
 sim.create_state_from_pgsd(filename = filename)
 
-if SHOW_DECOMP_INFO:
-    sph_info.print_decomp_info(sim, device)
-
 # Fluid and particle properties
 SHOW_PROC_PART_INFO = False
 SHOW_DECOMP_INFO    = False
+if SHOW_DECOMP_INFO:
+    sph_info.print_decomp_info(sim, device)
 num_length          = int(sys.argv[1])                          # [ - ]
 lref                = 0.001                                     # [ m ]
 voxelsize           = lref/float(num_length)                    # [ m ]

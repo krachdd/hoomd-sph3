@@ -109,7 +109,7 @@ sim.create_state_from_snapshot(snapshot)
 init_filename = f'liddrivencavity_{nx}_{ny}_{nz}_vs_{voxelsize}_init.gsd'
 # hoomd.write.GSD.write(state = sim.state, mode = 'wb', filename = init_filename)
 
-with gsd.hoomd.open(name = init_filename, mode = 'wb') as f:
+with gsd.hoomd.open(name = init_filename, mode = 'w') as f:
     f.append(snapshot)
 
 # if device.communicator.rank == 0:

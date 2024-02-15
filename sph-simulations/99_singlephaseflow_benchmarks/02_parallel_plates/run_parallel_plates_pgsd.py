@@ -38,8 +38,6 @@ dumpname = f'{dumpname}_run.gsd'
 sim.create_state_from_pgsd(filename = filename)
 MPI.COMM_WORLD.Barrier()
 
-if SHOW_DECOMP_INFO:
-    sph_info.print_decomp_info(sim, device)
 
 # Fluid and particle properties
 SHOW_PROC_PART_INFO = False
@@ -72,6 +70,9 @@ kappa      = kernel_obj.Kappa()
 
 # Neighbor list
 nlist = hoomd.nsearch.nlist.Cell(buffer = rcut*0.05, rebuild_check_delay = 1, kappa = kappa)
+
+if SHOW_DECOMP_INFO:
+    sph_info.print_decomp_info(sim, device)
 
 # Equation of State
 eos = hoomd.sph.eos.Tait()

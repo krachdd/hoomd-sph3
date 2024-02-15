@@ -99,7 +99,7 @@ if deletesolid_flag == 1:
 init_filename = rawfile.replace('.raw', f'vs_{voxelsize}_init.gsd')
 # hoomd.write.GSD.write(state = sim.state, mode = 'wb', filename = init_filename)
 
-with gsd.hoomd.open(name = init_filename, mode = 'wb') as f:
+with gsd.hoomd.open(name = init_filename, mode = 'w') as f:
     f.append(snapshot)
 
 print(f'Filename: {init_filename}, Number of particles: {N_particles}')

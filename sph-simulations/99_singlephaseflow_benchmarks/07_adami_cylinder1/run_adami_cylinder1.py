@@ -36,12 +36,11 @@ dumpname = f'{dumpname}_run_TV_{factorfx}.gsd'
 
 sim.create_state_from_gsd(filename = filename)
 
-if SHOW_DECOMP_INFO:
-    sph_info.print_decomp_info(sim, device)
-
 # Fluid and particle properties
 SHOW_PROC_PART_INFO = False
 SHOW_DECOMP_INFO    = False
+if SHOW_DECOMP_INFO:
+    sph_info.print_decomp_info(sim, device)
 num_length          = 100                                       # [ - ]
 lref                = 0.1                                     # [ m ]
 radius              = 0.02                                      # [ m ]
