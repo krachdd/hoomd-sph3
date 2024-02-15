@@ -10,14 +10,13 @@ from hoomd import sph
 from hoomd.sph import _sph
 import numpy as np
 import math
-from mpi4py import MPI
 # import itertools
 from datetime import datetime
 import export_gsd2vtu, delete_solids_initial_timestep 
 import sph_info, sph_helper, read_input_fromtxt
 import sys, os
 
-import pgsd.hoomd
+import gsd.hoomd
 # ------------------------------------------------------------
 
 device = hoomd.device.CPU(notice_level=2)
@@ -35,8 +34,7 @@ logname  = f'{logname}_run.log'
 dumpname = filename.replace('_init.gsd', '')
 dumpname = f'{dumpname}_run.gsd'
 
-sim.create_state_from_pgsd(filename = filename)
-MPI.COMM_WORLD.Barrier()
+sim.create_state_from_gsd(filename = filename)
 
 
 # Fluid and particle properties
@@ -56,6 +54,7 @@ drho                = 0.01                                      # [ % ]
 backpress           = 0.01                                      # [ - ]
 refvel              = fx * lref**2 * 0.25 / (viscosity/rho0)    # [ m/s ]
 
+
 # get kernel properties
 kernel  = 'WendlandC4'
 slength = hoomd.sph.kernel.OptimalH[kernel]*dx                  # [ m ]
@@ -68,11 +67,11 @@ steps = int(sys.argv[3])
 kernel_obj = hoomd.sph.kernel.Kernels[kernel]()
 kappa      = kernel_obj.Kappa()
 
-# Neighbor list
-nlist = hoomd.nsearch.nlist.Cell(buffer = rcut*0.05, rebuild_check_delay = 1, kappa = kappa)
-
 if SHOW_DECOMP_INFO:
     sph_info.print_decomp_info(sim, device)
+
+# Neighbor list
+nlist = hoomd.nsearch.nlist.Cell(buffer = rcut*0.05, rebuild_check_delay = 1, kappa = kappa)
 
 # Equation of State
 eos = hoomd.sph.eos.Tait()
@@ -88,7 +87,7 @@ with sim.state.cpu_local_snapshot as snap:
     print(f'{np.count_nonzero(snap.particles.typeid == 1)} solid particles on rank {device.communicator.rank}')
 
 # Set up SPH solver
-model = hoomd.sph.sphmodel.SinglePhaseFlow(kernel = kernel_obj,
+model = hoomd.sph.sphmodel.SinglePhaseFlowTV(kernel = kernel_obj,
                                            eos    = eos,
                                            nlist  = nlist,
                                            fluidgroup_filter = filterfluid,
@@ -124,9 +123,10 @@ if device.communicator.rank == 0:
     print(f'Timestep size [s]: {dt}, Used: {dt_condition}')
 
 integrator = hoomd.sph.Integrator(dt=dt)
-velocityverlet = hoomd.sph.methods.VelocityVerletBasic(filter=filterfluid, densitymethod = densitymethod)
 
-integrator.methods.append(velocityverlet)
+kdktv = hoomd.sph.methods.KickDriftKickTV(filter=filterfluid, densitymethod = densitymethod)
+
+integrator.methods.append(kdktv)
 integrator.forces.append(model)
 
 compute_filter_all = hoomd.filter.All()
@@ -139,13 +139,13 @@ if device.communicator.rank == 0:
     print(f'Integrator Methods: {integrator.methods[:]}')
     print(f'Simulation Computes: {sim.operations.computes[:]}')
 
-pgsd_trigger = hoomd.trigger.Periodic(100)
-pgsd_writer = hoomd.write.PGSD(filename=dumpname,
-                             trigger=pgsd_trigger,
+gsd_trigger = hoomd.trigger.Periodic(1000)
+gsd_writer = hoomd.write.GSD(filename=dumpname,
+                             trigger=gsd_trigger,
                              mode='wb',
                              dynamic = ['property', 'momentum']
                              )
-sim.operations.writers.append(pgsd_writer)
+sim.operations.writers.append(gsd_writer)
 
 log_trigger = hoomd.trigger.Periodic(100)
 logger = hoomd.logging.Logger(categories=['scalar', 'string'])
