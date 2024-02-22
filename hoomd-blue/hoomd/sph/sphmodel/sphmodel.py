@@ -438,6 +438,9 @@ class SinglePhaseFlow(SPHModel):
         self._cpp_obj.setRCut(('F', 'S'), rcut)
         self._cpp_obj.setRCut(('S', 'S'), rcut)
         self._cpp_obj.setRCut(('F', 'F'), rcut)
+        self._cpp_obj.setRCut(('W', 'F'), rcut)
+        self._cpp_obj.setRCut(('W', 'S'), rcut)
+        self._cpp_obj.setRCut(('W', 'W'), rcut)
 
     # @property
     def densitymethod(self):
@@ -786,6 +789,9 @@ class SinglePhaseFlowTV(SPHModel):
         self._cpp_obj.setRCut(('F', 'S'), rcut)
         self._cpp_obj.setRCut(('S', 'S'), rcut)
         self._cpp_obj.setRCut(('F', 'F'), rcut)
+        self._cpp_obj.setRCut(('W', 'F'), rcut)
+        self._cpp_obj.setRCut(('W', 'S'), rcut)
+        self._cpp_obj.setRCut(('W', 'W'), rcut)
 
     # @property
     def densitymethod(self):

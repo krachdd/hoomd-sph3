@@ -23,6 +23,7 @@ set(_${COMPONENT_NAME}_sources
     SmoothingKernel.cc
     CustomForceCompute.cc
     ComputeSPFBasicProperties.cc
+    ComputeSolidProperties.cc
     HalfStepHook.cc
     ConstantForceCompute.cc
     )
@@ -57,6 +58,7 @@ set(_${COMPONENT_NAME}_headers
     KickDriftKickTV.h
     CustomForceCompute.h
     ComputeSPFBasicProperties.h
+    ComputeSolidProperties.h
     ComputeMechanicalProp.h
     EvaluationMethodDefinition.h
     ConstantForceCompute.h
