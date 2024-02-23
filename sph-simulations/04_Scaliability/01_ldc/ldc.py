@@ -4,16 +4,20 @@
 maintainer: dkrach, david.krach@mib.uni-stuttgart.de
 -----------------------------------------------------------"""
 # ----- HEADER -----------------------------------------------
+import sys, os
 import hoomd
 from hoomd import *
 from hoomd import sph
 from hoomd.sph import _sph
 import numpy as np
+import math
 # import itertools
 from datetime import datetime
-# import export_gsd2vtu 
-# import read_input_fromtxt
+import export_gsd2vtu, delete_solids_initial_timestep 
+import sph_info, sph_helper, read_input_fromtxt
+from optparse import OptionParser
 
+import gsd.hoomd
 # ------------------------------------------------------------
 
 
@@ -22,30 +26,38 @@ device = hoomd.device.CPU(notice_level=2)
 # device = hoomd.device.CPU(notice_level=10)
 sim = hoomd.Simulation(device=device)
 
-filename = 'liddrivencavity_408_408_11_vs_0.003_init.gsd'
+filename = 'liddrivencavity_408_408_11_vs_0.0025_init.gsd'
+
+nodes = int(sys.argv[1])
 
 dt_string = datetime.now().strftime("%Y-%m-%d-%H-%M-%S")
 logname  = filename.replace('_init.gsd', '')
-logname  = f'{logname}_run.log'
+logname  = f'{logname}_runTV_nodes{nodes}.log'
 dumpname = filename.replace('_init.gsd', '')
-dumpname = f'{dumpname}_run.gsd'
+dumpname = f'{dumpname}_runTV_nodes{nodes}.gsd'
 
 sim.create_state_from_gsd(filename = filename)
 
+
+SHOW_PROC_PART_INFO = False
+SHOW_DECOMP_INFO    = False
+num_length          = 400                                       # [ - ]
+lref                = 1.0                                       # [ m ]
+voxelsize           = lref/float(num_length)                    # [ m ]
+dx                  = voxelsize                                 # [ m ]
+specific_volume     = dx * dx * dx                              # [ m^3 ]
+rho0                = 1.0                                       # [ kg/m^3 ]
+mass                = rho0 * specific_volume                    # [ kg ]
+fx                  = 0.0                                       # [ m/s^2 ]
+lidvel              = 1.0                                       # [ m/s ]
+reynolds            = 10.0                                      # [ - ] 
+viscosity           = (rho0 * lidvel * lref)/reynolds           # [ Pa s ]
+drho                = 0.05                                      # [ % ]
+backpress           = 0.01                                      # [  ]
+refvel              = lidvel                                    # [ m/s ]
+
 if SHOW_DECOMP_INFO:
     sph_info.print_decomp_info(sim, device)
-# Fluid and particle properties
-num_length          = 400
-lref                = 1.2
-voxelsize           = lref/num_length
-dx                  = voxelsize
-specific_volume     = dx * dx * dx
-rho0                = 1000.0
-mass                = rho0 * specific_volume
-refvel              = 10
-Re                  = 10
-viscosity           = rho0 * lref * refvel/Re
-
 
 # get kernel properties
 kernel  = 'WendlandC4'
@@ -53,32 +65,31 @@ slength = hoomd.sph.kernel.OptimalH[kernel]*dx                  # [ m ]
 rcut    = hoomd.sph.kernel.Kappa[kernel]*slength                # [ m ]
 
 # define model parameters
-densitymethod = 'CONTINUITY'
-steps = 101
-
+densitymethod = 'SUMMATION'
+steps = 201
 
 kernel_obj = hoomd.sph.kernel.Kernels[kernel]()
 kappa      = kernel_obj.Kappa()
-
 
 # Neighbor list
 nlist = hoomd.nsearch.nlist.Cell(buffer = rcut*0.05, rebuild_check_delay = 1, kappa = kappa)
 
 # Equation of State
-eos = hoomd.sph.eos.Tait()
-eos.set_params(rho0,0.1)
+eos = hoomd.sph.eos.Linear()
+eos.set_params( rho0 , backpress )
 
 # Define groups/filters
 filterfluid  = hoomd.filter.Type(['F']) # is zero
 filtersolid  = hoomd.filter.Type(['S']) # is one
 filterall    = hoomd.filter.All()
 
-with sim.state.cpu_local_snapshot as snap:
-    print(f'{np.count_nonzero(snap.particles.typeid == 0)} fluid particles on rank {device.communicator.rank}')
-    print(f'{np.count_nonzero(snap.particles.typeid == 1)} solid particles on rank {device.communicator.rank}')
+if SHOW_PROC_PART_INFO:
+    with sim.state.cpu_local_snapshot as snap:
+        print(f'{np.count_nonzero(snap.particles.typeid == 0)} fluid particles on rank {device.communicator.rank}')
+        print(f'{np.count_nonzero(snap.particles.typeid == 1)} solid particles on rank {device.communicator.rank}')
 
 # Set up SPH solver
-model = hoomd.sph.sphmodel.SinglePhaseFlow(kernel = kernel_obj,
+model = hoomd.sph.sphmodel.SinglePhaseFlowTV(kernel = kernel_obj,
                                            eos    = eos,
                                            nlist  = nlist,
                                            fluidgroup_filter = filterfluid,
@@ -88,14 +99,16 @@ if device.communicator.rank == 0:
 
 model.mu = viscosity
 model.densitymethod = densitymethod
-model.gx = 0.0
+model.gx = fx
 model.damp = 5000
 # model.artificialviscosity = True
 model.artificialviscosity = True 
-model.alpha = 0.2
-model.beta = 0.0
-model.densitydiffusion = False
-model.shepardrenormanlization = False 
+model.alpha = 0.4
+model.beta = 0.2
+model.densitydiffusion = True
+model.ddiff = 0.2
+# model.shepardrenormanlization = True
+# model.shepardfreq = 2
 
 
 maximum_smoothing_length = sph_helper.set_max_sl(sim, device, snapshot, model)
@@ -120,16 +133,15 @@ dt, dt_condition = model.compute_dt(LREF = lref, UREF = refvel,
 
 if device.communicator.rank == 0:
     print(f'Timestep size [s]: {dt}, Used: {dt_condition}')
-# compute dt
-dt = model.compute_dt(lref, refvel, dx, drho)
 
-
-integrator = hoomd.sph.Integrator(dt=dt)
+integrator = hoomd.sph.Integrator(dt=0.5*dt)
 
 # VelocityVerlet = hoomd.sph.methods.VelocityVerlet(filter=filterFLUID, densitymethod = densitymethod)
-velocityverlet = hoomd.sph.methods.VelocityVerletBasic(filter=filterfluid, densitymethod = densitymethod)
+# velocityverlet = hoomd.sph.methods.KickDriftKickTV(filter=filterfluid, densitymethod = densitymethod, 
+#                                                     vlimit = True, vlimit_val = 2* refvel, xlimit = True, xlimit_val = rcut)
+kdktv = hoomd.sph.methods.KickDriftKickTV(filter=filterfluid, densitymethod = densitymethod)
 
-integrator.methods.append(velocityverlet)
+integrator.methods.append(kdktv)
 integrator.forces.append(model)
 
 compute_filter_all = hoomd.filter.All()
@@ -142,7 +154,7 @@ if device.communicator.rank == 0:
     print(f'Integrator Methods: {integrator.methods[:]}')
     print(f'Simulation Computes: {sim.operations.computes[:]}')
 
-gsd_trigger = hoomd.trigger.Periodic(1)
+gsd_trigger = hoomd.trigger.Periodic(1000)
 gsd_writer = hoomd.write.GSD(filename=dumpname,
                              trigger=gsd_trigger,
                              mode='wb',

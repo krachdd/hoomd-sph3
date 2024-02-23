@@ -10,12 +10,12 @@ from hoomd import sph
 from hoomd.sph import _sph
 import numpy as np
 import math
-import itertools
+# import itertools
 from datetime import datetime
-
-# import export_gsd2vtu 
-# import read_input_fromtxt
-# import delete_solids_initial_timestep
+import export_gsd2vtu, delete_solids_initial_timestep 
+import sph_info, sph_helper, read_input_fromtxt
+import os, sys
+from optparse import OptionParser
 
 import gsd.hoomd
 # ------------------------------------------------------------
@@ -26,20 +26,18 @@ device = hoomd.device.CPU(notice_level=2)
 # device = hoomd.device.CPU(notice_level=10)
 sim = hoomd.Simulation(device=device)
 
-
 # Fluid and particle properties
-num_length          = 400
-lref                = 1.2
-voxelsize           = lref/num_length
-dx                  = voxelsize
-specific_volume     = dx * dx * dx
-rho0                = 1000.0
-mass                = rho0 * specific_volume
-refvel              = 10
-Re                  = 10
-viscosity           = rho0 * lref * refvel/Re
-
-
+num_length          = 400                                       # [ - ]
+lref                = 1.0                                       # [ m ]
+voxelsize           = lref/float(num_length)                    # [ m ]
+dx                  = voxelsize                                 # [ m ]
+specific_volume     = dx * dx * dx                              # [ m^3 ]
+rho0                = 1.0                                       # [ kg/m^3 ]
+mass                = rho0 * specific_volume                    # [ kg ]
+fx                  = 0.0                                       # [ m/s ]
+lidvel              = 1.0                                       # [ m/s ]
+reynolds            = 10.0                                      # [ - ]
+viscosity           = (rho0 * lidvel * lref)/reynolds   # [ Pa s ]
 
 # get kernel properties
 kernel  = 'WendlandC4'
@@ -50,24 +48,19 @@ rcut    = hoomd.sph.kernel.Kappa[kernel]*slength                # [ m ]
 part_rcut  = math.ceil(rcut/dx) 
 part_depth = math.ceil(1.5 * hoomd.sph.kernel.Kappa[kernel] * rcut/dx) 
 
-
 # get simulation box sizes etc.
 nx, ny, nz = num_length + (2*part_rcut), num_length + (2*part_rcut) , part_depth
 lx, ly, lz = nx*voxelsize, ny*voxelsize, nz*voxelsize
 # box dimensions
-box_lx, box_ly, box_lz = lx, ly, lz  
-
-print(lx, ly, lz)
-
-print(part_rcut)
+box_lx, box_ly, box_lz = lx, ly, lz
 
 # Number of Particles
 n_particles = nx * ny * nz 
 
 # define meshgrid and add properties
-x, y, z = np.meshgrid(*(np.linspace(-box_lx / 2, box_lx / 2, nx, endpoint=True),),
-                      *(np.linspace(-box_ly / 2, box_ly / 2, ny, endpoint=True),),
-                      *(np.linspace(-box_lz / 2, box_lz / 2, nz, endpoint=True),))
+x, y, z = np.meshgrid(*(np.linspace(-box_lx / 2 + (dx/2), box_lx / 2 - (dx/2), nx, endpoint=True),),
+                      *(np.linspace(-box_ly / 2 + (dx/2), box_ly / 2 - (dx/2), ny, endpoint=True),),
+                      *(np.linspace(-box_lz / 2 + (dx/2), box_lz / 2 - (dx/2), nz, endpoint=True),))
 
 positions = np.array((x.ravel(), y.ravel(), z.ravel())).T
 
@@ -76,8 +69,8 @@ masses     = np.ones((positions.shape[0]), dtype = np.float32) * mass
 slengths   = np.ones((positions.shape[0]), dtype = np.float32) * slength
 densities  = np.ones((positions.shape[0]), dtype = np.float32) * rho0
 
-# # # create Snapshot 
-snapshot = gsd.hoomd.Snapshot()
+# create Snapshot 
+snapshot = gsd.hoomd.Frame()
 snapshot.configuration.box     = [box_lx, box_ly, box_lz] + [0, 0, 0]
 snapshot.particles.N           = n_particles
 snapshot.particles.position    = positions
@@ -96,10 +89,12 @@ for i in range(len(x)):
     xi,yi,zi  = x[i][0], x[i][1], x[i][2]
     tid[i]    = 0
     # solid walls 
-    if ( xi < -0.5 * lref or xi > 0.5 * lref or yi < -0.5 * lref or yi > 0.5 * lref):
+    if ( yi < -0.5 * lref or yi > 0.5 * lref):
         tid[i] = 1
-    if ( yi >= 0.5 * lref):
-        vels[i][0] = refvel
+    if ( xi < -0.5 * lref or xi > 0.5 * lref):
+        tid[i] = 1
+    if (yi > 0.5 * lref):
+        vels[i][0] = lidvel
 
 snapshot.particles.typeid[:]     = tid
 snapshot.particles.velocity[:]   = vels
