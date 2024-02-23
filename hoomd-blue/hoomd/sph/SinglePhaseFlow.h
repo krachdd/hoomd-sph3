@@ -179,6 +179,7 @@ class PYBIND11_EXPORT SinglePhaseFlow : public SPHBaseClass<KT_, SET_>
         //! Computes forces
         virtual void computeForces(uint64_t timestep);
 
+
     #ifdef ENABLE_MPI
         /// The system's communicator.
         std::shared_ptr<Communicator> m_comm;
@@ -314,6 +315,10 @@ class PYBIND11_EXPORT SinglePhaseFlow : public SPHBaseClass<KT_, SET_>
         */
         void update_ghost_aux1(uint64_t timestep);
 
+        /*! Helper function that computes the Fluid induced Forces on a solid body
+         */
+        virtual void compute_solid_forces(uint64_t timestep);
+        
     private:
 
     };

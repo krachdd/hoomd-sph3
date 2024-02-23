@@ -70,6 +70,7 @@ namespace detail
     // void export_StateEquation_Linear(pybind11::module& m);
 
     void export_ComputeSPFMechanicalProperties(pybind11::module& m);
+    void export_ComputeSolidProperties(pybind11::module& m);
     // void export_LocalNeighborListDataHost(pybind11::module& m);
     void export_HalfStepHook(pybind11::module& m);
 
@@ -150,6 +151,7 @@ PYBIND11_MODULE(_sph, m){
     export_CustomForceCompute(m);
 
     export_ComputeSPFMechanicalProperties(m);
+    export_ComputeSolidProperties(m);
 
     export_DensityMethod(m);
     export_ViscosityMethod(m);
