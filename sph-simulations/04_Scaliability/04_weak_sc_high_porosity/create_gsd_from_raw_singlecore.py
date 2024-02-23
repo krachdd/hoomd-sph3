@@ -16,6 +16,7 @@ import export_gsd2vtu, delete_solids_initial_timestep
 import sph_info, sph_helper, read_input_fromtxt
 import os, sys
 from optparse import OptionParser
+import array
 
 import gsd.hoomd
 # ------------------------------------------------------------
@@ -67,6 +68,7 @@ tids = tids.reshape((nz, ny, nx))
 tids = tids.flatten(order = 'F')
 rawf_handle.close()
 porosity = 1.0 - np.sum(tids)/(nx * ny * nz)
+print(f'Porosity: {porosity}')
 
 # define meshgrid and add properties
 x, y, z = np.meshgrid(*(np.linspace(-box_lx / 2 + (dx/2), box_lx / 2 - (dx/2), nx, endpoint=True),),
@@ -98,9 +100,12 @@ deletesolid_flag = params['delete_flag']
 if deletesolid_flag == 1:
     print(f'Delete solid particles')
     sim, ndel_particles = delete_solids_initial_timestep.delete_solids(sim, device, kernel, 0.000001, viscosity, dx, rho0)
-    N_particles = N_particles - ndel_particles
+    n_particles = n_particles - ndel_particles
 
 init_filename = rawfile.replace('.raw', '_init.gsd')
 hoomd.write.GSD.write(state = sim.state, mode = 'wb', filename = init_filename)
 
-print(f'Filename: {init_filename}, Number of particles: {N_particles}')
+print(f'Filename: {init_filename}, Number of particles: {n_particles}')
+
+if device.communicator.rank == 0:
+    export_gsd2vtu.export_spf(init_filename)

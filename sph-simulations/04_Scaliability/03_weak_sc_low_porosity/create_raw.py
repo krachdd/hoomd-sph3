@@ -35,7 +35,7 @@ tids = np.reshape(tids, (nx, ny, nz), order = 'F')
     
 rawfile.close()
 
-porosity = np.sum(tids)/(nx * ny * nz)
+porosity = 1.0 - np.sum(tids)/(nx * ny * nz)
 print(f'Porosity: {porosity}')
 
 
