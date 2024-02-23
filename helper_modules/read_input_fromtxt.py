@@ -63,8 +63,8 @@ def sanity_check_input(input_dict):
         raise ValueError('Flag on deleting solids not set properly.')
 
     porosity = input_dict['porosity']
-    if porosity < 0.0 or porosity >= 1.0:
-        raise ValueError('Porosity has to be 0 <= phi < 1.')
+    if porosity < 0.0 or porosity > 1.0:
+        raise ValueError('Porosity has to be 0 <= phi <= 1.')
 
 
 
