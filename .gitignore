@@ -1,10 +1,7 @@
 dependencies/gsd-sph/gsd-*/build
 dependencies/pgsd-sph/pgsd-*/build
 helper_modules/gsd2vtu/__pycache__/
-helper_modules/delete_solid_sphparticles/__pycache__/
-helper_modules/read_input_from_txt/__pycache__/
-helper_modules/get_properties_raw/__pycache__/
-helper_modules/__pycache__
+helper_modules/__pycache__/
 
 hoomd-blue/hoomd/extern/pgsd.c
 hoomd-blue/hoomd/extern/pgsd.h
