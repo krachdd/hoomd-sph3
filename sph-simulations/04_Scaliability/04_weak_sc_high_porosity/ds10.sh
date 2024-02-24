@@ -18,7 +18,17 @@
 #SBATCH -e hp_s10%j.err # File to which STDERR will be written
 
 module load openmpi/4.1.4_gcc-11.3_cuda-11.7
-module load gcc/11.3.0
+module load gcc/11.3.0 
+
+# Exports
+PYTHON=/home/ac126015/software/miniconda3/envs/sph3/bin/python3.11
+PY_LOCAL_LIB=/home/ac126015/software/miniconda3/envs/sph3/lib
+PY_LOCAL_BIN=/home/ac126015/software/miniconda3/envs/sph3/bin
+PY_LOCAL_INC=/home/ac126015/software/miniconda3/envs/sph3/include
+PY_LOCAL_SIT=/home/ac126015/software/miniconda3/envs/sph3/lib/python3.11/site-packages
+
+export PYTHONPATH=$PY_LOCAL_SIT:$PYTHONPATH
+export PATH=$PY_LOCAL_BIN:$PATH
 
 echo "Date              = $(date)"
 echo "Hostname          = $(hostname -s)"
