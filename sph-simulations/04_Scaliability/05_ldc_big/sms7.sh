@@ -10,8 +10,7 @@
 #SBATCH --output=ldc_s7%j.log     # Path to the standard output and error files relative to the working directory
 #SBATCH --partition=cpu              # put the job into the cpu partition
 
-# Ensure that all of the cores are on the same Inifniband network
-#SBATCH --contiguous
+
 
 # OUTPUT und FEHLER Dateien. %j wird durch job id ersetzt.
 # SBATCH -o ldc_run_1.out # File to which STDOUT will be written
