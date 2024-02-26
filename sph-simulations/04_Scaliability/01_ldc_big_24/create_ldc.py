@@ -27,7 +27,7 @@ device = hoomd.device.CPU(notice_level=2)
 sim = hoomd.Simulation(device=device)
 
 # Fluid and particle properties
-num_length          = int(4*400)                                # [ - ]
+num_length          = 400                                       # [ - ]
 lref                = 1.0                                       # [ m ]
 voxelsize           = lref/float(num_length)                    # [ m ]
 dx                  = voxelsize                                 # [ m ]
