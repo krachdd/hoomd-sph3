@@ -26,7 +26,7 @@ device = hoomd.device.CPU(notice_level=2)
 # device = hoomd.device.CPU(notice_level=10)
 sim = hoomd.Simulation(device=device)
 
-filename = 'liddrivencavity_408_408_11_vs_0.0025_init.gsd'
+filename = 'liddrivencavity_1608_1608_11_vs_0.000625_init.gsd'
 
 nodes = int(sys.argv[1])
 
@@ -41,7 +41,7 @@ sim.create_state_from_gsd(filename = filename)
 
 SHOW_PROC_PART_INFO = False
 SHOW_DECOMP_INFO    = False
-num_length          = 400                                       # [ - ]
+num_length          = int(4*400)                                # [ - ]
 lref                = 1.0                                       # [ m ]
 voxelsize           = lref/float(num_length)                    # [ m ]
 dx                  = voxelsize                                 # [ m ]
