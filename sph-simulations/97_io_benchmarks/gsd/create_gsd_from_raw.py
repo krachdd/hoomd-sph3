@@ -61,7 +61,7 @@ tids = np.array(tids, dtype = np.uint8)
 tids = tids.reshape((nz, ny, nx))
 tids = tids.flatten(order = 'F')
 rawf_handle.close()
-porosity = np.sum(tids)/(nx * ny * nz)
+porosity = 1.0 - np.sum(tids)/(nx * ny * nz)
 
 
 # define meshgrid and add properties

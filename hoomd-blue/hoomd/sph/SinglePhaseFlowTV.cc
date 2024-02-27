@@ -332,22 +332,11 @@ void SinglePhaseFlowTV<KT_, SET_>::forcecomputation(uint64_t timestep)
             Scalar dwdr   = this->m_skernel->dwijdr(meanh,r);
             Scalar dwdr_r = dwdr/(r+eps);
 
-            // Evaluate inter-particle pressure forces
-            //temp0 = -((mi*mj)/(rhoj*rhoi))*(Pi+Pj);
-            //temp0 = -Vi*Vj*( Pi + Pj );
-            //temp0 = -mi*mj*(Pi+Pj)/(rhoi*rhoj);
-            //temp0 = -mi*mj*( Pi/(rhoi*rhoj) + Pj/(rhoj*rhoj) );
-            if ( this->m_density_method == DENSITYSUMMATION )
-            {
-                // Transport formulation proposed by Adami 2013
-                temp0 = -(Vi*Vi+Vj*Vj)*((rhoj*Pi+rhoi*Pj)/(rhoi+rhoj)); 
-            }
-            else if ( this->m_density_method == DENSITYCONTINUITY) 
-            { 
-                temp0 = -mi*mj*(Pi+Pj)/(rhoi*rhoj);
-            }
+            // Evaluate inter-particle pressure force
+            // Transport formulation proposed by Adami 2013
+            temp0 = (rhoj*Pi+rhoi*Pj)/(rhoi+rhoj); 
 
-
+            Scalar avc = 0.0;
             // Optionally add artificial viscosity
             // Monaghan (1983) J. Comput. Phys. 52 (2) 374–389
             if ( this->m_artificial_viscosity && !issolid )
@@ -357,39 +346,24 @@ void SinglePhaseFlowTV<KT_, SET_>::forcecomputation(uint64_t timestep)
                     {
                     Scalar muij    = meanh*dotdvdx/(rsq+epssqr);
                     Scalar meanrho = Scalar(0.5)*(rhoi+rhoj);
-                    temp0 += mi*mj*(this->m_avalpha*this->m_c*muij+this->m_avbeta*muij*muij)/meanrho;
+                    avc = -(this->m_avalpha*this->m_c*muij+this->m_avbeta*muij*muij)/meanrho;
                     }
                 }
 
             // Add contribution to fluid particle; pressure interaction force
-            h_force.data[i].x += temp0*dwdr_r*dx.x;
-            h_force.data[i].y += temp0*dwdr_r*dx.y;
-            h_force.data[i].z += temp0*dwdr_r*dx.z;
-
-            // Add contribution to solid particl; pressure interaction force
-            if ( issolid && this->m_compute_solid_forces )
-                {
-                h_force.data[k].x -= (mj/mi)*temp0*dwdr_r*dx.x;
-                h_force.data[k].y -= (mj/mi)*temp0*dwdr_r*dx.y;
-                h_force.data[k].z -= (mj/mi)*temp0*dwdr_r*dx.z;
-                }
+            Scalar vijsqr = Vi*Vi+Vj*Vj;
+            h_force.data[i].x -= vijsqr * ( temp0 + avc )* dwdr_r * dx.x;
+            h_force.data[i].y -= vijsqr * ( temp0 + avc )* dwdr_r * dx.y;
+            h_force.data[i].z -= vijsqr * ( temp0 + avc )* dwdr_r * dx.z;
 
             // Evaluate viscous interaction forces
-            temp0 = this->m_mu * (Vi*Vi+Vj*Vj) * dwdr_r;
-            h_force.data[i].x  += temp0*dv.x;
-            h_force.data[i].y  += temp0*dv.y;
-            h_force.data[i].z  += temp0*dv.z;
-
-            // Add contribution to solid particle; viscous interaction force
-            if ( issolid && this->m_compute_solid_forces )
-                {
-                h_force.data[k].x -= (mj/mi)*temp0*dv.x;
-                h_force.data[k].y -= (mj/mi)*temp0*dv.y;
-                h_force.data[k].z -= (mj/mi)*temp0*dv.z;
-                }
+            temp0 = this->m_mu * vijsqr * dwdr_r;
+            h_force.data[i].x  += temp0 * dv.x;
+            h_force.data[i].y  += temp0 * dv.y;
+            h_force.data[i].z  += temp0 * dv.z;
 
             // Evaluate and add artificial stress part
-            temp0 = 0.5 * (Vi*Vi+Vj*Vj) * dwdr_r;
+            temp0 = 0.5 * vijsqr * dwdr_r;
             Scalar A1ij = ( A11i + A11j ) * dx.x + ( A12i + A12j ) * dx.y + ( A13i + A13j ) * dx.z;
             Scalar A2ij = ( A21i + A21j ) * dx.x + ( A22i + A22j ) * dx.y + ( A23i + A23j ) * dx.z;
             Scalar A3ij = ( A31i + A31j ) * dx.x + ( A32i + A32j ) * dx.y + ( A33i + A33j ) * dx.z;
@@ -399,9 +373,9 @@ void SinglePhaseFlowTV<KT_, SET_>::forcecomputation(uint64_t timestep)
             h_force.data[k].z += temp0 * A3ij; 
 
             // Evaluate background pressure contribution in aux2
-            h_bpc.data[i].x -= (Vi*Vi+Vj*Vj) * this->m_eos->getBackgroundPressure()/mi * dwdr_r * dx.x;
-            h_bpc.data[i].y -= (Vi*Vi+Vj*Vj) * this->m_eos->getBackgroundPressure()/mi * dwdr_r * dx.y;
-            h_bpc.data[i].z -= (Vi*Vi+Vj*Vj) * this->m_eos->getBackgroundPressure()/mi * dwdr_r * dx.z;
+            h_bpc.data[i].x -= vijsqr * this->m_eos->getBackgroundPressure()/mi * dwdr_r * dx.x;
+            h_bpc.data[i].y -= vijsqr * this->m_eos->getBackgroundPressure()/mi * dwdr_r * dx.y;
+            h_bpc.data[i].z -= vijsqr * this->m_eos->getBackgroundPressure()/mi * dwdr_r * dx.z;
 
             // Evaluate rate of change of density if CONTINUITY approach is used
             if ( this->m_density_method == DENSITYCONTINUITY )
@@ -441,8 +415,6 @@ void SinglePhaseFlowTV<KT_, SET_>::forcecomputation(uint64_t timestep)
     this->m_timestep_list[5] = max_vel;
     // Add volumetric force (gravity)
     this->applyBodyForce(timestep, this->m_fluidgroup);
-    if ( this->m_compute_solid_forces )
-        this->applyBodyForce(timestep, this->m_solidgroup);
 
     }
 

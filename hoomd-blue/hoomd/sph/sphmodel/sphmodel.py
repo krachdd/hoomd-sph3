@@ -15,7 +15,7 @@ from hoomd.data.parameterdicts import ParameterDict, TypeParameterDict
 from hoomd.data.typeparam import TypeParameter
 import numpy as np
 from hoomd.data.typeconverter import OnlyFrom, nonnegative_real
-
+from itertools import combinations
 
 class SPHModel(force.Force):
     r""" Base class for all SPH Models
@@ -432,15 +432,11 @@ class SinglePhaseFlow(SPHModel):
         self._param_dict.__setattr__('params_set', True)
 
     # @rcut.setter
-    def setrcut(self, rcut):
+    def setrcut(self, rcut, types):
         if rcut <= 0.0:
             raise ValueError("Rcut has to be > 0.0.")
-        self._cpp_obj.setRCut(('F', 'S'), rcut)
-        self._cpp_obj.setRCut(('S', 'S'), rcut)
-        self._cpp_obj.setRCut(('F', 'F'), rcut)
-        self._cpp_obj.setRCut(('W', 'F'), rcut)
-        self._cpp_obj.setRCut(('W', 'S'), rcut)
-        self._cpp_obj.setRCut(('W', 'W'), rcut)
+        for p in combinations(types, 2):
+            self._cpp_obj.setRCut(p, rcut)
 
     # @property
     def densitymethod(self):
@@ -783,15 +779,11 @@ class SinglePhaseFlowTV(SPHModel):
         self._param_dict.__setattr__('params_set', True)
 
     # @rcut.setter
-    def setrcut(self, rcut):
+    def setrcut(self, rcut, types):
         if rcut <= 0.0:
             raise ValueError("Rcut has to be > 0.0.")
-        self._cpp_obj.setRCut(('F', 'S'), rcut)
-        self._cpp_obj.setRCut(('S', 'S'), rcut)
-        self._cpp_obj.setRCut(('F', 'F'), rcut)
-        self._cpp_obj.setRCut(('W', 'F'), rcut)
-        self._cpp_obj.setRCut(('W', 'S'), rcut)
-        self._cpp_obj.setRCut(('W', 'W'), rcut)
+        for p in combinations(types, 2):
+            self._cpp_obj.setRCut(p, rcut)
 
     # @property
     def densitymethod(self):
