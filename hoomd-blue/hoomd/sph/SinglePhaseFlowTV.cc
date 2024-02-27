@@ -358,9 +358,9 @@ void SinglePhaseFlowTV<KT_, SET_>::forcecomputation(uint64_t timestep)
 
             // Add contribution to fluid particle; pressure interaction force
             Scalar vijsqr = Vi*Vi+Vj*Vj;
-            h_force.data[i].x -= vijsqr * ( temp0 + avc )* dwdr_r * dx.x;
-            h_force.data[i].y -= vijsqr * ( temp0 + avc )* dwdr_r * dx.y;
-            h_force.data[i].z -= vijsqr * ( temp0 + avc )* dwdr_r * dx.z;
+            h_force.data[i].x -= vijsqr * ( temp0 - avc )* dwdr_r * dx.x;
+            h_force.data[i].y -= vijsqr * ( temp0 - avc )* dwdr_r * dx.y;
+            h_force.data[i].z -= vijsqr * ( temp0 - avc )* dwdr_r * dx.z;
 
             // Evaluate viscous interaction forces
             temp0 = this->m_mu * vijsqr * dwdr_r;
