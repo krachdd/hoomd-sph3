@@ -40,7 +40,7 @@ drho                = 0.01                                      # [ % ]
 backpress           = 0.1                                       # [ - ]
 
 # get kernel properties
-kernel  = 'Quintic'
+kernel  = 'WendlandC4'
 slength = hoomd.sph.kernel.OptimalH[kernel]*dx                  # [ m ]
 rcut    = hoomd.sph.kernel.Kappa[kernel]*slength                # [ m ]
 
@@ -48,7 +48,7 @@ rcut    = hoomd.sph.kernel.Kappa[kernel]*slength                # [ m ]
 part_rcut  = math.ceil(rcut/dx) 
 
 # get simulation box sizes etc.
-nx, ny, nz = int(num_length), int(num_length + (3*part_rcut)), int(num_length + (3*part_rcut))
+nx, ny, nz = int(num_length), int(num_length + (2*part_rcut)), int(num_length + (2*part_rcut))
 lx, ly, lz = float(nx) * voxelsize, float(ny) * voxelsize, float(nz) * voxelsize
 # box dimensions
 box_lx, box_ly, box_lz = lx, ly, lz
@@ -89,7 +89,7 @@ for i in range(len(x)):
     xi,yi,zi  = x[i][0], x[i][1], x[i][2]
     distance = np.sqrt((yi)**2 + (zi)**2)
 
-    if distance > radius:
+    if distance >= radius:
         tid[i] = 1
 
 snapshot.particles.typeid[:]     = tid

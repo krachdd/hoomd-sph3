@@ -31,9 +31,9 @@ if device.communicator.rank == 0:
 
 dt_string = datetime.now().strftime("%Y-%m-%d-%H-%M-%S")
 logname  = filename.replace('_init.gsd', '')
-logname  = f'{logname}_run.log'
+logname  = f'{logname}_runTV.log'
 dumpname = filename.replace('_init.gsd', '')
-dumpname = f'{dumpname}_run.gsd'
+dumpname = f'{dumpname}_runTV.gsd'
 
 sim.create_state_from_gsd(filename = filename)
 
@@ -55,7 +55,7 @@ backpress           = 0.1                                       # [ - ]
 refvel              = fx * lref**2 * 0.25 / (viscosity/rho0)    # [ m/s ]
 
 # get kernel properties
-kernel  = 'Quintic'
+kernel  = 'WendlandC4'
 slength = hoomd.sph.kernel.OptimalH[kernel]*dx                  # [ m ]
 rcut    = hoomd.sph.kernel.Kappa[kernel]*slength                # [ m ]
 
@@ -167,5 +167,5 @@ if device.communicator.rank == 0:
 
 sim.run(steps, write_at_start=True)
 
-if device.communicator.rank == 0:
-    export_gsd2vtu.export_spf(dumpname)
+# if device.communicator.rank == 0:
+#     export_gsd2vtu.export_spf(dumpname)
