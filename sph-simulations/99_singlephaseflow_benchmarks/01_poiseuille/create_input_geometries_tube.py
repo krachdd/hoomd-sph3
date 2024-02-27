@@ -27,20 +27,20 @@ sim = hoomd.Simulation(device=device)
 
 # Fluid and particle properties
 num_length          = int(sys.argv[1])                          # [ - ]
-lref                = 0.001                                     # [ m ]
+lref                = 0.01                                      # [ m ]
 radius              = 0.5 * lref                                # [ m ]
 voxelsize           = lref/float(num_length)                    # [ m ]
 dx                  = voxelsize                                 # [ m ]
 specific_volume     = dx * dx * dx                              # [ m^3 ]
 rho0                = 1000.0                                    # [ kg/m^3 ]
 mass                = rho0 * specific_volume                    # [ kg ]
-fx                  = 0.1                                       # [ m/s^2 ]
-viscosity           = 0.01                                      # [ Pa s ]
-drho                = 0.05                                      # [ % ]
-backpress           = 0.01                                      # [ - ]
+fx                  = 1.0                                       # [ m/s^2 ]
+viscosity           = 1.0                                       # [ Pa s ]
+drho                = 0.01                                      # [ % ]
+backpress           = 0.1                                       # [ - ]
 
 # get kernel properties
-kernel  = 'WendlandC4'
+kernel  = 'Quintic'
 slength = hoomd.sph.kernel.OptimalH[kernel]*dx                  # [ m ]
 rcut    = hoomd.sph.kernel.Kappa[kernel]*slength                # [ m ]
 

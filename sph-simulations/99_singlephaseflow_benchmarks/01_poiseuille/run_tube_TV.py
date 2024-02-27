@@ -41,21 +41,21 @@ sim.create_state_from_gsd(filename = filename)
 SHOW_PROC_PART_INFO = False
 SHOW_DECOMP_INFO    = False
 num_length          = int(sys.argv[1])                          # [ - ]
-lref                = 0.001                                     # [ m ]
+lref                = 0.01                                     # [ m ]
 radius              = 0.5 * lref                                # [ m ]
 voxelsize           = lref/float(num_length)                    # [ m ]
 dx                  = voxelsize                                 # [ m ]
 specific_volume     = dx * dx * dx                              # [ m^3 ]
 rho0                = 1000.0                                    # [ kg/m^3 ]
 mass                = rho0 * specific_volume                    # [ kg ]
-fx                  = 0.1                                       # [ m/s^2 ]
-viscosity           = 0.01                                      # [ Pa s ]
+fx                  = 1.0                                       # [ m/s^2 ]
+viscosity           = 1.0                                       # [ Pa s ]
 drho                = 0.01                                      # [ % ]
-backpress           = 0.01                                      # [ - ]
+backpress           = 0.1                                       # [ - ]
 refvel              = fx * lref**2 * 0.25 / (viscosity/rho0)    # [ m/s ]
 
 # get kernel properties
-kernel  = 'WendlandC4'
+kernel  = 'Quintic'
 slength = hoomd.sph.kernel.OptimalH[kernel]*dx                  # [ m ]
 rcut    = hoomd.sph.kernel.Kappa[kernel]*slength                # [ m ]
 
@@ -100,9 +100,10 @@ model.gx = fx
 model.damp = 1000
 model.artificialviscosity = True 
 model.alpha = 0.2
-model.beta = 0.0
+model.beta = 0.4
 model.densitydiffusion = False
-model.shepardrenormanlization = False
+model.shepardrenormanlization = True
+model.shepardfreq = 25
 
 maximum_smoothing_length = sph_helper.set_max_sl(sim, device, snapshot, model)
 
@@ -136,7 +137,7 @@ if device.communicator.rank == 0:
     print(f'Integrator Methods: {integrator.methods[:]}')
     print(f'Simulation Computes: {sim.operations.computes[:]}')
 
-gsd_trigger = hoomd.trigger.Periodic(1000)
+gsd_trigger = hoomd.trigger.Periodic(2000)
 gsd_writer = hoomd.write.GSD(filename=dumpname,
                              trigger=gsd_trigger,
                              mode='wb',
