@@ -52,7 +52,7 @@ def get_c0_bf(lref, bforce, cfactor):
 def get_c0_umax(uref, cfator):
     return cfator * uref
 
-def update_min_c0(device, model, c, mode = 'uref', lref = 0.0, uref = 0.0, bforce = 0.0, cfator = 10.0):
+def update_min_c0(device, model, c, mode = 'uref', lref = 0.0, uref = 0.0, bforce = 0.0, cfactor = 10.0):
     """
     
     Parameters
@@ -78,7 +78,7 @@ def update_min_c0(device, model, c, mode = 'uref', lref = 0.0, uref = 0.0, bforc
     if mode == 'uref':
         if uref <= 0.0:
             raise ValueError('Give correct uref!')
-        c0 = get_c0_umax(uref, cfator)
+        c0 = get_c0_umax(uref, cfactor)
         if c0 <= 0.0:
             raise ValueError('c0 must not be smaller or equal to 0.')
     elif mode == 'bforce':
@@ -90,7 +90,7 @@ def update_min_c0(device, model, c, mode = 'uref', lref = 0.0, uref = 0.0, bforc
     elif mode == 'both':
         if bforce <= 0.0 or lref <= 0.0 or uref <= 0.0:
             raise ValueError('Give correct bforce, lref and uref!')
-        c0 = np.max(get_c0_bf(lref, bforce, cfactor), get_c0_umax(uref, cfator))
+        c0 = np.max(get_c0_bf(lref, bforce, cfactor), get_c0_umax(uref, cfactor))
         if c0 <= 0.0:
             raise ValueError('c0 must not be smaller or equal to 0.') 
     else:
