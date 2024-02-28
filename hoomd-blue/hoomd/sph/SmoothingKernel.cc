@@ -41,7 +41,6 @@ see https://pysph.readthedocs.io/en/latest/reference/kernels.html
 */
 template<>
 SmoothingKernel<wendlandc4>::SmoothingKernel()
-    // : m_kappa(Scalar(2.0)), m_self_density(Scalar(1.0)), m_alpha(Scalar(0.6154820064881891))
     : m_kappa(Scalar(2.0)), m_self_density(Scalar(3.0)), m_alpha(Scalar(0.2051606688293963))
     {
     }
@@ -60,7 +59,7 @@ SmoothingKernel<quintic>::SmoothingKernel()
 Cubic Spline
 m_alpha = 1./PI, 
 m_kappa = 2.0,
-m_self_density check properties if needed for n_density or density renormalization
+m_self_density = 1.0,
 see: J. Monaghan, Smoothed Particle Hydrodynamics, “Annual Review of Astronomy and Astrophysics”, 30 (1992), pp. 543-574.
 and https://pysph.readthedocs.io/en/latest/reference/kernels.html
 */
@@ -136,11 +135,13 @@ Scalar SmoothingKernel<wendlandc2>::wij(const Scalar h, const Scalar rij)
 {
     Scalar q = rij / h;
     Scalar w = Scalar(0.0);
-    if ( q >= 0 && q < Scalar(2) )
+    
+    if ( q >= 0 && q <= Scalar(2) )
     {
         // (alpha/h^D) * (1-0.5q)^4 * ( 1.0 + 2*q )
         w = normalizationfactor(h)*( pow(Scalar(1)-Scalar(0.5)*q,Scalar(4))*(Scalar(1) + Scalar(2)*q) );
     }
+    
     return w;
 }
 
@@ -148,69 +149,78 @@ Scalar SmoothingKernel<wendlandc2>::wij(const Scalar h, const Scalar rij)
 template<>
 Scalar SmoothingKernel<wendlandc4>::wij(const Scalar h, const Scalar rij)
 {
-        Scalar q = rij / h;
-        Scalar w = Scalar(0.0);
-        if ( q >= 0 && q < 2.0)
-            {
-            // (alpha/h^D) * (1-0.5q)^6 * (35/12*q^2 +3*q + 1)
-            // w = normalizationfactor(h)*pow((1.0-(0.5*q)),6)*(2.9166666*q*q + 3.0*q + 1.0);
-            w = normalizationfactor(h)*pow((1.0-(0.5*q)),6)*(8.75*q*q + 9.0*q + 3.0);
-            }
-        return w;
+    Scalar q = rij / h;
+    Scalar w = Scalar(0.0);
+    
+    if ( q >= 0 && q <= 2.0)
+    {
+        // (alpha/h^D) * (1-0.5q)^6 * (35/12*q^2 +3*q + 1)
+        // w = normalizationfactor(h)*pow((1.0-(0.5*q)),6)*(2.9166666*q*q + 3.0*q + 1.0);
+        w = normalizationfactor(h)*pow((1.0-(0.5*q)),6)*(8.75*q*q + 9.0*q + 3.0);
+    }
+    
+    return w;
 }
 
 template<>
 Scalar SmoothingKernel<wendlandc6>::wij(const Scalar h, const Scalar rij)
 {
-        Scalar q = rij / h;
-        Scalar w = Scalar(0.0);
-        if ( q >= 0 && q < Scalar(2) )
-            {
-            // (alpha/h^D) * (1-0.5q)^8 * ( 4*q^3 + 6.25*q^2 + 4*q + 1 )
-            w = normalizationfactor(h)*( pow(Scalar(1)-Scalar(0.5)*q,Scalar(8)) * (Scalar(4)*q*q*q+Scalar(6.25)*q*q+Scalar(4)*q+Scalar(1)) );
-            }
-        return w;
+    Scalar q = rij / h;
+    Scalar w = Scalar(0.0);
+    
+    if ( q >= 0 && q <= Scalar(2) )
+    {
+        // (alpha/h^D) * (1-0.5q)^8 * ( 4*q^3 + 6.25*q^2 + 4*q + 1 )
+        w = normalizationfactor(h)*( pow(Scalar(1)-Scalar(0.5)*q,Scalar(8)) * (Scalar(4)*q*q*q+Scalar(6.25)*q*q+Scalar(4)*q+Scalar(1)) );
+    }
+    
+    return w;
 }
+
 template<>
 Scalar SmoothingKernel<quintic>::wij(const Scalar h, const Scalar rij)
 {
-        Scalar q = rij / h;
-        Scalar w = Scalar(0.0);
-        if( q >= Scalar(0.0) && q < Scalar(1) )
-        {
-            // (alpha/h^D)*( (3.0-q)^5 - 6.0*(2.0-q)^5 + 15.0*(1.0-q)^5 );
-            w = normalizationfactor(h)* ( pow(Scalar(3)-q,Scalar(5)) - Scalar(6)*pow(Scalar(2)-q,Scalar(5)) + Scalar(15)*pow(Scalar(1)-q,Scalar(5)) );
-        }else if ( q >= Scalar(1) && q < Scalar(2) )
-        {
-            // (alpha/h^D)*( (3.0-q)^5 - 6.0*(2.0-q)^5 ;
-            w = normalizationfactor(h)* ( pow(Scalar(3)-q,Scalar(5)) - Scalar(6)*pow(Scalar(2)-q,Scalar(5)) );
-        }else if ( q >= Scalar(2) && q < Scalar(3) )
-        {
-            // (alpha/h^D)*( (3.0-q)^5 ) ;
-            w = normalizationfactor(h)* ( pow(Scalar(3)-q,Scalar(5)) );
-        }
+    Scalar q = rij / h;
+    Scalar w = Scalar(0.0);
+    
+    if( q >= Scalar(0.0) && q <= Scalar(1) )
+    {
+        // (alpha/h^D)*( (3.0-q)^5 - 6.0*(2.0-q)^5 + 15.0*(1.0-q)^5 );
+        w = normalizationfactor(h)* ( pow(Scalar(3)-q,Scalar(5)) - Scalar(6)*pow(Scalar(2)-q,Scalar(5)) + Scalar(15)*pow(Scalar(1)-q,Scalar(5)) );
+    }
+    else if ( q > Scalar(1) && q <= Scalar(2) )
+    {
+        // (alpha/h^D)*( (3.0-q)^5 - 6.0*(2.0-q)^5 ;
+        w = normalizationfactor(h)* ( pow(Scalar(3)-q,Scalar(5)) - Scalar(6)*pow(Scalar(2)-q,Scalar(5)) );
+    }
+    else if ( q > Scalar(2) && q <= Scalar(3) )
+    {
+        // (alpha/h^D)*( (3.0-q)^5 ) ;
+        w = normalizationfactor(h)* ( pow(Scalar(3)-q,Scalar(5)) );
+    }
 
-        return w;
+    return w;
 }
 
 /* checked DK 10/2022 */
 template<>
 Scalar SmoothingKernel<cubicspline>::wij(const Scalar h, const Scalar rij)
 {
-        Scalar q = rij / h;
-        Scalar w = Scalar(0.0);
-        if( q >= 0.0 && q <= 1.0)
-        {
-            // (alpha/h^3)*( 1.0 - 1.5*q^2 + 0.75*q^3 );
-            w = normalizationfactor(h)* ( 1.0 - 1.5*q*q + 0.75*q*q*q);
-        }
-        else if ( q > 1.0 && q <= 2.0 )
-        {
-            // (alpha/h^D)*( 0.25*(2.0-q)^3 );
-            w = normalizationfactor(h)* ( 0.25* (2.0-q) * (2.0-q) * (2.0-q));
-        }
+    Scalar q = rij / h;
+    Scalar w = Scalar(0.0);
+    
+    if( q >= 0.0 && q <= 1.0)
+    {
+        // (alpha/h^3)*( 1.0 - 1.5*q^2 + 0.75*q^3 );
+        w = normalizationfactor(h)* ( 1.0 - 1.5*q*q + 0.75*q*q*q);
+    }
+    else if ( q > 1.0 && q <= 2.0 )
+    {
+        // (alpha/h^D)*( 0.25*(2.0-q)^3 );
+        w = normalizationfactor(h)* ( 0.25* (2.0-q) * (2.0-q) * (2.0-q));
+    }
 
-        return w;
+    return w;
 }
 
 template<>
@@ -218,11 +228,13 @@ Scalar SmoothingKernel<wendlandc2>::dwijdr(const Scalar h, const Scalar rij)
 {
     Scalar q = rij / h;
     Scalar dwdr = Scalar(0.0);
-    if ( q >= 0 && q < Scalar(2) )
+    
+    if ( q >= 0 && q <= Scalar(2) )
     {
         // (alpha/h^D+1) * 5*(1-0.5)^3
         dwdr = -(normalizationfactor(h)/h)*( Scalar(5)*pow(Scalar(1)-Scalar(0.5)*q,Scalar(3)) );
     }
+    
     return dwdr;
 }
 
@@ -232,51 +244,58 @@ adapted limits, removed additional datatyping
 template<>
 Scalar SmoothingKernel<wendlandc4>::dwijdr(const Scalar h, const Scalar rij)
 {
-        Scalar q = rij / h;
-        Scalar dwdr = 0.0;
-        if ( q >= 0 && q <=  2.0 )
-            {
-            // - (alpha/h^D+1) * 7./96. * (2-q)^5 *q*(5q +2)
-            // dwdr = -(normalizationfactor(h)/h)* 7./96. * (2.0-q) * (2.0-q) * (2.0-q) * (2.0-q) * (2.0-q) * q * (5.0*q +2);
-            
-            dwdr = -(normalizationfactor(h)/h)* pow(Scalar(1)-Scalar(0.5)*q,Scalar(5))*q*(Scalar(35)*q+Scalar(14));
-            }
-        return dwdr;
+    Scalar q = rij / h;
+    Scalar dwdr = 0.0;
+    
+    if ( q >= 0 && q <=  2.0 )
+    {
+        // - (alpha/h^D+1) * 7./96. * (2-q)^5 *q*(5q +2)
+        // dwdr = -(normalizationfactor(h)/h)* 7./96. * (2.0-q) * (2.0-q) * (2.0-q) * (2.0-q) * (2.0-q) * q * (5.0*q +2);
+        
+        dwdr = -(normalizationfactor(h)/h)* pow(Scalar(1)-Scalar(0.5)*q,Scalar(5))*q*(Scalar(35)*q+Scalar(14));
+    }
+    
+    return dwdr;
 }
 
 template<>
 Scalar SmoothingKernel<wendlandc6>::dwijdr(const Scalar h, const Scalar rij)
 {
-        Scalar q = rij / h;
-        Scalar dwdr = Scalar(0.0);
-        if ( q >= 0 && q < Scalar(2) )
-            {
-            // (alpha/h^D+1) * 11*(1-0.5)^7 * (2*q^2 + 1.75*q + 0.5)
-            dwdr = -(normalizationfactor(h)/h)* Scalar(11)*q*( pow(Scalar(1)-Scalar(0.5)*q,Scalar(7))*(Scalar(2)*q*q+Scalar(1.75)*q+Scalar(0.5)) );
-            }
-        return dwdr;
+    Scalar q = rij / h;
+    Scalar dwdr = Scalar(0.0);
+    
+    if ( q >= 0 && q <= Scalar(2) )
+    {
+        // (alpha/h^D+1) * 11*(1-0.5)^7 * (2*q^2 + 1.75*q + 0.5)
+        dwdr = -(normalizationfactor(h)/h)* Scalar(11)*q*( pow(Scalar(1)-Scalar(0.5)*q,Scalar(7))*(Scalar(2)*q*q+Scalar(1.75)*q+Scalar(0.5)) );
+    }
+    
+    return dwdr;
 }
+
 template<>
 Scalar SmoothingKernel<quintic>::dwijdr(const Scalar h, const Scalar rij)
 {
-        Scalar q = rij / h;
-        Scalar dwdr = Scalar(0.0);
+    Scalar q = rij / h;
+    Scalar dwdr = Scalar(0.0);
 
-        if( q >= Scalar(0.0) && q < Scalar(1) )
-        {
-            // (alpha/(h^D+1))*-5*( (3.0-q)^4 - 6.0*(2.0-q)^4 + 15.0*(1.0-q)^4 );
-            dwdr = -(normalizationfactor(h)/h)*Scalar(5)*( pow(Scalar(3)-q,Scalar(4)) - Scalar(6)*( pow(Scalar(2)-q,Scalar(4)) + Scalar(15)*pow(Scalar(1)-q,Scalar(3)) ) );
-        }else if ( q >= Scalar(1) && q < Scalar(2) )
-        {
-            // (alpha/(h^D+1))*-5*( (3.0-q)^4 - 6.0*(2.0-q)^4 );
-            dwdr = -(normalizationfactor(h)/h)*Scalar(5)*( pow(Scalar(3)-q,Scalar(4)) - Scalar(6)*( pow(Scalar(2)-q,Scalar(4)) ) );
-        }else if ( q >= Scalar(2) && q < Scalar(3) )
-        {
-            // (alpha/(h^D+1))*-5*( (3.0-q)^4 );
-            dwdr = -(normalizationfactor(h)/h)*Scalar(5)*( pow(Scalar(3)-q,Scalar(4)) );
-        }
+    if( q >= Scalar(0.0) && q <= Scalar(1) )
+    {
+        // (alpha/(h^D+1))*-5*( (3.0-q)^4 - 6.0*(2.0-q)^4 + 15.0*(1.0-q)^4 );
+        dwdr = -(normalizationfactor(h)/h)*Scalar(5)*( pow(Scalar(3)-q,Scalar(4)) - Scalar(6)*( pow(Scalar(2)-q,Scalar(4)) + Scalar(15)*pow(Scalar(1)-q,Scalar(3)) ) );
+    }
+    else if ( q > Scalar(1) && q <= Scalar(2) )
+    {
+        // (alpha/(h^D+1))*-5*( (3.0-q)^4 - 6.0*(2.0-q)^4 );
+        dwdr = -(normalizationfactor(h)/h)*Scalar(5)*( pow(Scalar(3)-q,Scalar(4)) - Scalar(6)*( pow(Scalar(2)-q,Scalar(4)) ) );
+    }
+    else if ( q > Scalar(2) && q <= Scalar(3) )
+    {
+        // (alpha/(h^D+1))*-5*( (3.0-q)^4 );
+        dwdr = -(normalizationfactor(h)/h)*Scalar(5)*( pow(Scalar(3)-q,Scalar(4)) );
+    }
 
-        return dwdr;
+    return dwdr;
 }
 
 
@@ -286,21 +305,21 @@ adapted limits, removed additional datatyping
 template<>
 Scalar SmoothingKernel<cubicspline>::dwijdr(const Scalar h, const Scalar rij)
 {
-        Scalar q = rij / h;
-        Scalar dwdr = Scalar(0.0);
+    Scalar q = rij / h;
+    Scalar dwdr = Scalar(0.0);
 
-        if( q >= 0.0 && q <= 1.0 )
-        {
-            // (alpha/(h^D+1))*-1*( (3.0-q) + 2.25*q^2 );
-            dwdr = -(normalizationfactor(h)/h)*( 3*q + 2.25*q*q );
-        }
-        else if ( q > 1.0 && q <= 2.0 )
-        {
-            // (alpha/(h^D+1))*-1*( 0.75*(2.0-q)^2 );
-            dwdr = -(normalizationfactor(h)/h)*( 0.75*(2.0-q)*(2.0-q) );
-        }
+    if( q >= 0.0 && q <= 1.0 )
+    {
+        // (alpha/(h^D+1))*-1*( (3.0-q) + 2.25*q^2 );
+        dwdr = -(normalizationfactor(h)/h)*( 3*q + 2.25*q*q );
+    }
+    else if ( q > 1.0 && q <= 2.0 )
+    {
+        // (alpha/(h^D+1))*-1*( 0.75*(2.0-q)^2 );
+        dwdr = -(normalizationfactor(h)/h)*( 0.75*(2.0-q)*(2.0-q) );
+    }
 
-        return dwdr;
+    return dwdr;
 }
 
 namespace detail

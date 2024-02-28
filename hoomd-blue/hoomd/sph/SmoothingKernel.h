@@ -103,13 +103,7 @@ struct PYBIND11_EXPORT SmoothingKernel
         */
         // HOSTDEVICE Scalar normalizationfactor(const Scalar h);
         Scalar normalizationfactor(const Scalar h);
-/*
-    protected:
-        const boost::shared_ptr<SystemDefinition> m_sysdef; //!< The system definition this method is associated with
-        boost::shared_ptr<nsearch::NeighborList> m_nlist; //!< The neighbor list to use for the computation
-        const boost::shared_ptr<ParticleData> m_pdata;  //!< The particle data this method is associated with
-        boost::shared_ptr<const ExecutionConfiguration> m_exec_conf; //!< Stored shared ptr to the execution configuration
-*/
+
     private:
         Scalar m_kappa; //!< Kernel size scaling factor
         Scalar m_self_density; //!< Kernel self-density, i.e. w(0)
