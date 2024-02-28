@@ -126,11 +126,7 @@ c, c_condition = model.compute_speedofsound(LREF = lref, UREF = refvel,
 if device.communicator.rank == 0:
     print(f'Speed of sound [m/s]: {c}, Used: {c_condition}')
 
-cfactor = 100
-if c < cfactor * refvel:
-    model.set_speedofsound(cfactor * refvel)
-    if device.communicator.rank == 0:
-        print(f'Increase Speed of Sound to adami condition: {cfactor} * revel: {model.get_speedofsound()}')
+sph_helper.update_min_c0(device, model, c, mode = 'uref', lref = lref, uref = refvel, bforce = fx, cfactor = 100.0)
 
 # compute dt
 dt, dt_condition = model.compute_dt(LREF = lref, UREF = refvel, 

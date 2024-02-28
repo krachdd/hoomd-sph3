@@ -14,6 +14,13 @@ python3 ./create_input_geometries_ldc.py  --resolution=100 --reynolds=400
 python3 ./create_input_geometries_ldc.py  --resolution=100 --reynolds=1000
 python3 ./create_input_geometries_ldc.py  --resolution=100 --reynolds=10000
 
+python3 ./create_input_geometries_ldc.py  --resolution=60 --reynolds=1
+python3 ./create_input_geometries_ldc.py  --resolution=60 --reynolds=10
+python3 ./create_input_geometries_ldc.py  --resolution=60 --reynolds=100
+python3 ./create_input_geometries_ldc.py  --resolution=60 --reynolds=400
+python3 ./create_input_geometries_ldc.py  --resolution=60 --reynolds=1000
+python3 ./create_input_geometries_ldc.py  --resolution=60 --reynolds=10000
+
 python3 ./create_input_geometries_ldc.py  --resolution=200 --reynolds=1
 python3 ./create_input_geometries_ldc.py  --resolution=200 --reynolds=10
 python3 ./create_input_geometries_ldc.py  --resolution=200 --reynolds=100

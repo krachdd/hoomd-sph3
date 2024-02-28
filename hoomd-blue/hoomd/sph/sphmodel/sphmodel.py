@@ -15,7 +15,7 @@ from hoomd.data.parameterdicts import ParameterDict, TypeParameterDict
 from hoomd.data.typeparam import TypeParameter
 import numpy as np
 from hoomd.data.typeconverter import OnlyFrom, nonnegative_real
-
+from itertools import combinations_with_replacement
 
 class SPHModel(force.Force):
     r""" Base class for all SPH Models
@@ -197,6 +197,14 @@ class SPHModel(force.Force):
                 r_cut_dict.set_pair(type_list[i],type_list[j],self.rcut);
 
         return r_cut_dict;
+
+    def get_typelist(self):
+        # Go through the list of only the active particle types in the simulation
+        ntypes = self._simulation.state._cpp_sys_def.getParticleData().getNTypes();
+        type_list = [];
+        for i in range(0,ntypes):
+            type_list.append(self._simulation.state._cpp_sys_def.getParticleData().getNameByType(i));
+        return type_list
 
 
 
@@ -415,7 +423,7 @@ class SinglePhaseFlow(SPHModel):
         if (self.compute_solid_forces == True):
             self.computeSolidForces()
 
-        self.setrcut(self.rcut)
+        self.setrcut(self.rcut, self.get_typelist())
 
         self.setBodyAcceleration(self.gx, self.gy, self.gz, self.damp)
 
@@ -432,15 +440,11 @@ class SinglePhaseFlow(SPHModel):
         self._param_dict.__setattr__('params_set', True)
 
     # @rcut.setter
-    def setrcut(self, rcut):
+    def setrcut(self, rcut, types):
         if rcut <= 0.0:
             raise ValueError("Rcut has to be > 0.0.")
-        self._cpp_obj.setRCut(('F', 'S'), rcut)
-        self._cpp_obj.setRCut(('S', 'S'), rcut)
-        self._cpp_obj.setRCut(('F', 'F'), rcut)
-        self._cpp_obj.setRCut(('W', 'F'), rcut)
-        self._cpp_obj.setRCut(('W', 'S'), rcut)
-        self._cpp_obj.setRCut(('W', 'W'), rcut)
+        for p in combinations_with_replacement(types, 2):
+            self._cpp_obj.setRCut(p, rcut)
 
     # @property
     def densitymethod(self):
@@ -766,7 +770,7 @@ class SinglePhaseFlowTV(SPHModel):
         if (self.compute_solid_forces == True):
             self.computeSolidForces()
 
-        self.setrcut(self.rcut)
+        self.setrcut(self.rcut, self.get_typelist())
 
         self.setBodyAcceleration(self.gx, self.gy, self.gz, self.damp)
 
@@ -783,15 +787,11 @@ class SinglePhaseFlowTV(SPHModel):
         self._param_dict.__setattr__('params_set', True)
 
     # @rcut.setter
-    def setrcut(self, rcut):
+    def setrcut(self, rcut, types):
         if rcut <= 0.0:
             raise ValueError("Rcut has to be > 0.0.")
-        self._cpp_obj.setRCut(('F', 'S'), rcut)
-        self._cpp_obj.setRCut(('S', 'S'), rcut)
-        self._cpp_obj.setRCut(('F', 'F'), rcut)
-        self._cpp_obj.setRCut(('W', 'F'), rcut)
-        self._cpp_obj.setRCut(('W', 'S'), rcut)
-        self._cpp_obj.setRCut(('W', 'W'), rcut)
+        for p in list(combinations_with_replacement(types, 2)):
+            self._cpp_obj.setRCut(p, rcut)
 
     # @property
     def densitymethod(self):
