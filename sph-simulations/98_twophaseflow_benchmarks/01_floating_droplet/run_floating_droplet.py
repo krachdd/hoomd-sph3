@@ -58,7 +58,7 @@ sigma               = 0.01                            # [ Pa/m**2 ]
 contact_angle       = 60                              # [ ° ]
 refvel              = fx
 drho                = 0.01                            # [ - ] %
-steps               = 20001                           # [ - ]
+steps               = 101                             # [ - ]
 
 # get kernel properties
 kernel  = 'WendlandC4'
@@ -69,6 +69,7 @@ kappa      = kernel_obj.Kappa()
 
 # define model parameters
 densitymethod = 'SUMMATION'
+colorgradientmethod = 'DENSITYRATIO'
 
 if SHOW_DECOMP_INFO:
     sph_info.print_decomp_info(sim, device)
@@ -100,7 +101,9 @@ model = hoomd.sph.sphmodel.TwoPhaseFlow(kernel = kernel_obj,
                                         nlist  = nlist,
                                         fluidgroup1_filter = filterfluidW,
                                         fluidgroup2_filter = filterfluidN,
-                                        solidgroup_filter = filtersolid)
+                                        solidgroup_filter = filtersolid,
+                                        densitymethod = densitymethod,
+                                        colorgradientmethod = colorgradientmethod)
 
 model.mu1 = viscosity1
 model.mu2 = viscosity2
@@ -191,4 +194,4 @@ if device.communicator.rank == 0:
 sim.run(steps, write_at_start=True)
 
 if device.communicator.rank == 0:
-    export_gsd2vtu.export_spf(dumpname)
+    export_gsd2vtu.export_tpf(dumpname)

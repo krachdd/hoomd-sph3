@@ -30,6 +30,7 @@ namespace sph
     enum ColorGradientMethod
     {
         DENSITYRATIO, //!< Method to compute TPF Color gradient
+        NUMBERDENSITY, //!< Method to compute TPF Color gradient
     };
 
     } // end namespace sph

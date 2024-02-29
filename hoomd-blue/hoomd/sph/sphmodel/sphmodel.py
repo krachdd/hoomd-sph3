@@ -952,7 +952,8 @@ class TwoPhaseFlow(SPHModel):
 
     VISCOSITYMETHODS = {'HARMONICAVERAGE':_sph.PhaseFlowViscosityMethod.HARMONICAVERAGE}
 
-    COLORGRADIENTMETHODS = {'DENSITYRATIO':_sph.PhaseFlowColorGradientMethod.DENSITYRATIO}
+    COLORGRADIENTMETHODS = {'DENSITYRATIO':_sph.PhaseFlowColorGradientMethod.DENSITYRATIO,
+                            'NUMBERDENSITY':_sph.PhaseFlowColorGradientMethod.NUMBERDENSITY}
 
     def __init__(self,
                  kernel,
@@ -1017,6 +1018,8 @@ class TwoPhaseFlow(SPHModel):
 
         if self.str_colorgradientmethod == str('DENSITYRATIO'):
             self.cpp_colorgradientmethod = hoomd.sph._sph.PhaseFlowColorGradientMethod.DENSITYRATIO
+        elif self.str_colorgradientmethod == str('NUMBERDENSITY'):
+            self.cpp_colorgradientmethod = hoomd.sph._sph.PhaseFlowColorGradientMethod.NUMBERDENSITY
         else:
             raise ValueError("Using undefined ColorGradientMethod.")
 
@@ -1114,9 +1117,10 @@ class TwoPhaseFlow(SPHModel):
         else:
             raise ValueError("Using undefined ViscosityMethod.")
 
-
         if self.str_colorgradientmethod == str('DENSITYRATIO'):
             self.cpp_colorgradientmethod = hoomd.sph._sph.PhaseFlowColorGradientMethod.DENSITYRATIO
+        elif self.str_colorgradientmethod == str('NUMBERDENSITY'):
+            self.cpp_colorgradientmethod = hoomd.sph._sph.PhaseFlowColorGradientMethod.NUMBERDENSITY
         else:
             raise ValueError("Using undefined ColorGradientMethod.")
 

@@ -119,7 +119,7 @@ init_filename = f'droplet_3d_{nx}_{ny}_{nz}_vs_{voxelsize}_init.gsd'
 with gsd.hoomd.open(name = init_filename, mode = 'w') as f:
     f.append(snapshot)
 
-if device.communicator.rank == 0:
-    export_gsd2vtu.export_spf(init_filename)
+# if device.communicator.rank == 0:
+#     export_gsd2vtu.export_spf(init_filename)
 
 

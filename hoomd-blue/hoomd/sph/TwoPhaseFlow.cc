@@ -976,6 +976,7 @@ void TwoPhaseFlow<KT_, SET1_, SET2_>::compute_colorgradients(uint64_t timestep)
         // Detect particle i type
         bool i_issolid = checksolid(h_type_property_map.data, h_pos.data[i].w);
         bool i_isfluid1 = checkfluid1(h_type_property_map.data, h_pos.data[i].w);
+        bool i_isfluid2 = checkfluid2(h_type_property_map.data, h_pos.data[i].w);
 
         // Loop over all of the neighbors of this particle
         long unsigned int myHead = h_head_list.data[i];
@@ -997,9 +998,12 @@ void TwoPhaseFlow<KT_, SET1_, SET2_>::compute_colorgradients(uint64_t timestep)
             // Determine neighbor type
             bool j_issolid  = checksolid(h_type_property_map.data, h_pos.data[k].w);
             bool j_isfluid1 = checkfluid1(h_type_property_map.data, h_pos.data[k].w);
+            bool j_isfluid2 = checkfluid2(h_type_property_map.data, h_pos.data[k].w);
 
             // Skip color gradient computation if both particles belong to same phase
-            if ( (i_issolid==true && j_issolid==true) || i_isfluid1 == j_isfluid1 )
+            if (    ( i_issolid  && j_issolid  ) 
+                 || ( i_isfluid1 && j_isfluid1 ) 
+                 || ( i_isfluid2 && j_isfluid2 ) )
                 continue;
 
             // Compute distance vector (FLOPS: 3)
@@ -1031,24 +1035,36 @@ void TwoPhaseFlow<KT_, SET1_, SET2_>::compute_colorgradients(uint64_t timestep)
             Scalar dwdr   = this->m_skernel->dwijdr(meanh,r);
             Scalar dwdr_r = dwdr/(r+eps);
 
-            // Evaluate interpolation contribution
-            //Scalar temp0 = (Vi*Vi+Vj*Vj)*(rhoi/(rhoi+rhoj))*(mi/rhoj);
-            Scalar temp0 = (Vj*Vj/Vi);
+
+            Scalar temp0 = 0.0;
+
+            if ( m_colorgradient_method == DENSITYRATIO )
+            {
+                temp0 = rhoi/( rhoi + rhoj ) * (Vi*Vi + Vj*Vj)/Vi;
+            }
+
+            else if ( m_colorgradient_method == NUMBERDENSITY )
+            {
+                temp0 = (Vj*Vj/Vi);
+            }
+            else {
+                throw std::runtime_error("Error: No valid ColorGradientMethod given.");
+            }
 
             // If either on of the particle is a solid, interface must be solid-fluid
             if ( i_issolid || j_issolid )
-                {
-                    h_sn.data[i].x += temp0*dwdr_r*dx.x;
-                    h_sn.data[i].y += temp0*dwdr_r*dx.y;
-                    h_sn.data[i].z += temp0*dwdr_r*dx.z;
-                }
+            {
+                h_sn.data[i].x += temp0*dwdr_r*dx.x;
+                h_sn.data[i].y += temp0*dwdr_r*dx.y;
+                h_sn.data[i].z += temp0*dwdr_r*dx.z;
+            }
             // Otherwise, interface must be fluid-fluid
             else
-                {
-                    h_fn.data[i].x += temp0*dwdr_r*dx.x;
-                    h_fn.data[i].y += temp0*dwdr_r*dx.y;
-                    h_fn.data[i].z += temp0*dwdr_r*dx.z;
-                }
+            {
+                h_fn.data[i].x += temp0*dwdr_r*dx.x;
+                h_fn.data[i].y += temp0*dwdr_r*dx.y;
+                h_fn.data[i].z += temp0*dwdr_r*dx.z;
+            }
 
             } // Closing Neighbor Loop
 
