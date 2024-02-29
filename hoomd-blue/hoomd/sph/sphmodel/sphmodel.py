@@ -43,14 +43,7 @@ class SPHModel(force.Force):
         self._param_dict.update(params)
 
         self.kernel     = kernel
-        # print(kernel)
         self.eos        = eos
-        # self.nlist      = nlist
-        # self.accel_set  = False
-        # self.params_set = False
-        # self.gx         = 0.0
-        # self.gy         = 0.0
-        # self.gz         = 0.0
 
         # # Detect maximum cut-off radius for nlist parameterization
         # kappa = self.kernel.Kappa()
@@ -224,14 +217,14 @@ class SinglePhaseFlow(SPHModel):
                  nlist,
                  fluidgroup_filter = None,
                  solidgroup_filter = None,
-                 densitymethod='SUMMATION',
+                 densitymethod=None,
                  viscositymethod='HARMONICAVERAGE'):
 
         super().__init__(kernel, eos, nlist)
 
         self._param_dict.update(ParameterDict(
-                          densitymethod = str('SUMMATION'),
-                          viscositymethod = str('HARMONICAVERAGE'), 
+                          densitymethod = densitymethod,
+                          viscositymethod = viscositymethod, 
                           mu = float(0.0), 
                           artificialviscosity = bool(True), 
                           alpha = float(0.2),
@@ -239,7 +232,7 @@ class SinglePhaseFlow(SPHModel):
                           densitydiffusion = bool(False),
                           ddiff = float(0.0),
                           shepardrenormanlization = bool(False),
-                          shepardfreq = int(30),
+                          shepardfreq = int(0),
                           compute_solid_forces = bool(False),
                           max_sl = float(0.0)
                           ))
@@ -251,8 +244,8 @@ class SinglePhaseFlow(SPHModel):
         self._cpp_SPFclass_name = 'SinglePF' '_' + Kernel[self.kernel.name] + '_' + EOS[self.eos.name]
         self.fluidgroup_filter = fluidgroup_filter
         self.solidgroup_filter = solidgroup_filter
-        self.str_densitymethod = self._param_dict._dict["densitymethod"]
-        self.str_viscositymethod = self._param_dict._dict["viscositymethod"]
+        self.str_densitymethod = densitymethod
+        self.str_viscositymethod = viscositymethod
         self.accel_set = False
         self.params_set = False
 
@@ -399,6 +392,8 @@ class SinglePhaseFlow(SPHModel):
         self.ddiff = self._param_dict['ddiff']
         self.shepardrenormanlization = self._param_dict['shepardrenormanlization']
         self.shepardfreq = self._param_dict['shepardfreq']
+        print(self.shepardfreq)
+        print(self.mu)
         self.compute_solid_forces = self._param_dict['compute_solid_forces']
 
         self.set_params(self.mu)
@@ -608,14 +603,14 @@ class SinglePhaseFlowTV(SPHModel):
                  nlist,
                  fluidgroup_filter = None,
                  solidgroup_filter = None,
-                 densitymethod='SUMMATION',
+                 densitymethod=None,
                  viscositymethod='HARMONICAVERAGE'):
 
         super().__init__(kernel, eos, nlist)
 
         self._param_dict.update(ParameterDict(
-                          densitymethod = str('SUMMATION'),
-                          viscositymethod = str('HARMONICAVERAGE'), 
+                          densitymethod = densitymethod,
+                          viscositymethod = viscositymethod, 
                           mu = float(0.0), 
                           artificialviscosity = bool(True), 
                           alpha = float(0.2),
@@ -623,7 +618,7 @@ class SinglePhaseFlowTV(SPHModel):
                           densitydiffusion = bool(False),
                           ddiff = float(0.0),
                           shepardrenormanlization = bool(False),
-                          shepardfreq = int(30),
+                          shepardfreq = int(0),
                           compute_solid_forces = bool(False),
                           max_sl = float(0.0)
                           ))
@@ -635,8 +630,8 @@ class SinglePhaseFlowTV(SPHModel):
         self._cpp_SPFclass_name = 'SinglePFTV' '_' + Kernel[self.kernel.name] + '_' + EOS[self.eos.name]
         self.fluidgroup_filter = fluidgroup_filter
         self.solidgroup_filter = solidgroup_filter
-        self.str_densitymethod = self._param_dict._dict["densitymethod"]
-        self.str_viscositymethod = self._param_dict._dict["viscositymethod"]
+        self.str_densitymethod = densitymethod
+        self.str_viscositymethod = viscositymethod
         self.accel_set = False
         self.params_set = False
 

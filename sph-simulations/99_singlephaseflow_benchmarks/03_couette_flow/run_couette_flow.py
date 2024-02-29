@@ -90,7 +90,8 @@ model = hoomd.sph.sphmodel.SinglePhaseFlow(kernel = kernel_obj,
                                            eos    = eos,
                                            nlist  = nlist,
                                            fluidgroup_filter = filterfluid,
-                                           solidgroup_filter = filtersolid)
+                                           solidgroup_filter = filtersolid, 
+                                           densitymethod = densitymethod)
 if device.communicator.rank == 0:
     print("SetModelParameter on all ranks")
 
