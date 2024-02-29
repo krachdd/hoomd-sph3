@@ -952,6 +952,8 @@ class TwoPhaseFlow(SPHModel):
 
     VISCOSITYMETHODS = {'HARMONICAVERAGE':_sph.PhaseFlowViscosityMethod.HARMONICAVERAGE}
 
+    COLORGRADIENTMETHODS = {'DENSITYRATIO':_sph.PhaseFlowColorGradientMethod.DENSITYRATIO}
+
     def __init__(self,
                  kernel,
                  eos1,
@@ -960,14 +962,16 @@ class TwoPhaseFlow(SPHModel):
                  fluidgroup1_filter = None,
                  fluidgroup2_filter = None,
                  solidgroup_filter = None,
-                 densitymethod='SUMMATION',
-                 viscositymethod='HARMONICAVERAGE'):
+                 densitymethod = None,
+                 viscositymethod = 'HARMONICAVERAGE',
+                 colorgradientmethod = 'DENSITYRATIO'):
 
         super().__init__(kernel, eos1, nlist)
 
         self._param_dict.update(ParameterDict(
-                          densitymethod = str('SUMMATION'),
-                          viscositymethod = str('HARMONICAVERAGE'), 
+                          densitymethod = densitymethod,
+                          viscositymethod = viscositymethod,
+                          colorgradientmethod = colorgradientmethod, 
                           mu1 = float(0.0), 
                           mu2 = float(0.0),
                           sigma12 = float(0.0), 
@@ -993,8 +997,9 @@ class TwoPhaseFlow(SPHModel):
         self.fluidgroup1_filter = fluidgroup1_filter
         self.fluidgroup2_filter = fluidgroup2_filter
         self.solidgroup_filter = solidgroup_filter
-        self.str_densitymethod = self._param_dict._dict["densitymethod"]
-        self.str_viscositymethod = self._param_dict._dict["viscositymethod"]
+        self.str_densitymethod = densitymethod
+        self.str_viscositymethod = viscositymethod
+        self.str_colorgradientmethod = colorgradientmethod
         self.accel_set = False
         self.params_set = False
 
@@ -1009,6 +1014,11 @@ class TwoPhaseFlow(SPHModel):
             self.cpp_viscositymethod = hoomd.sph._sph.PhaseFlowViscosityMethod.HARMONICAVERAGE
         else:
             raise ValueError("Using undefined ViscosityMethod.")
+
+        if self.str_colorgradientmethod == str('DENSITYRATIO'):
+            self.cpp_colorgradientmethod = hoomd.sph._sph.PhaseFlowColorGradientMethod.DENSITYRATIO
+        else:
+            raise ValueError("Using undefined ColorGradientMethod.")
 
     def _attach_hook(self):
         if isinstance(self._simulation.device, hoomd.device.CPU):
@@ -1055,7 +1065,9 @@ class TwoPhaseFlow(SPHModel):
                                 cpp_nlist, 
                                 cpp_fluidgroup1, cpp_fluidgroup2, 
                                 cpp_solidgroup, 
-                                self.cpp_densitymethod, self.cpp_viscositymethod)
+                                self.cpp_densitymethod, 
+                                self.cpp_viscositymethod, 
+                                self.cpp_colorgradientmethod)
 
         # Set kernel parameters
         kappa = self.kernel.Kappa()
@@ -1088,6 +1100,7 @@ class TwoPhaseFlow(SPHModel):
         # Reload density and viscosity methods from __dict__
         self.str_densitymethod = self._param_dict._dict["densitymethod"]
         self.str_viscositymethod = self._param_dict._dict["viscositymethod"]
+        self.str_colorgradientmethod = self._param_dict._dict["colorgradientmethod"]
 
         if self.str_densitymethod == str('SUMMATION'):
             self.cpp_densitymethod = hoomd.sph._sph.PhaseFlowDensityMethod.DENSITYSUMMATION
@@ -1100,6 +1113,12 @@ class TwoPhaseFlow(SPHModel):
             self.cpp_viscositymethod = hoomd.sph._sph.PhaseFlowViscosityMethod.HARMONICAVERAGE
         else:
             raise ValueError("Using undefined ViscosityMethod.")
+
+
+        if self.str_colorgradientmethod == str('DENSITYRATIO'):
+            self.cpp_colorgradientmethod = hoomd.sph._sph.PhaseFlowColorGradientMethod.DENSITYRATIO
+        else:
+            raise ValueError("Using undefined ColorGradientMethod.")
 
         # get all params in line
         self.mu1 = self._param_dict['mu1']
@@ -1118,6 +1137,7 @@ class TwoPhaseFlow(SPHModel):
         self.set_params(self.mu1, self.mu2, self.sigma12, self.omega)
         self.setdensitymethod(self.str_densitymethod)
         self.setviscositymethod(self.str_viscositymethod)
+        self.setcolorgradientmethod(self.str_colorgradientmethod)
         
         if (self.artificialviscosity == True):
             self.activateArtificialViscosity(self.alpha, self.beta)
@@ -1182,6 +1202,18 @@ class TwoPhaseFlow(SPHModel):
         if method not in self.VISCOSITYMETHODS:
             raise ValueError("Undefined ViscosityMethod.")
         self._cpp_obj.setViscosityMethod(self.VISCOSITYMETHODS[method])
+
+    # @property
+    def colorgradientmethod(self):
+        # Invert key mapping
+        invD = dict((v,k) for k, v in self.COLORGRADIENTMETHODS.iteritems())
+        return invD[self._cpp_obj.getColorGradientMethod()]
+
+    # @colorgradientmethod.setter
+    def setcolorgradientmethod(self, method):
+        if method not in self.COLORGRADIENTMETHODS:
+            raise ValueError("Undefined ColorGradientMethod.")
+        self._cpp_obj.setColorGradientMethod(self.COLORGRADIENTMETHODS[method])
 
     def activateArtificialViscosity(self, alpha, beta):
         self.alpha   = alpha.item()  if isinstance(alpha, np.generic)   else alpha

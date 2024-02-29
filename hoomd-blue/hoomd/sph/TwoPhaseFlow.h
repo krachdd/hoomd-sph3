@@ -68,7 +68,8 @@ class PYBIND11_EXPORT TwoPhaseFlow : public SPHBaseClass<KT_, SET1_>
                         std::shared_ptr<ParticleGroup> fluidgroup2,
                         std::shared_ptr<ParticleGroup> solidgroup,
                         DensityMethod   mdensitymethod=DENSITYSUMMATION,
-                        ViscosityMethod mviscositymethod=HARMONICAVERAGE);
+                        ViscosityMethod mviscositymethod=HARMONICAVERAGE,
+                        ColorGradientMethod mcolorgradientmethod=DENSITYRATIO);
 
         //! Destructor
         virtual ~TwoPhaseFlow();
@@ -108,6 +109,16 @@ class PYBIND11_EXPORT TwoPhaseFlow : public SPHBaseClass<KT_, SET1_>
         void setViscosityMethod(ViscosityMethod viscositymethod)
             {
             m_viscosity_method = viscositymethod;
+            }
+
+        //! Getter and Setter methods for viscosity method
+        ColorGradientMethod getColorGradientMethod()
+            {
+            return m_colorgradient_method;
+            }
+        void setColorGradientMethod(ColorGradientMethod colorgradientmethod)
+            {
+            m_colorgradient_method = colorgradientmethod;
             }
 
         // Set constant smoothing length option to true for faster computation
@@ -232,6 +243,7 @@ class PYBIND11_EXPORT TwoPhaseFlow : public SPHBaseClass<KT_, SET1_>
         Scalar m_rcutsq; //!< Square cut-off length to use if constant for all particles
         DensityMethod m_density_method; //!< Density approach to use
         ViscosityMethod m_viscosity_method; //!< Viscosity approach to use
+        ColorGradientMethod m_colorgradient_method; //!< Colorgradient approach to use
 
         // Physical variables
         Scalar m_rho01; //!< Rest density (Read from equation of state class)

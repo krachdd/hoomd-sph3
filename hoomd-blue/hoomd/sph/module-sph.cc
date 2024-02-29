@@ -180,6 +180,7 @@ PYBIND11_MODULE(_sph, m){
 
     export_DensityMethod(m);
     export_ViscosityMethod(m);
+    export_ColorGradientMethod(m);
 
     // export_LocalNeighborListDataHost(m);
     export_HalfStepHook(m);

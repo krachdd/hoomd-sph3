@@ -26,6 +26,12 @@ namespace sph
         HARMONICAVERAGE, //!< Viscosity operator based on inter-particle averaged shear stress
     };
 
+    //! Enum for various Colorgradient evaluation approaches
+    enum ColorGradientMethod
+    {
+        DENSITYRATIO, //!< Method to compute TPF Color gradient
+    };
+
     } // end namespace sph
     } // end namespace hoomd
 

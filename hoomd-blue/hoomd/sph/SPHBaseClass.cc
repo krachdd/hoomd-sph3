@@ -306,6 +306,13 @@ void export_ViscosityMethod(pybind11::module& m)
         ;
 }
 
+void export_ColorGradientMethod(pybind11::module& m)
+{
+    pybind11::enum_<ColorGradientMethod>(m, "PhaseFlowColorGradientMethod")
+        .value("DENSITYRATIO", ColorGradientMethod::DENSITYRATIO)
+        ;
+}
+
 
 
 } // end namespace detail 

@@ -26,7 +26,8 @@ TwoPhaseFlow<KT_, SET1_, SET2_>::TwoPhaseFlow(std::shared_ptr<SystemDefinition> 
                                  std::shared_ptr<ParticleGroup> fluidgroup2,
                                  std::shared_ptr<ParticleGroup> solidgroup,
                                  DensityMethod mdensitymethod,
-                                 ViscosityMethod mviscositymethod)
+                                 ViscosityMethod mviscositymethod,
+                                 ColorGradientMethod mcolorgradientmethod)
     : SPHBaseClass<KT_, SET1_>(sysdef, skernel, equationofstate1, nlist), m_fluidgroup1(fluidgroup1), m_fluidgroup2(fluidgroup2), 
         m_solidgroup(solidgroup), m_eos1(equationofstate1), m_eos2(equationofstate2), m_typpair_idx(this->m_pdata->getNTypes())
     {
@@ -96,6 +97,7 @@ TwoPhaseFlow<KT_, SET1_, SET2_>::TwoPhaseFlow(std::shared_ptr<SystemDefinition> 
         // Set simulations methods
         m_density_method = mdensitymethod;
         m_viscosity_method = mviscositymethod;
+        m_colorgradient_method = mcolorgradientmethod;
 
         // Get necessary variables from kernel and EOS classes
         m_rho01  = equationofstate1->getRestDensity();
@@ -1678,12 +1680,15 @@ void export_TwoPhaseFlow(pybind11::module& m, std::string name)
                              std::shared_ptr<ParticleGroup>,
                              std::shared_ptr<ParticleGroup>,
                              DensityMethod,
-                             ViscosityMethod >())
+                             ViscosityMethod,
+                             ColorGradientMethod >())
         .def("setParams", &TwoPhaseFlow<KT_, SET1_, SET2_>::setParams)
         .def("getDensityMethod", &TwoPhaseFlow<KT_, SET1_, SET2_>::getDensityMethod)
         .def("setDensityMethod", &TwoPhaseFlow<KT_, SET1_, SET2_>::setDensityMethod)
         .def("getViscosityMethod", &TwoPhaseFlow<KT_, SET1_, SET2_>::getViscosityMethod)
         .def("setViscosityMethod", &TwoPhaseFlow<KT_, SET1_, SET2_>::setViscosityMethod)
+        .def("getColorGradientMethod", &TwoPhaseFlow<KT_, SET1_, SET2_>::getColorGradientMethod)
+        .def("setColorGradientMethod", &TwoPhaseFlow<KT_, SET1_, SET2_>::setColorGradientMethod)
         .def("setConstSmoothingLength", &TwoPhaseFlow<KT_, SET1_, SET2_>::setConstSmoothingLength)
         .def("computeSolidForces", &TwoPhaseFlow<KT_, SET1_, SET2_>::computeSolidForces)
         .def("activateArtificialViscosity", &TwoPhaseFlow<KT_, SET1_, SET2_>::activateArtificialViscosity)
