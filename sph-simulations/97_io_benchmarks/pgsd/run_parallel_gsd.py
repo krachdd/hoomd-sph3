@@ -89,7 +89,8 @@ model = hoomd.sph.sphmodel.SinglePhaseFlow(kernel = Kernel,
                                            eos    = EOS,
                                            nlist  = NList,
                                            fluidgroup_filter = filterFLUID,
-                                           solidgroup_filter = filterSOLID)
+                                           solidgroup_filter = filterSOLID, 
+                                           densitymethod = densitymethod)
 
 model.mu = MU
 model.densitymethod = densitymethod
