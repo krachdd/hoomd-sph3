@@ -216,6 +216,37 @@ void TwoPhaseFlow<KT_, SET1_, SET2_>::update_ghost_density_pressure(uint64_t tim
 #endif
     }
 
+template<SmoothingKernelType KT_, StateEquationType SET1_, StateEquationType SET2_>
+void TwoPhaseFlow<KT_, SET1_, SET2_>::update_ghost_density_pressure_energy(uint64_t timestep)
+    {
+    this->m_exec_conf->msg->notice(7) << "Computing TwoPhaseFlow::Update Ghost density, pressure and energy" << std::endl;
+
+#ifdef ENABLE_MPI
+    if (this->m_comm)
+        {
+        CommFlags flags(0);
+        flags[comm_flag::tag] = 0;
+        flags[comm_flag::position] = 0;
+        flags[comm_flag::velocity] = 0;
+        flags[comm_flag::density] = 1;
+        flags[comm_flag::pressure] = 1;
+        flags[comm_flag::energy] = 1; // L2 norm of the color gradient
+        flags[comm_flag::auxiliary1] = 0;
+        flags[comm_flag::auxiliary2] = 0;
+        flags[comm_flag::auxiliary3] = 0;
+        flags[comm_flag::auxiliary4] = 0;
+        flags[comm_flag::body] = 0;
+        flags[comm_flag::image] = 0;
+        flags[comm_flag::net_force] = 0;
+        flags[comm_flag::net_ratedpe] = 0;
+        this->m_comm->setFlags(flags);
+        this->m_comm->beginUpdateGhosts(timestep);
+        this->m_comm->finishUpdateGhosts(timestep);
+        }
+#endif
+    }
+
+
 
 template<SmoothingKernelType KT_, StateEquationType SET1_, StateEquationType SET2_>
 void TwoPhaseFlow<KT_, SET1_, SET2_>::update_ghost_density(uint64_t timestep)
@@ -412,6 +443,191 @@ void TwoPhaseFlow<KT_, SET1_, SET2_>::mark_solid_particles_toremove(uint64_t tim
     } // End mark solid particles to remove
 
 
+/*! Perform particle concentration gradient
+ * This method computes and stores the particle concentration gradient
+ * in h_energy[i] to be reused in the computation of the Surface Force.
+ * We overwrite h_pressure druing that, which is uncritical, since it is computed afterwards 
+ * in compute_pressure, purely on the density of the particle 
+ */
+template<SmoothingKernelType KT_, StateEquationType SET1_, StateEquationType SET2_>
+void TwoPhaseFlow<KT_, SET1_, SET2_>::compute_particle_concentration_gradient(uint64_t timestep)
+{
+    this->m_exec_conf->msg->notice(7) << "Computing TwoPhaseFlow::Number Density" << std::endl;
+
+    // Grab handles for particle data
+    ArrayHandle<Scalar> h_density(this->m_pdata->getDensities(), access_location::host, access_mode::read);
+    ArrayHandle<Scalar> h_energy(this->m_pdata->getEnergies(), access_location::host, access_mode::readwrite);
+    ArrayHandle<Scalar> h_pressure(this->m_pdata->getPressures(), access_location::host, access_mode::readwrite);
+    ArrayHandle<Scalar4> h_pos(this->m_pdata->getPositions(), access_location::host, access_mode::read);
+    ArrayHandle<Scalar4> h_velocity(this->m_pdata->getVelocities(), access_location::host, access_mode::read);
+    ArrayHandle<Scalar>  h_h(this->m_pdata->getSlengths(), access_location::host, access_mode::read);
+
+    // Grab handles for neighbor data
+    ArrayHandle<unsigned int> h_n_neigh(this->m_nlist->getNNeighArray(), access_location::host, access_mode::read);
+    ArrayHandle<unsigned int> h_nlist(this->m_nlist->getNListArray(), access_location::host, access_mode::read);
+    ArrayHandle<size_t> h_head_list(this->m_nlist->getHeadList(), access_location::host, access_mode::read);
+    ArrayHandle<unsigned int> h_type_property_map(this->m_type_property_map, access_location::host, access_mode::read);
+
+    // Local copy of the simulation box
+    const BoxDim& box = this->m_pdata->getGlobalBox();
+
+    unsigned int size;
+    size_t myHead;
+
+    // Precompute self-density for homogeneous smoothing lengths
+    // Scalar w0 = this->m_skernel->w0(m_ch);
+    Scalar Ci;
+
+    // Particle loop to compute the particle concentration
+    // For each fluid particle
+    unsigned int group_size = this->m_fluidgroup->getNumMembers();
+    for (unsigned int group_idx = 0; group_idx < group_size; group_idx++)
+    {
+        // Read particle index
+        unsigned int i = this->m_fluidgroup->getMemberIndex(group_idx);
+        
+        // set temp variable to zero 
+
+        // Access the particle's position
+        Scalar3 pi;
+        pi.x = h_pos.data[i].x;
+        pi.y = h_pos.data[i].y;
+        pi.z = h_pos.data[i].z;
+
+        // Ci = w0;
+
+        // Loop over all of the neighbors of this particle
+        myHead = h_head_list.data[i];
+        size = (unsigned int)h_n_neigh.data[i];
+
+        for (unsigned int j = 0; j < size; j++)
+        {
+            // Index of neighbor
+            unsigned int k = h_nlist.data[myHead + j];
+
+            // Access neighbor position
+            Scalar3 pj;
+            pj.x = h_pos.data[k].x;
+            pj.y = h_pos.data[k].y;
+            pj.z = h_pos.data[k].z;
+
+            // Compute distance vector
+            // Scalar3 dx = pj - pi;
+            Scalar3 dx;
+            dx.x = pi.x - pj.x;
+            dx.y = pi.y - pj.y;
+            dx.z = pi.z - pj.z;
+
+            Scalar mj   = h_velocity.data[k].w;
+            Scalar rhoj = h_density.data[k];
+
+            // Apply periodic boundary conditions
+            dx = box.minImage(dx);
+
+            // Calculate squared distance
+            Scalar rsq = dot(dx, dx);
+
+            // If particle distance is too large, continue with next neighbor in loop
+            if ( this->m_const_slength && rsq > m_rcutsq )
+                continue;
+
+            // Calculate distance
+            Scalar r = sqrt(rsq);
+            // Write \sum_j mj/rhoj * W_ij to h_pressure
+            Ci += (mj/rhoj)*(this->m_const_slength ? this->m_skernel->wij(m_ch,r) : this->m_skernel->wij(Scalar(0.5)*(h_h.data[i]+h_h.data[k]),r));
+
+        } // End neighbour loop
+
+        h_pressure.data[i] = Ci;
+
+    } // End fluid group loop
+
+    Scalar3 gradCi;
+    Scalar  temp0; 
+    // Second loop to compute the actual gradient, stored in h_energy
+    group_size = this->m_fluidgroup->getNumMembers();
+    for (unsigned int group_idx = 0; group_idx < group_size; group_idx++)
+    {
+        // Read particle index
+        unsigned int i = this->m_fluidgroup->getMemberIndex(group_idx);
+        
+        // set temp variable to zero 
+        gradCi.x = 0.0;
+        gradCi.y = 0.0;
+        gradCi.z = 0.0;
+
+        // Access the particle's position
+        Scalar3 pi;
+        pi.x = h_pos.data[i].x;
+        pi.y = h_pos.data[i].y;
+        pi.z = h_pos.data[i].z;
+
+        Ci = h_pressure.data[i];
+
+        // Loop over all of the neighbors of this particle
+        myHead = h_head_list.data[i];
+        size = (unsigned int)h_n_neigh.data[i];
+
+        for (unsigned int j = 0; j < size; j++)
+        {
+            // Index of neighbor
+            unsigned int k = h_nlist.data[myHead + j];
+
+            // Access neighbor position
+            Scalar3 pj;
+            pj.x = h_pos.data[k].x;
+            pj.y = h_pos.data[k].y;
+            pj.z = h_pos.data[k].z;
+
+            Cj = h_pressure.data[k];
+            
+            // Compute distance vector
+            // Scalar3 dx = pj - pi;
+            Scalar3 dx;
+            dx.x = pi.x - pj.x;
+            dx.y = pi.y - pj.y;
+            dx.z = pi.z - pj.z;
+
+            Scalar mj   = h_velocity.data[k].w;
+            Scalar rhoj = h_density.data[k];
+
+            // Apply periodic boundary conditions
+            dx = box.minImage(dx);
+
+            // Calculate squared distance
+            Scalar rsq = dot(dx, dx);
+
+            // If particle distance is too large, continue with next neighbor in loop
+            if ( this->m_const_slength && rsq > m_rcutsq )
+                continue;
+
+            // Calculate distance
+            Scalar r = sqrt(rsq);
+
+            // Mean smoothing length and denominator modifier
+            Scalar meanh  = this->m_const_slength ? this->m_ch : Scalar(0.5)*(h_h.data[i]+h_h.data[k]);
+            Scalar eps    = Scalar(0.1)*meanh;
+
+            // Kernel function derivative evaluation
+            Scalar dwdr   = this->m_skernel->dwijdr(meanh,r);
+            Scalar dwdr_r = dwdr/(r+eps);
+            
+            temp0 = ( Cj - Ci ) * ( mj/rhoj ); 
+
+            gradCi.x += temp0 * dwdr_r * dx.x;
+            gradCi.y += temp0 * dwdr_r * dx.y;
+            gradCi.z += temp0 * dwdr_r * dx.z;
+
+        } // End neighbour loop
+
+        // Compute the actual squared L2 norm of the partcile contentration gradient
+
+        h_energy.data[i] = dot( gradCi, gradCi );
+
+    } // End fluid group loop
+
+} // End compute particle concentration gradient
+
 
 /*! Perform number density computation
  * This method computes and stores
@@ -442,7 +658,7 @@ void TwoPhaseFlow<KT_, SET1_, SET2_>::compute_ndensity(uint64_t timestep)
 
     unsigned int size;
     size_t myHead;
-    Scalar ni;
+    Scalar ni; // \sum_j w_{ij}
 
     // Precompute self-density for homogeneous smoothing lengths
     Scalar w0 = this->m_skernel->w0(m_ch);
@@ -816,7 +1032,7 @@ void TwoPhaseFlow<KT_, SET1_, SET2_>::renormalize_density(uint64_t timestep)
     Scalar w0 = this->m_skernel->w0(this->m_ch);
 
     unsigned int size;
-    long unsigned int myHead;
+    size_t myHead;
 
 
     // Particle loop
@@ -979,7 +1195,7 @@ void TwoPhaseFlow<KT_, SET1_, SET2_>::compute_colorgradients(uint64_t timestep)
         bool i_isfluid2 = checkfluid2(h_type_property_map.data, h_pos.data[i].w);
 
         // Loop over all of the neighbors of this particle
-        long unsigned int myHead = h_head_list.data[i];
+        size_t myHead = h_head_list.data[i];
         const unsigned int size = (unsigned int)h_n_neigh.data[i];
         for (unsigned int j = 0; j < size; j++)
             {
@@ -1040,6 +1256,7 @@ void TwoPhaseFlow<KT_, SET1_, SET2_>::compute_colorgradients(uint64_t timestep)
 
             if ( m_colorgradient_method == DENSITYRATIO )
             {
+                // Adami type color gradient, also implemented in PySPH
                 temp0 = rhoi/( rhoi + rhoj ) * (Vi*Vi + Vj*Vj)/Vi;
             }
 
@@ -1103,6 +1320,7 @@ void TwoPhaseFlow<KT_, SET1_, SET2_>::compute_surfaceforce(uint64_t timestep)
     ArrayHandle<Scalar4> h_pos(this->m_pdata->getPositions(), access_location::host, access_mode::read);
     // ArrayHandle<Scalar3> h_dpe(this->m_pdata->getDPEs(), access_location::host, access_mode::read);
     ArrayHandle<Scalar>  h_density(this->m_pdata->getDensities(), access_location::host, access_mode::read);
+    ArrayHandle<Scalar>  h_energy(this->m_pdata->getDensities(), access_location::host, access_mode::read);
     ArrayHandle<Scalar>  h_h(this->m_pdata->getSlengths(), access_location::host, access_mode::read);
     ArrayHandle<Scalar4> h_velocity(this->m_pdata->getVelocities(), access_location::host, access_mode::read);
 
@@ -1133,13 +1351,15 @@ void TwoPhaseFlow<KT_, SET1_, SET2_>::compute_surfaceforce(uint64_t timestep)
         pi.y = h_pos.data[i].y;
         pi.z = h_pos.data[i].z;
         bool i_isfluid1 = checkfluid1(h_type_property_map.data, h_pos.data[i].w);
+        bool i_isfluid2 = checkfluid2(h_type_property_map.data, h_pos.data[i].w);
 
         // Check if there is any fluid particle near the current particle, if not continue
         // This makes sure that only particle near a fluid interface experience an interfacial force.
         // In other words, fluid particles only near solid interfaces are omitted.
         bool nearfluidinterface = false;
+
         // Loop over all of the neighbors of this particle
-        long unsigned int myHead = h_head_list.data[i];
+        size_t myHead = h_head_list.data[i];
         unsigned int size = (unsigned int)h_n_neigh.data[i];
         for (unsigned int j = 0; j < size; j++)
             {
@@ -1178,6 +1398,17 @@ void TwoPhaseFlow<KT_, SET1_, SET2_>::compute_surfaceforce(uint64_t timestep)
 
         // Evaluate particle i interfacial stress tensor
         Scalar istress[6] = {0};
+        // normal vectors point from solid to fluid and from fluid 1
+        // to fluid 2
+        // if Fluid1 that has neighbors of 
+        if ( i_isfluid1 && this->m_sigma12 > 0.0 && normfni > 0.0 )
+        {
+
+        }
+
+
+
+
         // Fluid phase 1 - Fluid phase 2 interface
         if ( this->m_sigma12 > 0 && normfni > 0 )
             {
@@ -1633,6 +1864,8 @@ void TwoPhaseFlow<KT_, SET1_, SET2_>::computeForces(uint64_t timestep)
 #endif
         }
 
+    compute_particle_concentration_gradient(timestep)
+
     if (m_density_method == DENSITYSUMMATION)
     {
         compute_ndensity(timestep);
@@ -1645,7 +1878,7 @@ void TwoPhaseFlow<KT_, SET1_, SET2_>::computeForces(uint64_t timestep)
 
 #ifdef ENABLE_MPI
     // Update ghost particle densities and pressures.
-    update_ghost_density_pressure(timestep);
+    update_ghost_density_pressure_energy(timestep);
 #endif
 
     // Compute particle pressures
