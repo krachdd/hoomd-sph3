@@ -985,6 +985,7 @@ class TwoPhaseFlow(SPHModel):
                           shepardrenormanlization = bool(False),
                           shepardfreq = int(30),
                           compute_solid_forces = bool(False),
+                          fickian_shifting = bool(False),
                           max_sl = float(0.0)
                           ))
 
@@ -1137,6 +1138,7 @@ class TwoPhaseFlow(SPHModel):
         self.shepardrenormanlization = self._param_dict['shepardrenormanlization']
         self.shepardfreq = self._param_dict['shepardfreq']
         self.compute_solid_forces = self._param_dict['compute_solid_forces']
+        self.fickian_shifting = self._param_dict['fickian_shifting']
 
         self.set_params(self.mu1, self.mu2, self.sigma12, self.omega)
         self.setdensitymethod(self.str_densitymethod)
@@ -1160,6 +1162,9 @@ class TwoPhaseFlow(SPHModel):
         
         if (self.compute_solid_forces == True):
             self.computeSolidForces()
+
+        if (self.fickian_shifting == True):
+            self.activateFickianShifting()
 
         self.setrcut(self.rcut, self.get_typelist())
 
@@ -1243,6 +1248,9 @@ class TwoPhaseFlow(SPHModel):
 
     def computeSolidForces(self):
         self._cpp_obj.computeSolidForces()
+
+    def activateFickianShifting(self):
+        self._cpp_obj.activateFickianShifting()
 
     def setBodyAcceleration(self,gx,gy,gz,damp=0):
         self.accel_set = True

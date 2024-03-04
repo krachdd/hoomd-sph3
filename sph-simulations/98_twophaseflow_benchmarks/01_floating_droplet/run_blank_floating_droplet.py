@@ -58,7 +58,7 @@ sigma               = 0.01                            # [ Pa/m**2 ]
 contact_angle       = 60                              # [ ° ]
 refvel              = fx
 drho                = 0.01                            # [ - ] %
-steps               = 101                           # [ - ]
+steps               = 1001                           # [ - ]
 
 # get kernel properties
 kernel  = 'WendlandC4'
@@ -113,10 +113,11 @@ model.densitymethod = densitymethod
 model.gx = fx
 model.damp = 1000
 model.artificialviscosity = True 
-model.alpha = 0.2
-model.beta = 0.0
+model.alpha = 0.4
+model.beta = 0.2
 model.densitydiffusion = False
 model.shepardrenormanlization = False
+model.fickian_shifting = False
 
 maximum_smoothing_length = sph_helper.set_max_sl(sim, device, snapshot, model)
 

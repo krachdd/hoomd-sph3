@@ -185,6 +185,21 @@ class PYBIND11_EXPORT TwoPhaseFlow : public SPHBaseClass<KT_, SET1_>
             m_shepard_renormalization = false;
             }
 
+        /*! Turn Fickian shifting based on particle concentration on
+         * \param Used in Computation of CSF
+         */
+        void activateFickianShifting()
+            {
+            m_fickian_shifting = true;
+            }
+
+        /*! Turn Shepard type density reinitialization off.
+         */
+        void deactivateFickianShifting()
+            {
+            m_fickian_shifting = false;
+            }
+
         //! Computes forces
         void computeForces(uint64_t timestep);
     
@@ -204,7 +219,7 @@ class PYBIND11_EXPORT TwoPhaseFlow : public SPHBaseClass<KT_, SET1_>
             flags[comm_flag::velocity] = 1; // Stores velocity and mass
             flags[comm_flag::density] = 1; // Stores density 
             flags[comm_flag::pressure] = 1; // Stores pressure
-            flags[comm_flag::energy] = 0; // Stores density and pressure
+            flags[comm_flag::energy] = 0; // Stores energy/ Partcile Concentration gradient
             flags[comm_flag::auxiliary1] = 1; // Stores fictitious velocity
             flags[comm_flag::auxiliary2] = 1; // Stores solid normal vector field
             flags[comm_flag::auxiliary3] = 1; // Stores fluid interfacial normal vector
@@ -278,7 +293,8 @@ class PYBIND11_EXPORT TwoPhaseFlow : public SPHBaseClass<KT_, SET1_>
         bool m_density_diffusion; //!< Set to true if Molteni type density diffusion is to be used
         bool m_shepard_renormalization; //!< Set to true if Shepard type density reinitialization is to be used
         bool m_params_set; //!< True if parameters are set
-        bool m_solid_removed; //!< True if solid Particles have been marked to remove 
+        bool m_solid_removed; //!< True if solid Particles have been marked to remove
+        bool m_fickian_shifting; //!< True if Fickian Particle Shifting is activated
 
         // Log parameters
         uint64_t m_log_computed_last_timestep; //!< Last time step where log quantities were computed
@@ -308,6 +324,13 @@ class PYBIND11_EXPORT TwoPhaseFlow : public SPHBaseClass<KT_, SET1_>
         * \post Fictitious particle properties are computed and stored in aux1 array
         */
         void compute_noslip(uint64_t timestep);
+
+        /*! Helper function to compute particle concentration gradient for Fickian shifting 
+         * within the CSF computation
+         * It overwrites h_pressure and the dot product of the gradient is stored in h_energy
+         * Paper: Lind et al. 2012
+        */
+        void compute_particle_concentration_gradient(uint64_t timestep);
 
         /*! Helper function to apply Shepard density filter
         * \post Fluid particle densities are recomputed based on the Shepard renormalization
@@ -357,6 +380,12 @@ class PYBIND11_EXPORT TwoPhaseFlow : public SPHBaseClass<KT_, SET1_>
         * \post Ghost particle auxiliary array 4 is up-to-date
         */
         void update_ghost_aux4(uint64_t timestep);
+
+        /*! Helper function to set communication flags and update ghosts auxiliary array 4
+        * \param timestep The time step
+        * \post Ghost particle density, pressure and energy is up-to-date
+        */
+        void update_ghost_density_pressure_energy(uint64_t timestep);
 
     private:
 
