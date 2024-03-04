@@ -1542,12 +1542,12 @@ void TwoPhaseFlow<KT_, SET1_, SET2_>::compute_surfaceforce(uint64_t timestep)
             if ( !(j_issolid) && this->m_sigma12 > 0.0 && normfnj > 0.0 )
             {
                 temp0 = this->m_sigma12/normfnj;
-                istress[0] += temp0 * ( temp1 - fnj.x * fnj.x); // xx
-                istress[1] += temp0 * ( temp1 - fnj.y * fnj.y); // yy
-                istress[2] += temp0 * ( temp1 - fnj.z * fnj.z); // zz
-                istress[3] -= temp0 * ( fnj.x * fnj.y);         // xy yx
-                istress[4] -= temp0 * ( fnj.x * fnj.z);         // xz zx
-                istress[5] -= temp0 * ( fnj.y * fnj.z);         // yz zy
+                jstress[0] += temp0 * ( temp1 - fnj.x * fnj.x); // xx
+                jstress[1] += temp0 * ( temp1 - fnj.y * fnj.y); // yy
+                jstress[2] += temp0 * ( temp1 - fnj.z * fnj.z); // zz
+                jstress[3] -= temp0 * ( fnj.x * fnj.y);         // xy yx
+                jstress[4] -= temp0 * ( fnj.x * fnj.z);         // xz zx
+                jstress[5] -= temp0 * ( fnj.y * fnj.z);         // yz zy
             }
 
             if ( !m_fickian_shifting )
@@ -1559,24 +1559,24 @@ void TwoPhaseFlow<KT_, SET1_, SET2_>::compute_surfaceforce(uint64_t timestep)
             if ( j_isfluid1 && this->m_sigma01 > 0.0 && normsnj > 0.0 )
             {
                 temp0 = this->m_sigma01/normsnj;
-                istress[0] += temp0 * ( temp1 - snj.x * snj.x); // xx
-                istress[1] += temp0 * ( temp1 - snj.y * snj.y); // yy
-                istress[2] += temp0 * ( temp1 - snj.z * snj.z); // zz
-                istress[3] -= temp0 * ( snj.x * snj.y);         // xy yx
-                istress[4] -= temp0 * ( snj.x * snj.z);         // xz zx
-                istress[5] -= temp0 * ( snj.y * snj.z);         // yz zy
+                jstress[0] += temp0 * ( temp1 - snj.x * snj.x); // xx
+                jstress[1] += temp0 * ( temp1 - snj.y * snj.y); // yy
+                jstress[2] += temp0 * ( temp1 - snj.z * snj.z); // zz
+                jstress[3] -= temp0 * ( snj.x * snj.y);         // xy yx
+                jstress[4] -= temp0 * ( snj.x * snj.z);         // xz zx
+                jstress[5] -= temp0 * ( snj.y * snj.z);         // yz zy
             }
 
             // Fluid phase 2 - Solid interface
             if ( j_isfluid2 && this->m_sigma02 > 0.0 && normsnj > 0.0 )
             {
                 temp0 = this->m_sigma02/normsnj;
-                istress[0] += temp0 * ( temp1 - snj.x * snj.x); // xx
-                istress[1] += temp0 * ( temp1 - snj.y * snj.y); // yy
-                istress[2] += temp0 * ( temp1 - snj.z * snj.z); // zz
-                istress[3] -= temp0 * ( snj.x * snj.y);         // xy yx
-                istress[4] -= temp0 * ( snj.x * snj.z);         // xz zx
-                istress[5] -= temp0 * ( snj.y * snj.z);         // yz zy
+                jstress[0] += temp0 * ( temp1 - snj.x * snj.x); // xx
+                jstress[1] += temp0 * ( temp1 - snj.y * snj.y); // yy
+                jstress[2] += temp0 * ( temp1 - snj.z * snj.z); // zz
+                jstress[3] -= temp0 * ( snj.x * snj.y);         // xy yx
+                jstress[4] -= temp0 * ( snj.x * snj.z);         // xz zx
+                jstress[5] -= temp0 * ( snj.y * snj.z);         // yz zy
             }
 
             bool oldm = true;
