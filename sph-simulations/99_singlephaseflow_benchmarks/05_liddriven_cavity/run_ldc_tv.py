@@ -112,10 +112,10 @@ model.damp = 5000
 model.artificialviscosity = True 
 model.alpha = 0.4
 model.beta = 0.2
-model.densitydiffusion = True
-model.ddiff = 0.2
-model.shepardrenormanlization = True
-model.shepardfreq = 2
+model.densitydiffusion = False
+# model.ddiff = 0.2
+model.shepardrenormanlization = False
+# model.shepardfreq = 2
 
 
 maximum_smoothing_length = sph_helper.set_max_sl(sim, device, snapshot, model)
