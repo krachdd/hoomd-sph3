@@ -31,9 +31,9 @@ if device.communicator.rank == 0:
 
 dt_string = datetime.now().strftime("%Y-%m-%d-%H-%M-%S")
 logname  = filename.replace('_init.gsd', '')
-logname  = f'{logname}_run.log'
+logname  = f'{logname}_runWC.log'
 dumpname = filename.replace('_init.gsd', '')
-dumpname = f'{dumpname}_run.gsd'
+dumpname = f'{dumpname}_runWC.gsd'
 
 sim.create_state_from_gsd(filename = filename)
 
@@ -100,7 +100,7 @@ model.gx = fx
 model.damp = 1000
 model.artificialviscosity = True 
 model.alpha = 0.2
-model.beta = 0.0
+model.beta = 0.2
 model.densitydiffusion = False
 model.shepardrenormanlization = False
 
@@ -112,13 +112,7 @@ c, c_condition = model.compute_speedofsound(LREF = lref, UREF = refvel,
 
 if device.communicator.rank == 0:
     print(f'Speed of sound [m/s]: {c}, Used: {c_condition}')
-
-cfactor = 100
-if c < cfactor * refvel:
-    model.set_speedofsound(cfactor * refvel)
-    if device.communicator.rank == 0:
-        print(f'Increase Speed of Sound to adami condition: {cfactor} * revel: {model.get_speedofsound()}')
-
+    
 # compute dt
 dt, dt_condition = model.compute_dt(LREF = lref, UREF = refvel, 
                                           DX = dx, DRHO = drho, H = maximum_smoothing_length, 
@@ -144,7 +138,7 @@ if device.communicator.rank == 0:
     print(f'Integrator Methods: {integrator.methods[:]}')
     print(f'Simulation Computes: {sim.operations.computes[:]}')
 
-gsd_trigger = hoomd.trigger.Periodic(100)
+gsd_trigger = hoomd.trigger.Periodic(1000)
 gsd_writer = hoomd.write.GSD(filename=dumpname,
                              trigger=gsd_trigger,
                              mode='wb',
@@ -174,5 +168,5 @@ if device.communicator.rank == 0:
 
 sim.run(steps, write_at_start=True)
 
-if device.communicator.rank == 0:
-    export_gsd2vtu.export_spf(dumpname)
+# if device.communicator.rank == 0:
+#     export_gsd2vtu.export_tvspf(dumpname)

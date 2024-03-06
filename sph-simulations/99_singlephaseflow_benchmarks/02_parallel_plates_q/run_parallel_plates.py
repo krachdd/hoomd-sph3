@@ -19,7 +19,6 @@ import sys, os
 import gsd.hoomd
 # ------------------------------------------------------------
 
-
 device = hoomd.device.CPU(notice_level=2)
 # device = hoomd.device.CPU(notice_level=10)
 sim = hoomd.Simulation(device=device)
@@ -31,33 +30,33 @@ if device.communicator.rank == 0:
 
 dt_string = datetime.now().strftime("%Y-%m-%d-%H-%M-%S")
 logname  = filename.replace('_init.gsd', '')
-logname  = f'{logname}_runTV.log'
+logname  = f'{logname}_runWC.log'
 dumpname = filename.replace('_init.gsd', '')
-dumpname = f'{dumpname}_runTV.gsd'
+dumpname = f'{dumpname}_runWC.gsd'
 
 sim.create_state_from_gsd(filename = filename)
+
 
 # Fluid and particle properties
 SHOW_PROC_PART_INFO = False
 SHOW_DECOMP_INFO    = False
-if SHOW_DECOMP_INFO:
-    sph_info.print_decomp_info(sim, device)
 num_length          = int(sys.argv[1])                          # [ - ]
 lref                = 0.001                                     # [ m ]
+radius              = 0.5 * lref                                # [ m ]
 voxelsize           = lref/float(num_length)                    # [ m ]
 dx                  = voxelsize                                 # [ m ]
 specific_volume     = dx * dx * dx                              # [ m^3 ]
 rho0                = 1000.0                                    # [ kg/m^3 ]
 mass                = rho0 * specific_volume                    # [ kg ]
 fx                  = 0.1                                       # [ m/s^2 ]
-viscosity           = 0.01                                      # [ Pa s ]
+viscosity           = 1e-03                                     # [ Pa s ]
 drho                = 0.01                                      # [ % ]
 backpress           = 0.01                                      # [ - ]
-lidvel              = 0.01                                      # [ m/s ]
-refvel              = lidvel * lref**2 * 0.25 / (viscosity/rho0)# [ m/s ]
+refvel              = fx * lref**2 * 0.25 / (viscosity/rho0)    # [ m/s ]
+
 
 # get kernel properties
-kernel  = 'WendlandC4'
+kernel  = 'Quintic'
 slength = hoomd.sph.kernel.OptimalH[kernel]*dx                  # [ m ]
 rcut    = hoomd.sph.kernel.Kappa[kernel]*slength                # [ m ]
 
@@ -67,6 +66,9 @@ steps = int(sys.argv[3])
 
 kernel_obj = hoomd.sph.kernel.Kernels[kernel]()
 kappa      = kernel_obj.Kappa()
+
+if SHOW_DECOMP_INFO:
+    sph_info.print_decomp_info(sim, device)
 
 # Neighbor list
 nlist = hoomd.nsearch.nlist.Cell(buffer = rcut*0.05, rebuild_check_delay = 1, kappa = kappa)
@@ -85,7 +87,7 @@ with sim.state.cpu_local_snapshot as snap:
     print(f'{np.count_nonzero(snap.particles.typeid == 1)} solid particles on rank {device.communicator.rank}')
 
 # Set up SPH solver
-model = hoomd.sph.sphmodel.SinglePhaseFlowTV(kernel = kernel_obj,
+model = hoomd.sph.sphmodel.SinglePhaseFlow(kernel = kernel_obj,
                                            eos    = eos,
                                            nlist  = nlist,
                                            fluidgroup_filter = filterfluid,
@@ -100,7 +102,7 @@ model.gx = fx
 model.damp = 1000
 model.artificialviscosity = True 
 model.alpha = 0.2
-model.beta = 0.2
+model.beta = 0.0
 model.densitydiffusion = False
 model.shepardrenormanlization = False
 
@@ -112,7 +114,7 @@ c, c_condition = model.compute_speedofsound(LREF = lref, UREF = refvel,
 
 if device.communicator.rank == 0:
     print(f'Speed of sound [m/s]: {c}, Used: {c_condition}')
-    
+
 # compute dt
 dt, dt_condition = model.compute_dt(LREF = lref, UREF = refvel, 
                                           DX = dx, DRHO = drho, H = maximum_smoothing_length, 
@@ -123,9 +125,9 @@ if device.communicator.rank == 0:
 
 integrator = hoomd.sph.Integrator(dt=dt)
 
-kdktv = hoomd.sph.methods.KickDriftKickTV(filter=filterfluid, densitymethod = densitymethod)
+velocityverlet = hoomd.sph.methods.VelocityVerletBasic(filter=filterfluid, densitymethod = densitymethod)
 
-integrator.methods.append(kdktv)
+integrator.methods.append(velocityverlet)
 integrator.forces.append(model)
 
 compute_filter_all = hoomd.filter.All()
@@ -168,5 +170,5 @@ if device.communicator.rank == 0:
 
 sim.run(steps, write_at_start=True)
 
-# if device.communicator.rank == 0:
-#     export_gsd2vtu.export_tvspf(dumpname)
+#if device.communicator.rank == 0:
+#    export_gsd2vtu.export_spf(dumpname)
