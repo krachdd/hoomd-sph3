@@ -112,10 +112,10 @@ model.damp = 5000
 model.artificialviscosity = True 
 model.alpha = 0.4
 model.beta = 0.2
-model.densitydiffusion = True
-model.ddiff = 0.2
-model.shepardrenormanlization = True
-model.shepardfreq = 2
+model.densitydiffusion = False
+# model.ddiff = 0.2
+model.shepardrenormanlization = False
+# model.shepardfreq = 2
 
 
 maximum_smoothing_length = sph_helper.set_max_sl(sim, device, snapshot, model)
@@ -127,7 +127,7 @@ c, c_condition = model.compute_speedofsound(LREF = lref, UREF = refvel,
 if device.communicator.rank == 0:
     print(f'Speed of sound [m/s]: {c}, Used: {c_condition}')
 
-sph_helper.update_min_c0(device, model, c, mode = 'uref', lref = lref, uref = refvel, bforce = fx, cfactor = 100.0)
+sph_helper.update_min_c0(device, model, c, mode = 'uref', lref = lref, uref = refvel, bforce = fx, cfactor = 10.0)
 
 # compute dt
 dt, dt_condition = model.compute_dt(LREF = lref, UREF = refvel, 
@@ -137,7 +137,7 @@ dt, dt_condition = model.compute_dt(LREF = lref, UREF = refvel,
 if device.communicator.rank == 0:
     print(f'Timestep size [s]: {dt}, Used: {dt_condition}')
 
-integrator = hoomd.sph.Integrator(dt=0.5*dt)
+integrator = hoomd.sph.Integrator(dt=0.05*dt)
 
 # VelocityVerlet = hoomd.sph.methods.VelocityVerlet(filter=filterFLUID, densitymethod = densitymethod)
 # velocityverlet = hoomd.sph.methods.KickDriftKickTV(filter=filterfluid, densitymethod = densitymethod, 
@@ -157,7 +157,7 @@ if device.communicator.rank == 0:
     print(f'Integrator Methods: {integrator.methods[:]}')
     print(f'Simulation Computes: {sim.operations.computes[:]}')
 
-gsd_trigger = hoomd.trigger.Periodic(2000)
+gsd_trigger = hoomd.trigger.Periodic(5000)
 gsd_writer = hoomd.write.GSD(filename=dumpname,
                              trigger=gsd_trigger,
                              mode='wb',
@@ -187,5 +187,5 @@ if device.communicator.rank == 0:
 
 sim.run(steps, write_at_start=True)
 
-if device.communicator.rank == 0:
-    export_gsd2vtu.export_spf(dumpname)
+# if device.communicator.rank == 0:
+#     export_gsd2vtu.export_spf(dumpname)

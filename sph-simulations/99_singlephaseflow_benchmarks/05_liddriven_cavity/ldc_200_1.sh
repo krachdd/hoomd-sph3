@@ -1,21 +1,21 @@
 #!/bin/bash
-#SBATCH --job-name=05_100_100_      # Job name
+#SBATCH --job-name=05_200_1_      # Job name
 #SBATCH --mail-type=BEGIN,END,FAIL         # Mail events (NONE, BEGIN, END, FAIL, ALL)
 #SBATCH --mail-user=david.krach@mib.uni-stuttgart.de    # Where to send mail.  Set this to your email address
-#SBATCH --ntasks=64                 # Number of MPI tasks (i.e. processes)
+#SBATCH --ntasks=128                 # Number of MPI tasks (i.e. processes)
 #SBATCH --nodes=1                    # Maximum number of nodes to be allocated
 #SBATCH --distribution=cyclic:cyclic # Distribute tasks cyclically first among nodes and then among sockets within a node
-#SBATCH --mem=100G          
-#SBATCH --time=1-23:59:00              # Wall time limit (days-hrs:min:sec)
-#SBATCH --output=05_100_100_%j.log     # Path to the standard output and error files relative to the working directory
-#SBATCH --partition=long             # put the job into the cpu partition
+#SBATCH --mem=400G          
+#SBATCH --time=3-23:00:00              # Wall time limit (days-hrs:min:sec)
+#SBATCH --output=05_200_1_%j.log     # Path to the standard output and error files relative to the working directory
+#SBATCH --partition=cpu-long             # put the job into the cpu partition
 
 # Ensure that all of the cores are on the same Inifniband network
 #SBATCH --contiguous
 
 # OUTPUT und FEHLER Dateien. %j wird durch job id ersetzt.
 # SBATCH -o mpi_test_job.out # File to which STDOUT will be written
-#SBATCH -e 05_100_100_%j.err # File to which STDERR will be written
+#SBATCH -e 05_200_1_%j.err # File to which STDERR will be written
 
 module load openmpi/4.1.4_gcc-11.3_cuda-11.7
 module load gcc/11.3.0
@@ -29,4 +29,4 @@ echo "Number of Tasks Allocated      = $SLURM_NTASKS"
 echo "Number of Cores/Task Allocated = $SLURM_CPUS_PER_TASK"
 echo "JobID = $SLURM_JOB_ID"
 
-/usr/local.nfs/software/openmpi/4.1.4_gcc-11.3_cuda-11.7/bin/mpirun -np $SLURM_NTASKS  ./run_ldc_tv.py --resolution=100 --reynolds=100 --steps=10000 --initgsd="liddrivencavity_108_108_11_vs_0.01_re_100.0_init.gsd"
+/usr/local.nfs/software/openmpi/4.1.4_gcc-11.3_cuda-11.7/bin/mpirun -np $SLURM_NTASKS  ./run_ldc_tv.py --resolution=200 --reynolds=1 --steps=100000 --initgsd="liddrivencavity_208_208_11_vs_0.005_re_1.0_init.gsd"

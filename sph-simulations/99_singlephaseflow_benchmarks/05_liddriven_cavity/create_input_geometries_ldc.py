@@ -51,7 +51,7 @@ rcut    = hoomd.sph.kernel.Kappa[kernel]*slength                # [ m ]
 
 # particles per Kernel Radius
 part_rcut  = math.ceil(rcut/dx) 
-part_depth = math.ceil(2.5 * hoomd.sph.kernel.Kappa[kernel] * rcut/dx) 
+part_depth = math.ceil(1.5 * hoomd.sph.kernel.Kappa[kernel] * rcut/dx) 
 
 # get simulation box sizes etc.
 nx, ny, nz = int(num_length + (2*part_rcut)), int(num_length + (2*part_rcut)), int(part_depth)
