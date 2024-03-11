@@ -97,7 +97,7 @@ model = hoomd.sph.sphmodel.SinglePhaseFlowTV(kernel = kernel_obj,
                                            nlist  = NList,
                                            fluidgroup_filter = filterFLUID,
                                            solidgroup_filter = filterSOLID,
-                                           densitymethood = densitymethod)
+                                           densitymethod = densitymethod)
 if device.communicator.rank == 0:
     print("SetModelParameter on all ranks")
 
@@ -119,6 +119,12 @@ c, c_condition = model.compute_speedofsound(LREF = lref, UREF = refvel,
 
 if device.communicator.rank == 0:
     print(f'Speed of sound [m/s]: {c}, Used: {c_condition}')
+
+# cfactor = 10
+# if c < cfactor * refvel:
+#     model.set_speedofsound(cfactor * refvel)
+#     if device.communicator.rank == 0:
+#         print(f'Increase Speed of Sound to adami condition: {cfactor} * revel: {model.get_speedofsound()}')
 
 # compute dt
 dt, dt_condition = model.compute_dt(LREF = lref, UREF = refvel, 

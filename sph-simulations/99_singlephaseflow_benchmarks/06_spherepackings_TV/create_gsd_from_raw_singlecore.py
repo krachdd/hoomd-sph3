@@ -67,9 +67,9 @@ porosity = np.sum(tids)/(NX * NY * NZ)
 
 
 # define meshgrid and add properties
-x, y, z = np.meshgrid(*(np.linspace(-box_Lx / 2, box_Lx / 2, NX, endpoint=False),),
-                      *(np.linspace(-box_Ly / 2, box_Ly / 2, NY, endpoint=False),),
-                      *(np.linspace(-box_Lz / 2, box_Lz / 2, NZ, endpoint=False),))
+x, y, z = np.meshgrid(*(np.linspace(-box_Lx / 2 + dx/2, box_Lx / 2 - dx/2, NX, endpoint=True),),
+                      *(np.linspace(-box_Ly / 2 + dx/2, box_Ly / 2 - dx/2, NY, endpoint=True),),
+                      *(np.linspace(-box_Lz / 2 + dx/2, box_Lz / 2 - dx/2, NZ, endpoint=True),))
 
 positions = np.array((x.ravel(), y.ravel(), z.ravel())).T
 
@@ -95,11 +95,11 @@ snapshot.particles.density[:] = density
 
 sim.create_state_from_snapshot(snapshot)
 
-deletesolid_flag = params['delete_flag']
-if deletesolid_flag == 1:
-    print(f'Delete solid particles')
-    sim, ndel_particles = delete_solids_initial_timestep.delete_solids(sim, device, kernel, 0.000001, viscosity, dx, rho0)
-    N_particles = N_particles - ndel_particles
+# deletesolid_flag = params['delete_flag']
+# if deletesolid_flag == 1:
+#     print(f'Delete solid particles')
+#     sim, ndel_particles = delete_solids_initial_timestep.delete_solids(sim, device, kernel, 0.000001, viscosity, dx, rho0)
+#     N_particles = N_particles - ndel_particles
 
 init_filename = rawfile.replace('.raw', '_init.gsd')
 hoomd.write.GSD.write(state = sim.state, mode = 'wb', filename = init_filename)
