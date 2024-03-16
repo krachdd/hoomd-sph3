@@ -182,7 +182,8 @@ void KickDriftKickTV::integrateStepOne(uint64_t timestep)
         // h_pos.data[j].z += h_vel.data[j].z*m_deltaT;
 
         // Advection Velocity
-        temp0 = Scalar(1.0 / 2.0) * 1.0/h_vel.data[j].w * m_deltaT;
+        // temp0 = Scalar(1.0 / 2.0) * 1.0/h_vel.data[j].w * m_deltaT;
+        // temp0 = Scalar(1.0 / 2.0) * m_deltaT;
         h_tv.data[j].x = h_vel.data[j].x + temp0 * h_bpc.data[j].x; 
         h_tv.data[j].y = h_vel.data[j].y + temp0 * h_bpc.data[j].y; 
         h_tv.data[j].z = h_vel.data[j].z + temp0 * h_bpc.data[j].z; 
