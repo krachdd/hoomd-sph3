@@ -47,10 +47,10 @@ def set_max_sl(sim, device, snapshot, model):
 
 
 def get_c0_bf(lref, bforce, cfactor):
-    return cfator * np.sqrt( bforce * lref )
+    return cfactor * np.sqrt( bforce * lref )
 
-def get_c0_umax(uref, cfator):
-    return cfator * uref
+def get_c0_umax(uref, cfactor):
+    return cfactor * uref
 
 def update_min_c0(device, model, c, mode = 'uref', lref = 0.0, uref = 0.0, bforce = 0.0, cfactor = 10.0):
     """
@@ -67,7 +67,7 @@ def update_min_c0(device, model, c, mode = 'uref', lref = 0.0, uref = 0.0, bforc
         DESCRIPTION.
     bforce : 
         DESCRIPTION.
-    cfator : 
+    cfactor : 
         DESCRIPTION.
     Returns
     -------
@@ -90,7 +90,7 @@ def update_min_c0(device, model, c, mode = 'uref', lref = 0.0, uref = 0.0, bforc
     elif mode == 'both':
         if bforce <= 0.0 or lref <= 0.0 or uref <= 0.0:
             raise ValueError('Give correct bforce, lref and uref!')
-        c0 = np.max(get_c0_bf(lref, bforce, cfactor), get_c0_umax(uref, cfactor))
+        c0 = np.max(np.asarray[get_c0_bf(lref, bforce, cfactor), get_c0_umax(uref, cfactor)])
         if c0 <= 0.0:
             raise ValueError('c0 must not be smaller or equal to 0.') 
     else:
