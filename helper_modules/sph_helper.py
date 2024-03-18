@@ -96,7 +96,10 @@ def update_min_c0(device, model, c, mode = 'uref', lref = 0.0, uref = 0.0, bforc
     else:
         raise ValueError('Give correct mode')
 
-    Ma = uref/c0 
+    Ma = uref/c0
+    if Ma > 0.01:
+        c0 *= 0.01/Ma
+        Ma = uref/c0
     if c > c0:
         if device.communicator.rank == 0: 
             print(f'c0 not updated, Ma = {Ma}')
