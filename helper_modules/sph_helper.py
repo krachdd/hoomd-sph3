@@ -102,7 +102,7 @@ def update_min_c0(device, model, c, mode = 'uref', lref = 0.0, uref = 0.0, bforc
         Ma = uref/c0
     if c > c0:
         if device.communicator.rank == 0: 
-            print(f'c0 not updated, Ma = {Ma}')
+            print(f'c0 not updated, Ma = {uref/c}')
     else:
         model.set_speedofsound(c0)
         if device.communicator.rank == 0:
