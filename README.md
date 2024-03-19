@@ -30,7 +30,7 @@ sudo apt install libcereal-dev
 - better internal separation of model, logger, and integrator
 - access to particle fields direct in python interface easily possible
 - generally more modularized (in all aspects of the model)
-- **HOOMD-Blue v4.4.1** instead of **HOOMD-Blue v1.8.2/v2.2.0**. Try to keep that up to date in the future
+- **HOOMD-Blue v4.5.0** instead of **HOOMD-Blue v1.8.2/v2.2.0**. Try to keep that up to date in the future
 
 ### Organizational apsects
 - differnt Loggers, physical models, integrators can be applied added additivly (use filters instead of groups)
