@@ -82,9 +82,9 @@ set(_hoomd_sources Action.cc
                    ForceConstraint.cc
                    GSDDequeWriter.cc
                    GSDDumpWriter.cc
-                   GSDDumpWriterMPI.cc
+#                   GSDDumpWriterMPI.cc
                    GSDReader.cc
-                   GSDReaderMPI.cc
+#                   GSDReaderMPI.cc
                    HOOMDMath.cc
                    HOOMDVersion.cc
                    Initializers.cc
@@ -111,7 +111,7 @@ set(_hoomd_sources Action.cc
                    Variant.cc
                    extern/BVLSSolver.cc
                    extern/gsd.c
-                   extern/pgsd.c
+#                   extern/pgsd.c
                    extern/kiss_fft.cc
                    extern/kiss_fftnd.cc
                    filter/export_filters.cc
@@ -164,9 +164,9 @@ set(_hoomd_headers
     PGSD.h
     GSDDequeWriter.h
     GSDDumpWriter.h
-    GSDDumpWriterMPI.h
+#    GSDDumpWriterMPI.h
     GSDReader.h
-    GSDReaderMPI.h
+#    GSDReaderMPI.h
     HalfStepHook.h
     HOOMDMath.h
     HOOMDMPI.h

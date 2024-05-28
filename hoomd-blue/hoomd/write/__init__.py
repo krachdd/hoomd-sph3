@@ -30,7 +30,7 @@ See Also:
 
 from hoomd.write.custom_writer import CustomWriter
 from hoomd.write.gsd import GSD
-from hoomd.write.pgsd import PGSD
+# from hoomd.write.pgsd import PGSD
 from hoomd.write.gsd_burst import Burst
 # from hoomd.write.dcd import DCD
 from hoomd.write.table import Table
