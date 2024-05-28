@@ -552,7 +552,7 @@ class SinglePhaseFlow(SPHModel):
         return C, condition
 
 
-    def compute_dt(self, LREF, UREF, DX, DRHO, H, MU, RHO0, COURANT=0.25):
+    def compute_dt(self, LREF, UREF, DX, DRHO, H, MU, RHO0):
         # Input sanity
         if LREF == 0.0:
             raise ValueError('Reference length LREF may not be zero.')
@@ -574,7 +574,7 @@ class SinglePhaseFlow(SPHModel):
         DT_a = []
         # CFL condition
         # DT_1 = 0.25*H/C
-        DT_a.append(DX/C)
+        DT_a.append(0.25*(DX/C))
         # Fourier condition
         DT_a.append((DX*DX*RHO0)/(8.0*MU))
         
@@ -584,7 +584,7 @@ class SinglePhaseFlow(SPHModel):
         DT_a = np.asarray(DT_a)
         conditions = ['CFL-condition', 'Fourier-condition', 'Gravity_waves-condition']
         condition = [conditions[i] for i in np.where(DT_a == DT_a.min())[0]]
-        DT = COURANT * np.min(DT_a)
+        DT = np.min(DT_a)
 
         return DT, condition
 
@@ -901,7 +901,7 @@ class SinglePhaseFlowTV(SPHModel):
         return C, condition
 
 
-    def compute_dt(self, LREF, UREF, DX, DRHO, H, MU, RHO0, COURANT=0.25):
+    def compute_dt(self, LREF, UREF, DX, DRHO, H, MU, RHO0):
         # Input sanity
         if LREF == 0.0:
             raise ValueError('Reference length LREF may not be zero.')
@@ -923,7 +923,7 @@ class SinglePhaseFlowTV(SPHModel):
         DT_a = []
         # CFL condition
         # DT_1 = 0.25*H/C
-        DT_a.append(DX/C)
+        DT_a.append(0.25*(DX/C))
         # Fourier condition
         DT_a.append((DX*DX*RHO0)/(8.0*MU))
         # Adami max flow
@@ -939,7 +939,7 @@ class SinglePhaseFlowTV(SPHModel):
         conditions = ['CFL-condition', 'Fourier-condition', 'Adami_max_flow-condition', 'Adami_viscous-condition' 'Gravity_waves-condition']
         condition = [conditions[i] for i in np.where(DT_a == DT_a.min())[0]]
         
-        DT = COURANT * np.min(DT_a)
+        DT = np.min(DT_a)
 
         return DT, condition
 
