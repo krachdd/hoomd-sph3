@@ -1,4 +1,4 @@
-// Copyright (c) 2009-2023 The Regents of the University of Michigan.
+// Copyright (c) 2009-2024 The Regents of the University of Michigan.
 // Part of HOOMD-blue, released under the BSD 3-Clause License.
 
 /*! \file GPUArray.h
@@ -963,13 +963,11 @@ template<class T> void GPUArray<T>::allocate()
         }
 #endif
 
-    if (m_exec_conf){
+    if (m_exec_conf)
         m_exec_conf->msg->notice(10)
             << "GPUArray: Allocating " << float(m_num_elements * sizeof(T)) / 1024.0f / 1024.0f
             << " MB" << std::endl;
-        m_exec_conf->msg->notice(10)
-            << "GPUArray: Allocating num elements" << m_num_elements << " MB with size" << sizeof(T) << std::endl;
-    }
+
     void* host_ptr = nullptr;
 
     // allocate host memory
