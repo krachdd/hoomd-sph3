@@ -1,4 +1,4 @@
-# Copyright (c) 2009-2023 The Regents of the University of Michigan.
+# Copyright (c) 2009-2024 The Regents of the University of Michigan.
 # Part of HOOMD-blue, released under the BSD 3-Clause License.
 
 """Pair Potentials for Monte Carlo.
@@ -30,3 +30,6 @@ Define :math:`U_{\\mathrm{pair},ij}` for use with `HPMCIntegrator
 from . import user
 from .pair import Pair
 from .lennard_jones import LennardJones
+from .union import Union
+from .angular_step import AngularStep
+from .step import Step

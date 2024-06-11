@@ -1,4 +1,4 @@
-// Copyright (c) 2009-2023 The Regents of the University of Michigan.
+// Copyright (c) 2009-2024 The Regents of the University of Michigan.
 // Part of HOOMD-blue, released under the BSD 3-Clause License.
 
 #include "GSDReader.h"
@@ -257,11 +257,11 @@ void GSDReader::readParticles()
 void GSDReader::readTopology()
     {
     unsigned int N = 0;
+    m_snapshot->bond_data.type_mapping = readTypes(m_frame, "bonds/types");
     readChunk(&N, m_frame, "bonds/N", 4);
     if (N > 0)
         {
         m_snapshot->bond_data.resize(N);
-        m_snapshot->bond_data.type_mapping = readTypes(m_frame, "bonds/types");
         readChunk(&m_snapshot->bond_data.type_id[0], m_frame, "bonds/typeid", N * 4, N);
         readChunk(&m_snapshot->bond_data.groups[0], m_frame, "bonds/group", N * 8, N);
         }
