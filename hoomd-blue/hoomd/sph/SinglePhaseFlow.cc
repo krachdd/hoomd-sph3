@@ -724,18 +724,18 @@ void SinglePhaseFlow<KT_, SET_>::compute_noslip(uint64_t timestep)
             // Compute solid densities by inverting equation of state
             // Here: overwrite the normalisation constant
             // If interpolated solid pressure is negative, set to background pressure
-            if ( h_pressure.data[i] < 0 )
-                {
-                // Set pressure to background pressure
-                h_pressure.data[i] = this->m_eos->getBackgroundPressure();
-                // Set Density to rest density
-                h_density.data[i] = this->m_rho0;
-                }
-            else 
-                {
+            // if ( h_pressure.data[i] < 0 )
+            //     {
+            //     // Set pressure to background pressure
+            //     h_pressure.data[i] = this->m_eos->getBackgroundPressure();
+            //     // Set Density to rest density
+            //     h_density.data[i] = this->m_rho0;
+            //     }
+            // else 
+            //     {
                 // Compute solid densities by inverting equation of state
                 h_density.data[i] = this->m_eos->Density(h_pressure.data[i]);
-                }
+                // }
             }
         else
             {
@@ -1156,6 +1156,7 @@ void SinglePhaseFlow<KT_, SET_>::forcecomputation(uint64_t timestep)
     }
 
 
+// TODO: Check this
 /*! Perform fcomputation of solid forces
  * When computed via a summation of 
  */

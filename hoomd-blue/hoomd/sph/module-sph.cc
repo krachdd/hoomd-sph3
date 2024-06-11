@@ -13,10 +13,14 @@ maintainer: dkrach, david.krach@mib.uni-stuttgart.de
 #include "VelocityVerlet.h"
 #include "VelocityVerletBasic.h"
 #include "KickDriftKickTV.h"
-// // #include "SuspendedObjectIntegrator.h"
+#include "SuspendedObjectIntegrator.h"
 // // #include "RigidBodyIntegrator.h"
 #include "SinglePhaseFlow.h"
+#include "SinglePhaseFlowNN.h"
 #include "SinglePhaseFlowTV.h"
+#include "SinglePhaseFlowTVNN.h"
+#include "SuspensionFlow.h"
+#include "SuspensionFlowNN.h"
 // // #include "TwoPhaseFlow.h"
 #include "CustomForceCompute.h"
 
@@ -100,7 +104,7 @@ PYBIND11_MODULE(_sph, m){
     export_VelocityVerlet(m);
     export_VelocityVerletBasic(m);
     export_KickDriftKickTV(m);
-    // export_SuspendedObjectIntegrator(m);
+    export_SuspendedObjectIntegrator(m);
     // export_RigidBodyIntegrator(m);
     export_WendlandC2(m);
     export_WendlandC4(m);
@@ -137,6 +141,17 @@ PYBIND11_MODULE(_sph, m){
     export_SinglePhaseFlow<cubicspline, linear>(m, "SinglePF_CS_L");
     export_SinglePhaseFlow<cubicspline, tait>(m, "SinglePF_CS_T");
 
+    export_SinglePhaseFlowNN<wendlandc2, linear>(m, "SinglePFNN_WC2_L");
+    export_SinglePhaseFlowNN<wendlandc2, tait>(m, "SinglePFNN_WC2_T");
+    export_SinglePhaseFlowNN<wendlandc4, linear>(m, "SinglePFNN_WC4_L");
+    export_SinglePhaseFlowNN<wendlandc4, tait>(m, "SinglePFNN_WC4_T");
+    export_SinglePhaseFlowNN<wendlandc6, linear>(m, "SinglePFNN_WC6_L");
+    export_SinglePhaseFlowNN<wendlandc6, tait>(m, "SinglePFNN_WC6_T");
+    export_SinglePhaseFlowNN<quintic, linear>(m, "SinglePFNN_Q_L");
+    export_SinglePhaseFlowNN<quintic, tait>(m, "SinglePFNN_Q_T");
+    export_SinglePhaseFlowNN<cubicspline, linear>(m, "SinglePFNN_CS_L");
+    export_SinglePhaseFlowNN<cubicspline, tait>(m, "SinglePFNN_CS_T");
+
     export_SinglePhaseFlowTV<wendlandc2, linear>(m, "SinglePFTV_WC2_L");
     export_SinglePhaseFlowTV<wendlandc2, tait>(m, "SinglePFTV_WC2_T");
     export_SinglePhaseFlowTV<wendlandc4, linear>(m, "SinglePFTV_WC4_L");
@@ -148,6 +163,39 @@ PYBIND11_MODULE(_sph, m){
     export_SinglePhaseFlowTV<cubicspline, linear>(m, "SinglePFTV_CS_L");
     export_SinglePhaseFlowTV<cubicspline, tait>(m, "SinglePFTV_CS_T");
 
+    export_SinglePhaseFlowTVNN<wendlandc2, linear>(m, "SinglePFTVNN_WC2_L");
+    export_SinglePhaseFlowTVNN<wendlandc2, tait>(m, "SinglePFTVNN_WC2_T");
+    export_SinglePhaseFlowTVNN<wendlandc4, linear>(m, "SinglePFTVNN_WC4_L");
+    export_SinglePhaseFlowTVNN<wendlandc4, tait>(m, "SinglePFTVNN_WC4_T");
+    export_SinglePhaseFlowTVNN<wendlandc6, linear>(m, "SinglePFTVNN_WC6_L");
+    export_SinglePhaseFlowTVNN<wendlandc6, tait>(m, "SinglePFTVNN_WC6_T");
+    export_SinglePhaseFlowTVNN<quintic, linear>(m, "SinglePFTVNN_Q_L");
+    export_SinglePhaseFlowTVNN<quintic, tait>(m, "SinglePFTVNN_Q_T");
+    export_SinglePhaseFlowTVNN<cubicspline, linear>(m, "SinglePFTVNN_CS_L");
+    export_SinglePhaseFlowTVNN<cubicspline, tait>(m, "SinglePFTVNN_CS_T");
+
+    export_SuspensionFlow<wendlandc2, linear>(m, "SuspensionF_WC2_L");
+    export_SuspensionFlow<wendlandc2, tait>(m, "SuspensionF_WC2_T");
+    export_SuspensionFlow<wendlandc4, linear>(m, "SuspensionF_WC4_L");
+    export_SuspensionFlow<wendlandc4, tait>(m, "SuspensionF_WC4_T");
+    export_SuspensionFlow<wendlandc6, linear>(m, "SuspensionF_WC6_L");
+    export_SuspensionFlow<wendlandc6, tait>(m, "SuspensionF_WC6_T");
+    export_SuspensionFlow<quintic, linear>(m, "SuspensionF_Q_L");
+    export_SuspensionFlow<quintic, tait>(m, "SuspensionF_Q_T");
+    export_SuspensionFlow<cubicspline, linear>(m, "SuspensionF_CS_L");
+    export_SuspensionFlow<cubicspline, tait>(m, "SuspensionF_CS_T");
+
+    export_SuspensionFlowNN<wendlandc2, linear>(m, "SuspensionFNN_WC2_L");
+    export_SuspensionFlowNN<wendlandc2, tait>(m, "SuspensionFNN_WC2_T");
+    export_SuspensionFlowNN<wendlandc4, linear>(m, "SuspensionFNN_WC4_L");
+    export_SuspensionFlowNN<wendlandc4, tait>(m, "SuspensionFNN_WC4_T");
+    export_SuspensionFlowNN<wendlandc6, linear>(m, "SuspensionFNN_WC6_L");
+    export_SuspensionFlowNN<wendlandc6, tait>(m, "SuspensionFNN_WC6_T");
+    export_SuspensionFlowNN<quintic, linear>(m, "SuspensionFNN_Q_L");
+    export_SuspensionFlowNN<quintic, tait>(m, "SuspensionFNN_Q_T");
+    export_SuspensionFlowNN<cubicspline, linear>(m, "SuspensionFNN_CS_L");
+    export_SuspensionFlowNN<cubicspline, tait>(m, "SuspensionFNN_CS_T");
+
     export_CustomForceCompute(m);
 
     export_ComputeSPFMechanicalProperties(m);
@@ -155,6 +203,7 @@ PYBIND11_MODULE(_sph, m){
 
     export_DensityMethod(m);
     export_ViscosityMethod(m);
+    export_MaterialModel(m);
 
     // export_LocalNeighborListDataHost(m);
     export_HalfStepHook(m);

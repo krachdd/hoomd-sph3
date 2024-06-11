@@ -306,6 +306,13 @@ void export_ViscosityMethod(pybind11::module& m)
         ;
 }
 
+void export_MaterialModel(pybind11::module& m)
+{
+    pybind11::enum_<MaterialModel>(m, "PhaseFlowMaterialModel")
+        .value("REGULARIZEDBINGHAM", MaterialModel::REGULARIZEDBINGHAM)
+        .value("BIVISCOUS", MaterialModel::BIVISCOUS)
+        ;
+}
 
 
 } // end namespace detail 

@@ -2,7 +2,7 @@
 maintainer: dkrach, david.krach@mib.uni-stuttgart.de
 ----------------------------------------------------------*/
 
-#include "SinglePhaseFlowTV.h"
+#include "SinglePhaseFlowTVNN.h"
 
 #include <pybind11/pybind11.h>
 #include <pybind11/stl_bind.h>
@@ -17,17 +17,18 @@ namespace sph
 /*! Constructor
 */
 template<SmoothingKernelType KT_,StateEquationType SET_>
-SinglePhaseFlowTV<KT_, SET_>::SinglePhaseFlowTV(std::shared_ptr<SystemDefinition> sysdef,
+SinglePhaseFlowTVNN<KT_, SET_>::SinglePhaseFlowTVNN(std::shared_ptr<SystemDefinition> sysdef,
                                  std::shared_ptr<SmoothingKernel<KT_> > skernel,
                                  std::shared_ptr<StateEquation<SET_> > equationofstate,
                                  std::shared_ptr<nsearch::NeighborList> nlist,
                                  std::shared_ptr<ParticleGroup> fluidgroup,
                                  std::shared_ptr<ParticleGroup> solidgroup,
                                  DensityMethod mdensitymethod,
-                                 ViscosityMethod mviscositymethod)
-    : SinglePhaseFlow<KT_, SET_>(sysdef,skernel,equationofstate,nlist,fluidgroup,solidgroup,mdensitymethod, mviscositymethod)
+                                 ViscosityMethod mviscositymethod,
+                                 MaterialModel mmaterialmodel)
+    : SinglePhaseFlowNN<KT_, SET_>(sysdef,skernel,equationofstate,nlist,fluidgroup,solidgroup,mdensitymethod,mviscositymethod,mmaterialmodel)
       {
-        this->m_exec_conf->msg->notice(5) << "Constructing SinglePhaseFlowTV" << std::endl;
+        this->m_exec_conf->msg->notice(5) << "Constructing SinglePhaseFlowTVNN" << std::endl;
 
         // Set private attributes to default values
         this->m_const_slength = false;
@@ -75,6 +76,8 @@ SinglePhaseFlowTV<KT_, SET_>::SinglePhaseFlowTV(std::shared_ptr<SystemDefinition
         // Set simulations methods
         this->m_density_method = mdensitymethod;
         this->m_viscosity_method = mviscositymethod;
+        this->m_material_model = mmaterialmodel;
+
 
         // Get necessary variables from kernel and EOS classes
         this->m_rho0  = equationofstate->getRestDensity();
@@ -89,17 +92,17 @@ SinglePhaseFlowTV<KT_, SET_>::SinglePhaseFlowTV(std::shared_ptr<SystemDefinition
 /*! Destructor
 */
 template<SmoothingKernelType KT_,StateEquationType SET_>
-SinglePhaseFlowTV<KT_, SET_>::~SinglePhaseFlowTV()
+SinglePhaseFlowTVNN<KT_, SET_>::~SinglePhaseFlowTVNN()
     {
-    this->m_exec_conf->msg->notice(5) << "Destroying SinglePhaseFlowTV" << std::endl;
+    this->m_exec_conf->msg->notice(5) << "Destroying SinglePhaseFlowTVNN" << std::endl;
     }
 
 
 
 template<SmoothingKernelType KT_,StateEquationType SET_>
-void SinglePhaseFlowTV<KT_, SET_>::update_ghost_aux123(uint64_t timestep)
+void SinglePhaseFlowTVNN<KT_, SET_>::update_ghost_aux1234(uint64_t timestep)
     {
-    this->m_exec_conf->msg->notice(7) << "Computing SinglePhaseFlowTV::Update Ghost aux123" << std::endl;
+    this->m_exec_conf->msg->notice(7) << "Computing SinglePhaseFlowTVNN::Update Ghost aux123" << std::endl;
 
 #ifdef ENABLE_MPI
     if (this->m_comm)
@@ -115,7 +118,7 @@ void SinglePhaseFlowTV<KT_, SET_>::update_ghost_aux123(uint64_t timestep)
         flags[comm_flag::auxiliary1] = 1; // ficticios velocity
         flags[comm_flag::auxiliary2] = 2;
         flags[comm_flag::auxiliary3] = 3;
-        flags[comm_flag::auxiliary4] = 0;
+        flags[comm_flag::auxiliary4] = 4;
         flags[comm_flag::body] = 0;
         flags[comm_flag::image] = 0;
         flags[comm_flag::net_force] = 0;
@@ -131,13 +134,13 @@ void SinglePhaseFlowTV<KT_, SET_>::update_ghost_aux123(uint64_t timestep)
  */
 
 template<SmoothingKernelType KT_,StateEquationType SET_>
-void SinglePhaseFlowTV<KT_, SET_>::forcecomputation(uint64_t timestep)
+void SinglePhaseFlowTVNN<KT_, SET_>::forcecomputation(uint64_t timestep)
     {
 
     if ( this->m_density_method == DENSITYSUMMATION )
-        this->m_exec_conf->msg->notice(7) << "Computing SinglePhaseFlowTV::Forces using SUMMATION approach " << this->m_density_method << endl;
+        this->m_exec_conf->msg->notice(7) << "Computing SinglePhaseFlowTVNN::Forces using SUMMATION approach " << this->m_density_method << endl;
     else if ( this->m_density_method == DENSITYCONTINUITY )
-        this->m_exec_conf->msg->notice(7) << "Computing SinglePhaseFlowTV::Forces using CONTINUITY approach " << this->m_density_method << endl;
+        this->m_exec_conf->msg->notice(7) << "Computing SinglePhaseFlowTVNN::Forces using CONTINUITY approach " << this->m_density_method << endl;
 
     // Grab handles for particle data
     // Access mode overwrite implies that data does not need to be read in
@@ -160,6 +163,7 @@ void SinglePhaseFlowTV<KT_, SET_>::forcecomputation(uint64_t timestep)
     ArrayHandle<Scalar3> h_vf(this->m_pdata->getAuxiliaries1(), access_location::host,access_mode::read);
     ArrayHandle<Scalar3> h_bpc(this->m_pdata->getAuxiliaries2(), access_location::host,access_mode::readwrite); // background pressure contribution to tv
     ArrayHandle<Scalar3> h_tv(this->m_pdata->getAuxiliaries3(), access_location::host,access_mode::read); // transport velocity of the particle tv
+    ArrayHandle<Scalar3> h_nn(this->m_pdata->getAuxiliaries4(), access_location::host,access_mode::read);
     ArrayHandle<Scalar>  h_h(this->m_pdata->getSlengths(), access_location::host, access_mode::read);
     
     // access the neighbor list
@@ -180,6 +184,9 @@ void SinglePhaseFlowTV<KT_, SET_>::forcecomputation(uint64_t timestep)
 
     // Local variable to store things
     Scalar temp0 = 0; 
+
+    // Local variable to store mean viscosity
+    Scalar meanmu = 0;
 
     // maximum velocity variable for adaptive timestep
     double max_vel = 0.0;
@@ -238,6 +245,9 @@ void SinglePhaseFlowTV<KT_, SET_>::forcecomputation(uint64_t timestep)
         if (i == 0) { max_vel = vi_total; }
         else if (vi_total > max_vel) { max_vel = vi_total; }
 
+        // Read particle i viscosity
+        Scalar mui  = h_nn.data[i].y;
+
         // Loop over all of the neighbors of this particle
         myHead = h_head_list.data[i];
         size = (unsigned int)h_n_neigh.data[i];
@@ -293,6 +303,9 @@ void SinglePhaseFlowTV<KT_, SET_>::forcecomputation(uint64_t timestep)
                 }
             Scalar rhoj = h_density.data[k];
             Scalar Vj   = mj / rhoj;
+
+            // Read particle j viscosity
+            Scalar muj  = h_nn.data[k].y;
 
             Scalar3 tvj;
             tvj.x = h_tv.data[k].x;
@@ -357,7 +370,18 @@ void SinglePhaseFlowTV<KT_, SET_>::forcecomputation(uint64_t timestep)
             h_force.data[i].z -= vijsqr * ( temp0 + avc )* dwdr_r * dx.z;
 
             // Evaluate viscous interaction forces
-            temp0 = this->m_mu * vijsqr * dwdr_r;
+            if (!issolid)
+            {
+                meanmu = (Scalar(2.0) * mui * muj) / (mui + muj);
+            }
+            else
+            {
+                meanmu = mui;
+            }
+
+
+            // Evaluate viscous interaction forces
+            temp0 = meanmu * vijsqr * dwdr_r;
             h_force.data[i].x  += temp0 * dv.x;
             h_force.data[i].y  += temp0 * dv.y;
             h_force.data[i].z  += temp0 * dv.z;
@@ -422,7 +446,7 @@ void SinglePhaseFlowTV<KT_, SET_>::forcecomputation(uint64_t timestep)
 */
 
 template<SmoothingKernelType KT_,StateEquationType SET_>
-void SinglePhaseFlowTV<KT_, SET_>::computeForces(uint64_t timestep)
+void SinglePhaseFlowTVNN<KT_, SET_>::computeForces(uint64_t timestep)
     {
 
     // start by updating the neighborlist
@@ -431,9 +455,9 @@ void SinglePhaseFlowTV<KT_, SET_>::computeForces(uint64_t timestep)
     // This is executed once to initialize protected/private variables
     if (!this->m_params_set)
         {
-        this->m_exec_conf->msg->error() << "sph.models.SinglePhaseFlowTV requires parameters to be set before run()"
+        this->m_exec_conf->msg->error() << "sph.models.SinglePhaseFlowTVNN requires parameters to be set before run()"
             << std::endl;
-        throw std::runtime_error("Error computing SinglePhaseFlowTV forces");
+        throw std::runtime_error("Error computing SinglePhaseFlowTVNN forces");
         }
 
     // m_solid_removed flag is set to False initially, so this 
@@ -481,6 +505,14 @@ void SinglePhaseFlowTV<KT_, SET_>::computeForces(uint64_t timestep)
     this->update_ghost_aux1(timestep);
 #endif
 
+    // Compute fluid particle viscosity
+    this->compute_viscosity(timestep);
+
+#ifdef ENABLE_MPI
+    // Update ghost particles
+    this->update_ghost_aux4(timestep);
+#endif
+
     // Execute the force computation
     // This includes the computation of the density if 
     // DENSITYCONTINUITY method is used
@@ -488,7 +520,7 @@ void SinglePhaseFlowTV<KT_, SET_>::computeForces(uint64_t timestep)
 
 #ifdef ENABLE_MPI
     // Update ghost particles
-    update_ghost_aux123(timestep);
+    update_ghost_aux1234(timestep);
 #endif
 
     }
@@ -496,9 +528,9 @@ void SinglePhaseFlowTV<KT_, SET_>::computeForces(uint64_t timestep)
 namespace detail 
 {
 template<SmoothingKernelType KT_, StateEquationType SET_>
-void export_SinglePhaseFlowTV(pybind11::module& m, std::string name)
+void export_SinglePhaseFlowTVNN(pybind11::module& m, std::string name)
 {
-    pybind11::class_<SinglePhaseFlowTV<KT_, SET_>, SPHBaseClass<KT_, SET_> , std::shared_ptr<SinglePhaseFlowTV<KT_, SET_>>>(m, name.c_str()) 
+    pybind11::class_<SinglePhaseFlowTVNN<KT_, SET_>, SPHBaseClass<KT_, SET_> , std::shared_ptr<SinglePhaseFlowTVNN<KT_, SET_>>>(m, name.c_str()) 
         .def(pybind11::init< std::shared_ptr<SystemDefinition>,
                              std::shared_ptr<SmoothingKernel<KT_> >,
                              std::shared_ptr<StateEquation<SET_> >,
@@ -506,22 +538,25 @@ void export_SinglePhaseFlowTV(pybind11::module& m, std::string name)
                              std::shared_ptr<ParticleGroup>,
                              std::shared_ptr<ParticleGroup>,
                              DensityMethod,
-                             ViscosityMethod >())
-        .def("setParams", &SinglePhaseFlowTV<KT_, SET_>::setParams)
-        .def("getDensityMethod", &SinglePhaseFlowTV<KT_, SET_>::getDensityMethod)
-        .def("setDensityMethod", &SinglePhaseFlowTV<KT_, SET_>::setDensityMethod)
-        .def("getViscosityMethod", &SinglePhaseFlowTV<KT_, SET_>::getViscosityMethod)
-        .def("setViscosityMethod", &SinglePhaseFlowTV<KT_, SET_>::setViscosityMethod)
-        .def("setConstSmoothingLength", &SinglePhaseFlowTV<KT_, SET_>::setConstSmoothingLength)
-        .def("computeSolidForces", &SinglePhaseFlowTV<KT_, SET_>::computeSolidForces)
-        .def("activateArtificialViscosity", &SinglePhaseFlowTV<KT_, SET_>::activateArtificialViscosity)
-        .def("deactivateArtificialViscosity", &SinglePhaseFlowTV<KT_, SET_>::deactivateArtificialViscosity)
-        .def("activateDensityDiffusion", &SinglePhaseFlowTV<KT_, SET_>::activateDensityDiffusion)
-        .def("deactivateDensityDiffusion", &SinglePhaseFlowTV<KT_, SET_>::deactivateDensityDiffusion)
-        .def("activateShepardRenormalization", &SinglePhaseFlowTV<KT_, SET_>::activateShepardRenormalization)
-        .def("deactivateShepardRenormalization", &SinglePhaseFlowTV<KT_, SET_>::deactivateShepardRenormalization)
+                             ViscosityMethod,
+                             MaterialModel >())
+        .def("setParams", &SinglePhaseFlowTVNN<KT_, SET_>::setParams)
+        .def("getDensityMethod", &SinglePhaseFlowTVNN<KT_, SET_>::getDensityMethod)
+        .def("setDensityMethod", &SinglePhaseFlowTVNN<KT_, SET_>::setDensityMethod)
+        .def("getViscosityMethod", &SinglePhaseFlowTVNN<KT_, SET_>::getViscosityMethod)
+        .def("setViscosityMethod", &SinglePhaseFlowTVNN<KT_, SET_>::setViscosityMethod)
+        .def("getMaterialModel", &SinglePhaseFlowTVNN<KT_, SET_>::getMaterialModel)
+        .def("setMaterialModel", &SinglePhaseFlowTVNN<KT_, SET_>::setMaterialModel)
+        .def("setConstSmoothingLength", &SinglePhaseFlowTVNN<KT_, SET_>::setConstSmoothingLength)
+        .def("computeSolidForces", &SinglePhaseFlowTVNN<KT_, SET_>::computeSolidForces)
+        .def("activateArtificialViscosity", &SinglePhaseFlowTVNN<KT_, SET_>::activateArtificialViscosity)
+        .def("deactivateArtificialViscosity", &SinglePhaseFlowTVNN<KT_, SET_>::deactivateArtificialViscosity)
+        .def("activateDensityDiffusion", &SinglePhaseFlowTVNN<KT_, SET_>::activateDensityDiffusion)
+        .def("deactivateDensityDiffusion", &SinglePhaseFlowTVNN<KT_, SET_>::deactivateDensityDiffusion)
+        .def("activateShepardRenormalization", &SinglePhaseFlowTVNN<KT_, SET_>::activateShepardRenormalization)
+        .def("deactivateShepardRenormalization", &SinglePhaseFlowTVNN<KT_, SET_>::deactivateShepardRenormalization)
         .def("setAcceleration", &SPHBaseClass<KT_, SET_>::setAcceleration)
-        .def("setRCut", &SinglePhaseFlowTV<KT_, SET_>::setRCutPython)
+        .def("setRCut", &SinglePhaseFlowTVNN<KT_, SET_>::setRCutPython)
         ;
 
     }
@@ -529,31 +564,31 @@ void export_SinglePhaseFlowTV(pybind11::module& m, std::string name)
 } // end namespace detail
 
 //! Explicit template instantiations
-template class PYBIND11_EXPORT SinglePhaseFlowTV<wendlandc2, linear>;
-template class PYBIND11_EXPORT SinglePhaseFlowTV<wendlandc2, tait>;
-template class PYBIND11_EXPORT SinglePhaseFlowTV<wendlandc4, linear>;
-template class PYBIND11_EXPORT SinglePhaseFlowTV<wendlandc4, tait>;
-template class PYBIND11_EXPORT SinglePhaseFlowTV<wendlandc6, linear>;
-template class PYBIND11_EXPORT SinglePhaseFlowTV<wendlandc6, tait>;
-template class PYBIND11_EXPORT SinglePhaseFlowTV<quintic, linear>;
-template class PYBIND11_EXPORT SinglePhaseFlowTV<quintic, tait>;
-template class PYBIND11_EXPORT SinglePhaseFlowTV<cubicspline, linear>;
-template class PYBIND11_EXPORT SinglePhaseFlowTV<cubicspline, tait>;
+template class PYBIND11_EXPORT SinglePhaseFlowTVNN<wendlandc2, linear>;
+template class PYBIND11_EXPORT SinglePhaseFlowTVNN<wendlandc2, tait>;
+template class PYBIND11_EXPORT SinglePhaseFlowTVNN<wendlandc4, linear>;
+template class PYBIND11_EXPORT SinglePhaseFlowTVNN<wendlandc4, tait>;
+template class PYBIND11_EXPORT SinglePhaseFlowTVNN<wendlandc6, linear>;
+template class PYBIND11_EXPORT SinglePhaseFlowTVNN<wendlandc6, tait>;
+template class PYBIND11_EXPORT SinglePhaseFlowTVNN<quintic, linear>;
+template class PYBIND11_EXPORT SinglePhaseFlowTVNN<quintic, tait>;
+template class PYBIND11_EXPORT SinglePhaseFlowTVNN<cubicspline, linear>;
+template class PYBIND11_EXPORT SinglePhaseFlowTVNN<cubicspline, tait>;
 
 
 namespace detail
 {
 
-    template void export_SinglePhaseFlowTV<wendlandc2, linear>(pybind11::module& m, std::string name = "SinglePFTV_WC2_L");
-    template void export_SinglePhaseFlowTV<wendlandc2, tait>(pybind11::module& m, std::string name = "SinglePFTV_WC2_T");
-    template void export_SinglePhaseFlowTV<wendlandc4, linear>(pybind11::module& m, std::string name = "SinglePFTV_WC4_L");
-    template void export_SinglePhaseFlowTV<wendlandc4, tait>(pybind11::module& m, std::string name = "SinglePFTV_WC4_T");
-    template void export_SinglePhaseFlowTV<wendlandc6, linear>(pybind11::module& m, std::string name = "SinglePFTV_WC6_L");
-    template void export_SinglePhaseFlowTV<wendlandc6, tait>(pybind11::module& m, std::string name = "SinglePFTV_WC6_T");
-    template void export_SinglePhaseFlowTV<quintic, linear>(pybind11::module& m, std::string name = "SinglePFTV_Q_L");
-    template void export_SinglePhaseFlowTV<quintic, tait>(pybind11::module& m, std::string name = "SinglePFTV_Q_T");
-    template void export_SinglePhaseFlowTV<cubicspline, linear>(pybind11::module& m, std::string name = "SinglePFTV_CS_L");
-    template void export_SinglePhaseFlowTV<cubicspline, tait>(pybind11::module& m, std::string name = "SinglePFTV_CS_T");
+    template void export_SinglePhaseFlowTVNN<wendlandc2, linear>(pybind11::module& m, std::string name = "SinglePFTVNN_WC2_L");
+    template void export_SinglePhaseFlowTVNN<wendlandc2, tait>(pybind11::module& m, std::string name = "SinglePFTVNN_WC2_T");
+    template void export_SinglePhaseFlowTVNN<wendlandc4, linear>(pybind11::module& m, std::string name = "SinglePFTVNN_WC4_L");
+    template void export_SinglePhaseFlowTVNN<wendlandc4, tait>(pybind11::module& m, std::string name = "SinglePFTVNN_WC4_T");
+    template void export_SinglePhaseFlowTVNN<wendlandc6, linear>(pybind11::module& m, std::string name = "SinglePFTVNN_WC6_L");
+    template void export_SinglePhaseFlowTVNN<wendlandc6, tait>(pybind11::module& m, std::string name = "SinglePFTVNN_WC6_T");
+    template void export_SinglePhaseFlowTVNN<quintic, linear>(pybind11::module& m, std::string name = "SinglePFTVNN_Q_L");
+    template void export_SinglePhaseFlowTVNN<quintic, tait>(pybind11::module& m, std::string name = "SinglePFTVNN_Q_T");
+    template void export_SinglePhaseFlowTVNN<cubicspline, linear>(pybind11::module& m, std::string name = "SinglePFTVNN_CS_L");
+    template void export_SinglePhaseFlowTVNN<cubicspline, tait>(pybind11::module& m, std::string name = "SinglePFTVNN_CS_T");
 
 } // end namespace detail
 } // end namespace sph

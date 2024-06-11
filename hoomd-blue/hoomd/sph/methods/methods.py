@@ -13,6 +13,8 @@ from hoomd.filter import ParticleFilter
 from hoomd.variant import Variant
 from collections.abc import Sequence
 
+# Add Logger to directly log COM, Translation and Rotation
+from hoomd.logging import log, Loggable
 
 class Method(AutotunedObject):
     """Base class integration method.
@@ -916,6 +918,168 @@ class KickDriftKickTV(Method):
         else:
             raise ValueError("xlimit_val must be positive.")
 
+class SuspendedObjectIntegrator(Method):
+    r"""
+
+    Args:
+        filter (hoomd.filter.filter_like): Subset of particles on which to
+            apply this method.
+
+    Based on md-`NVE` integrates integrates translational degrees of freedom
+    using Velocity-Verlet.
+
+    Examples::
+
+    Attributes:
+        filter (hoomd.filter.filter_like): Subset of particles on which to
+            apply this method.
+    """
+
+    DENSITYMETHODS = {'SUMMATION':_sph.PhaseFlowDensityMethod.DENSITYSUMMATION,
+                      'CONTINUITY':_sph.PhaseFlowDensityMethod.DENSITYCONTINUITY}
+
+    VISCOSITYMETHODS = {'HARMONICAVERAGE':_sph.PhaseFlowViscosityMethod.HARMONICAVERAGE}
+
+    def __init__(self, filter, densitymethod):
+        # store metadata
+        param_dict = ParameterDict(filter=ParticleFilter,)
+        param_dict.update(dict(filter=filter, densitymethod=densitymethod))
+
+        # set defaults
+        self._param_dict.update(param_dict)
+
+        self.str_densitymethod = self._param_dict._dict["densitymethod"]
+
+        # COM, Translation, Rotation
+        self._com = [0.0, 0.0, 0.0]
+        self._trans = [0.0, 0.0, 0.0]
+        self._rot = [0.0, 0.0, 0.0]
+
+
+
+        if self.str_densitymethod == str('SUMMATION'):
+            self.cpp_densitymethod = hoomd.sph._sph.PhaseFlowDensityMethod.DENSITYSUMMATION
+        elif self.str_densitymethod == str('CONTINUITY'):
+            self.cpp_densitymethod = hoomd.sph._sph.PhaseFlowDensityMethod.DENSITYCONTINUITY
+        else:
+            raise ValueError("Using undefined DensityMethod.")
+
+    def _attach_hook(self):
+        sim = self._simulation
+        # initialize the reflected c++ class
+        if isinstance(sim.device, hoomd.device.CPU):
+            self._cpp_obj = _sph.SuspendedObjectIntegrator(sim.state._cpp_sys_def,
+                                           sim.state._get_group(self.filter))
+        else:
+            self._cpp_obj = _sph.SuspendedObjectIntegratorGPU(sim.state._cpp_sys_def,
+                                              sim.state._get_group(self.filter))
+
+        # Reload density and viscosity methods from __dict__
+        self.str_densitymethod = self._param_dict._dict["densitymethod"]
+        if self.str_densitymethod == str('SUMMATION'):
+            self.cpp_densitymethod = hoomd.sph._sph.PhaseFlowDensityMethod.DENSITYSUMMATION
+        elif self.str_densitymethod == str('CONTINUITY'):
+            self.cpp_densitymethod = hoomd.sph._sph.PhaseFlowDensityMethod.DENSITYCONTINUITY
+        else:
+            raise ValueError("Using undefined DensityMethod.")
+
+        self.setdensitymethod(self.str_densitymethod)
+
+        # Attach param_dict and typeparam_dict
+        super()._attach_hook()
+
+    # @property
+    def densitymethod(self):
+        # Invert key mapping
+        invD = dict((v,k) for k, v in self.DENSITYMETHODS.iteritems())
+        return invD[self._cpp_obj.getDensityMethod()]
+
+    # @densitymethod.setter
+    def setdensitymethod(self, method):
+        if method not in self.DENSITYMETHODS:
+            raise ValueError("Undefined DensityMethod.")
+        self._cpp_obj.setDensityMethod(self.DENSITYMETHODS[method])
+
+    @log
+    def com_x(self):
+    #    """float: X component of the center of mass."""
+        if self._cpp_obj is None:
+            return None
+        else:
+            self._com[0] = self._cpp_obj.getCOMX()
+            return self._com[0]
+
+    @log
+    def com_y(self):
+    #    """float: Y component of the center of mass."""
+        if self._cpp_obj is None:
+            return None
+        else:
+            self._com[1] = self._cpp_obj.getCOMY()
+            return self._com[1]
+
+    @log
+    def com_z(self):
+    #    """float: Z component of the center of mass."""
+        if self._cpp_obj is None:
+            return None
+        else:
+            self._com[2] = self._cpp_obj.getCOMZ()
+            return self._com[2]
+
+    @log
+    def trans_x(self):
+    #    """float: X component of the center of mass."""
+        if self._cpp_obj is None:
+            return None
+        else:
+            self._trans[0] = self._cpp_obj.getTranslationX()
+            return self._trans[0]
+
+    @log
+    def trans_y(self):
+    #    """float: X component of the center of mass."""
+        if self._cpp_obj is None:
+            return None
+        else:
+            self._trans[1] = self._cpp_obj.getTranslationY()
+            return self._trans[1]
+
+    @log
+    def trans_z(self):
+    #    """float: X component of the center of mass."""
+        if self._cpp_obj is None:
+            return None
+        else:
+            self._trans[2] = self._cpp_obj.getTranslationZ()
+            return self._trans[2]
+
+    @log
+    def rot_x(self):
+    #    """float: X component of the center of mass."""
+        if self._cpp_obj is None:
+            return None
+        else:
+            self._rot[0] = self._cpp_obj.getRotationX()
+            return self._rot[0]
+
+    @log
+    def rot_y(self):
+    #    """float: X component of the center of mass."""
+        if self._cpp_obj is None:
+            return None
+        else:
+            self._rot[1] = self._cpp_obj.getRotationY()
+            return self._rot[1]
+
+    @log
+    def rot_z(self):
+    #    """float: X component of the center of mass."""
+        if self._cpp_obj is None:
+            return None
+        else:
+            self._rot[2] = self._cpp_obj.getRotationZ()
+            return self._rot[2]
 
 # class Langevin(Method):
 #     r"""Langevin dynamics.

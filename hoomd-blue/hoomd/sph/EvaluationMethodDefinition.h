@@ -26,6 +26,14 @@ namespace sph
         HARMONICAVERAGE, //!< Viscosity operator based on inter-particle averaged shear stress
     };
 
+    //! Enum for various viscosity evaluation approaches
+    enum MaterialModel
+    {
+        REGULARIZEDBINGHAM, //!< Regularized Bingham material model
+        BIVISCOUS, //!< Biviscous material model
+    };
+
+
     } // end namespace sph
     } // end namespace hoomd
 

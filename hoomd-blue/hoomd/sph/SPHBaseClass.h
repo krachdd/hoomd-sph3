@@ -148,6 +148,9 @@ void export_DensityMethod(pybind11::module& m);
 
 void export_ViscosityMethod(pybind11::module& m);
 
+void export_MaterialModel(pybind11::module& m);
+
+
 } // end namespace detail
 
 } // end namespace sph

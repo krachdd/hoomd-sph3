@@ -11,19 +11,24 @@ set(_${COMPONENT_NAME}_sources
     VelocityVerlet.cc
     VelocityVerletBasic.cc
     KickDriftKickTV.cc
-#     SuspendedObjectIntegrator.cc
+    SuspendedObjectIntegrator.cc
 #     RigidBodyIntegrator.cc
 #     StateEquationsExport.cc
     StateEquations.cc
     SPHBaseClass.cc
     SinglePhaseFlow.cc
+    SinglePhaseFlowNN.cc
     SinglePhaseFlowTV.cc
+    SinglePhaseFlowTVNN.cc
+    SuspensionFlow.cc
+    SuspensionFlowNN.cc
 #     TwoPhaseFlow.cc
 #     SmoothingKernelExport.cc
     SmoothingKernel.cc
     CustomForceCompute.cc
     ComputeSPFBasicProperties.cc
     ComputeSolidProperties.cc
+    ComputeSuspendedProperties.cc
     HalfStepHook.cc
     ConstantForceCompute.cc
     )
@@ -34,8 +39,12 @@ set(_${COMPONENT_NAME}_headers
     SPHIntegrationMethodTwoStep.h     
 #     TwoPhaseFlowGPU.cuh
 #     GeneralGPUFunctions.cuh
-    SinglePhaseFlow.h     
+    SinglePhaseFlow.h   
+    SinglePhaseFlowNN.h       
     SinglePhaseFlowTV.h     
+    SinglePhaseFlowTVNN.h
+    SuspensionFlow.h    
+    SuspensionFlowNN.h      
     SPHIntegratorTwoStep.h            
 #     TwoPhaseFlowGPU.h
 #     RigidBodyIntegratorGPU.cuh     
@@ -52,13 +61,14 @@ set(_${COMPONENT_NAME}_headers
 #     VelocityVerletGPU.h
 #     SinglePhaseFlowGPU.cuh         
     SPHBaseClass.h        
-#     SuspendedObjectIntegrator.h       
+    SuspendedObjectIntegrator.h       
     VelocityVerlet.h
     VelocityVerletBasic.h
     KickDriftKickTV.h
     CustomForceCompute.h
     ComputeSPFBasicProperties.h
     ComputeSolidProperties.h
+    ComputeSuspendedProperties.h
     ComputeMechanicalProp.h
     EvaluationMethodDefinition.h
     ConstantForceCompute.h

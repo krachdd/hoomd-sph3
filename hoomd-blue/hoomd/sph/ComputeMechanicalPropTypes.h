@@ -41,6 +41,19 @@ struct solidphase_logger_index
         };
     };
 
+struct suspendedphase_logger_index
+    {
+    //! The enum
+    enum Enum
+        {
+        total_drag_x,           //!< Index for the overall total drag on the solid phase
+        total_drag_y,           //!< Index for the overall total drag on the solid phase
+        total_drag_z,           //!< Index for the overall total drag on the solid phase
+        num_quantities // final element to count number of quantities
+        };
+    };
+
+
     } // end namespace sph
     } // end namespace hoomd
 
