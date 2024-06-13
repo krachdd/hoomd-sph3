@@ -96,7 +96,8 @@ model = hoomd.sph.sphmodel.SinglePhaseFlowTV(kernel = kernel_obj,
                                            eos    = eos,
                                            nlist  = NList,
                                            fluidgroup_filter = filterFLUID,
-                                           solidgroup_filter = filterSOLID)
+                                           solidgroup_filter = filterSOLID,
+                                           densitymethood = densitymethod)
 if device.communicator.rank == 0:
     print("SetModelParameter on all ranks")
 
@@ -106,7 +107,7 @@ model.gx = fx
 model.damp = 5000
 model.artificialviscosity = True 
 model.alpha = 0.2
-model.beta = 0.0
+model.beta = 0.2
 model.densitydiffusion = False
 model.shepardrenormanlization = False 
 
@@ -148,7 +149,7 @@ if device.communicator.rank == 0:
 
 
 
-gsd_trigger = hoomd.trigger.Periodic(1000)
+gsd_trigger = hoomd.trigger.Periodic(3000)
 gsd_writer = hoomd.write.GSD(filename=dumpname,
                              trigger=gsd_trigger,
                              mode='wb',

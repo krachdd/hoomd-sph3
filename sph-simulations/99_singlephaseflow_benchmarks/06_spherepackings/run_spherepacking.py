@@ -30,20 +30,20 @@ rawfilename = params['rawfilename']
 filename = rawfilename.replace('.raw', '_init.gsd')
 dt_string = datetime.now().strftime("%Y-%m-%d-%H-%M-%S")
 logname  = filename.replace('_init.gsd', '')
-logname  = f'{logname}_run_{FX}_{dt_string}.log'
+logname  = f'{logname}_run_{FX}_{dt_string}_WC.log'
 dumpname = filename.replace('_init.gsd', '')
-dumpname = f'{dumpname}_run_{FX}.gsd'
+dumpname = f'{dumpname}_run_{FX}_WC.gsd'
 
 sim.create_state_from_gsd(filename = filename)
 
 
-if SHOW_DECOMP_INFO:
-    sph_info.print_decomp_info(sim, device)
 
 # Define necessary parameters
 # Fluid and particle properties
 SHOW_PROC_PART_INFO = False
 SHOW_DECOMP_INFO    = False
+if SHOW_DECOMP_INFO:
+    sph_info.print_decomp_info(sim, device)
 lref                = 0.001                                     # [ m ]
 voxelsize           = np.float64(params['vsize'])               # [ m ]
 dx                  = voxelsize                                 # [ m ]
@@ -72,8 +72,8 @@ Re = 0.01
 refvel = (Re * viscosity)/(rho0 * lref)
 
 # define model parameters
-densitymethod = 'CONTINUITY'
-steps = 20001
+densitymethod = 'SUMMATION'
+steps = 30001
 
 # Neighbor list
 NList = hoomd.nsearch.nlist.Cell(buffer = rcut*0.05, rebuild_check_delay = 1, kappa = kappa)
@@ -96,7 +96,8 @@ model = hoomd.sph.sphmodel.SinglePhaseFlow(kernel = kernel_obj,
                                            eos    = eos,
                                            nlist  = NList,
                                            fluidgroup_filter = filterFLUID,
-                                           solidgroup_filter = filterSOLID)
+                                           solidgroup_filter = filterSOLID,
+                                           densitymethod = densitymethod)
 if device.communicator.rank == 0:
     print("SetModelParameter on all ranks")
 
@@ -106,7 +107,7 @@ model.gx = fx
 model.damp = 5000
 model.artificialviscosity = True 
 model.alpha = 0.2
-model.beta = 0.0
+model.beta = 0.2
 model.densitydiffusion = False
 model.shepardrenormanlization = False 
 
@@ -148,7 +149,7 @@ if device.communicator.rank == 0:
 
 
 
-gsd_trigger = hoomd.trigger.Periodic(1000)
+gsd_trigger = hoomd.trigger.Periodic(3000)
 gsd_writer = hoomd.write.GSD(filename=dumpname,
                              trigger=gsd_trigger,
                              mode='wb',

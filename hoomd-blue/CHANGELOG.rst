@@ -1,4 +1,4 @@
-.. Copyright (c) 2009-2023 The Regents of the University of Michigan.
+.. Copyright (c) 2009-2024 The Regents of the University of Michigan.
 .. Part of HOOMD-blue, released under the BSD 3-Clause License.
 
 Change Log
@@ -7,7 +7,81 @@ Change Log
 4.x
 ---
 
-4.5.0 (2023-02-13)
+4.7.0 (2024-05-16)
+^^^^^^^^^^^^^^^^^^
+
+*Fixed*
+
+* ``md.methods.rattle.Brownian`` executes without causing a segmentation fault on the CPU with domain
+  decomposition (`#1748 <https://github.com/glotzerlab/hoomd-blue/pull/1748>`__).
+* Compile ``BoxDim.h`` without warnings
+  (`#1756 <https://github.com/glotzerlab/hoomd-blue/pull/1756>`__).
+* Do not compute dipole-dipole interactions that are not necessary
+  (`#1758 <https://github.com/glotzerlab/hoomd-blue/pull/1758>`__).
+* Correctly define the units of gamma in ``md.methods.Langevin``
+  (`#1771 <https://github.com/glotzerlab/hoomd-blue/pull/1771>`__).
+* Fix compile errors with external components that use the Expanded Mie potential
+  (`#1781 <https://github.com/glotzerlab/hoomd-blue/pull/1781>`__).
+* Allow HPMC pair potentials to be subclassed in external components
+  (`#1780 <https://github.com/glotzerlab/hoomd-blue/pull/1780>`__).
+
+*Added*
+
+* "How to tune move sizes in multicomponent HPMC systems" documentation page
+  (`#1750 <https://github.com/glotzerlab/hoomd-blue/pull/1750>`__).
+* ``hoomd.box.from_basis_vectors`` - construct a box from arbitrary basis vectors
+  (`#1769 <https://github.com/glotzerlab/hoomd-blue/pull/1769>`__).
+
+*Changed*
+
+* Make readthedocs builds more reproducible
+  (`#1758 <https://github.com/glotzerlab/hoomd-blue/pull/1758>`__).
+
+
+4.6.0 (2024-03-19)
+^^^^^^^^^^^^^^^^^^
+
+*Fixed*
+
+* ``create_state_from_gsd`` reads bond/angle/dihedral/improper/pair types when there are no
+  corresponding groups (`#1729 <https://github.com/glotzerlab/hoomd-blue/pull/1729>`__).
+
+*Added*
+
+* ``hoomd.variant.box.BoxVariant`` - Describe boxes that change as a function of timestep
+  (`#1685 <https://github.com/glotzerlab/hoomd-blue/pull/1685>`__).
+* ``hoomd.variant.box.Constant`` - A constant box
+  (`#1685 <https://github.com/glotzerlab/hoomd-blue/pull/1685>`__).
+* ``hoomd.variant.box.Interpolate`` - Linearly interpolate between two boxes
+  (`#1685 <https://github.com/glotzerlab/hoomd-blue/pull/1685>`__).
+* ``hoomd.variant.box.InverseVolumeRamp`` - Linearly ramp the inverse volume of the system
+  (`#1685 <https://github.com/glotzerlab/hoomd-blue/pull/1685>`__).
+* ``hoomd.hpmc.update.QuickCompress`` now accepts a ``hoomd.variant.box.BoxVariant`` object for
+  `target_box` (`#1736 <https://github.com/glotzerlab/hoomd-blue/pull/1736>`__).
+* ``box`` argument to ``hoomd.update.BoxResize`` that accepts a ``hoomd.variant.box.BoxVariant``
+  (`#1740 <https://github.com/glotzerlab/hoomd-blue/pull/1740>`__).
+* ``hoomd.hpmc.pair.Union`` computes pair potentials between unions of points. Replaces
+  ``CPPPotentialUnion`` (`#1725 <https://github.com/glotzerlab/hoomd-blue/pull/1725>`__).
+* ``hoomd.hpmc.pair.Step`` - A step function potential
+  (`#1732 <https://github.com/glotzerlab/hoomd-blue/pull/1732>`__).
+* ``hoomd.hpmc.pair.AngularStep`` - Angular patches on particles with step function interactions
+  (e.g. Kern-Frenkel) (`#1728 <https://github.com/glotzerlab/hoomd-blue/pull/1728>`__).
+
+*Changed*
+
+* Use ``FindPython`` on modern CMake installations. You may need to adjust build scripts
+  in cases where the new behavior does not exactly match the old (i.e. use
+  ``-DPython_EXECUTABLE`` in place of ``-DPYTHON_EXECUTABLE``)
+  (`#1730 <https://github.com/glotzerlab/hoomd-blue/pull/1730>`__).
+* External components must switch from ``pybind11_add_module`` to ``hoomd_add_module``
+  (`#1730 <https://github.com/glotzerlab/hoomd-blue/pull/1730>`__).
+
+*Deprecated*
+
+* ``box1``, ``box2``, and ``variant`` arguments to ``hoomd.update.BoxResize``
+  (`#1740 <https://github.com/glotzerlab/hoomd-blue/pull/1740>`__).
+
+4.5.0 (2024-02-13)
 ^^^^^^^^^^^^^^^^^^
 
 *Fixed*
@@ -61,6 +135,8 @@ Change Log
   (`#1676 <https://github.com/glotzerlab/hoomd-blue/pull/1676>`__).
 * ``HPMCIntegrator.pair_potential`` - Use compiled potentials with ``pair_potentials``
   (`#1676 <https://github.com/glotzerlab/hoomd-blue/pull/1676>`__).
+* Single-process multi-gpu code path
+  (`#1706 <https://github.com/glotzerlab/hoomd-blue/pull/1706>`__).
 
 *Changed*
 

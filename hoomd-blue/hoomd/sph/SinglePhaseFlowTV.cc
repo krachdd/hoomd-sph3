@@ -346,7 +346,7 @@ void SinglePhaseFlowTV<KT_, SET_>::forcecomputation(uint64_t timestep)
                     {
                     Scalar muij    = meanh*dotdvdx/(rsq+epssqr);
                     Scalar meanrho = Scalar(0.5)*(rhoi+rhoj);
-                    avc = -(this->m_avalpha*this->m_c*muij+this->m_avbeta*muij*muij)/meanrho;
+                    avc = (-this->m_avalpha*this->m_c*muij+this->m_avbeta*muij*muij)/meanrho;
                     }
                 }
 

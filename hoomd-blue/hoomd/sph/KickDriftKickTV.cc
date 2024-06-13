@@ -134,6 +134,7 @@ void KickDriftKickTV::integrateStepOne(uint64_t timestep)
     // perform the first half step of velocity verlet
     // r(t+deltaT) = r(t) + v(t)*deltaT + (1/2)a(t)*deltaT^2
     // v(t+deltaT/2) = v(t) + (1/2)a*deltaT
+    Scalar temp0 = 0.0;
     for (unsigned int group_idx = 0; group_idx < group_size; group_idx++)
         {
         unsigned int j = m_group->getMemberIndex(group_idx);
@@ -163,15 +164,16 @@ void KickDriftKickTV::integrateStepOne(uint64_t timestep)
 
         // David 
         // dpe(t+deltaT/2) = dpe(t) + (1/2)*dpedt(t)*deltaT
-        h_density.data[j] += Scalar(1.0/2.0)*h_dpedt.data[j].x*m_deltaT;
-        h_pressure.data[j] += Scalar(1.0/2.0)*h_dpedt.data[j].y*m_deltaT;
+        temp0 = Scalar(1.0 / 2.0) * m_deltaT;
+        h_density.data[j]  += temp0 * h_dpedt.data[j].x;
+        h_pressure.data[j] += temp0 * h_dpedt.data[j].y;
         // DK: Energy change can be ignored
         // h_dpe.data[j].z += Scalar(1.0/2.0)*h_dpedt.data[j].z*m_deltaT;
 
         // Original HOOMD Velocity Verlet Two Step NVE
-        h_vel.data[j].x += Scalar(1.0 / 2.0) * h_accel.data[j].x * m_deltaT;
-        h_vel.data[j].y += Scalar(1.0 / 2.0) * h_accel.data[j].y * m_deltaT;
-        h_vel.data[j].z += Scalar(1.0 / 2.0) * h_accel.data[j].z * m_deltaT;
+        h_vel.data[j].x += temp0 * h_accel.data[j].x;
+        h_vel.data[j].y += temp0 * h_accel.data[j].y;
+        h_vel.data[j].z += temp0 * h_accel.data[j].z;
 
         // David 
         // r(t+deltaT) = r(t) + v(t+deltaT/2)*deltaT
@@ -180,9 +182,11 @@ void KickDriftKickTV::integrateStepOne(uint64_t timestep)
         // h_pos.data[j].z += h_vel.data[j].z*m_deltaT;
 
         // Advection Velocity
-        h_tv.data[j].x = h_vel.data[j].x + Scalar(1.0 / 2.0) * h_bpc.data[j].x * m_deltaT; 
-        h_tv.data[j].y = h_vel.data[j].y + Scalar(1.0 / 2.0) * h_bpc.data[j].y * m_deltaT; 
-        h_tv.data[j].z = h_vel.data[j].z + Scalar(1.0 / 2.0) * h_bpc.data[j].z * m_deltaT; 
+        // temp0 = Scalar(1.0 / 2.0) * 1.0/h_vel.data[j].w * m_deltaT;
+        // temp0 = Scalar(1.0 / 2.0) * m_deltaT;
+        h_tv.data[j].x = h_vel.data[j].x + temp0 * h_bpc.data[j].x; 
+        h_tv.data[j].y = h_vel.data[j].y + temp0 * h_bpc.data[j].y; 
+        h_tv.data[j].z = h_vel.data[j].z + temp0 * h_bpc.data[j].z; 
 
 
         Scalar dx = h_tv.data[j].x * m_deltaT;
@@ -247,6 +251,9 @@ void KickDriftKickTV::integrateStepTwo(uint64_t timestep)
     ArrayHandle<Scalar4> h_net_force(net_force, access_location::host, access_mode::read);
     ArrayHandle<Scalar4> h_net_ratedpe(m_pdata->getNetRateDPEArray(), access_location::host, access_mode::read);
 
+    Scalar minv;
+    Scalar temp0;
+
     // v(t+deltaT) = v(t+deltaT/2) + 1/2 * a(t+deltaT)*deltaT
     for (unsigned int group_idx = 0; group_idx < group_size; group_idx++)
         {
@@ -268,7 +275,7 @@ void KickDriftKickTV::integrateStepTwo(uint64_t timestep)
 
         // David 
         // first, calculate acceleration from the net force
-        Scalar minv = Scalar(1.0) / h_vel.data[j].w;
+        minv = Scalar(1.0) / h_vel.data[j].w;
         h_accel.data[j].x = h_net_force.data[j].x * minv;
         h_accel.data[j].y = h_net_force.data[j].y * minv;
         h_accel.data[j].z = h_net_force.data[j].z * minv;
@@ -278,9 +285,10 @@ void KickDriftKickTV::integrateStepTwo(uint64_t timestep)
         h_dpedt.data[j].y = h_net_ratedpe.data[j].y;
         // h_dpedt.data[j].z = h_net_ratedpe.data[j].z;
 
+        temp0 = Scalar(1.0/2.0) * m_deltaT;
         // dpe(t+deltaT) = dpe(t+deltaT/2) + 1/2 * dpedt(t+deltaT)*deltaT
-        h_density.data[j] += Scalar(1.0/2.0)*h_dpedt.data[j].x*m_deltaT;
-        h_pressure.data[j] += Scalar(1.0/2.0)*h_dpedt.data[j].y*m_deltaT;
+        h_density.data[j]  += temp0 *h_dpedt.data[j].x;
+        h_pressure.data[j] += temp0 *h_dpedt.data[j].y;
         // h_dpe.data[j].z += Scalar(1.0/2.0)*h_dpedt.data[j].z*m_deltaT;
 
 
@@ -293,9 +301,9 @@ void KickDriftKickTV::integrateStepTwo(uint64_t timestep)
         // Original HOOMD Velocity Verlet Two Step NVE
         // then, update the velocity
         // v(t+deltaT) = v(t+deltaT/2) + 1/2 * a(t+deltaT) deltaT
-        h_vel.data[j].x += Scalar(1.0 / 2.0) * h_accel.data[j].x * m_deltaT;
-        h_vel.data[j].y += Scalar(1.0 / 2.0) * h_accel.data[j].y * m_deltaT;
-        h_vel.data[j].z += Scalar(1.0 / 2.0) * h_accel.data[j].z * m_deltaT;
+        h_vel.data[j].x += temp0 * h_accel.data[j].x;
+        h_vel.data[j].y += temp0 * h_accel.data[j].y;
+        h_vel.data[j].z += temp0 * h_accel.data[j].z;
 
         // limit the movement of the particles
         if (m_vlimit)

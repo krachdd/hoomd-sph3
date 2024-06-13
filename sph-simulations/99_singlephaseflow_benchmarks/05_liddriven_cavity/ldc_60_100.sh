@@ -29,4 +29,4 @@ echo "Number of Tasks Allocated      = $SLURM_NTASKS"
 echo "Number of Cores/Task Allocated = $SLURM_CPUS_PER_TASK"
 echo "JobID = $SLURM_JOB_ID"
 
-/usr/local.nfs/software/openmpi/4.1.4_gcc-11.3_cuda-11.7/bin/mpirun -np $SLURM_NTASKS  ./run_ldc_tv.py --resolution=60 --reynolds=100 --steps=3000 --initgsd="liddrivencavity_68_68_17_vs_0.016666666666666666_re_100.0_init.gsd"
+/usr/local.nfs/software/openmpi/4.1.4_gcc-11.3_cuda-11.7/bin/mpirun -np $SLURM_NTASKS  ./run_ldc_tv.py --resolution=60 --reynolds=100 --steps=10000 --initgsd="liddrivencavity_68_68_11_vs_0.016666666666666666_re_100.0_init.gsd"
