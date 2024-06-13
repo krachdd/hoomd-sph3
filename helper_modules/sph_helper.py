@@ -109,6 +109,56 @@ def update_min_c0(device, model, c, mode = 'uref', lref = 0.0, uref = 0.0, bforc
             print(f'Increase Speed of Sound: {model.get_speedofsound()}, Ma = {Ma}')
 
 
+def update_min_c0_tpf(device, model, c1, c2, mode = 'plain', lref = 0.0, uref = 0.0, bforce = 0.0, cfactor = 10.0):
+    """
+    
+    Parameters
+    ----------
+    model : sph model
+        DESCRIPTION.
+    model : string
+        DESCRIPTION.
+    lref : 
+        DESCRIPTION.
+    uref : 
+        DESCRIPTION.
+    bforce : 
+        DESCRIPTION.
+    cfator : 
+        DESCRIPTION.
+    Returns
+    -------
+    Nothing
+
+    """
+
+    if mode == 'uref':
+        raise NotImplementedError
+    elif mode == 'bforce':
+        raise NotImplementedError 
+    elif mode == 'both':
+        raise NotImplementedError 
+    elif mode == 'plain':
+        c01 = c1 * cfactor
+        if c01 <= 0.0:
+            raise ValueError('c0 must not be smaller or equal to 0.') 
+        c02 = c2 * cfactor
+        if c01 <= 0.0:
+            raise ValueError('c0 must not be smaller or equal to 0.') 
+    else:
+        raise ValueError('Give correct mode')
+
+    Ma1 = uref/c01 
+    Ma2 = uref/c02 
+    if c1 > c01 or c2 > c02:
+        if device.communicator.rank == 0: 
+            print(f'c0 not updated, Ma1 = {Ma1}, Ma2 = {Ma2}')
+    else:
+        model.set_speedofsound(c01, c02)
+        if device.communicator.rank == 0:
+            print(f'Increase Speed of Sound: {model.get_speedofsound()}, Ma1 = {Ma1}, Ma2 = {Ma2}')
+
+
 
 
 
