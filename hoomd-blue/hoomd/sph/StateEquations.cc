@@ -23,7 +23,7 @@ namespace sph
 
 template<StateEquationType SET_>
 StateEquation<SET_>::StateEquation()
-    : m_bp(Scalar(0.0)), m_rho0(Scalar(0.0)), m_c(Scalar(0.0))
+    : m_bp(Scalar(0.0)), m_tvp(Scalar(0.0)), m_rho0(Scalar(0.0)), m_c(Scalar(0.0))
     {
         // Default values
         m_params_set = false;
@@ -34,12 +34,15 @@ This is called two times in a simulation setup. First initially to
 construct EOS with c = 0.1, secondly with c computed in sphmodel.py
 */
 template<StateEquationType SET_>
-void StateEquation<SET_>::setParams(Scalar rho0, Scalar c, Scalar bpfactor)
+void StateEquation<SET_>::setParams(Scalar rho0, Scalar c, Scalar bpfactor, Scalar tvpfactor)
     {
         m_rho0 = rho0;
         m_c = c;
         m_bpfactor = bpfactor;
         m_bp = m_bpfactor*m_rho0*m_c*m_c;
+        m_tvpfactor = tvpfactor;
+        m_tvp = m_tvp*m_rho0*m_c*m_c;
+
         m_params_set = true;
     }
     
@@ -47,6 +50,13 @@ template<StateEquationType SET_>
 void StateEquation<SET_>::setBackPressure(Scalar bp)
     {
         m_bp = bp;
+        m_params_set = true;
+    }
+
+template<StateEquationType SET_>
+void StateEquation<SET_>::setTransportVelocityPressure(Scalar tvp)
+    {
+        m_tvp = tvp;
         m_params_set = true;
     }
 

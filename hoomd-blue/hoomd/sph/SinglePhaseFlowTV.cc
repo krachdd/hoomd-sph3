@@ -373,9 +373,9 @@ void SinglePhaseFlowTV<KT_, SET_>::forcecomputation(uint64_t timestep)
             h_force.data[k].z += temp0 * A3ij; 
 
             // Evaluate background pressure contribution in aux2
-            h_bpc.data[i].x -= vijsqr * this->m_eos->getBackgroundPressure()/mi * dwdr_r * dx.x;
-            h_bpc.data[i].y -= vijsqr * this->m_eos->getBackgroundPressure()/mi * dwdr_r * dx.y;
-            h_bpc.data[i].z -= vijsqr * this->m_eos->getBackgroundPressure()/mi * dwdr_r * dx.z;
+            h_bpc.data[i].x -= vijsqr * this->m_eos->getTransportVelocityPressure()/mi * dwdr_r * dx.x;
+            h_bpc.data[i].y -= vijsqr * this->m_eos->getTransportVelocityPressure()/mi * dwdr_r * dx.y;
+            h_bpc.data[i].z -= vijsqr * this->m_eos->getTransportVelocityPressure()/mi * dwdr_r * dx.z;
 
             // Evaluate rate of change of density if CONTINUITY approach is used
             if ( this->m_density_method == DENSITYCONTINUITY )
