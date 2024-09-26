@@ -41,7 +41,7 @@ void StateEquation<SET_>::setParams(Scalar rho0, Scalar c, Scalar bpfactor, Scal
         m_bpfactor = bpfactor;
         m_bp = m_bpfactor*m_rho0*m_c*m_c;
         m_tvpfactor = tvpfactor;
-        m_tvp = m_tvp*m_rho0*m_c*m_c;
+        m_tvp = m_tvpfactor*m_rho0*m_c*m_c;
 
         m_params_set = true;
     }

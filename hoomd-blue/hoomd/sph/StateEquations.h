@@ -63,6 +63,12 @@ struct StateEquation
          */
         void setBackPressure(Scalar bp);
 
+        /*! Set the parameters
+         * \param tv Transport Velocity Pressure
+         */
+        void setTransportVelocityPressure(Scalar tvp);
+
+
         // Getter and setter methods
         HOSTDEVICE Scalar getRestDensity()
             {
