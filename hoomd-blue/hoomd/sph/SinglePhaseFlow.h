@@ -180,11 +180,6 @@ class PYBIND11_EXPORT SinglePhaseFlow : public SPHBaseClass<KT_, SET_>
         virtual void computeForces(uint64_t timestep);
 
     #ifdef ENABLE_MPI
-        /// The system's communicator.
-        std::shared_ptr<Communicator> m_comm;
-    #endif
-
-    #ifdef ENABLE_MPI
         //! Get requested ghost communication flags
         virtual CommFlags getRequestedCommFlags(uint64_t timestep)
             {
@@ -211,6 +206,11 @@ class PYBIND11_EXPORT SinglePhaseFlow : public SPHBaseClass<KT_, SET_>
             }
 
     protected:
+
+    #ifdef ENABLE_MPI
+        /// The system's communicator.
+        std::shared_ptr<Communicator> m_comm;
+    #endif
 
         // Shared pointers
         std::shared_ptr<ParticleGroup> m_fluidgroup; //!< Group of fluid particles

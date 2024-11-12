@@ -84,6 +84,15 @@ SinglePhaseFlowTV<KT_, SET_>::SinglePhaseFlowTV(std::shared_ptr<SystemDefinition
         this->m_r_cut_nlist = std::make_shared<GlobalArray<Scalar>>(this->m_typpair_idx.getNumElements(), this->m_exec_conf);
         this->m_nlist->addRCutMatrix(this->m_r_cut_nlist);
 
+#ifdef ENABLE_MPI
+    if (this->m_sysdef->isDomainDecomposed())
+        {
+        auto comm_weak = this->m_sysdef->getCommunicator();
+        assert(comm_weak.lock());
+        m_comm = comm_weak.lock();
+        }
+#endif
+
       }
 
 /*! Destructor
