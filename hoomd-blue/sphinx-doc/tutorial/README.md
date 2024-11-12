@@ -17,6 +17,7 @@ included in HOOMD-blue's [documentation].
 * [Organizing and Executing Simulations](05-Organizing-and-Executing-Simulations/00-index.ipynb)
 * [Modelling Rigid Bodies](06-Modelling-Rigid-Bodies/00-index.ipynb)
 * [Modelling Patchy Particles](07-Modelling-Patchy-Particles/00-index.ipynb)
+* [Multiparticle Collision Dynamics](09-Multiparticle-Collision-Dynamics/00-index.ipynb)
 
 ## Executing the tutorials
 
@@ -24,13 +25,8 @@ You can [install HOOMD-blue] and run these examples interactively.
 
 [install HOOMD-blue]: http://hoomd-blue.readthedocs.io
 
-Clone the **hoomd-examples** repository and start **jupyter notebook**
-
-```bash
-$ git clone https://github.com/glotzerlab/hoomd-examples
-$ cd hoomd-examples
-$ jupyter lab
-```
+Clone the **hoomd-examples** repository and open the notebooks with the tool you
+prefer.
 
 ## Prerequisites
 
@@ -40,12 +36,13 @@ These examples use the following python packages:
 * [freud](http://glotzerlab.engin.umich.edu/freud/)
 * [GSD](https://github.com/glotzerlab/gsd)
 * [HOOMD-blue](http://glotzerlab.engin.umich.edu/hoomd-blue/)
-* [jupyterlab](http://jupyterlab.io/)
 * [matplotlib](http://matplotlib.org/)
 * [pillow](https://python-pillow.org/)
+* [signac](https://signac.io/)
+* [signac-flow](https://signac.io/)
 
-Conda users can install these from [conda-forge](https://conda-forge.org/):
+You can install these from [conda-forge](https://conda-forge.org/):
 
 ```bash
-conda install -c conda-forge fresnel freud  gsd hoomd jupyterlab matplotlib
+mamba install fresnel freud gsd hoomd matplotlib pillow signac signac-flow
 ```

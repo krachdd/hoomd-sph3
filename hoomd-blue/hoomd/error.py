@@ -28,8 +28,9 @@ class DataAccessError(RuntimeError):
 
     def __str__(self):
         """Returns the error message."""
-        return (f'The property {self.data_name} is unavailable until the '
-                'simulation runs for 0 or more steps.')
+        return (f'The property {self.data_name} is not available until the '
+                'operation is added to a simulation AND `simulation.run` '
+                'has been called.')
 
 
 class TypeConversionError(ValueError):
@@ -48,6 +49,11 @@ class _NoGPU:
     def __init__(self, *args, **kwargs):
         raise GPUNotAvailableError(
             "This build of HOOMD-blue does not support GPUs.")
+
+
+class MPINotAvailableError(NotImplementedError):
+    """Error for when a feature is not implemented for MPI."""
+    pass
 
 
 class IncompleteSpecificationError(ValueError):

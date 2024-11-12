@@ -7,8 +7,6 @@ CMAKE_MINIMUM_REQUIRED(VERSION 3.15...3.27 FATAL_ERROR)
 set(CMAKE_FIND_FRAMEWORK LAST)
 
 project (HOOMD LANGUAGES C CXX)
-
-# enlble compile_commands.json output
 set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
 
 include(GNUInstallDirs)
@@ -18,7 +16,7 @@ add_subdirectory (CMake)
 
 ################################
 ## Version information
-set(HOOMD_VERSION_RAW "4.7.0")
+set(HOOMD_VERSION_RAW "4.9.1")
 string(REGEX MATCH "(.*)\\.(.*)\\.(.*)$" _hoomd_version_match ${HOOMD_VERSION_RAW})
 set(HOOMD_VERSION_MAJOR ${CMAKE_MATCH_1})
 set(HOOMD_VERSION_MINOR ${CMAKE_MATCH_2})
@@ -70,7 +68,12 @@ set(CMAKE_HIP_STANDARD 14)
 
 # Enable compiler warnings on gcc and clang (common compilers used by developers)
 if(CMAKE_COMPILER_IS_GNUCXX OR CMAKE_CXX_COMPILER_ID MATCHES "Clang")
-    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wall -Wconversion -Wno-sign-conversion -Wno-unknown-pragmas -Wno-deprecated-declarations -Wno-unused-result")
+    if (NOT (ENABLE_GPU AND HOOMD_GPU_PLATFORM STREQUAL "HIP"))
+        set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wconversion")
+    endif()
+
+    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wall -Wno-sign-conversion -Wno-unknown-pragmas -Wno-deprecated-declarations -Wno-unused-result")
+
     set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -Wall")
 endif()
 
@@ -105,6 +108,13 @@ option(BUILD_HPMC "Build the hpmc package" off)
 endif()
 option(BUILD_METAL "Build the metal package" off)
 
+if (ENABLE_GPU AND HOOMD_GPU_PLATFORM STREQUAL "HIP")
+message("Defaulting BUILD_MPCD=off due to HIP GPU platform.")
+option(BUILD_MPCD "Build the mpcd package" off)
+else()
+option(BUILD_MPCD "Build the mpcd package" ${BUILD_MD})
+endif()
+
 # Optionally use TBB for threading
 option(ENABLE_TBB "Enable support for Threading Building Blocks (TBB)" off)
 
@@ -123,12 +133,6 @@ include (HOOMDMPISetup)
 include(HOOMDPythonSetup)
 
 include (hoomd-macros)
-
-if (NOT ENABLE_HIP OR HIP_PLATFORM STREQUAL "nvcc")
-    option(BUILD_MPCD "Build the mpcd package" off)
-else()
-    option(BUILD_MPCD "Build the mpcd package" off)
-endif()
 
 find_package(Eigen3 3.2 CONFIG REQUIRED)
 if (Eigen3_FOUND)
@@ -215,3 +219,12 @@ install(FILES CMake/hoomd/FindTBB.cmake
               CMake/hoomd/hoomd-macros.cmake
               ${HOOMD_BINARY_DIR}/hoomd-config.cmake
         DESTINATION ${CONFIG_INSTALL_DIR})
+
+# enable compile_commands.json
+if (NOT WIN32)
+  file(CREATE_LINK
+    "${CMAKE_BINARY_DIR}/compile_commands.json"
+    "${CMAKE_SOURCE_DIR}/compile_commands.json"
+    SYMBOLIC
+  )
+endif()

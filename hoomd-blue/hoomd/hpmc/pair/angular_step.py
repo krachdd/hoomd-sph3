@@ -38,11 +38,11 @@ class AngularStep(Pair):
         U(\vec{r}_{ij}, \mathbf{q}_i, \mathbf{q}_j) =
         U_\mathrm{isotropic}(\vec{r}_{ij}) \cdot
         \max \left(1,
-        \sum_{m=1}^{N_{\mathrm{patches},i}} \sum_{m=1}^{N_{\mathrm{patches},j}}
-        f(\mathbf{q}_i \vec{d}_{n,i} \mathbf{q}_i^*,
-          \mathbf{q}_j \vec{d}_{m,j} \mathbf{q}_j^*,
-          \delta_{n,i},
-          \delta_{m,j}) \right)
+        \sum_{m=1}^{N_{\mathrm{patches},i}} \sum_{n=1}^{N_{\mathrm{patches},j}}
+        f(\mathbf{q}_i \vec{d}_{m,i} \mathbf{q}_i^*,
+          \mathbf{q}_j \vec{d}_{n,j} \mathbf{q}_j^*,
+          \delta_{m,i},
+          \delta_{n,j}) \right)
 
     where :math:`U_\mathrm{isotropic}` is the isotropic potential.
     For a given particle :math:`i`, :math:`N_{\mathrm{patches},i}` is the
@@ -90,6 +90,8 @@ class AngularStep(Pair):
           directional vectors of the patches on a particle.
         - ``deltas`` (`list` [`float`]): List of delta values (the half opening
           angle of the patch in radian) of the patches.
+
+        Type: `TypeParameter` [``particle_type``, `dict`]
     """
     _cpp_class_name = "PairPotentialAngularStep"
 

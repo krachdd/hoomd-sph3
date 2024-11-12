@@ -7,6 +7,7 @@ CMakeCache.txt
 *.dcd
 *.gsd
 build
+html
 __pycache__
 *.pyc
 *.swp

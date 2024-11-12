@@ -4,12 +4,10 @@ ci:
 
 repos:
   - repo: https://github.com/pre-commit/pre-commit-hooks
-    rev: 'v4.5.0'
+    rev: 'v5.0.0'
     hooks:
       - id: end-of-file-fixer
-        exclude: 'setup.cfg'
       - id: trailing-whitespace
-        exclude: 'setup.cfg'
       - id: debug-statements
       - id: check-yaml
       - id: check-case-conflict
@@ -29,8 +27,9 @@ repos:
     hooks:
       - id: nb-strip-paths
   - repo: https://github.com/astral-sh/ruff-pre-commit
-    rev: v0.3.4
+    rev: v0.6.9
     hooks:
       - id: ruff-format
+        types_or: [ python, jupyter ]
       - id: ruff
         types_or: [ python, jupyter ]

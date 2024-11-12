@@ -107,4 +107,4 @@ contributed to the code.
 Propose a change log entry
 __________________________
 
-Propose a short concise entry describing the change in the pull request description.
+Propose a concise entry describing the change in ``CHANGELOG.rst``.

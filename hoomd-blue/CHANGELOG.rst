@@ -7,6 +7,143 @@ Change Log
 4.x
 ---
 
+4.9.1 (2024-10-31)
+^^^^^^^^^^^^^^^^^^
+
+*Fixed*
+
+* Correct compile errors with ``-DENABLE_GPU=on -DHOOMD_GPU_PLATFORM=HIP``
+  (`#1920 <https://github.com/glotzerlab/hoomd-blue/pull/1915>`__)
+
+4.9.0 (2024-10-29)
+^^^^^^^^^^^^^^^^^^
+
+*Added*
+
+* Support Python 3.13
+  (`#1915 <https://github.com/glotzerlab/hoomd-blue/pull/1915>`__)
+* Patchy potentials for MD simulations: ``hoomd.md.pair.aniso.PatchyExpandedGaussian``,
+  ``hoomd.md.pair.aniso.PatchyExpandedLJ``, ``hoomd.md.pair.aniso.PatchyExpandedMie``,
+  ``hoomd.md.pair.aniso.PatchyGaussian``, ``hoomd.md.pair.aniso.PatchyLJ``,
+  ``hoomd.md.pair.aniso.PatchyMie``, and ``hoomd.md.pair.aniso.PatchyYukawa``
+  (`#1412 <https://github.com/glotzerlab/hoomd-blue/pull/1412>`__).
+* Double-well potentials in HPMC: ``hoomd.hpmc.pair.LJGauss`` and ``hoomd.hpmc.pair.OPP``
+  (`#1889 <https://github.com/glotzerlab/hoomd-blue/pull/1889>`__).
+* Mesh potentials: ``hoomd.md.mesh.bending.BendingRigidity``, ``hoomd.md.mesh.bending.Helfrich``,
+  ``hoomd.md.mesh.conservation.Area``, ``hoomd.md.mesh.conservation.TriangleArea``, and
+  ``hoomd.md.mesh.conservation.Volume``
+  (`#1792 <https://github.com/glotzerlab/hoomd-blue/pull/1792>`__,
+  `#1793 <https://github.com/glotzerlab/hoomd-blue/pull/1793>`__,
+  `#1794 <https://github.com/glotzerlab/hoomd-blue/pull/1794>`__,
+  `#1795 <https://github.com/glotzerlab/hoomd-blue/pull/1795>`__).
+* ``start`` and ``end`` arguments to ``hoomd.write.Burst.dump``
+  (`#1870 <https://github.com/glotzerlab/hoomd-blue/pull/1870>`__)
+* ``hoomd.mpcd.geometry.CosineChannel`` for a serpentine (cosine) channel
+  (`#1836 <https://github.com/glotzerlab/hoomd-blue/pull/1836>`__).
+* ``hoomd.mpcd.geometry.CosineExpansionContraction`` for an expansion-contraction channel
+  (`#1836 <https://github.com/glotzerlab/hoomd-blue/pull/1836>`__).
+
+*Fixed*
+
+* Errors in the documentation
+  (`#1830 <https://github.com/glotzerlab/hoomd-blue/pull/1830>`__,
+  `#1861 <https://github.com/glotzerlab/hoomd-blue/pull/1861>`__,
+  `#1872 <https://github.com/glotzerlab/hoomd-blue/pull/1872>`__,
+  `#1884 <https://github.com/glotzerlab/hoomd-blue/pull/1884>`__,
+  `#1896 <https://github.com/glotzerlab/hoomd-blue/pull/1896>`__).
+* Thermalize momenta of particles with floppy body tags
+  (`#1891 <https://github.com/glotzerlab/hoomd-blue/pull/1891>`__).
+* Spheropolyhedra with two vertices can now be saved as a valid ``gsd_shape_spec``
+  (`#1898 <https://github.com/glotzerlab/hoomd-blue/pull/1898>`__).
+
+*Changed*
+
+* Improved build instructions
+  (`#1909 <https://github.com/glotzerlab/hoomd-blue/pull/1909>`__).
+
+
+4.8.2 (2024-07-23)
+^^^^^^^^^^^^^^^^^^
+
+*Fixed*
+
+* Correct citation to Langevin piston paper
+  (`#1849 <https://github.com/glotzerlab/hoomd-blue/pull/1849>`__).
+* External walls, external fields, and constrains can now be implemented via external plugins
+  (`#1849 <https://github.com/glotzerlab/hoomd-blue/pull/1849>`__).
+* Prevent compile errors with ``-DENABLE_GPU=on -DHOOMD_GPU_PLATFORM=HIP``
+  (`#1851 <https://github.com/glotzerlab/hoomd-blue/pull/1851>`__).
+* Prevent ``/usr/lib64/slurm/auth_munge.so: undefined symbol: slurm_conf`` error on Purdue Anvil
+  (`#1850 <https://github.com/glotzerlab/hoomd-blue/pull/1850>`__).
+
+4.8.1 (2024-07-18)
+^^^^^^^^^^^^^^^^^^
+
+*Fixed*
+
+* Prevent illegal instruction when accessing 0 length snapshot arrays
+  (`#1846 <https://github.com/glotzerlab/hoomd-blue/pull/1846>`__)
+* Fix MPCD compiler warning.
+  (`#1845 <https://github.com/glotzerlab/hoomd-blue/pull/1845>`__)
+
+4.8.0 (2024-07-11)
+^^^^^^^^^^^^^^^^^^
+
+*Added*
+
+* ``hoomd.mpcd`` reimplements the MPCD method for simulating hydrodynamic interactions.
+  See the migrating page for an overview and individual class and method documentation for more
+  information (`#1784 <https://github.com/glotzerlab/hoomd-blue/pull/1784>`__).
+* MPCD tutorial.
+* Support numpy 2.0
+  (`#1797 <https://github.com/glotzerlab/hoomd-blue/pull/1797>`__)
+* ``hoomd.hpmc.external.External`` provides an abstract interface to external potentials
+  (`#1811 <https://github.com/glotzerlab/hoomd-blue/pull/1811>`__).
+* ``hoomd.hpmc.external.Linear`` computes the potential as a linear function of the distance from a
+  point to a plane (`#1811 <https://github.com/glotzerlab/hoomd-blue/pull/1811>`__).
+* ``HPMCIntegrator.external_potentials`` sets the list of external potentials applied to the system
+  (`#1811 <https://github.com/glotzerlab/hoomd-blue/pull/1811>`__).
+* ``hpmc.pair.ExpandedGaussian`` computes the expanded Gaussian pair potential in HPMC
+  (`#1817 <https://github.com/glotzerlab/hoomd-blue/pull/1817>`__).
+
+*Changed*
+
+* Miscellaneous documentation improvements
+  (`#1786 <https://github.com/glotzerlab/hoomd-blue/pull/1786>`__,
+  `#1800 <https://github.com/glotzerlab/hoomd-blue/pull/1800>`__,
+  `#1820 <https://github.com/glotzerlab/hoomd-blue/pull/1820>`__).
+* Provide an error message for invalid Ellipsoid shape parameters
+  (`#1785 <https://github.com/glotzerlab/hoomd-blue/pull/1785>`__).
+* Provide the full CUDA error message when scanning devices
+  (`#1803 <https://github.com/glotzerlab/hoomd-blue/pull/1803>`__).
+* Test with gcc14, clang17, and clang18. No longer test with clang10, clang11, or clang12.
+  (`#1798 <https://github.com/glotzerlab/hoomd-blue/pull/1798>`__,
+  `#1816 <https://github.com/glotzerlab/hoomd-blue/pull/1816>`__).
+* Ensure that Gaussian-type pair potentials have positive sigma values
+  (`#1810 <https://github.com/glotzerlab/hoomd-blue/pull/1810>`__).
+* Demonstrate ``Step`` and ``AngularStep`` in the tutorial "Modelling Patchy Particles".
+* Fixed typographical errors in all tutorials.
+
+*Fixed*
+
+* Issue the proper error message when ``ALJ.shape`` is not set for all particle types
+  (`#1808 <https://github.com/glotzerlab/hoomd-blue/pull/1808>`__).
+* Correctly apply Brownian torque when elements of the inertia tensor are 0
+  (`#1825 <https://github.com/glotzerlab/hoomd-blue/pull/1825>`__).
+
+
+*Deprecated*
+
+* ``HPMCIntegrator.external_potential`` - use ``HPMCIntegrator.external_potentials``
+  (`#1811 <https://github.com/glotzerlab/hoomd-blue/pull/1811>`__).
+* ``hoomd.hpmc.external.user.CPPExternalPotential`` - use ``hoomd.hpmc.external.Linear`` or write a
+  custom component in C++ (`#1811 <https://github.com/glotzerlab/hoomd-blue/pull/1811>`__).
+
+*Removed*
+
+* Support for Python 3.8
+  (`#1797 <https://github.com/glotzerlab/hoomd-blue/pull/1797>`__).
+
 4.7.0 (2024-05-16)
 ^^^^^^^^^^^^^^^^^^
 
@@ -2552,7 +2689,7 @@ HOOMD-blue v2.0 is released under a clean BSD 3-clause license.
    blocks.
 -  ``analyze.log`` can now register python callback functions as sources
    for logged quantities.
--  The GSD file format (http://gsd.readthedocs.io) is fully implemented
+-  The GSD file format (https://gsd.readthedocs.io) is fully implemented
    in hoomd
 
    -  ``dump.gsd`` writes GSD trajectories and restart files (use
@@ -2587,7 +2724,7 @@ HOOMD-blue v2.0 is released under a clean BSD 3-clause license.
    -  Convenience functions for common lattices: sq, hex, sc, bcc, fcc.
 
 -  Dump and initialize commands for the GTAR file format
-   (http://libgetar.readthedocs.io).
+   (https://libgetar.readthedocs.io).
 
    -  GTAR can store trajectory data in zip, tar, sqlite, or bare
       directories
@@ -3140,7 +3277,7 @@ Version 0.11.0 (2012-07-27)
 12. Added *–msg-file* command line option which redirects the message
     output to a file
 13. New pair potential *pair.force_shifted_lj* : Implements
-    http://dx.doi.org/10.1063/1.3558787
+    https://dx.doi.org/10.1063/1.3558787
 
 *Bug fixes*
 
