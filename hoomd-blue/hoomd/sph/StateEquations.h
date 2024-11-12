@@ -56,12 +56,18 @@ struct StateEquation
          * \param c Speed of sound
          * \param bpfactor Back pressure factor
          */
-        void setParams(Scalar rho0, Scalar c, Scalar bpfactor);
+        void setParams(Scalar rho0, Scalar c, Scalar bpfactor, Scalar tvpfactor);
 
         /*! Set the parameters
          * \param bp Back pressure
          */
         void setBackPressure(Scalar bp);
+
+        /*! Set the parameters
+         * \param tv Transport Velocity Pressure
+         */
+        void setTransportVelocityPressure(Scalar tvp);
+
 
         // Getter and setter methods
         HOSTDEVICE Scalar getRestDensity()
@@ -71,6 +77,10 @@ struct StateEquation
         HOSTDEVICE Scalar getBackgroundPressure()
             {
             return m_bp;
+            }
+        HOSTDEVICE Scalar getTransportVelocityPressure()
+            {
+            return m_tvp;
             }
         HOSTDEVICE Scalar getSpeedOfSound()
             {
@@ -90,7 +100,9 @@ struct StateEquation
 
     protected:
         Scalar m_bpfactor; //!< Back pressure scaling factor
+        Scalar m_tvpfactor; //!< Back pressure scaling factor
         Scalar m_bp; //!< Back pressure
+        Scalar m_tvp; //!< Back pressure
         Scalar m_rho0; //!< Reference density
         Scalar m_c; //!< Numerical speed of sound
         bool m_params_set; //!< True if parameters are set
