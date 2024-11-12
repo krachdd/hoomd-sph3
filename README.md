@@ -1,19 +1,9 @@
 # hoomd-sph3 - A SPH Implementation in HOOMD-Blue
-SPH Implementation in 
-- HOOMD-Blue 3.3.0 (as of 01.08.2022)
-- HOOMD-Blue 3.8.0 (as of 28.01.2023)
-- HOOMD-Blue 3.8.1 (as of 29.01.2023)
-- HOOMD-Blue 3.9.0 (as of 27.02.2023)
-- HOOMD-Blue 3.10.0 (as of 15.03.2023)
-- HOOMD-Blue 4.2.1 (as of 06.10.2023)
-- HOOMD-Blue 4.4.0 (as of 14.12.2023)
-- HOOMD-Blue 4.4.1 (as of 17.01.2024)
+SPH Implementation in HOOMD-Blue 4.9.1 (as of 12.11.2024)
 
-GSD Version
-- GSD 2.8.0 (as of 27.02.2023)
-- GSD 3.2.0 (as of 06.10.2023)
+GSD Version 3.4.0 (as of 12.11.2024)
 
-PGSD Version
+PGSD Version 3.2.0 (as of 12.11.2024)
 
 ## Libaries to install check HOOMD Webpage
 additional: cereal - A C++11 library for serialization
@@ -22,15 +12,6 @@ sudo apt install libcereal-dev
 ```
 
 ## Main Modifications
-### Technical aspects
-- **pybind11** instead of old BOOST Verison (This makes life easy.)
-- can be build not only on NVIDIA cards
-- use Type-Parameter dictionaries for class metaparameter handling
-- version later than python 3.10, or 3.9
-- better internal separation of model, logger, and integrator
-- access to particle fields direct in python interface easily possible
-- generally more modularized (in all aspects of the model)
-- **HOOMD-Blue v4.5.0** instead of **HOOMD-Blue v1.8.2/v2.2.0**. Try to keep that up to date in the future
 
 ### Organizational apsects
 - differnt Loggers, physical models, integrators can be applied added additivly (use filters instead of groups)
