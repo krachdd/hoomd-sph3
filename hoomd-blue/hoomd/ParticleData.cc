@@ -5705,7 +5705,11 @@ template<class Real> pybind11::object SnapshotParticleData<Real>::getPosNP(pybin
     std::vector<size_t> dims(2);
     dims[0] = self_cpp->pos.size();
     dims[1] = 3;
-    return pybind11::array(dims, (Real*)&self_cpp->pos[0], self);
+    if (dims[0] == 0)
+        {
+        return pybind11::array(pybind11::dtype::of<Real>(), dims, nullptr);
+        }
+    return pybind11::array(dims, (Real*)self_cpp->pos.data(), self);
     }
 
 /*! \returns a numpy array that wraps the pos data element.
@@ -5721,7 +5725,11 @@ template<class Real> pybind11::object SnapshotParticleData<Real>::getVelNP(pybin
     std::vector<size_t> dims(2);
     dims[0] = self_cpp->pos.size();
     dims[1] = 3;
-    return pybind11::array(dims, (Real*)&self_cpp->vel[0], self);
+    if (dims[0] == 0)
+        {
+        return pybind11::array(pybind11::dtype::of<Real>(), dims, nullptr);
+        }
+    return pybind11::array(dims, (Real*)self_cpp->vel.data(), self);
     }
 
 /*! \returns a numpy array that wraps the pos data element.
@@ -5737,7 +5745,11 @@ template<class Real> pybind11::object SnapshotParticleData<Real>::getAccelNP(pyb
     std::vector<size_t> dims(2);
     dims[0] = self_cpp->pos.size();
     dims[1] = 3;
-    return pybind11::array(dims, (Real*)&self_cpp->accel[0], self);
+    if (dims[0] == 0)
+        {
+        return pybind11::array(pybind11::dtype::of<Real>(), dims, nullptr);
+        }
+    return pybind11::array(dims, (Real*)self_cpp->accel.data(), self);
     }
 
 
@@ -5754,7 +5766,7 @@ template<class Real> pybind11::object SnapshotParticleData<Real>::getAccelNP(pyb
 //     std::vector<size_t> dims(2);
 //     dims[0] = self_cpp->pos.size();
 //     dims[1] = 3;
-//     return pybind11::array(dims, (Real*)&self_cpp->dpe[0], self);
+//     return pybind11::array(dims, (Real*)self_cpp->dpe[0], self);
 //     }
 
 
@@ -5767,8 +5779,11 @@ template<class Real> pybind11::object SnapshotParticleData<Real>::getDensityNP(p
     auto self_cpp = self.cast<SnapshotParticleData<Real>*>();
     // mark as dirty when accessing internal data
     self_cpp->is_accel_set = false;
-
-    return pybind11::array(self_cpp->density.size(), &self_cpp->density[0], self);
+    if (self_cpp->density.size() == 0)
+        {
+        return pybind11::array(pybind11::dtype::of<Real>(), 0, nullptr);
+        }
+    return pybind11::array(self_cpp->density.size(), self_cpp->density.data(), self);
     }
 
 
@@ -5781,8 +5796,11 @@ template<class Real> pybind11::object SnapshotParticleData<Real>::getPressureNP(
     auto self_cpp = self.cast<SnapshotParticleData<Real>*>();
     // mark as dirty when accessing internal data
     self_cpp->is_accel_set = false;
-
-    return pybind11::array(self_cpp->pressure.size(), &self_cpp->pressure[0], self);
+    if (self_cpp->pressure.size() == 0)
+        {
+        return pybind11::array(pybind11::dtype::of<Real>(), 0, nullptr);
+        }
+    return pybind11::array(self_cpp->pressure.size(), self_cpp->pressure.data(), self);
     }
 
 
@@ -5795,8 +5813,11 @@ template<class Real> pybind11::object SnapshotParticleData<Real>::getEnergyNP(py
     auto self_cpp = self.cast<SnapshotParticleData<Real>*>();
     // mark as dirty when accessing internal data
     self_cpp->is_accel_set = false;
-
-    return pybind11::array(self_cpp->energy.size(), &self_cpp->energy[0], self);
+    if (self_cpp->energy.size() == 0)
+        {
+        return pybind11::array(pybind11::dtype::of<Real>(), 0, nullptr);
+        }
+    return pybind11::array(self_cpp->energy.size(), self_cpp->energy.data(), self);
     }
 
 
@@ -5814,7 +5835,11 @@ template<class Real> pybind11::object SnapshotParticleData<Real>::getAux1NP(pybi
     std::vector<size_t> dims(2);
     dims[0] = self_cpp->pos.size();
     dims[1] = 3;
-    return pybind11::array(dims, (Real*)&self_cpp->aux1[0], self);
+    if (dims[0] == 0)
+        {
+        return pybind11::array(pybind11::dtype::of<Real>(), dims, nullptr);
+        }
+    return pybind11::array(dims, (Real*)self_cpp->aux1.data(), self);
     }
 
 
@@ -5831,7 +5856,11 @@ template<class Real> pybind11::object SnapshotParticleData<Real>::getAux2NP(pybi
     std::vector<size_t> dims(2);
     dims[0] = self_cpp->pos.size();
     dims[1] = 3;
-    return pybind11::array(dims, (Real*)&self_cpp->aux2[0], self);
+    if (dims[0] == 0)
+        {
+        return pybind11::array(pybind11::dtype::of<Real>(), dims, nullptr);
+        }
+    return pybind11::array(dims, (Real*)self_cpp->aux2.data(), self);
     }
 
 
@@ -5848,7 +5877,11 @@ template<class Real> pybind11::object SnapshotParticleData<Real>::getAux3NP(pybi
     std::vector<size_t> dims(2);
     dims[0] = self_cpp->pos.size();
     dims[1] = 3;
-    return pybind11::array(dims, (Real*)&self_cpp->aux3[0], self);
+    if (dims[0] == 0)
+        {
+        return pybind11::array(pybind11::dtype::of<Real>(), dims, nullptr);
+        }
+    return pybind11::array(dims, (Real*)self_cpp->aux3.data(), self);
     }
 
 
@@ -5865,7 +5898,11 @@ template<class Real> pybind11::object SnapshotParticleData<Real>::getAux4NP(pybi
     std::vector<size_t> dims(2);
     dims[0] = self_cpp->pos.size();
     dims[1] = 3;
-    return pybind11::array(dims, (Real*)&self_cpp->aux4[0], self);
+    if (dims[0] == 0)
+        {
+        return pybind11::array(pybind11::dtype::of<Real>(), dims, nullptr);
+        }
+    return pybind11::array(dims, (Real*)self_cpp->aux4.data(), self);
     }
 
 
@@ -5882,7 +5919,11 @@ template<class Real> pybind11::object SnapshotParticleData<Real>::getDpedtNP(pyb
     std::vector<size_t> dims(2);
     dims[0] = self_cpp->pos.size();
     dims[1] = 3;
-    return pybind11::array(dims, (Real*)&self_cpp->dpedt[0], self);
+    if (dims[0] == 0)
+        {
+        return pybind11::array(pybind11::dtype::of<Real>(), dims, nullptr);
+        }
+    return pybind11::array(dims, (Real*)self_cpp->dpedt.data(), self);
     }
 
 
@@ -5895,8 +5936,11 @@ template<class Real> pybind11::object SnapshotParticleData<Real>::getTypeNP(pybi
     auto self_cpp = self.cast<SnapshotParticleData<Real>*>();
     // mark as dirty when accessing internal data
     self_cpp->is_accel_set = false;
-
-    return pybind11::array(self_cpp->type.size(), &self_cpp->type[0], self);
+    if (self_cpp->type.size() == 0)
+        {
+        return pybind11::array(pybind11::dtype::of<unsigned int>(), 0, nullptr);
+        }
+    return pybind11::array(self_cpp->type.size(), self_cpp->type.data(), self);
     }
 
 /*! \returns a numpy array that wraps the mass data element.
@@ -5908,8 +5952,11 @@ template<class Real> pybind11::object SnapshotParticleData<Real>::getMassNP(pybi
     auto self_cpp = self.cast<SnapshotParticleData<Real>*>();
     // mark as dirty when accessing internal data
     self_cpp->is_accel_set = false;
-
-    return pybind11::array(self_cpp->mass.size(), &self_cpp->mass[0], self);
+    if (self_cpp->mass.size() == 0)
+        {
+        return pybind11::array(pybind11::dtype::of<Real>(), 0, nullptr);
+        }
+    return pybind11::array(self_cpp->mass.size(), self_cpp->mass.data(), self);
     }
 
 /*! \returns a numpy array that wraps the charge data element.
@@ -5921,8 +5968,11 @@ template<class Real> pybind11::object SnapshotParticleData<Real>::getSlengthNP(p
     auto self_cpp = self.cast<SnapshotParticleData<Real>*>();
     // mark as dirty when accessing internal data
     self_cpp->is_accel_set = false;
-
-    return pybind11::array(self_cpp->slength.size(), &self_cpp->slength[0], self);
+    if (self_cpp->slength.size() == 0)
+        {
+        return pybind11::array(pybind11::dtype::of<Real>(), 0, nullptr);
+        }
+    return pybind11::array(self_cpp->slength.size(), self_cpp->slength.data(), self);
     }
 
 
@@ -5936,7 +5986,7 @@ template<class Real> pybind11::object SnapshotParticleData<Real>::getSlengthNP(p
 //     // mark as dirty when accessing internal data
 //     self_cpp->is_accel_set = false;
 
-//     return pybind11::array(self_cpp->charge.size(), &self_cpp->charge[0], self);
+//     return pybind11::array(self_cpp->charge.size(), self_cpp->charge[0], self);
 //     }
 
 /*! \returns a numpy array that wraps the diameter data element.
@@ -5950,7 +6000,7 @@ template<class Real> pybind11::object SnapshotParticleData<Real>::getSlengthNP(p
 //     // mark as dirty when accessing internal data
 //     self_cpp->is_accel_set = false;
 
-//     return pybind11::array(self_cpp->diameter.size(), &self_cpp->diameter[0], self);
+//     return pybind11::array(self_cpp->diameter.size(), self_cpp->diameter[0], self);
 //     }
 
 /*! \returns a numpy array that wraps the image data element.
@@ -5966,7 +6016,11 @@ template<class Real> pybind11::object SnapshotParticleData<Real>::getImageNP(pyb
     std::vector<size_t> dims(2);
     dims[0] = self_cpp->pos.size();
     dims[1] = 3;
-    return pybind11::array(dims, (int*)&self_cpp->image[0], self);
+    if (dims[0] == 0)
+        {
+        return pybind11::array(pybind11::dtype::of<int>(), dims, nullptr);
+        }
+    return pybind11::array(dims, (int*)self_cpp->image.data(), self);
     }
 
 /*! \returns a numpy array that wraps the body data element.
@@ -5978,8 +6032,11 @@ template<class Real> pybind11::object SnapshotParticleData<Real>::getBodyNP(pybi
     auto self_cpp = self.cast<SnapshotParticleData<Real>*>();
     // mark as dirty when accessing internal data
     self_cpp->is_accel_set = false;
-
-    return pybind11::array(self_cpp->body.size(), (int*)&self_cpp->body[0], self);
+    if (self_cpp->body.size() == 0)
+        {
+        return pybind11::array(pybind11::dtype::of<Real>(), 0, nullptr);
+        }
+    return pybind11::array(self_cpp->body.size(), (int*)self_cpp->body.data(), self);
     }
 
 /*! \returns a numpy array that wraps the orientation data element.
@@ -5996,7 +6053,7 @@ template<class Real> pybind11::object SnapshotParticleData<Real>::getBodyNP(pybi
 //     std::vector<size_t> dims(2);
 //     dims[0] = self_cpp->pos.size();
 //     dims[1] = 4;
-//     return pybind11::array(dims, (Real*)&self_cpp->orientation[0], self);
+//     return pybind11::array(dims, (Real*)self_cpp->orientation[0], self);
 //     }
 
 /*! \returns a numpy array that wraps the moment of inertia data element.
@@ -6013,7 +6070,7 @@ template<class Real> pybind11::object SnapshotParticleData<Real>::getBodyNP(pybi
 //     std::vector<size_t> dims(2);
 //     dims[0] = self_cpp->inertia.size();
 //     dims[1] = 3;
-//     return pybind11::array(dims, (Real*)&self_cpp->inertia[0], self);
+//     return pybind11::array(dims, (Real*)self_cpp->inertia[0], self);
 //     }
 
 /*! \returns a numpy array that wraps the angular momentum data element.
@@ -6029,7 +6086,7 @@ template<class Real> pybind11::object SnapshotParticleData<Real>::getBodyNP(pybi
 //     std::vector<size_t> dims(2);
 //     dims[0] = self_cpp->angmom.size();
 //     dims[1] = 4;
-//     return pybind11::array(dims, (Real*)&self_cpp->angmom[0], self);
+//     return pybind11::array(dims, (Real*)self_cpp->angmom[0], self);
 //     }
 
 /*! \returns A python list of type names
