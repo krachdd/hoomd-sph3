@@ -88,8 +88,8 @@ from hoomd import custom
 #     from hoomd import hpmc
 # if version.metal_built:
 #     from hoomd import metal
-if version.mpcd_built:
-    from hoomd import mpcd
+# if version.mpcd_built:
+#     from hoomd import mpcd
 
 from hoomd.simulation import Simulation
 from hoomd.state import State

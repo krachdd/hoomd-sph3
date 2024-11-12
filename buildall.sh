@@ -8,8 +8,7 @@ cd build
 CC=/usr/bin/mpicc CXX=/usr/bin/mpicxx cmake .. 
 make 
 cd $GIT_SRC
-# cd dependencies/gsd-sph/gsd-3.2.0/
-cd dependencies/gsd-sph/gsd-3.3.0/
+cd dependencies/gsd-sph/gsd-3.4.1/
 rm -rf build
 mkdir build
 cd build 

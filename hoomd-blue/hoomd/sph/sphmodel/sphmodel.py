@@ -392,8 +392,8 @@ class SinglePhaseFlow(SPHModel):
         self.ddiff = self._param_dict['ddiff']
         self.shepardrenormanlization = self._param_dict['shepardrenormanlization']
         self.shepardfreq = self._param_dict['shepardfreq']
-        print(self.shepardfreq)
-        print(self.mu)
+        # print(self.shepardfreq)
+        # print(self.mu)
         self.compute_solid_forces = self._param_dict['compute_solid_forces']
 
         self.set_params(self.mu)
