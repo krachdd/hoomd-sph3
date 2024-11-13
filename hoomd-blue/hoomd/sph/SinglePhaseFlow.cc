@@ -84,6 +84,15 @@ SinglePhaseFlow<KT_, SET_>::SinglePhaseFlow(std::shared_ptr<SystemDefinition> sy
         m_r_cut_nlist = std::make_shared<GlobalArray<Scalar>>(m_typpair_idx.getNumElements(), this->m_exec_conf);
         this->m_nlist->addRCutMatrix(m_r_cut_nlist);
 
+#ifdef ENABLE_MPI
+    if (this->m_sysdef->isDomainDecomposed())
+        {
+        auto comm_weak = this->m_sysdef->getCommunicator();
+        assert(comm_weak.lock());
+        m_comm = comm_weak.lock();
+        }
+#endif
+
       }
 
 /*! Destructor
