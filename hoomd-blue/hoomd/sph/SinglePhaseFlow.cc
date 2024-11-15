@@ -1066,12 +1066,11 @@ void SinglePhaseFlow<KT_, SET_>::forcecomputation(uint64_t timestep)
 
             // Mean smoothing length and denominator modifier
             Scalar meanh  = m_const_slength ? m_ch : Scalar(0.5)*(h_h.data[i]+h_h.data[k]);
-            Scalar eps    = Scalar(0.1)*meanh;
-            Scalar epssqr = eps*eps;
+            Scalar epssqr = Scalar(0.01) * meanh * meanh;
 
             // Kernel function derivative evaluation
             Scalar dwdr   = this->m_skernel->dwijdr(meanh,r);
-            Scalar dwdr_r = dwdr/(r+eps);
+            Scalar dwdr_r = dwdr/(r+epssqr);
 
             // Evaluate inter-particle pressure forces
             //temp0 = -((mi*mj)/(rhoj*rhoi))*(Pi+Pj);
@@ -1299,11 +1298,11 @@ void SinglePhaseFlow<KT_, SET_>::compute_solid_forces(uint64_t timestep)
 
             // Mean smoothing length and denominator modifier
             Scalar meanh  = m_const_slength ? m_ch : Scalar(0.5)*(h_h.data[i]+h_h.data[k]);
-            Scalar eps    = Scalar(0.1)*meanh;
+            Scalar epssqr = Scalar(0.01) * meanh * meanh;
 
             // Kernel function derivative evaluation
             Scalar dwdr   = this->m_skernel->dwijdr(meanh,r);
-            Scalar dwdr_r = dwdr/(r+eps);
+            Scalar dwdr_r = dwdr/(r+epssqr);
 
             // Evaluate inter-particle pressure forces
             //temp0 = -((mi*mj)/(rhoj*rhoi))*(Pi+Pj);
