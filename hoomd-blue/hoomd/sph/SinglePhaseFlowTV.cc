@@ -36,6 +36,7 @@ SinglePhaseFlowTV<KT_, SET_>::SinglePhaseFlowTV(std::shared_ptr<SystemDefinition
         this->m_artificial_viscosity = false;
         this->m_density_diffusion = false;
         this->m_shepard_renormalization = false;
+        this->m_density_reinitialization = false;
         this->m_ch = Scalar(0.0);
         this->m_rcut = Scalar(0.0);
         this->m_rcutsq = Scalar(0.0);
@@ -43,6 +44,7 @@ SinglePhaseFlowTV<KT_, SET_>::SinglePhaseFlowTV(std::shared_ptr<SystemDefinition
         this->m_avbeta = Scalar(0.0);
         this->m_ddiff = Scalar(0.0);
         this->m_shepardfreq = 1;
+        this->m_densityreinitfreq = 1;
 
         this->m_solid_removed = false;
 
@@ -464,6 +466,20 @@ void SinglePhaseFlowTV<KT_, SET_>::computeForces(uint64_t timestep)
 #endif
         }
 
+    // Apply density renormalization if requested (only with CONTINUITY)
+    if ( this->m_density_reinitialization && timestep % this->m_densityreinitfreq == 0 )
+        {
+        // Make sure DENSITYCONTINUITY is chosen - Eventually delete this (Apparently not working anyway)
+        if ( this->m_density_method == DENSITYSUMMATION )
+            this->m_exec_conf->msg->error() << "sph.models.SinglePhaseFlowTV: Density reinitialization only possible with Continuity approach" << std::endl;
+        this->compute_ndensity(timestep);
+    // Apparently not necessary - Same for shepard renormalization
+// #ifdef ENABLE_MPI
+//          // Update ghost particle densities and pressures.
+//         update_ghost_density(timestep);
+// #endif
+        }
+
     if (this->m_density_method == DENSITYSUMMATION)
     {
         this->compute_ndensity(timestep);
@@ -528,6 +544,8 @@ void export_SinglePhaseFlowTV(pybind11::module& m, std::string name)
         .def("deactivateDensityDiffusion", &SinglePhaseFlowTV<KT_, SET_>::deactivateDensityDiffusion)
         .def("activateShepardRenormalization", &SinglePhaseFlowTV<KT_, SET_>::activateShepardRenormalization)
         .def("deactivateShepardRenormalization", &SinglePhaseFlowTV<KT_, SET_>::deactivateShepardRenormalization)
+        .def("activateDensityReinitialization", &SinglePhaseFlowTV<KT_, SET_>::activateDensityReinitialization)
+        .def("deactivateDensityReinitialization", &SinglePhaseFlowTV<KT_, SET_>::deactivateDensityReinitialization)
         .def("setAcceleration", &SPHBaseClass<KT_, SET_>::setAcceleration)
         .def("setRCut", &SinglePhaseFlowTV<KT_, SET_>::setRCutPython)
         ;

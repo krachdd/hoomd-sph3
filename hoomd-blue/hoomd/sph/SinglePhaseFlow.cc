@@ -36,6 +36,7 @@ SinglePhaseFlow<KT_, SET_>::SinglePhaseFlow(std::shared_ptr<SystemDefinition> sy
         m_artificial_viscosity = false;
         m_density_diffusion = false;
         m_shepard_renormalization = false;
+        m_density_reinitialization = false;
         m_ch = Scalar(0.0);
         m_rcut = Scalar(0.0);
         m_rcutsq = Scalar(0.0);
@@ -43,6 +44,7 @@ SinglePhaseFlow<KT_, SET_>::SinglePhaseFlow(std::shared_ptr<SystemDefinition> sy
         m_avbeta = Scalar(0.0);
         m_ddiff = Scalar(0.0);
         m_shepardfreq = 1;
+        m_densityreinitfreq = 1;
 
         m_solid_removed = false;
 
@@ -136,6 +138,16 @@ void  SinglePhaseFlow<KT_, SET_>::activateShepardRenormalization(unsigned int sh
             m_shepardfreq = shepardfreq;
             }
 
+template<SmoothingKernelType KT_,StateEquationType SET_>
+void  SinglePhaseFlow<KT_, SET_>::activateDensityReinitialization(unsigned int densityreinitfreq){
+            if (densityreinitfreq <= 0)
+                {
+                this->m_exec_conf->msg->error() << "sph.models.SinglePhaseFlow: Density reinitialization period has to be a positive real number" << std::endl;
+                throw std::runtime_error("Error initializing SinglePhaseFlow.");
+            }
+            m_density_reinitialization = true;
+            m_densityreinitfreq = densityreinitfreq;
+            }
 
 /*! \post Set model parameters
  */
@@ -1371,10 +1383,24 @@ void SinglePhaseFlow<KT_, SET_>::computeForces(uint64_t timestep)
     if ( m_shepard_renormalization && timestep % m_shepardfreq == 0 )
         {
         renormalize_density(timestep);
-#ifdef ENABLE_MPI
-         // Update ghost particle densities and pressures.
-        update_ghost_density(timestep);
-#endif
+// #ifdef ENABLE_MPI
+//          // Update ghost particle densities and pressures.
+//         update_ghost_density(timestep);
+// #endif
+        }
+
+    // Apply density renormalization if requested (only with CONTINUITY)
+    if ( m_density_reinitialization && timestep % m_densityreinitfreq == 0 )
+        {
+        // Make sure DENSITYCONTINUITY is chosen - Eventually delete this (Apparently not working anyway)
+        if ( m_density_method == DENSITYSUMMATION )
+            this->m_exec_conf->msg->error() << "sph.models.SinglePhaseFlow: Density reinitialization only possible with Continuity approach" << std::endl;
+        compute_ndensity(timestep);
+    // Apparently not necessary - Same for shepard renormalization
+// #ifdef ENABLE_MPI
+//          // Update ghost particle densities and pressures.
+//         update_ghost_density(timestep);
+// #endif
         }
 
     if (m_density_method == DENSITYSUMMATION)
@@ -1441,6 +1467,8 @@ void export_SinglePhaseFlow(pybind11::module& m, std::string name)
         .def("deactivateDensityDiffusion", &SinglePhaseFlow<KT_, SET_>::deactivateDensityDiffusion)
         .def("activateShepardRenormalization", &SinglePhaseFlow<KT_, SET_>::activateShepardRenormalization)
         .def("deactivateShepardRenormalization", &SinglePhaseFlow<KT_, SET_>::deactivateShepardRenormalization)
+        .def("activateDensityReinitialization", &SinglePhaseFlow<KT_, SET_>::activateDensityReinitialization)
+        .def("deactivateDensityReinitialization", &SinglePhaseFlow<KT_, SET_>::deactivateDensityReinitialization)
         .def("setAcceleration", &SPHBaseClass<KT_, SET_>::setAcceleration)
         .def("setRCut", &SinglePhaseFlow<KT_, SET_>::setRCutPython)
         ;

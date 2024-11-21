@@ -40,7 +40,7 @@ class _StateEquation(_HOOMDBaseObject):
             # hoomd.context.msg.error('Bug in hoomd_script: cpp_stateequation not set, please report\n');
             raise RuntimeError("Bug in hoomd_script: cpp_stateequation not set, please report\n");
 
-    def set_params(self,rho0,bp,tvp):
+    def set_params(self,rho0,bp,tvp = 0):
         self.check_initialization();
         self.RestDensity        = rho0.item() if isinstance(rho0, numpy.generic) else rho0
         self.BackgroundPressure = bp.item()   if isinstance(bp, numpy.generic)   else bp

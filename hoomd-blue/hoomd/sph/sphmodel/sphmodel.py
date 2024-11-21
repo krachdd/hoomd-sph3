@@ -232,11 +232,12 @@ class SinglePhaseFlow(SPHModel):
                           densitydiffusion = bool(False),
                           ddiff = float(0.0),
                           shepardrenormanlization = bool(False),
+                          densityreinitialization = bool(False),
                           shepardfreq = int(0),
+                          densityreinitfreq = int(0),
                           compute_solid_forces = bool(False),
                           max_sl = float(0.0)
                           ))
-
 
 
 
@@ -391,7 +392,9 @@ class SinglePhaseFlow(SPHModel):
         self.densitydiffusion = self._param_dict['densitydiffusion']
         self.ddiff = self._param_dict['ddiff']
         self.shepardrenormanlization = self._param_dict['shepardrenormanlization']
+        self.densityreinitialization = self._param_dict['densityreinitialization']
         self.shepardfreq = self._param_dict['shepardfreq']
+        self.densityreinitfreq = self._param_dict['densityreinitfreq']
         # print(self.shepardfreq)
         # print(self.mu)
         self.compute_solid_forces = self._param_dict['compute_solid_forces']
@@ -414,6 +417,11 @@ class SinglePhaseFlow(SPHModel):
             self.activateShepardRenormalization(self.shepardfreq)
         else:
             self.deactivateShepardRenormalization()
+
+        if (self.densityreinitialization == True):
+            self.activateDensityReinitialization(self.densityreinitfreq)
+        else:
+            self.deactivateDensityReinitialization()
         
         if (self.compute_solid_forces == True):
             self.computeSolidForces()
@@ -486,6 +494,14 @@ class SinglePhaseFlow(SPHModel):
 
     def deactivateShepardRenormalization(self):
         self._cpp_obj.deactivateShepardRenormalization()
+
+    def activateDensityReinitialization(self, densityreinitfreq=20):
+        self.densityreinitfreq   = densityreinitfreq.item()   if isinstance(densityreinitfreq, np.generic)   else densityreinitfreq
+        self._cpp_obj.activateDensityReinitialization(int(densityreinitfreq))
+
+    def deactivateDensityReinitialization(self):
+        self._cpp_obj.deactivateDensityReinitialization()
+
 
     def computeSolidForces(self):
         self._cpp_obj.computeSolidForces()
@@ -618,7 +634,9 @@ class SinglePhaseFlowTV(SPHModel):
                           densitydiffusion = bool(False),
                           ddiff = float(0.0),
                           shepardrenormanlization = bool(False),
+                          densityreinitialization = bool(False),
                           shepardfreq = int(0),
+                          densityreinitfreq = int(0),
                           compute_solid_forces = bool(False),
                           max_sl = float(0.0)
                           ))
@@ -740,7 +758,9 @@ class SinglePhaseFlowTV(SPHModel):
         self.densitydiffusion = self._param_dict['densitydiffusion']
         self.ddiff = self._param_dict['ddiff']
         self.shepardrenormanlization = self._param_dict['shepardrenormanlization']
+        self.densityreinitialization = self._param_dict['densityreinitialization']
         self.shepardfreq = self._param_dict['shepardfreq']
+        self.densityreinitfreq = self._param_dict['densityreinitfreq']
         self.compute_solid_forces = self._param_dict['compute_solid_forces']
 
         self.set_params(self.mu)
@@ -762,6 +782,11 @@ class SinglePhaseFlowTV(SPHModel):
         else:
             self.deactivateShepardRenormalization()
         
+        if (self.densityreinitialization == True):
+            self.activateDensityReinitialization(self.densityreinitfreq)
+        else:
+            self.deactivateDensityReinitialization()
+
         if (self.compute_solid_forces == True):
             self.computeSolidForces()
 
@@ -833,6 +858,13 @@ class SinglePhaseFlowTV(SPHModel):
 
     def deactivateShepardRenormalization(self):
         self._cpp_obj.deactivateShepardRenormalization()
+
+    def activateDensityReinitialization(self, densityreinitfreq=20):
+        self.densityreinitfreq   = densityreinitfreq.item()   if isinstance(densityreinitfreq, np.generic)   else densityreinitfreq
+        self._cpp_obj.activateDensityReinitialization(int(densityreinitfreq))
+
+    def deactivateDensityReinitialization(self):
+        self._cpp_obj.deactivateDensityReinitialization()
 
     def computeSolidForces(self):
         self._cpp_obj.computeSolidForces()
