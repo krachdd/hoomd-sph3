@@ -1,4 +1,4 @@
-// Copyright (c) 2009-2024 The Regents of the University of Michigan.
+// Copyright (c) 2009-2025 The Regents of the University of Michigan.
 // Part of HOOMD-blue, released under the BSD 3-Clause License.
 
 /*!
@@ -132,6 +132,27 @@ class __attribute__((visibility("default"))) ParallelPlateGeometry
     HOSTDEVICE bool isOutside(const Scalar3& pos) const
         {
         return (pos.y > m_H || pos.y < -m_H);
+        }
+
+    //! Add a contribution to random virtual particle velocity.
+    /*!
+     * \param vel Velocity of virtual particle
+     * \param pos Position of virtual particle
+     *
+     * Add velocity of moving parallel plates to \a vel for particles beyond the separation
+     * distance. The velocity is increased by \a m_V if beyond the upper plate, and decreased by \a
+     * m_V if beyond the lower plate.
+     */
+    HOSTDEVICE void addToVirtualParticleVelocity(Scalar3& vel, const Scalar3& pos) const
+        {
+        if (pos.y > m_H)
+            {
+            vel.x += m_V;
+            }
+        else if (pos.y < -m_H)
+            {
+            vel.x -= m_V;
+            }
         }
 
     //! Get channel half width

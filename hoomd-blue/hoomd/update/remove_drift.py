@@ -1,4 +1,4 @@
-# Copyright (c) 2009-2024 The Regents of the University of Michigan.
+# Copyright (c) 2009-2025 The Regents of the University of Michigan.
 # Part of HOOMD-blue, released under the BSD 3-Clause License.
 
 """Implement RemoveDrift.
@@ -42,7 +42,7 @@ class RemoveDrift(Updater):
         \vec{r}_i \leftarrow \mathrm{minimum\_image}(\vec{r}_i - \vec{D})
 
     Tip:
-        Use `RemoveDrift` with `hoomd.hpmc.external.field.Harmonic` to
+        Use `RemoveDrift` with `hoomd.hpmc.external.Harmonic` to
         improve the accuracy of Frenkel-Ladd calculations.
 
     .. rubric:: Example:
@@ -50,8 +50,15 @@ class RemoveDrift(Updater):
     .. code-block:: python
 
         remove_drift = hoomd.update.RemoveDrift(
-            reference_positions=[(0,0,0), (1,0,0)])
+            reference_positions=[(0, 0, 0), (1, 0, 0)]
+        )
         simulation.operations.updaters.append(remove_drift)
+
+    {inherited}
+
+    ----------
+
+    **Members defined in** `RemoveDrift`:
 
     Attributes:
         reference_positions ((*N_particles*, 3) `numpy.ndarray` of `float`):
@@ -61,22 +68,29 @@ class RemoveDrift(Updater):
 
             .. code-block:: python
 
-                remove_drift.reference_positions = [(0,0,0), (1,0,0)]
+                remove_drift.reference_positions = [
+                    (0, 0, 0),
+                    (1, 0, 0),
+                ]
     """
+
+    __doc__ = __doc__.replace("{inherited}", Updater._doc_inherited)
 
     def __init__(self, reference_positions, trigger=1):
         super().__init__(trigger)
         self._param_dict.update(
-            ParameterDict({
-                "reference_positions": NDArrayValidator(np.float64, (None, 3))
-            }))
+            ParameterDict(
+                {"reference_positions": NDArrayValidator(np.float64, (None, 3))}
+            )
+        )
         self.reference_positions = reference_positions
 
     def _attach_hook(self):
         if isinstance(self._simulation.device, hoomd.device.GPU):
             self._simulation.device._cpp_msg.warning(
-                "Falling back on CPU. No GPU implementation available.\n")
+                "Falling back on CPU. No GPU implementation available.\n"
+            )
 
         self._cpp_obj = _hoomd.UpdaterRemoveDrift(
-            self._simulation.state._cpp_sys_def, self.trigger,
-            self.reference_positions)
+            self._simulation.state._cpp_sys_def, self.trigger, self.reference_positions
+        )

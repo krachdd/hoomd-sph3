@@ -1,4 +1,4 @@
-// Copyright (c) 2009-2024 The Regents of the University of Michigan.
+// Copyright (c) 2009-2025 The Regents of the University of Michigan.
 // Part of HOOMD-blue, released under the BSD 3-Clause License.
 
 #include "ForceComposite.h"
@@ -28,21 +28,17 @@ ForceComposite::ForceComposite(std::shared_ptr<SystemDefinition> sysdef)
 
     m_exec_conf->msg->notice(7) << "ForceComposite initialize memory" << std::endl;
 
-    GlobalArray<unsigned int> body_types(m_pdata->getNTypes(), 1, m_exec_conf);
+    GPUArray<unsigned int> body_types(m_pdata->getNTypes(), 1, m_exec_conf);
     m_body_types.swap(body_types);
-    TAG_ALLOCATION(m_body_types);
 
-    GlobalArray<Scalar3> body_pos(m_pdata->getNTypes(), 1, m_exec_conf);
+    GPUArray<Scalar3> body_pos(m_pdata->getNTypes(), 1, m_exec_conf);
     m_body_pos.swap(body_pos);
-    TAG_ALLOCATION(m_body_pos);
 
-    GlobalArray<Scalar4> body_orientation(m_pdata->getNTypes(), 1, m_exec_conf);
+    GPUArray<Scalar4> body_orientation(m_pdata->getNTypes(), 1, m_exec_conf);
     m_body_orientation.swap(body_orientation);
-    TAG_ALLOCATION(m_body_orientation);
 
-    GlobalArray<unsigned int> body_len(m_pdata->getNTypes(), m_exec_conf);
+    GPUArray<unsigned int> body_len(m_pdata->getNTypes(), m_exec_conf);
     m_body_len.swap(body_len);
-    TAG_ALLOCATION(m_body_len);
 
     // reset elements to zero
     ArrayHandle<unsigned int> h_body_len(m_body_len, access_location::host, access_mode::readwrite);
@@ -439,27 +435,31 @@ void ForceComposite::pyCreateRigidBodies(pybind11::dict charges)
         createRigidBodies(std::unordered_map<unsigned int, std::vector<Scalar>>());
         return;
         }
-    ArrayHandle<unsigned int> h_body_len(m_body_len, access_location::host, access_mode::read);
+
     std::unordered_map<unsigned int, std::vector<Scalar>> charges_map;
-    for (const auto& item : charges)
         {
-        const auto type = m_pdata->getTypeByName(item.first.cast<std::string>());
-        if (h_body_len.data[type] == 0)
+        ArrayHandle<unsigned int> h_body_len(m_body_len, access_location::host, access_mode::read);
+        for (const auto& item : charges)
             {
-            throw std::runtime_error("Charge provided for non-central particle type.");
+            const auto type = m_pdata->getTypeByName(item.first.cast<std::string>());
+            if (h_body_len.data[type] == 0)
+                {
+                throw std::runtime_error("Charge provided for non-central particle type.");
+                }
+            const auto charges_list = item.second.cast<pybind11::list>();
+            if (pybind11::len(charges_list) != h_body_len.data[type])
+                {
+                throw std::runtime_error("Charges provided not consistent with rigid body size.");
+                }
+            std::vector<Scalar> charges_vector;
+            for (auto& charge : charges_list)
+                {
+                charges_vector.emplace_back(charge.cast<Scalar>());
+                }
+            charges_map.insert({type, charges_vector});
             }
-        const auto charges_list = item.second.cast<pybind11::list>();
-        if (pybind11::len(charges_list) != h_body_len.data[type])
-            {
-            throw std::runtime_error("Charges provided not consistent with rigid body size.");
-            }
-        std::vector<Scalar> charges_vector;
-        for (auto& charge : charges_list)
-            {
-            charges_vector.emplace_back(charge.cast<Scalar>());
-            }
-        charges_map.insert({type, charges_vector});
         }
+
     createRigidBodies(charges_map);
     }
 

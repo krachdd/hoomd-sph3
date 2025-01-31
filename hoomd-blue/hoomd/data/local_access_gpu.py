@@ -1,14 +1,19 @@
-# Copyright (c) 2009-2024 The Regents of the University of Michigan.
+# Copyright (c) 2009-2025 The Regents of the University of Michigan.
 # Part of HOOMD-blue, released under the BSD 3-Clause License.
 
 """Implement local access classes for the GPU."""
 
 from hoomd import _hoomd
 from hoomd.data.local_access import (
-    ParticleLocalAccessBase, BondLocalAccessBase, ConstraintLocalAccessBase,
-    #DihedralLocalAccessBase, AngleLocalAccessBase, ImproperLocalAccessBase,
+    ParticleLocalAccessBase, 
+    BondLocalAccessBase,
+    ConstraintLocalAccessBase,
+    # DihedralLocalAccessBase, 
+    # AngleLocalAccessBase, 
+    # ImproperLocalAccessBase,
     # PairLocalAccessBase, 
-    _LocalSnapshot)
+    _LocalSnapshot,
+)
 
 from hoomd.data.array import HOOMDGPUArray
 import hoomd
@@ -17,11 +22,13 @@ if hoomd.version.gpu_enabled:
 
     class ParticleLocalAccessGPU(ParticleLocalAccessBase):
         """Access particle data on the GPU."""
+
         _cpp_cls = _hoomd.LocalParticleDataDevice
         _array_cls = HOOMDGPUArray
 
     class BondLocalAccessGPU(BondLocalAccessBase):
         """Access bond data on the GPU."""
+
         _cpp_cls = _hoomd.LocalBondDataDevice
         _array_cls = HOOMDGPUArray
 
@@ -42,6 +49,7 @@ if hoomd.version.gpu_enabled:
 
     class ConstraintLocalAccessGPU(ConstraintLocalAccessBase):
         """Access constraint data on the GPU."""
+
         _cpp_cls = _hoomd.LocalConstraintDataDevice
         _array_cls = HOOMDGPUArray
 
@@ -68,6 +76,7 @@ else:
 
     class BondLocalAccessGPU(_NoGPU):
         """GPU data access is not available in CPU builds."""
+
         pass
 
     # class AngleLocalAccessGPU(_NoGPU):
@@ -84,6 +93,7 @@ else:
 
     class ConstraintLocalAccessGPU(_NoGPU):
         """GPU data access is not available in CPU builds."""
+
         pass
 
     # class PairLocalAccessGPU(_NoGPU):
@@ -92,10 +102,12 @@ else:
 
     class ParticleLocalAccessGPU(_NoGPU):
         """GPU data access is not available in CPU builds."""
+
         pass
 
     class LocalSnapshotGPU(_NoGPU, _LocalSnapshot):
         """GPU data access is not available in CPU builds."""
+
         pass
 
 

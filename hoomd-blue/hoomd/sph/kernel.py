@@ -38,8 +38,8 @@ class _SmoothingKernel(_HOOMDBaseObject):
     def check_initialization(self):
         # check that we have been initialized properly
         if self.cpp_smoothingkernel is None:
-            # hoomd.context.msg.error('Bug in hoomd_script: cpp_smoothingkernel not set, please report\n');
-            raise RuntimeError('Bug in hoomd_script: cpp_smoothingkernel not set, please report\n');
+            # hoomd.context.msg.error("Bug in hoomd_script: cpp_smoothingkernel not set, please report\n");
+            raise RuntimeError("Bug in hoomd_script: cpp_smoothingkernel not set, please report\n");
 
     def getKernelKappa(self):
         return self.cpp_smoothingkernel.getKernelKappa()
@@ -158,6 +158,15 @@ class CubicSpline(_SmoothingKernel):
         
             
 # Dicts
-Kernels  = {'WendlandC2':WendlandC2,'WendlandC4':WendlandC4,'WendlandC6':WendlandC6,'Quintic':Quintic,'CubicSpline':CubicSpline}
-OptimalH = {'WendlandC2':1.7,'WendlandC4':1.7,'WendlandC6':1.7,'Quintic':1.45,'CubicSpline':1.7}
-Kappa    = {'WendlandC2':2.0,'WendlandC4':2.0,'WendlandC6':2.0,'Quintic':3.0,'CubicSpline':2.0}
+Kernels  = {"WendlandC2":WendlandC2,"WendlandC4":WendlandC4,"WendlandC6":WendlandC6,"Quintic":Quintic,"CubicSpline":CubicSpline}
+OptimalH = {"WendlandC2":1.7,"WendlandC4":1.7,"WendlandC6":1.7,"Quintic":1.45,"CubicSpline":1.7}
+Kappa    = {"WendlandC2":2.0,"WendlandC4":2.0,"WendlandC6":2.0,"Quintic":3.0,"CubicSpline":2.0}
+
+
+__all__ = [
+    "WendlandC2",
+    "WendlandC4",
+    "WendlandC6",
+    "Quintic",
+    "CubicSpline",
+]

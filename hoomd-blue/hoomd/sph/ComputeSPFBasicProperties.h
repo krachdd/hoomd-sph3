@@ -4,7 +4,6 @@ maintainer: dkrach, david.krach@mib.uni-stuttgart.de
 
 #include "ComputeMechanicalPropTypes.h"
 #include "hoomd/Compute.h"
-#include "hoomd/GlobalArray.h"
 #include "hoomd/ParticleGroup.h"
 
 #include <limits>
@@ -30,13 +29,13 @@ namespace sph
 
 //! Computes properties of a group of particles
 /*! ComputeSPFMechanical properties calculates instantaneous properties and provides them in Python.
-    All computed values are stored in a GlobalArray so that they can be accessed on the GPU without
+    All computed values are stored in a GPUArray so that they can be accessed on the GPU without
    intermediate copies. Use the enum values in singlephaseflow_logger_index to index the array and extract the
    properties of interest. Convenience functions are provided for accessing the values on the CPU.
    Certain properties, like ndof and num_particles are always known and there is no need for them to
-   be accessible via the GlobalArray.
+   be accessible via the GPUArray.
 
-    Computed quantities available in the GlobalArray:
+    Computed quantities available in the GPUArray:
      - ergaenzen
 
     Values available all the time
@@ -158,7 +157,7 @@ class PYBIND11_EXPORT ComputeSPFBasicProperties : public Compute
         }
 
     //! Get the gpu array of properties
-    const GlobalArray<Scalar>& getProperties()
+    const GPUArray<Scalar>& getProperties()
         {
 #ifdef ENABLE_MPI
         if (!m_properties_reduced)
@@ -177,7 +176,7 @@ class PYBIND11_EXPORT ComputeSPFBasicProperties : public Compute
 
     protected:
     std::shared_ptr<ParticleGroup> m_group; //!< Group to compute properties for
-    GlobalArray<Scalar> m_properties;       //!< Stores the computed properties
+    GPUArray<Scalar> m_properties;       //!< Stores the computed properties
 
     /// Store the particle data flags used during the last computation
     PDataFlags m_computed_flags;

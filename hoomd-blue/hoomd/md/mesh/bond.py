@@ -1,9 +1,7 @@
-# Copyright (c) 2009-2024 The Regents of the University of Michigan.
+# Copyright (c) 2009-2025 The Regents of the University of Michigan.
 # Part of HOOMD-blue, released under the BSD 3-Clause License.
 
-r"""Mesh Bond forces.
-
-Mesh bond force classes apply a force and virial between every mesh vertex
+r"""Mesh bond force classes apply a force and virial between every mesh vertex
 particle and their neighbors based on the given mesh triangulation.
 
 .. math::
@@ -57,11 +55,24 @@ from hoomd.data.parameterdicts import TypeParameterDict
 class Harmonic(MeshPotential):
     r"""Harmonic bond potential.
 
+    Args:
+        mesh (hoomd.mesh.Mesh): Mesh data structure constraint.
+
     `Harmonic` computes forces, virials, and energies on all mesh bonds
     in ``mesh`` with the harmonic potential (see `hoomd.md.bond.Harmonic`).
 
-    Args:
-        mesh (hoomd.mesh.Mesh): Mesh data structure constraint.
+    .. rubric:: Example:
+
+    .. code-block:: python
+
+        harmonic = hoomd.md.mesh.bond.Harmonic(mesh)
+        harmonic.params["mesh"] = dict(k=10.0, r0=1.0)
+
+    {inherited}
+
+    ----------
+
+    **Members defined in** `Harmonic`:
 
     Attributes:
         params (TypeParameter[``mesh name``,dict]):
@@ -74,19 +85,15 @@ class Harmonic(MeshPotential):
 
             * ``r0`` (`float`, **required**) - rest length
               :math:`[\mathrm{length}]`
-
-    .. rubric:: Example:
-
-    .. code-block:: python
-
-        harmonic = hoomd.md.mesh.bond.Harmonic(mesh)
-        harmonic.params["mesh"] = dict(k=10.0, r0=1.0)
     """
+
     _cpp_class_name = "PotentialMeshBondHarmonic"
+    __doc__ = __doc__.replace("{inherited}", MeshPotential._doc_inherited)
 
     def __init__(self, mesh):
-        params = TypeParameter("params", "types",
-                               TypeParameterDict(k=float, r0=float, len_keys=1))
+        params = TypeParameter(
+            "params", "types", TypeParameterDict(k=float, r0=float, len_keys=1)
+        )
         self._add_typeparam(params)
 
         super().__init__(mesh)
@@ -95,11 +102,26 @@ class Harmonic(MeshPotential):
 class FENEWCA(MeshPotential):
     r"""FENE and WCA bond potential.
 
+    Args:
+        mesh (hoomd.mesh.Mesh): Mesh data structure constraint.
+
     `FENEWCA` computes forces, virials, and energies on all mesh bonds
     in ``mesh`` with the harmonic potential (see `hoomd.md.bond.FENEWCA`).
 
-    Args:
-        mesh (hoomd.mesh.Mesh): Mesh data structure constraint.
+    .. rubric:: Example:
+
+    .. code-block:: python
+
+        bond_potential = hoomd.md.mesh.bond.FENEWCA(mesh)
+        bond_potential.params["mesh"] = dict(
+            k=10.0, r0=1.0, epsilon=0.8, sigma=1.2, delta=0.0
+        )
+
+    {inherited}
+
+    ----------
+
+    **Members defined in** `FENEWCA`:
 
     Attributes:
         params (TypeParameter[``bond type``, dict]):
@@ -121,27 +143,19 @@ class FENEWCA(MeshPotential):
 
             * ``delta`` (`float`, **required**) - radial shift :math:`\Delta`
               :math:`[\mathrm{length}]`.
-
-    .. rubric:: Example:
-
-    .. code-block:: python
-
-        bond_potential = hoomd.md.mesh.bond.FENEWCA(mesh)
-        bond_potential.params["mesh"] = dict(k=10.0, r0=1.0,
-                                            epsilon=0.8, sigma=1.2, delta=0.0)
-
     """
+
     _cpp_class_name = "PotentialMeshBondFENE"
+    __doc__ = __doc__.replace("{inherited}", MeshPotential._doc_inherited)
 
     def __init__(self, mesh):
         params = TypeParameter(
-            "params", "types",
-            TypeParameterDict(k=float,
-                              r0=float,
-                              epsilon=float,
-                              sigma=float,
-                              delta=float,
-                              len_keys=1))
+            "params",
+            "types",
+            TypeParameterDict(
+                k=float, r0=float, epsilon=float, sigma=float, delta=float, len_keys=1
+            ),
+        )
         self._add_typeparam(params)
 
         super().__init__(mesh)
@@ -150,11 +164,26 @@ class FENEWCA(MeshPotential):
 class Tether(MeshPotential):
     r"""Tethering bond potential.
 
+    Args:
+        mesh (hoomd.mesh.Mesh): Mesh data structure constraint.
+
     `Tether` computes forces, virials, and energies on all mesh bonds
     in ``mesh`` with the harmonic potential (see `hoomd.md.bond.Tether`).
 
-    Args:
-        mesh (hoomd.mesh.Mesh): Mesh data structure constraint.
+    .. rubric:: Example:
+
+    .. code-block:: python
+
+        bond_potential = hoomd.md.mesh.bond.Tether(mesh)
+        bond_potential.params["mesh"] = dict(
+            k_b=10.0, l_min=0.9, l_c1=1.2, l_c0=1.8, l_max=2.1
+        )
+
+    {inherited}
+
+    ----------
+
+    **Members defined in** `Tether`:
 
     Attributes:
         params (TypeParameter[``mesh name``,dict]):
@@ -176,26 +205,26 @@ class Tether(MeshPotential):
 
             * ``l_max`` (`float`, **required**) - maximum bond length
               :math:`[\mathrm{length}]`
-
-    .. rubric:: Example:
-
-    .. code-block:: python
-
-        bond_potential = hoomd.md.mesh.bond.Tether(mesh)
-        bond_potential.params["mesh"] = dict(k_b=10.0, l_min=0.9, l_c1=1.2,
-                                         l_c0=1.8, l_max=2.1)
     """
+
     _cpp_class_name = "PotentialMeshBondTether"
+    __doc__ = __doc__.replace("{inherited}", MeshPotential._doc_inherited)
 
     def __init__(self, mesh):
         params = TypeParameter(
-            "params", "types",
-            TypeParameterDict(k_b=float,
-                              l_min=float,
-                              l_c1=float,
-                              l_c0=float,
-                              l_max=float,
-                              len_keys=1))
+            "params",
+            "types",
+            TypeParameterDict(
+                k_b=float, l_min=float, l_c1=float, l_c0=float, l_max=float, len_keys=1
+            ),
+        )
         self._add_typeparam(params)
 
         super().__init__(mesh)
+
+
+__all__ = [
+    "FENEWCA",
+    "Harmonic",
+    "Tether",
+]

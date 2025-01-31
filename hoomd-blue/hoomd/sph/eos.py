@@ -81,3 +81,8 @@ class Linear(_StateEquation):
 
         # create the c++ mirror class
         self.cpp_stateequation = _sph.Linear();
+
+__all__ = [
+    "Tait",
+    "Linear",
+]

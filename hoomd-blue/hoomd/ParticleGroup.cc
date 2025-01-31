@@ -1,4 +1,4 @@
-// Copyright (c) 2009-2024 The Regents of the University of Michigan.
+// Copyright (c) 2009-2025 The Regents of the University of Michigan.
 // Part of HOOMD-blue, released under the BSD 3-Clause License.
 
 #include "ParticleGroup.h"
@@ -106,9 +106,8 @@ ParticleGroup::ParticleGroup(std::shared_ptr<SystemDefinition> sysdef,
     sort(sorted_member_tags.begin(), sorted_member_tags.end());
 
     // store member tags
-    GlobalArray<unsigned int> member_tags_array(member_tags.size(), m_exec_conf);
+    GPUArray<unsigned int> member_tags_array(member_tags.size(), m_exec_conf);
     m_member_tags.swap(member_tags_array);
-    TAG_ALLOCATION(m_member_tags);
 
         {
         ArrayHandle<unsigned int> h_member_tags(m_member_tags,
@@ -119,20 +118,17 @@ ParticleGroup::ParticleGroup(std::shared_ptr<SystemDefinition> sysdef,
 
     // one byte per particle to indicate membership in the group, initialize with current number of
     // local particles
-    GlobalArray<unsigned int> is_member(m_pdata->getMaxN(), m_pdata->getExecConf());
+    GPUArray<unsigned int> is_member(m_pdata->getMaxN(), m_pdata->getExecConf());
     m_is_member.swap(is_member);
-    TAG_ALLOCATION(m_is_member);
 
-    GlobalArray<unsigned int> is_member_tag(m_pdata->getRTags().size(), m_pdata->getExecConf());
+    GPUArray<unsigned int> is_member_tag(m_pdata->getRTags().size(), m_pdata->getExecConf());
     m_is_member_tag.swap(is_member_tag);
-    TAG_ALLOCATION(m_is_member_tag);
 
     // build the reverse lookup table for tags
     buildTagHash();
 
-    GlobalArray<unsigned int> member_idx(member_tags.size(), m_pdata->getExecConf());
+    GPUArray<unsigned int> member_idx(member_tags.size(), m_pdata->getExecConf());
     m_member_idx.swap(member_idx);
-    TAG_ALLOCATION(m_member_idx);
 
 #ifdef ENABLE_HIP
     if (m_pdata->getExecConf()->isCUDAEnabled())
@@ -219,10 +215,9 @@ void ParticleGroup::updateMemberTags(bool force_update)
             }
 #endif
 
-        // store member tags in GlobalArray
-        GlobalArray<unsigned int> member_tags_array(member_tags.size(), m_pdata->getExecConf());
+        // store member tags in GPUArray
+        GPUArray<unsigned int> member_tags_array(member_tags.size(), m_pdata->getExecConf());
         m_member_tags.swap(member_tags_array);
-        TAG_ALLOCATION(m_member_tags);
 
         // sort member tags
         std::sort(member_tags.begin(), member_tags.end());
@@ -234,20 +229,17 @@ void ParticleGroup::updateMemberTags(bool force_update)
             std::copy(member_tags.begin(), member_tags.end(), h_member_tags.data);
             }
 
-        GlobalArray<unsigned int> member_idx(member_tags.size(), m_pdata->getExecConf());
+        GPUArray<unsigned int> member_idx(member_tags.size(), m_pdata->getExecConf());
         m_member_idx.swap(member_idx);
-        TAG_ALLOCATION(m_member_idx);
         }
 
     // one byte per particle to indicate membership in the group, initialize with current number of
     // local particles
-    GlobalArray<unsigned int> is_member(m_pdata->getMaxN(), m_pdata->getExecConf());
+    GPUArray<unsigned int> is_member(m_pdata->getMaxN(), m_pdata->getExecConf());
     m_is_member.swap(is_member);
-    TAG_ALLOCATION(m_is_member);
 
-    GlobalArray<unsigned int> is_member_tag(m_pdata->getRTags().size(), m_pdata->getExecConf());
+    GPUArray<unsigned int> is_member_tag(m_pdata->getRTags().size(), m_pdata->getExecConf());
     m_is_member_tag.swap(is_member_tag);
-    TAG_ALLOCATION(m_is_member_tag);
 
     // build the reverse lookup table for tags
     buildTagHash();
@@ -298,9 +290,8 @@ void ParticleGroup::reallocate()
     if (m_is_member_tag.getNumElements() != m_pdata->getRTags().size())
         {
         // reallocate if necessary
-        GlobalArray<unsigned int> is_member_tag(m_pdata->getRTags().size(), m_exec_conf);
+        GPUArray<unsigned int> is_member_tag(m_pdata->getRTags().size(), m_exec_conf);
         m_is_member_tag.swap(is_member_tag);
-        TAG_ALLOCATION(m_is_member_tag);
 
         buildTagHash();
         }

@@ -83,7 +83,7 @@ SinglePhaseFlowTV<KT_, SET_>::SinglePhaseFlowTV(std::shared_ptr<SystemDefinition
         this->m_c     = equationofstate->getSpeedOfSound();
         this->m_kappa = skernel->getKernelKappa();
 
-        this->m_r_cut_nlist = std::make_shared<GlobalArray<Scalar>>(this->m_typpair_idx.getNumElements(), this->m_exec_conf);
+        this->m_r_cut_nlist = std::make_shared<GPUArray<Scalar>>(this->m_typpair_idx.getNumElements(), this->m_exec_conf);
         this->m_nlist->addRCutMatrix(this->m_r_cut_nlist);
 
 #ifdef ENABLE_MPI

@@ -1,4 +1,4 @@
-// Copyright (c) 2009-2024 The Regents of the University of Michigan.
+// Copyright (c) 2009-2025 The Regents of the University of Michigan.
 // Part of HOOMD-blue, released under the BSD 3-Clause License.
 
 #ifndef __ANISO_POTENTIAL_PAIR_H__
@@ -222,7 +222,7 @@ template<class aniso_evaluator> class AnisoPotentialPair : public ForceCompute
     std::shared_ptr<NeighborList> m_nlist; //!< The neighborlist to use for the computation
     energyShiftMode m_shift_mode; //!< Store the mode with which to handle the energy shift at r_cut
     Index2D m_typpair_idx;        //!< Helper class for indexing per type pair arrays
-    GlobalArray<Scalar> m_rcutsq; //!< Cutoff radius squared per type pair
+    GPUArray<Scalar> m_rcutsq;    //!< Cutoff radius squared per type pair
     std::vector<param_type, hoomd::detail::managed_allocator<param_type>>
         m_params; //!< Pair parameters per type pair
     std::vector<shape_type, hoomd::detail::managed_allocator<shape_type>>
@@ -232,7 +232,7 @@ template<class aniso_evaluator> class AnisoPotentialPair : public ForceCompute
     bool m_attached = true;
 
     /// r_cut (not squared) given to the neighbor list
-    std::shared_ptr<GlobalArray<Scalar>> m_r_cut_nlist;
+    std::shared_ptr<GPUArray<Scalar>> m_r_cut_nlist;
 
     //! Actually compute the forces
     virtual void computeForces(uint64_t timestep);
@@ -252,9 +252,9 @@ AnisoPotentialPair<aniso_evaluator>::AnisoPotentialPair(std::shared_ptr<SystemDe
     assert(m_pdata);
     assert(m_nlist);
 
-    GlobalArray<Scalar> rcutsq(m_typpair_idx.getNumElements(), m_exec_conf);
+    GPUArray<Scalar> rcutsq(m_typpair_idx.getNumElements(), m_exec_conf);
     m_rcutsq.swap(rcutsq);
-    GlobalArray<Scalar> ronsq(m_typpair_idx.getNumElements(), m_exec_conf);
+    GPUArray<Scalar> ronsq(m_typpair_idx.getNumElements(), m_exec_conf);
     std::vector<param_type, hoomd::detail::managed_allocator<param_type>> params(
         static_cast<size_t>(m_typpair_idx.getNumElements()),
         param_type(),
@@ -267,53 +267,8 @@ AnisoPotentialPair<aniso_evaluator>::AnisoPotentialPair(std::shared_ptr<SystemDe
         hoomd::detail::managed_allocator<shape_type>(m_exec_conf->isCUDAEnabled()));
     m_shape_params.swap(shape_params);
 
-    m_r_cut_nlist
-        = std::make_shared<GlobalArray<Scalar>>(m_typpair_idx.getNumElements(), m_exec_conf);
+    m_r_cut_nlist = std::make_shared<GPUArray<Scalar>>(m_typpair_idx.getNumElements(), m_exec_conf);
     nlist->addRCutMatrix(m_r_cut_nlist);
-
-#if defined(ENABLE_HIP) && defined(__HIP_PLATFORM_NVCC__)
-    if (m_exec_conf->isCUDAEnabled())
-        {
-        cudaMemAdvise(m_params.data(),
-                      m_params.size() * sizeof(param_type),
-                      cudaMemAdviseSetReadMostly,
-                      0);
-        cudaMemAdvise(m_shape_params.data(),
-                      m_shape_params.size() * sizeof(shape_type),
-                      cudaMemAdviseSetReadMostly,
-                      0);
-
-        // prefetch
-        auto& gpu_map = m_exec_conf->getGPUIds();
-
-        for (unsigned int idev = 0; idev < m_exec_conf->getNumActiveGPUs(); ++idev)
-            {
-            // prefetch data on all GPUs
-            cudaMemPrefetchAsync(m_params.data(),
-                                 sizeof(param_type) * m_params.size(),
-                                 gpu_map[idev]);
-            cudaMemPrefetchAsync(m_shape_params.data(),
-                                 sizeof(shape_type) * m_shape_params.size(),
-                                 gpu_map[idev]);
-            }
-
-        if (m_exec_conf->allConcurrentManagedAccess())
-            {
-            cudaMemAdvise(m_rcutsq.get(),
-                          m_rcutsq.getNumElements() * sizeof(Scalar),
-                          cudaMemAdviseSetReadMostly,
-                          0);
-
-            for (unsigned int idev = 0; idev < m_exec_conf->getNumActiveGPUs(); ++idev)
-                {
-                // prefetch data on all GPUs
-                cudaMemPrefetchAsync(m_rcutsq.get(),
-                                     sizeof(Scalar) * m_rcutsq.getNumElements(),
-                                     gpu_map[idev]);
-                }
-            }
-        }
-#endif
     }
 
 template<class aniso_evaluator> AnisoPotentialPair<aniso_evaluator>::~AnisoPotentialPair()

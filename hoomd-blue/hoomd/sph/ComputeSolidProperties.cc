@@ -31,21 +31,9 @@ ComputeSolidProperties::ComputeSolidProperties(std::shared_ptr<SystemDefinition>
     m_exec_conf->msg->notice(5) << "Constructing ComputeSolidProperties" << endl;
 
     assert(m_pdata);
-    GlobalArray<Scalar> properties(solidphase_logger_index::num_quantities, m_exec_conf);
+    GPUArray<Scalar> properties(solidphase_logger_index::num_quantities, m_exec_conf);
     m_properties.swap(properties);
-    TAG_ALLOCATION(m_properties);
 
-#if defined(ENABLE_HIP) && defined(__HIP_PLATFORM_NVCC__)
-    if (m_exec_conf->isCUDAEnabled() && m_exec_conf->allConcurrentManagedAccess())
-        {
-        // store in host memory for faster access from CPU
-        cudaMemAdvise(m_properties.get(),
-                      m_properties.getNumElements() * sizeof(Scalar),
-                      cudaMemAdviseSetPreferredLocation,
-                      cudaCpuDeviceId);
-        CHECK_CUDA_ERROR();
-        }
-#endif
 
     m_computed_flags.reset();
 

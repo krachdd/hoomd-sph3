@@ -1,4 +1,4 @@
-// Copyright (c) 2009-2024 The Regents of the University of Michigan.
+// Copyright (c) 2009-2025 The Regents of the University of Michigan.
 // Part of HOOMD-blue, released under the BSD 3-Clause License.
 
 /*! \file MeshGroupData.h
@@ -76,7 +76,7 @@ MeshGroupData<group_size, Group, name, snap>::MeshGroupData(std::shared_ptr<Part
                           &BondedGroupData<group_size, Group, name, true>::setDirty>(this);
 
     // initialize from snapshot
-    initializeFromSnapshot(snapshot);
+    initializeFromTriangleSnapshot(snapshot);
 
 #ifdef ENABLE_MPI
     if (this->m_pdata->getDomainDecomposition())

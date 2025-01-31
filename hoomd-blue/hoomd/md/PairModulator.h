@@ -1,4 +1,4 @@
-// Copyright (c) 2009-2024 The Regents of the University of Michigan.
+// Copyright (c) 2009-2025 The Regents of the University of Michigan.
 // Part of HOOMD-blue, released under the BSD 3-Clause License.
 
 #ifndef __PAIR_MODULATOR_H__
@@ -144,7 +144,8 @@ template<typename PairEvaluator, typename DirectionalEnvelope> class PairModulat
                          const Scalar4& _q_j,
                          const Scalar _rcutsq,
                          const param_type& _params)
-        : dr(_dr), rsq(dot(_dr, _dr)), rcutsq(_rcutsq), q_i(_q_i), q_j(_q_j), params(_params)
+        : dr(_dr), rsq(dot(_dr, _dr)), rcutsq(_rcutsq), q_i(_q_i), q_j(_q_j), params(_params),
+          shape_i(nullptr), shape_j(nullptr), m_charge_i(0), m_charge_j(0)
         {
         }
 

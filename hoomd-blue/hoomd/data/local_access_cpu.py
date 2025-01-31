@@ -1,28 +1,32 @@
-# Copyright (c) 2009-2024 The Regents of the University of Michigan.
+# Copyright (c) 2009-2025 The Regents of the University of Michigan.
 # Part of HOOMD-blue, released under the BSD 3-Clause License.
 
 """Implement local access classes for the CPU."""
 
-from hoomd.data.local_access import (ParticleLocalAccessBase,
-                                     BondLocalAccessBase, 
-                                     # AngleLocalAccessBase,
-                                     # DihedralLocalAccessBase,
-                                     # ImproperLocalAccessBase,
-                                     ConstraintLocalAccessBase,
-                                     # PairLocalAccessBase, 
-                                     _LocalSnapshot)
+from hoomd.data.local_access import (
+    ParticleLocalAccessBase,
+    BondLocalAccessBase, 
+    # AngleLocalAccessBase,
+    # DihedralLocalAccessBase,
+    # ImproperLocalAccessBase,
+    ConstraintLocalAccessBase,
+    # PairLocalAccessBase, 
+    _LocalSnapshot,
+)
 from hoomd.data.array import HOOMDArray
 from hoomd import _hoomd
 
 
 class ParticleLocalAccessCPU(ParticleLocalAccessBase):
     """Access particle data on the CPU."""
+
     _cpp_cls = _hoomd.LocalParticleDataHost
     _array_cls = HOOMDArray
 
 
 class BondLocalAccessCPU(BondLocalAccessBase):
     """Access bond data on the GPU."""
+
     _cpp_cls = _hoomd.LocalBondDataHost
     _array_cls = HOOMDArray
 
@@ -47,6 +51,7 @@ class BondLocalAccessCPU(BondLocalAccessBase):
 
 class ConstraintLocalAccessCPU(ConstraintLocalAccessBase):
     """Access constraint data on the GPU."""
+
     _cpp_cls = _hoomd.LocalConstraintDataHost
     _array_cls = HOOMDArray
 

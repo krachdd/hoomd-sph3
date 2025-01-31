@@ -177,7 +177,7 @@ void VelocityVerlet::integrateStepTwo(uint64_t timestep)
     m_exec_conf->msg->notice(9) << "VelocityVerlet: Integrate Step two" << endl;
     unsigned int group_size = m_group->getNumMembers();
 
-    const GlobalArray<Scalar4>& net_force = m_pdata->getNetForce();
+    const GPUArray<Scalar4>& net_force = m_pdata->getNetForce();
 
     ArrayHandle<Scalar4> h_pos(m_pdata->getPositions(), access_location::host, access_mode::readwrite);
     ArrayHandle<Scalar4> h_vel(m_pdata->getVelocities(), access_location::host, access_mode::readwrite);

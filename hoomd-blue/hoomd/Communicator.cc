@@ -1,4 +1,4 @@
-// Copyright (c) 2009-2024 The Regents of the University of Michigan.
+// Copyright (c) 2009-2025 The Regents of the University of Michigan.
 // Part of HOOMD-blue, released under the BSD 3-Clause License.
 
 /*! \file Communicator.cc
@@ -791,7 +791,7 @@ void Communicator::GroupCommunicator<group_data>::migrateGroups(bool incomplete,
 //! Mark ghost particles
 template<class group_data>
 void Communicator::GroupCommunicator<group_data>::markGhostParticles(
-    const GlobalVector<unsigned int>& plans,
+    const GPUVector<unsigned int>& plans,
     unsigned int mask)
     {
     if (m_gdata->getNGlobal())
@@ -911,7 +911,7 @@ void Communicator::GroupCommunicator<group_data>::markGhostParticles(
 
 template<class group_data>
 void Communicator::GroupCommunicator<group_data>::exchangeGhostGroups(
-    const GlobalArray<unsigned int>& plans,
+    const GPUArray<unsigned int>& plans,
     unsigned int mask)
     {
     if (m_gdata->getNGlobal())
@@ -1239,7 +1239,7 @@ Communicator::Communicator(std::shared_ptr<SystemDefinition> sysdef,
 
     for (unsigned int dir = 0; dir < 6; dir++)
         {
-        GlobalVector<unsigned int> copy_ghosts(m_exec_conf);
+        GPUVector<unsigned int> copy_ghosts(m_exec_conf);
         m_copy_ghosts[dir].swap(copy_ghosts);
         m_num_copy_ghosts[dir] = 0;
         m_num_recv_ghosts[dir] = 0;
@@ -1248,14 +1248,14 @@ Communicator::Communicator(std::shared_ptr<SystemDefinition> sysdef,
     // All buffers corresponding to sending ghosts in reverse
     for (unsigned int dir = 0; dir < 6; dir++)
         {
-        GlobalVector<unsigned int> copy_ghosts_reverse(m_exec_conf);
+        GPUVector<unsigned int> copy_ghosts_reverse(m_exec_conf);
         m_copy_ghosts_reverse[dir].swap(copy_ghosts_reverse);
-        GlobalVector<unsigned int> plan_reverse_copybuf(m_exec_conf);
+        GPUVector<unsigned int> plan_reverse_copybuf(m_exec_conf);
         m_plan_reverse_copybuf[dir].swap(plan_reverse_copybuf);
         m_num_copy_local_ghosts_reverse[dir] = 0;
         m_num_recv_local_ghosts_reverse[dir] = 0;
 
-        GlobalVector<unsigned int> forward_ghosts_reverse(m_exec_conf);
+        GPUVector<unsigned int> forward_ghosts_reverse(m_exec_conf);
         m_forward_ghosts_reverse[dir].swap(forward_ghosts_reverse);
         m_num_forward_ghosts_reverse[dir] = 0;
         m_num_recv_forward_ghosts_reverse[dir] = 0;
@@ -1269,10 +1269,10 @@ Communicator::Communicator(std::shared_ptr<SystemDefinition> sysdef,
         .connect<Communicator, &Communicator::slotGhostParticlesRemoved>(this);
 
     // allocate per type ghost width
-    GlobalArray<Scalar> r_ghost(m_pdata->getNTypes(), m_exec_conf);
+    GPUArray<Scalar> r_ghost(m_pdata->getNTypes(), m_exec_conf);
     m_r_ghost.swap(r_ghost);
 
-    GlobalArray<Scalar> r_ghost_body(m_pdata->getNTypes(), m_exec_conf);
+    GPUArray<Scalar> r_ghost_body(m_pdata->getNTypes(), m_exec_conf);
     m_r_ghost_body.swap(r_ghost_body);
 
     /*
@@ -1309,77 +1309,76 @@ Communicator::Communicator(std::shared_ptr<SystemDefinition> sysdef,
     //     .connect<Communicator, &Communicator::setPairsChanged>(this);
 
     // allocate memory
-    GlobalArray<unsigned int> neighbors(NEIGH_MAX, m_exec_conf);
+    GPUArray<unsigned int> neighbors(NEIGH_MAX, m_exec_conf);
     m_neighbors.swap(neighbors);
 
-    GlobalArray<unsigned int> unique_neighbors(NEIGH_MAX, m_exec_conf);
+    GPUArray<unsigned int> unique_neighbors(NEIGH_MAX, m_exec_conf);
     m_unique_neighbors.swap(unique_neighbors);
 
     // neighbor masks
-    GlobalArray<unsigned int> adj_mask(NEIGH_MAX, m_exec_conf);
+    GPUArray<unsigned int> adj_mask(NEIGH_MAX, m_exec_conf);
     m_adj_mask.swap(adj_mask);
 
-    GlobalArray<unsigned int> begin(NEIGH_MAX, m_exec_conf);
+    GPUArray<unsigned int> begin(NEIGH_MAX, m_exec_conf);
     m_begin.swap(begin);
 
-    GlobalArray<unsigned int> end(NEIGH_MAX, m_exec_conf);
+    GPUArray<unsigned int> end(NEIGH_MAX, m_exec_conf);
     m_end.swap(end);
 
     initializeNeighborArrays();
 
-    /* create a type for pdata_element */
- const int nitems = 16;
-    int blocklengths[16] = {4, 4, 3, 1, 1, 1, 3, 3, 3, 3, 3, 1, 1, 4, 4, 1};
-    MPI_Datatype types[16] = {MPI_HOOMD_SCALAR,
+    // create a type for pdata_element
+    {
+    const MPI_Datatype mpi_scalar3 = m_exec_conf->getMPIConfig()->getScalar3Datatype();
+    const MPI_Datatype mpi_scalar4 = m_exec_conf->getMPIConfig()->getScalar4Datatype();
+    const int nitems = 16;
+    int blocklengths[nitems] = {1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 3, 1, 1, 1, 1, 1};
+    MPI_Datatype types[nitems] = {mpi_scalar4,
+                              mpi_scalar4,
+                              mpi_scalar3,
                               MPI_HOOMD_SCALAR,
                               MPI_HOOMD_SCALAR,
                               MPI_HOOMD_SCALAR,
-                              MPI_HOOMD_SCALAR,
-                              MPI_HOOMD_SCALAR,
-                              MPI_HOOMD_SCALAR,
-                              MPI_HOOMD_SCALAR,
-                              MPI_HOOMD_SCALAR,
-                              MPI_HOOMD_SCALAR,
+                              mpi_scalar3,
+                              mpi_scalar3,
+                              mpi_scalar3,
+                              mpi_scalar3,
                               MPI_INT,
                               MPI_UNSIGNED,
                               MPI_UNSIGNED,
-                              MPI_HOOMD_SCALAR,
-                              MPI_HOOMD_SCALAR,
+                              mpi_scalar4,
+                              mpi_scalar4,
                               MPI_HOOMD_SCALAR};
-    MPI_Aint offsets[16];
+    MPI_Aint offsets[nitems] = {offsetof(detail::pdata_element, pos),
+                        offsetof(detail::pdata_element, vel),
+                        offsetof(detail::pdata_element, accel),
+                        offsetof(detail::pdata_element, density),
+                        offsetof(detail::pdata_element, pressure),
+                        offsetof(detail::pdata_element, energy),
+                        // offsetof(detail::pdata_element, dpe),
+                        offsetof(detail::pdata_element, aux1),
+                        offsetof(detail::pdata_element, aux2),
+                        offsetof(detail::pdata_element, aux3),
+                        offsetof(detail::pdata_element, aux4),
+                        // offsetof(detail::pdata_element, charge),
+                        // offsetof(detail::pdata_element, diameter),
+                        offsetof(detail::pdata_element, image),
+                        offsetof(detail::pdata_element, body),
+                        // offsetof(detail::pdata_element, orientation),
+                        // offsetof(detail::pdata_element, angmom),
+                        // offsetof(detail::pdata_element, inertia),
+                        offsetof(detail::pdata_element, tag),
+                        offsetof(detail::pdata_element, net_force),
+                        offsetof(detail::pdata_element, net_ratedpe),
+                        // offsetof(detail::pdata_element, net_torque),
+                        // offsetof(detail::pdata_element, net_virial),
+                        offsetof(detail::pdata_element, slength)};
 
-    offsets[0] = offsetof(detail::pdata_element, pos);
-    offsets[1] = offsetof(detail::pdata_element, vel);
-    offsets[2] = offsetof(detail::pdata_element, accel);
-    offsets[3] = offsetof(detail::pdata_element, density);
-    offsets[4] = offsetof(detail::pdata_element, pressure);
-    offsets[5] = offsetof(detail::pdata_element, energy);
-    // offsets[3] = offsetof(detail::pdata_element, dpe);
-    offsets[6] = offsetof(detail::pdata_element, aux1);
-    offsets[7] = offsetof(detail::pdata_element, aux2);
-    offsets[8] = offsetof(detail::pdata_element, aux3);
-    offsets[9] = offsetof(detail::pdata_element, aux4);
-    // offsets[3] = offsetof(detail::pdata_element, charge);
-    // offsets[4] = offsetof(detail::pdata_element, diameter);
-    offsets[10] = offsetof(detail::pdata_element, image);
-    offsets[11] = offsetof(detail::pdata_element, body);
-    // offsets[7] = offsetof(detail::pdata_element, orientation);
-    // offsets[8] = offsetof(detail::pdata_element, angmom);
-    // offsets[9] = offsetof(detail::pdata_element, inertia);
-    offsets[12] = offsetof(detail::pdata_element, tag);
-    offsets[13] = offsetof(detail::pdata_element, net_force);
-    offsets[14] = offsetof(detail::pdata_element, net_ratedpe);
-    offsets[15] = offsetof(detail::pdata_element, slength);
-    // offsets[12] = offsetof(detail::pdata_element, net_torque);
-    // offsets[13] = offsetof(detail::pdata_element, net_virial);
-
-    MPI_Datatype tmp;
-    MPI_Type_create_struct(nitems, blocklengths, offsets, types, &tmp);
-    MPI_Type_commit(&tmp);
-
-    MPI_Type_create_resized(tmp, 0, sizeof(detail::pdata_element), &m_mpi_pdata_element);
-    MPI_Type_commit(&m_mpi_pdata_element);
-    MPI_Type_free(&tmp);
+        MPI_Datatype tmp;
+        MPI_Type_create_struct(nitems, blocklengths, offsets, types, &tmp);
+        MPI_Type_create_resized(tmp, 0, sizeof(detail::pdata_element), &m_mpi_pdata_element);
+        MPI_Type_commit(&m_mpi_pdata_element);
+        }
     }
 
 //! Destructor

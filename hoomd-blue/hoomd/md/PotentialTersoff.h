@@ -1,4 +1,4 @@
-// Copyright (c) 2009-2024 The Regents of the University of Michigan.
+// Copyright (c) 2009-2025 The Regents of the University of Michigan.
 // Part of HOOMD-blue, released under the BSD 3-Clause License.
 
 #ifndef __POTENTIAL_TERSOFF_H__
@@ -133,7 +133,7 @@ template<class evaluator> class PotentialTersoff : public ForceCompute
     bool m_attached = true;
 
     // r_cut (not squared) given to the neighborlist
-    std::shared_ptr<GlobalArray<Scalar>> m_r_cut_nlist;
+    std::shared_ptr<GPUArray<Scalar>> m_r_cut_nlist;
 
     // scratch pad memory per type
     std::vector<Scalar> m_phi_ab;
@@ -161,8 +161,7 @@ PotentialTersoff<evaluator>::PotentialTersoff(std::shared_ptr<SystemDefinition> 
     GPUArray<param_type> params(m_typpair_idx.getNumElements(), m_exec_conf);
     m_params.swap(params);
 
-    m_r_cut_nlist
-        = std::make_shared<GlobalArray<Scalar>>(m_typpair_idx.getNumElements(), m_exec_conf);
+    m_r_cut_nlist = std::make_shared<GPUArray<Scalar>>(m_typpair_idx.getNumElements(), m_exec_conf);
     nlist->addRCutMatrix(m_r_cut_nlist);
     }
 

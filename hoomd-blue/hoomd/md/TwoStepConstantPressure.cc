@@ -1,4 +1,4 @@
-// Copyright (c) 2009-2024 The Regents of the University of Michigan.
+// Copyright (c) 2009-2025 The Regents of the University of Michigan.
 // Part of HOOMD-blue, released under the BSD 3-Clause License.
 
 #include "TwoStepConstantPressure.h"
@@ -595,7 +595,7 @@ void TwoStepConstantPressure::integrateStepTwo(uint64_t timestep)
                                   : std::array<Scalar, 2> {1., 1.};
     const std::array<Scalar, 2> rescaleFactors = {rf[0] * mtk, rf[1] * mtk};
 
-    const GlobalArray<Scalar4>& net_force = m_pdata->getNetForce();
+    const GPUArray<Scalar4>& net_force = m_pdata->getNetForce();
 
         {
         ArrayHandle<Scalar4> h_vel(m_pdata->getVelocities(),

@@ -1,4 +1,4 @@
-// Copyright (c) 2009-2024 The Regents of the University of Michigan.
+// Copyright (c) 2009-2025 The Regents of the University of Michigan.
 // Part of HOOMD-blue, released under the BSD 3-Clause License.
 
 #include "PPPMForceCompute.h"
@@ -123,10 +123,10 @@ void PPPMForceCompute::setParams(unsigned int nx,
     m_ghost_offset = 0;
 #endif // ENABLE_MPI
 
-    GlobalArray<Scalar> n_gf_b(order, m_exec_conf);
+    GPUArray<Scalar> n_gf_b(order, m_exec_conf);
     m_gf_b.swap(n_gf_b);
 
-    GlobalArray<Scalar> n_rho_coeff(order * (2 * order + 1), m_exec_conf);
+    GPUArray<Scalar> n_rho_coeff(order * (2 * order + 1), m_exec_conf);
     m_rho_coeff.swap(n_rho_coeff);
 
     m_need_initialize = true;
@@ -400,13 +400,13 @@ void PPPMForceCompute::setupMesh()
     m_n_inner_cells = m_mesh_points.x * m_mesh_points.y * m_mesh_points.z;
 
     // allocate memory for influence function and k values
-    GlobalArray<Scalar> inf_f(m_n_inner_cells, m_exec_conf);
+    GPUArray<Scalar> inf_f(m_n_inner_cells, m_exec_conf);
     m_inf_f.swap(inf_f);
 
-    GlobalArray<Scalar3> k(m_n_inner_cells, m_exec_conf);
+    GPUArray<Scalar3> k(m_n_inner_cells, m_exec_conf);
     m_k.swap(k);
 
-    GlobalArray<Scalar> virial_mesh(6 * m_n_inner_cells, m_exec_conf);
+    GPUArray<Scalar> virial_mesh(6 * m_n_inner_cells, m_exec_conf);
     m_virial_mesh.swap(virial_mesh);
 
     initializeFFT();
@@ -550,30 +550,30 @@ void PPPMForceCompute::initializeFFT()
     // allocate mesh and transformed mesh
 
     // pad with offset
-    GlobalArray<kiss_fft_cpx> mesh(m_n_cells + m_ghost_offset, m_exec_conf);
+    GPUArray<kiss_fft_cpx> mesh(m_n_cells + m_ghost_offset, m_exec_conf);
     m_mesh.swap(mesh);
 
-    GlobalArray<kiss_fft_cpx> fourier_mesh(m_n_inner_cells, m_exec_conf);
+    GPUArray<kiss_fft_cpx> fourier_mesh(m_n_inner_cells, m_exec_conf);
     m_fourier_mesh.swap(fourier_mesh);
 
-    GlobalArray<kiss_fft_cpx> fourier_mesh_G_x(m_n_inner_cells, m_exec_conf);
+    GPUArray<kiss_fft_cpx> fourier_mesh_G_x(m_n_inner_cells, m_exec_conf);
     m_fourier_mesh_G_x.swap(fourier_mesh_G_x);
 
-    GlobalArray<kiss_fft_cpx> fourier_mesh_G_y(m_n_inner_cells, m_exec_conf);
+    GPUArray<kiss_fft_cpx> fourier_mesh_G_y(m_n_inner_cells, m_exec_conf);
     m_fourier_mesh_G_y.swap(fourier_mesh_G_y);
 
-    GlobalArray<kiss_fft_cpx> fourier_mesh_G_z(m_n_inner_cells, m_exec_conf);
+    GPUArray<kiss_fft_cpx> fourier_mesh_G_z(m_n_inner_cells, m_exec_conf);
     m_fourier_mesh_G_z.swap(fourier_mesh_G_z);
 
     // pad with offset
 
-    GlobalArray<kiss_fft_cpx> inv_fourier_mesh_x(m_n_cells + m_ghost_offset, m_exec_conf);
+    GPUArray<kiss_fft_cpx> inv_fourier_mesh_x(m_n_cells + m_ghost_offset, m_exec_conf);
     m_inv_fourier_mesh_x.swap(inv_fourier_mesh_x);
 
-    GlobalArray<kiss_fft_cpx> inv_fourier_mesh_y(m_n_cells + m_ghost_offset, m_exec_conf);
+    GPUArray<kiss_fft_cpx> inv_fourier_mesh_y(m_n_cells + m_ghost_offset, m_exec_conf);
     m_inv_fourier_mesh_y.swap(inv_fourier_mesh_y);
 
-    GlobalArray<kiss_fft_cpx> inv_fourier_mesh_z(m_n_cells + m_ghost_offset, m_exec_conf);
+    GPUArray<kiss_fft_cpx> inv_fourier_mesh_z(m_n_cells + m_ghost_offset, m_exec_conf);
     m_inv_fourier_mesh_z.swap(inv_fourier_mesh_z);
     }
 

@@ -83,7 +83,7 @@ SinglePhaseFlow<KT_, SET_>::SinglePhaseFlow(std::shared_ptr<SystemDefinition> sy
         m_c     = equationofstate->getSpeedOfSound();
         m_kappa = skernel->getKernelKappa();
 
-        m_r_cut_nlist = std::make_shared<GlobalArray<Scalar>>(m_typpair_idx.getNumElements(), this->m_exec_conf);
+        m_r_cut_nlist = std::make_shared<GPUArray<Scalar>>(m_typpair_idx.getNumElements(), this->m_exec_conf);
         this->m_nlist->addRCutMatrix(m_r_cut_nlist);
 
 #ifdef ENABLE_MPI

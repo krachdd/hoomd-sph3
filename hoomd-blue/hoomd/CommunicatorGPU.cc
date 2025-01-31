@@ -1,4 +1,4 @@
-// Copyright (c) 2009-2024 The Regents of the University of Michigan.
+// Copyright (c) 2009-2025 The Regents of the University of Michigan.
 // Part of HOOMD-blue, released under the BSD 3-Clause License.
 
 /*! \file CommunicatorGPU.cc
@@ -26,14 +26,6 @@ CommunicatorGPU::CommunicatorGPU(std::shared_ptr<SystemDefinition> sysdef,
       m_pair_comm(*this, m_sysdef->getPairData()), m_meshbond_comm(*this),
       m_meshtriangle_comm(*this)
     {
-    if (m_exec_conf->allConcurrentManagedAccess())
-        {
-        // inform the user to use a cuda-aware MPI
-        m_exec_conf->msg->notice(2)
-            << "Using unified memory with MPI. Make sure to enable CUDA-awareness in your MPI."
-            << std::endl;
-        }
-
     // allocate memory
     allocateBuffers();
 
@@ -63,109 +55,109 @@ void CommunicatorGPU::allocateBuffers()
     /*
      * Particle migration
      */
-    GlobalVector<detail::pdata_element> gpu_sendbuf(m_exec_conf);
+    GPUVector<detail::pdata_element> gpu_sendbuf(m_exec_conf);
     m_gpu_sendbuf.swap(gpu_sendbuf);
 
-    GlobalVector<detail::pdata_element> gpu_recvbuf(m_exec_conf);
+    GPUVector<detail::pdata_element> gpu_recvbuf(m_exec_conf);
     m_gpu_recvbuf.swap(gpu_recvbuf);
 
     // Communication flags for every particle sent
-    GlobalVector<unsigned int> comm_flags(m_exec_conf);
+    GPUVector<unsigned int> comm_flags(m_exec_conf);
     m_comm_flags.swap(comm_flags);
 
     // Key for every particle sent
-    GlobalVector<unsigned int> send_keys(m_exec_conf);
+    GPUVector<unsigned int> send_keys(m_exec_conf);
     m_send_keys.swap(send_keys);
 
     /*
      * Ghost communication
      */
 
-    GlobalVector<unsigned int> tag_ghost_sendbuf(m_exec_conf);
+    GPUVector<unsigned int> tag_ghost_sendbuf(m_exec_conf);
     m_tag_ghost_sendbuf.swap(tag_ghost_sendbuf);
 
-    GlobalVector<unsigned int> tag_ghost_recvbuf(m_exec_conf);
+    GPUVector<unsigned int> tag_ghost_recvbuf(m_exec_conf);
     m_tag_ghost_recvbuf.swap(tag_ghost_recvbuf);
 
-    GlobalVector<Scalar4> pos_ghost_sendbuf(m_exec_conf);
+    GPUVector<Scalar4> pos_ghost_sendbuf(m_exec_conf);
     m_pos_ghost_sendbuf.swap(pos_ghost_sendbuf);
 
-    GlobalVector<Scalar4> pos_ghost_recvbuf(m_exec_conf);
+    GPUVector<Scalar4> pos_ghost_recvbuf(m_exec_conf);
     m_pos_ghost_recvbuf.swap(pos_ghost_recvbuf);
 
-    GlobalVector<Scalar4> vel_ghost_sendbuf(m_exec_conf);
+    GPUVector<Scalar4> vel_ghost_sendbuf(m_exec_conf);
     m_vel_ghost_sendbuf.swap(vel_ghost_sendbuf);
 
-    GlobalVector<Scalar4> vel_ghost_recvbuf(m_exec_conf);
+    GPUVector<Scalar4> vel_ghost_recvbuf(m_exec_conf);
     m_vel_ghost_recvbuf.swap(vel_ghost_recvbuf);
 
-    GlobalVector<Scalar> charge_ghost_sendbuf(m_exec_conf);
+    GPUVector<Scalar> charge_ghost_sendbuf(m_exec_conf);
     m_charge_ghost_sendbuf.swap(charge_ghost_sendbuf);
 
-    GlobalVector<Scalar> charge_ghost_recvbuf(m_exec_conf);
+    GPUVector<Scalar> charge_ghost_recvbuf(m_exec_conf);
     m_charge_ghost_recvbuf.swap(charge_ghost_recvbuf);
 
-    GlobalVector<unsigned int> body_ghost_sendbuf(m_exec_conf);
+    GPUVector<unsigned int> body_ghost_sendbuf(m_exec_conf);
     m_body_ghost_sendbuf.swap(body_ghost_sendbuf);
 
-    GlobalVector<unsigned int> body_ghost_recvbuf(m_exec_conf);
+    GPUVector<unsigned int> body_ghost_recvbuf(m_exec_conf);
     m_body_ghost_recvbuf.swap(body_ghost_recvbuf);
 
-    GlobalVector<int3> image_ghost_sendbuf(m_exec_conf);
+    GPUVector<int3> image_ghost_sendbuf(m_exec_conf);
     m_image_ghost_sendbuf.swap(image_ghost_sendbuf);
 
-    GlobalVector<int3> image_ghost_recvbuf(m_exec_conf);
+    GPUVector<int3> image_ghost_recvbuf(m_exec_conf);
     m_image_ghost_recvbuf.swap(image_ghost_recvbuf);
 
-    GlobalVector<Scalar> diameter_ghost_sendbuf(m_exec_conf);
+    GPUVector<Scalar> diameter_ghost_sendbuf(m_exec_conf);
     m_diameter_ghost_sendbuf.swap(diameter_ghost_sendbuf);
 
-    GlobalVector<Scalar> diameter_ghost_recvbuf(m_exec_conf);
+    GPUVector<Scalar> diameter_ghost_recvbuf(m_exec_conf);
     m_diameter_ghost_recvbuf.swap(diameter_ghost_recvbuf);
 
-    GlobalVector<Scalar4> orientation_ghost_sendbuf(m_exec_conf);
+    GPUVector<Scalar4> orientation_ghost_sendbuf(m_exec_conf);
     m_orientation_ghost_sendbuf.swap(orientation_ghost_sendbuf);
 
-    GlobalVector<Scalar4> orientation_ghost_recvbuf(m_exec_conf);
+    GPUVector<Scalar4> orientation_ghost_recvbuf(m_exec_conf);
     m_orientation_ghost_recvbuf.swap(orientation_ghost_recvbuf);
 
-    GlobalVector<Scalar4> netforce_ghost_sendbuf(m_exec_conf);
+    GPUVector<Scalar4> netforce_ghost_sendbuf(m_exec_conf);
     m_netforce_ghost_sendbuf.swap(netforce_ghost_sendbuf);
 
-    GlobalVector<Scalar4> netforce_ghost_recvbuf(m_exec_conf);
+    GPUVector<Scalar4> netforce_ghost_recvbuf(m_exec_conf);
     m_netforce_ghost_recvbuf.swap(netforce_ghost_recvbuf);
 
-    GlobalVector<Scalar4> nettorque_ghost_sendbuf(m_exec_conf);
+    GPUVector<Scalar4> nettorque_ghost_sendbuf(m_exec_conf);
     m_nettorque_ghost_sendbuf.swap(nettorque_ghost_sendbuf);
 
-    GlobalVector<Scalar4> nettorque_ghost_recvbuf(m_exec_conf);
+    GPUVector<Scalar4> nettorque_ghost_recvbuf(m_exec_conf);
     m_nettorque_ghost_recvbuf.swap(nettorque_ghost_recvbuf);
 
-    GlobalVector<Scalar> netvirial_ghost_sendbuf(m_exec_conf);
+    GPUVector<Scalar> netvirial_ghost_sendbuf(m_exec_conf);
     m_netvirial_ghost_sendbuf.swap(netvirial_ghost_sendbuf);
 
-    GlobalVector<Scalar> netvirial_ghost_recvbuf(m_exec_conf);
+    GPUVector<Scalar> netvirial_ghost_recvbuf(m_exec_conf);
     m_netvirial_ghost_recvbuf.swap(netvirial_ghost_recvbuf);
 
-    GlobalVector<unsigned int> ghost_begin(m_exec_conf);
+    GPUVector<unsigned int> ghost_begin(m_exec_conf);
     m_ghost_begin.swap(ghost_begin);
 
-    GlobalVector<unsigned int> ghost_end(m_exec_conf);
+    GPUVector<unsigned int> ghost_end(m_exec_conf);
     m_ghost_end.swap(ghost_end);
 
-    GlobalVector<unsigned int> ghost_plan(m_exec_conf);
+    GPUVector<unsigned int> ghost_plan(m_exec_conf);
     m_ghost_plan.swap(ghost_plan);
 
-    GlobalVector<uint2> ghost_idx_adj(m_exec_conf);
+    GPUVector<uint2> ghost_idx_adj(m_exec_conf);
     m_ghost_idx_adj.swap(ghost_idx_adj);
 
-    GlobalVector<unsigned int> ghost_neigh(m_exec_conf);
+    GPUVector<unsigned int> ghost_neigh(m_exec_conf);
     m_ghost_neigh.swap(ghost_neigh);
 
-    GlobalVector<unsigned int> neigh_counts(m_exec_conf);
+    GPUVector<unsigned int> neigh_counts(m_exec_conf);
     m_neigh_counts.swap(neigh_counts);
 
-    GlobalVector<unsigned int> scan(m_exec_conf);
+    GPUVector<unsigned int> scan(m_exec_conf);
     m_scan.swap(scan);
     }
 
@@ -366,37 +358,37 @@ CommunicatorGPU::GroupCommunicatorGPU<group_data>::GroupCommunicatorGPU(
       m_ghost_group_idx_adj(m_exec_conf), m_ghost_group_neigh(m_exec_conf),
       m_ghost_group_plan(m_exec_conf), m_neigh_counts(m_exec_conf), m_ghost_scan(m_exec_conf)
     {
-    GlobalVector<unsigned int> rank_mask(m_exec_conf);
+    GPUVector<unsigned int> rank_mask(m_exec_conf);
     m_rank_mask.swap(rank_mask);
 
-    GlobalVector<unsigned int> scan(m_exec_conf);
+    GPUVector<unsigned int> scan(m_exec_conf);
     m_scan.swap(scan);
 
-    GlobalVector<unsigned int> marked_groups(m_exec_conf);
+    GPUVector<unsigned int> marked_groups(m_exec_conf);
     m_marked_groups.swap(marked_groups);
 
-    GlobalVector<rank_element_t> ranks_out(m_exec_conf);
+    GPUVector<rank_element_t> ranks_out(m_exec_conf);
     m_ranks_out.swap(ranks_out);
 
-    GlobalVector<rank_element_t> ranks_sendbuf(m_exec_conf);
+    GPUVector<rank_element_t> ranks_sendbuf(m_exec_conf);
     m_ranks_sendbuf.swap(ranks_sendbuf);
 
-    GlobalVector<rank_element_t> ranks_recvbuf(m_exec_conf);
+    GPUVector<rank_element_t> ranks_recvbuf(m_exec_conf);
     m_ranks_recvbuf.swap(ranks_recvbuf);
 
-    GlobalVector<group_element_t> groups_out(m_exec_conf);
+    GPUVector<group_element_t> groups_out(m_exec_conf);
     m_groups_out.swap(groups_out);
 
-    GlobalVector<unsigned int> rank_mask_out(m_exec_conf);
+    GPUVector<unsigned int> rank_mask_out(m_exec_conf);
     m_rank_mask_out.swap(rank_mask_out);
 
-    GlobalVector<group_element_t> groups_sendbuf(m_exec_conf);
+    GPUVector<group_element_t> groups_sendbuf(m_exec_conf);
     m_groups_sendbuf.swap(groups_sendbuf);
 
-    GlobalVector<group_element_t> groups_recvbuf(m_exec_conf);
+    GPUVector<group_element_t> groups_recvbuf(m_exec_conf);
     m_groups_recvbuf.swap(groups_recvbuf);
 
-    GlobalVector<group_element_t> groups_in(m_exec_conf);
+    GPUVector<group_element_t> groups_in(m_exec_conf);
     m_groups_in.swap(groups_in);
 
     // the size of the bit field must be larger or equal the group size
@@ -410,37 +402,37 @@ CommunicatorGPU::GroupCommunicatorGPU<group_data>::GroupCommunicatorGPU(Communic
       m_ghost_group_idx_adj(m_exec_conf), m_ghost_group_neigh(m_exec_conf),
       m_ghost_group_plan(m_exec_conf), m_neigh_counts(m_exec_conf), m_ghost_scan(m_exec_conf)
     {
-    GlobalVector<unsigned int> rank_mask(m_exec_conf);
+    GPUVector<unsigned int> rank_mask(m_exec_conf);
     m_rank_mask.swap(rank_mask);
 
-    GlobalVector<unsigned int> scan(m_exec_conf);
+    GPUVector<unsigned int> scan(m_exec_conf);
     m_scan.swap(scan);
 
-    GlobalVector<unsigned int> marked_groups(m_exec_conf);
+    GPUVector<unsigned int> marked_groups(m_exec_conf);
     m_marked_groups.swap(marked_groups);
 
-    GlobalVector<rank_element_t> ranks_out(m_exec_conf);
+    GPUVector<rank_element_t> ranks_out(m_exec_conf);
     m_ranks_out.swap(ranks_out);
 
-    GlobalVector<rank_element_t> ranks_sendbuf(m_exec_conf);
+    GPUVector<rank_element_t> ranks_sendbuf(m_exec_conf);
     m_ranks_sendbuf.swap(ranks_sendbuf);
 
-    GlobalVector<rank_element_t> ranks_recvbuf(m_exec_conf);
+    GPUVector<rank_element_t> ranks_recvbuf(m_exec_conf);
     m_ranks_recvbuf.swap(ranks_recvbuf);
 
-    GlobalVector<group_element_t> groups_out(m_exec_conf);
+    GPUVector<group_element_t> groups_out(m_exec_conf);
     m_groups_out.swap(groups_out);
 
-    GlobalVector<unsigned int> rank_mask_out(m_exec_conf);
+    GPUVector<unsigned int> rank_mask_out(m_exec_conf);
     m_rank_mask_out.swap(rank_mask_out);
 
-    GlobalVector<group_element_t> groups_sendbuf(m_exec_conf);
+    GPUVector<group_element_t> groups_sendbuf(m_exec_conf);
     m_groups_sendbuf.swap(groups_sendbuf);
 
-    GlobalVector<group_element_t> groups_recvbuf(m_exec_conf);
+    GPUVector<group_element_t> groups_recvbuf(m_exec_conf);
     m_groups_recvbuf.swap(groups_recvbuf);
 
-    GlobalVector<group_element_t> groups_in(m_exec_conf);
+    GPUVector<group_element_t> groups_in(m_exec_conf);
     m_groups_in.swap(groups_in);
     }
 
@@ -1252,7 +1244,7 @@ void CommunicatorGPU::GroupCommunicatorGPU<group_data>::migrateGroups(bool incom
 
 template<class group_data>
 void CommunicatorGPU::GroupCommunicatorGPU<group_data>::exchangeGhostGroups(
-    const GlobalVector<unsigned int>& plans)
+    const GPUVector<unsigned int>& plans)
     {
     if (m_gdata->getNGlobal())
         {
@@ -1703,7 +1695,7 @@ void CommunicatorGPU::GroupCommunicatorGPU<group_data>::exchangeGhostGroups(
 //! Mark ghost particles
 template<class group_data>
 void CommunicatorGPU::GroupCommunicatorGPU<group_data>::markGhostParticles(
-    const GlobalVector<unsigned int>& plans,
+    const GPUVector<unsigned int>& plans,
     unsigned int mask)
     {
     if (m_gdata->getNGlobal())
