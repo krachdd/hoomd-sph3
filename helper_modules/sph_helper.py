@@ -14,7 +14,7 @@ import gsd.hoomd
 # ------------------------------------------------------------
 
 
-def set_max_sl(sim, device, snapshot, model):
+def set_max_sl(sim, device, model):
     """
     
     Parameters

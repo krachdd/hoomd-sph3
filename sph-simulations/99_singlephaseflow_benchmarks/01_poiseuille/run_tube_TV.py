@@ -20,8 +20,8 @@ import gsd.hoomd
 # ------------------------------------------------------------
 
 
-device = hoomd.device.CPU(notice_level=2)
-# device = hoomd.device.CPU(notice_level=10)
+# device = hoomd.device.CPU(notice_level=2)
+device = hoomd.device.CPU(notice_level=10)
 sim = hoomd.Simulation(device=device)
 
 filename = str(sys.argv[2])
@@ -105,7 +105,7 @@ model.beta = 0.0
 model.densitydiffusion = False
 model.shepardrenormanlization = False
 
-maximum_smoothing_length = sph_helper.set_max_sl(sim, device, snapshot, model)
+maximum_smoothing_length = sph_helper.set_max_sl(sim, device, model)
 
 c, c_condition = model.compute_speedofsound(LREF = lref, UREF = refvel, 
                                             DX = dx, DRHO = drho, H = maximum_smoothing_length, 
@@ -164,6 +164,8 @@ sim.operations.integrator = integrator
 
 if device.communicator.rank == 0:
     print(f'Starting Run at {dt_string}')
+
+print("###\nSTART RUN\n ###")
 
 sim.run(steps, write_at_start=True)
 

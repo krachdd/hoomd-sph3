@@ -297,6 +297,7 @@ void GSDDumpWriter::flush()
         {
         m_exec_conf->msg->notice(5) << "GSD: flush gsd file " << m_fname << endl;
         int retval = gsd_flush(&m_handle);
+        m_exec_conf->msg->notice(5) << "GSD: flush gsd file done " << m_fname << endl;
         GSDUtils::checkError(retval, m_fname);
         }
     }
