@@ -56,11 +56,9 @@ from hoomd.version_config import (
     compile_date,
     git_branch,
     git_sha1,
-    # hpmc_built,
-    # llvm_enabled,
-    # md_built,
-    # metal_built,
-    # mpcd_built,
+    #hpmc_built,
+    #md_built,
+    #mpcd_built,
 )
 
 version = _hoomd.BuildInfo.getVersion()

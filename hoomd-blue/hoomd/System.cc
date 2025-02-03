@@ -203,15 +203,19 @@ void System::run(uint64_t nsteps, bool write_at_start, bool adaptive_dt)
         // execute the integrator
 
         if (m_integrator){
+            std::cout << "Integrator!!\n" << std::endl; 
             m_integrator->update(m_cur_tstep);
+            std::cout << "Integrator DONE!!\n" << std::endl; 
         }
         m_cur_tstep++;
 
         // execute analyzers after incrementing the step counter
         for (auto& analyzer : m_analyzers)
             {
+            std::cout << "Analyzer!!\n" << std::endl; 
             if ((*analyzer->getTrigger())(m_cur_tstep))
                 analyzer->analyze(m_cur_tstep);
+            std::cout << "Analyzer DONE!!\n" << std::endl; 
             }
 
         updateTPS();

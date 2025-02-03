@@ -65,7 +65,8 @@ To run pytest, either:
 (2) compile and install. Then, ensuring your current working directory is
 outside the hoomd source directory, execute `python3 -m pytest --pyargs hoomd`.
 """,
-          file=sys.stderr)
+        file=sys.stderr,
+    )
 
 from hoomd import version
 from hoomd import trigger

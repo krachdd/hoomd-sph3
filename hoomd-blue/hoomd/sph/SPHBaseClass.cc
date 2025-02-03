@@ -190,6 +190,7 @@ void SPHBaseClass<KT_, SET_>::applyBodyForce(uint64_t timestep, std::shared_ptr<
     {
     if ( m_body_acceleration )
         {
+        m_exec_conf->msg->notice(7) << "Computing SPHBaseClass::applyBodyForce" << std::endl;
 
         Scalar damp = Scalar(1);
         if ( m_damptime > 0 && timestep < m_damptime )
@@ -198,26 +199,34 @@ void SPHBaseClass<KT_, SET_>::applyBodyForce(uint64_t timestep, std::shared_ptr<
 
         m_exec_conf->msg->notice(7) << "Computing SPHBaseClass::applyBodyForce with damp factor " << damp << std::endl;
 
-        // Grab handles for particle data
-        ArrayHandle<Scalar4> h_force(m_force,access_location::host, access_mode::readwrite);
-        ArrayHandle<Scalar4> h_velocity(m_pdata->getVelocities(), access_location::host, access_mode::read);
+        m_exec_conf->msg->notice(7) << "Computing SPHBaseClass::applyBodyForce assered "<< std::endl;
 
-        // for each particle in given group
         unsigned int group_size = pgroup->getNumMembers();
-        for (unsigned int group_idx = 0; group_idx < group_size; group_idx++)
+        // Grab handles for particle data
             {
-            // Read particle index
-            unsigned int i = pgroup->getMemberIndex(group_idx);
+            ArrayHandle<Scalar4> h_velocity(m_pdata->getVelocities(), access_location::host, access_mode::read);
+            m_exec_conf->msg->notice(7) << "Computing SPHBaseClass::applyBodyForce velocity getter done!" << std::endl;
+            ArrayHandle<Scalar4> h_force(m_force,access_location::host, access_mode::readwrite);
+            m_exec_conf->msg->notice(7) << "Computing SPHBaseClass::applyBodyForce force getter done!" << std::endl;
+        
+            // for each particle in given group
+            for (unsigned int group_idx = 0; group_idx < group_size; group_idx++)
+                {
+                // Read particle index
+                unsigned int i = pgroup->getMemberIndex(group_idx);
 
-            // Read particle mass
-            Scalar mi = h_velocity.data[i].w;
+                // Read particle mass
+                Scalar mi = h_velocity.data[i].w;
 
-            // Add contribution to force
-            h_force.data[i].x += bforce.x*mi;
-            h_force.data[i].y += bforce.y*mi;
-            h_force.data[i].z += bforce.z*mi;
+                // Add contribution to force
+                h_force.data[i].x += bforce.x*mi;
+                h_force.data[i].y += bforce.y*mi;
+                h_force.data[i].z += bforce.z*mi;
+                }
             }
         }
+        m_exec_conf->msg->notice(7) << "Computing SPHBaseClass::applyBodyForce done!" << std::endl;
+
     }
 
 // #ifdef ENABLE_HIP

@@ -24,24 +24,24 @@ ConstantForceCompute::ConstantForceCompute(std::shared_ptr<SystemDefinition> sys
     GPUVector<Scalar3> tmp_f(m_pdata->getNTypes(), m_exec_conf);
 
     m_constant_force.swap(tmp_f);
+        { // GPU Array Scope 
+        ArrayHandle<Scalar3> h_constant_force(m_constant_force,
+                                              access_location::host,
+                                              access_mode::overwrite);
+        for (unsigned int i = 0; i < m_constant_force.size(); i++)
+            h_constant_force.data[i] = make_scalar3(0.0, 0.0, 0.0);
 
-    ArrayHandle<Scalar3> h_constant_force(m_constant_force,
-                                          access_location::host,
-                                          access_mode::overwrite);
-    for (unsigned int i = 0; i < m_constant_force.size(); i++)
-        h_constant_force.data[i] = make_scalar3(0.0, 0.0, 0.0);
+        // allocate memory for the per-type constant_torque storage and initialize them to (0,0,0)
+        // GPUVector<Scalar3> tmp_t(m_pdata->getNTypes(), m_exec_conf);
 
-    // allocate memory for the per-type constant_torque storage and initialize them to (0,0,0)
-    // GPUVector<Scalar3> tmp_t(m_pdata->getNTypes(), m_exec_conf);
+        // m_constant_torque.swap(tmp_t);
 
-    // m_constant_torque.swap(tmp_t);
-
-    // ArrayHandle<Scalar3> h_constant_torque(m_constant_torque,
-    //                                        access_location::host,
-    //                                        access_mode::overwrite);
-    // for (unsigned int i = 0; i < m_constant_torque.size(); i++)
-    //     h_constant_torque.data[i] = make_scalar3(0.0, 0.0, 0.0);
-
+        // ArrayHandle<Scalar3> h_constant_torque(m_constant_torque,
+        //                                        access_location::host,
+        //                                        access_mode::overwrite);
+        // for (unsigned int i = 0; i < m_constant_torque.size(); i++)
+        //     h_constant_torque.data[i] = make_scalar3(0.0, 0.0, 0.0);
+        } // GPU Array Scope
     }
 
 ConstantForceCompute::~ConstantForceCompute()
@@ -68,12 +68,12 @@ void ConstantForceCompute::setConstantForce(const std::string& type_name, pybind
     force.x = pybind11::cast<Scalar>(v[0]);
     force.y = pybind11::cast<Scalar>(v[1]);
     force.z = pybind11::cast<Scalar>(v[2]);
-
-    ArrayHandle<Scalar3> h_constant_force(m_constant_force,
-                                          access_location::host,
-                                          access_mode::readwrite);
-    h_constant_force.data[typ] = force;
-
+        { // GPU Array Scope
+        ArrayHandle<Scalar3> h_constant_force(m_constant_force,
+                                              access_location::host,
+                                              access_mode::readwrite);
+        h_constant_force.data[typ] = force;
+        } // end GPU Array Scope
     m_parameters_updated = true;
     }
 
@@ -82,14 +82,17 @@ pybind11::tuple ConstantForceCompute::getConstantForce(const std::string& type_n
     pybind11::list v;
     unsigned int typ = this->m_pdata->getTypeByName(type_name);
 
-    ArrayHandle<Scalar3> h_constant_force(m_constant_force,
-                                          access_location::host,
-                                          access_mode::read);
+        { // GPU Array Scope
+        ArrayHandle<Scalar3> h_constant_force(m_constant_force,
+                                              access_location::host,
+                                              access_mode::read);
 
-    Scalar3 f_constantVec = h_constant_force.data[typ];
-    v.append(f_constantVec.x);
-    v.append(f_constantVec.y);
-    v.append(f_constantVec.z);
+        Scalar3 f_constantVec = h_constant_force.data[typ];
+
+        v.append(f_constantVec.x);
+        v.append(f_constantVec.y);
+        v.append(f_constantVec.z);
+        } // end GPU Array Scope
     return pybind11::tuple(v);
     }
 

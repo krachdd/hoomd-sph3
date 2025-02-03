@@ -36,11 +36,6 @@ ParticleGroup::ParticleGroup(std::shared_ptr<SystemDefinition> sysdef,
       m_global_ptl_num_change(false), m_selector(selector), m_update_tags(update_tags),
       m_warning_printed(false)
     {
-#ifdef ENABLE_HIP
-    if (m_pdata->getExecConf()->isCUDAEnabled())
-        m_gpu_partition = GPUPartition(m_exec_conf->getGPUIds());
-#endif
-
     // update member tag arrays
     updateMemberTags(true);
 
@@ -54,9 +49,6 @@ ParticleGroup::ParticleGroup(std::shared_ptr<SystemDefinition> sysdef,
     // connect updateMemberTags() method to maximum particle number change signal
     m_pdata->getGlobalParticleNumberChangeSignal()
         .connect<ParticleGroup, &ParticleGroup::slotGlobalParticleNumChange>(this);
-
-    // update GPU memory hints
-    updateGPUAdvice();
     }
 
 /*! \param sysdef System definition to build the group from
@@ -83,7 +75,6 @@ ParticleGroup::ParticleGroup(std::shared_ptr<SystemDefinition> sysdef,
             throw std::runtime_error("Error creating ParticleGroup\n");
             }
         }
-
 
 #ifdef ENABLE_MPI
     if (m_pdata->getDomainDecomposition())
@@ -130,11 +121,6 @@ ParticleGroup::ParticleGroup(std::shared_ptr<SystemDefinition> sysdef,
     GPUArray<unsigned int> member_idx(member_tags.size(), m_pdata->getExecConf());
     m_member_idx.swap(member_idx);
 
-#ifdef ENABLE_HIP
-    if (m_pdata->getExecConf()->isCUDAEnabled())
-        m_gpu_partition = GPUPartition(m_exec_conf->getGPUIds());
-#endif
-
     // now that the tag list is completely set up and all memory is allocated, rebuild the index
     // list
     rebuildIndexList();
@@ -149,9 +135,6 @@ ParticleGroup::ParticleGroup(std::shared_ptr<SystemDefinition> sysdef,
     // connect updateMemberTags() method to maximum particle number change signal
     m_pdata->getGlobalParticleNumberChangeSignal()
         .connect<ParticleGroup, &ParticleGroup::slotGlobalParticleNumChange>(this);
-
-    // update GPU memory hints
-    updateGPUAdvice();
     }
 
 ParticleGroup::~ParticleGroup()
@@ -215,7 +198,7 @@ void ParticleGroup::updateMemberTags(bool force_update)
             }
 #endif
 
-        // store member tags in GPUArray
+        // store member tags in GlobalArray
         GPUArray<unsigned int> member_tags_array(member_tags.size(), m_pdata->getExecConf());
         m_member_tags.swap(member_tags_array);
 
@@ -564,59 +547,13 @@ void ParticleGroup::rebuildIndexList()
                 cur_member++;
                 }
             }
-        m_num_local_members = cur_member;
 
+        m_num_local_members = cur_member;
         assert(m_num_local_members <= m_member_tags.getNumElements());
-        
         }
 
     // index has been rebuilt
     m_particles_sorted = false;
-
-#ifdef ENABLE_HIP
-    if (m_pdata->getExecConf()->isCUDAEnabled())
-        {
-        // Update GPU load balancing info
-        m_gpu_partition.setN(m_num_local_members);
-        }
-#endif
-    }
-
-void ParticleGroup::updateGPUAdvice()
-    {
-#if defined(ENABLE_HIP) && defined(__HIP_PLATFORM_NVCC__)
-    if (m_exec_conf->isCUDAEnabled() && m_exec_conf->allConcurrentManagedAccess())
-        {
-        // split preferred location of group indices across GPUs
-        auto gpu_map = m_exec_conf->getGPUIds();
-        for (unsigned int idev = 0; idev < m_exec_conf->getNumActiveGPUs(); ++idev)
-            {
-            auto range = m_gpu_partition.getRange(idev);
-            unsigned int nelem = range.second - range.first;
-
-            if (!nelem)
-                continue;
-
-            cudaMemAdvise(m_member_idx.get() + range.first,
-                          sizeof(unsigned int) * nelem,
-                          cudaMemAdviseSetPreferredLocation,
-                          gpu_map[idev]);
-            cudaMemAdvise(m_is_member.get() + range.first,
-                          sizeof(unsigned int) * nelem,
-                          cudaMemAdviseSetPreferredLocation,
-                          gpu_map[idev]);
-
-            // migrate data to preferred location
-            cudaMemPrefetchAsync(m_member_idx.get() + range.first,
-                                 sizeof(unsigned int) * nelem,
-                                 gpu_map[idev]);
-            cudaMemPrefetchAsync(m_is_member.get() + range.first,
-                                 sizeof(unsigned int) * nelem,
-                                 gpu_map[idev]);
-            }
-        CHECK_CUDA_ERROR();
-        }
-#endif
     }
 
 #ifdef ENABLE_HIP
@@ -710,7 +647,12 @@ void ParticleGroup::thermalizeParticleMomenta(Scalar kT, uint64_t timestep)
 //     // Total the system's linear momentum
 //     vec3<Scalar> tot_momentum(0, 0, 0);
 
+//    // Loop over all particles in the group
+//    for (unsigned int group_idx = 0; group_idx < group_size; group_idx++)
 
+//        {
+//        unsigned int j = this->getMemberIndex(group_idx);
+//        unsigned int ptag = h_tag.data[j];
 
 //         // Generate random angular momentum if the particle has rotational degrees of freedom.
 //         vec3<Scalar> p_vec(0, 0, 0);

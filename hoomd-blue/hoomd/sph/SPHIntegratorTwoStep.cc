@@ -52,7 +52,7 @@ SPHIntegratorTwoStep::~SPHIntegratorTwoStep()
 void SPHIntegratorTwoStep::update(uint64_t timestep)
     {
     Integrator::update(timestep);
-
+    std::cout << "starting Integrator two step" << std::endl;
     // ensure that prepRun() has been called
     assert(m_prepared);
 
@@ -236,6 +236,7 @@ Scalar SPHIntegratorTwoStep::getTranslationalDOF(std::shared_ptr<ParticleGroup> 
 */
 void SPHIntegratorTwoStep::prepRun(uint64_t timestep)
     {
+    std::cout << "Integrator Two step prep run start!!!" << std::endl;
     Integrator::prepRun(timestep);
     // if (m_integrate_rotational_dof && !areForcesAnisotropic())
     //     {
@@ -264,6 +265,7 @@ void SPHIntegratorTwoStep::prepRun(uint64_t timestep)
         }
     // else
 #endif
+    std::cout << "Integrator Two step prep run communicate done!!!" << std::endl;
         // if (m_rigid_bodies)
         // {
         // m_rigid_bodies->validateRigidBodies();
@@ -276,7 +278,9 @@ void SPHIntegratorTwoStep::prepRun(uint64_t timestep)
         computeNetForceGPU(timestep);
     else
 #endif
-        computeNetForce(timestep);
+    std::cout << "Integrator Two step prep run compute net force before!!!" << std::endl;
+    computeNetForce(timestep);
+    std::cout << "Integrator Two step prep run compute net force done!!!" << std::endl;
 
     // accelerations only need to be calculated if the accelerations have not yet been set
     if (!m_pdata->isAccelSet())

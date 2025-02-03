@@ -1360,7 +1360,6 @@ void SinglePhaseFlow<KT_, SET_>::computeForces(uint64_t timestep)
 
     // start by updating the neighborlist
     this->m_nlist->compute(timestep);
-
     // This is executed once to initialize protected/private variables
     if (!m_params_set)
         {

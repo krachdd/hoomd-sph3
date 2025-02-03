@@ -435,8 +435,10 @@ template<SmoothingKernelType KT_,StateEquationType SET_>
 void SinglePhaseFlowTV<KT_, SET_>::computeForces(uint64_t timestep)
     {
 
+
     // start by updating the neighborlist
     this->m_nlist->compute(timestep);
+    std::cout << "SinglePhaseFlowTV::computeForces nlist done!" << std::endl;
 
     // This is executed once to initialize protected/private variables
     if (!this->m_params_set)
@@ -508,7 +510,9 @@ void SinglePhaseFlowTV<KT_, SET_>::computeForces(uint64_t timestep)
     // Execute the force computation
     // This includes the computation of the density if 
     // DENSITYCONTINUITY method is used
+    std::cout << "SinglePhaseFlowTV::computeForces forcecomputation before!" << std::endl;
     forcecomputation(timestep);
+    std::cout << "SinglePhaseFlowTV::computeForces forcecomputation done!" << std::endl;
 
 #ifdef ENABLE_MPI
     // Update ghost particles

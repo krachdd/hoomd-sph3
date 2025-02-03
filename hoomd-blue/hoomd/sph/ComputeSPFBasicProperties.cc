@@ -165,5 +165,5 @@ void export_ComputeSPFMechanicalProperties(pybind11::module& m)
     }
 
     } // end namespace detail
-    } // end namespace md
+    } // end namespace sph
     } // end namespace hoomd
