@@ -20,10 +20,6 @@
 #include <unordered_set>
 #include <vector>
 
-#ifdef ENABLE_HIP
-#include "GPUPartition.cuh"
-#endif
-
 #ifndef __PARTICLE_GROUP_H__
 #define __PARTICLE_GROUP_H__
 
@@ -147,7 +143,7 @@ class PYBIND11_EXPORT ParticleGroup
        the index is rebuilt. Hence, the tag array may not be accessed in the same scope in which
        this method is called.
     */
-    unsigned int getMemberIndex(unsigned int j) 
+    unsigned int getMemberIndex(unsigned int j)
         {
         checkRebuild();
 
@@ -164,7 +160,7 @@ class PYBIND11_EXPORT ParticleGroup
        access the particle data tag array if the index is rebuilt. Hence, the tag array may not be
        accessed in the same scope in which this method is called.
     */
-    bool isMember(unsigned int idx) 
+    bool isMember(unsigned int idx)
         {
         checkRebuild();
 
@@ -186,16 +182,6 @@ class PYBIND11_EXPORT ParticleGroup
 
         return m_member_idx;
         }
-
-#ifdef ENABLE_HIP
-    //! Return the load balancing GPU partition
-    const GPUPartition& getGPUPartition() 
-        {
-        checkRebuild();
-
-        return m_gpu_partition;
-        }
-#endif
 
     // @}
     //! \name Analysis methods
@@ -292,7 +278,7 @@ class PYBIND11_EXPORT ParticleGroup
         m_is_member; //!< One byte per particle, == 1 if index is a local member of the group
     mutable GPUArray<unsigned int> m_member_idx;  //!< List of all particle indices in the group
     mutable GPUArray<unsigned int> m_member_tags; //!< Lists the tags of the particle members
-    mutable unsigned int m_num_local_members;        //!< Number of members on the local processor
+    mutable unsigned int m_num_local_members;     //!< Number of members on the local processor
     mutable bool m_particles_sorted;      //!< True if particle have been sorted since last rebuild
     mutable bool m_reallocated;           //!< True if particle data arrays have been reallocated
     mutable bool m_global_ptl_num_change; //!< True if the global particle number changed
@@ -303,11 +289,6 @@ class PYBIND11_EXPORT ParticleGroup
 
     bool m_update_tags; //!< True if tags should be updated when global number of particles changes
     mutable bool m_warning_printed; //!< True if warning about static groups has been printed
-
-#ifdef ENABLE_HIP
-    mutable GPUPartition m_gpu_partition; //!< A handy struct to store load balancing info for this
-                                          //!< group's local members
-#endif
 
     /// Number of translational degrees of freedom in the group
     Scalar m_translational_dof = 0;
@@ -328,7 +309,6 @@ class PYBIND11_EXPORT ParticleGroup
     void checkRebuild()
         {
         // carry out rebuild in correct order
-        bool update_gpu_advice = false;
         if (m_global_ptl_num_change)
             {
             updateMemberTags(false);
@@ -338,16 +318,11 @@ class PYBIND11_EXPORT ParticleGroup
             {
             reallocate();
             m_reallocated = false;
-            update_gpu_advice = true;
             }
         if (m_particles_sorted)
             {
             rebuildIndexList();
             m_particles_sorted = false;
-            }
-        if (update_gpu_advice)
-            {
-            updateGPUAdvice();
             }
         }
 
@@ -362,9 +337,6 @@ class PYBIND11_EXPORT ParticleGroup
         {
         m_particles_sorted = true;
         }
-
-    //! Update the GPU memory advice
-    void updateGPUAdvice();
 
     //! Helper function to be called when particles are added/removed
     void slotGlobalParticleNumChange()

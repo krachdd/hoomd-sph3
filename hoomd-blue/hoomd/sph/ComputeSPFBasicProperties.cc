@@ -68,65 +68,66 @@ void ComputeSPFBasicProperties::computeProperties()
     if (m_group->getNumMembersGlobal() == 0)
         return;
 
-    unsigned int group_size = m_group->getNumMembers();
+    const unsigned int group_size = m_group->getNumMembers();
 
     assert(m_pdata);
 
     // PDataFlags flags = m_pdata->getFlags();
+        { // GPU Array Scope 
+        // access the particle data
+        ArrayHandle<Scalar4> h_velocity(m_pdata->getVelocities(), access_location::host, access_mode::read);
+        ArrayHandle<Scalar> h_density(m_pdata->getDensities(), access_location::host, access_mode::read);
 
-    // access the particle data
-    ArrayHandle<Scalar4> h_velocity(m_pdata->getVelocities(), access_location::host, access_mode::read);
-    ArrayHandle<Scalar> h_density(m_pdata->getDensities(), access_location::host, access_mode::read);
+        // ArrayHandle<unsigned int> h_body(m_pdata->getBodies(),
+        //                                  access_location::host,
+        //                                  access_mode::read);
+        // ArrayHandle<unsigned int> h_tag(m_pdata->getTags(), access_location::host, access_mode::read);
+        // tag evtl needed for group wise logging
 
-    // ArrayHandle<unsigned int> h_body(m_pdata->getBodies(),
-    //                                  access_location::host,
-    //                                  access_mode::read);
-    // ArrayHandle<unsigned int> h_tag(m_pdata->getTags(), access_location::host, access_mode::read);
-    // tag evtl needed for group wise logging
+        // if (flags[pdata_flag::kinetic_energy]){
+        // TO DO, add flags and use them in the future
+        // }
 
-    // if (flags[pdata_flag::kinetic_energy]){
-    // TO DO, add flags and use them in the future
-    // }
-
-    double fluid_vel_x_sum  = 0.0;
-    double fluid_vel_y_sum  = 0.0;
-    double fluid_vel_z_sum  = 0.0;
-    double sum_density      = 0.0;
-    // double fluid_prtl = 0;
-    double abs_velocity     = 0.0;
-    double e_kin_fluid      = 0.0;
-    // double adaptive_tstep = 0.0;
-    
-    for (unsigned int group_idx = 0; group_idx < group_size; group_idx++)
-    {
-        // Read particle index
-        unsigned int j = m_group->getMemberIndex(group_idx);
+        double fluid_vel_x_sum  = 0.0;
+        double fluid_vel_y_sum  = 0.0;
+        double fluid_vel_z_sum  = 0.0;
+        double sum_density      = 0.0;
+        // double fluid_prtl = 0;
+        double abs_velocity     = 0.0;
+        double e_kin_fluid      = 0.0;
+        // double adaptive_tstep = 0.0;
+        
+        for (unsigned int group_idx = 0; group_idx < group_size; group_idx++)
+            {
+            // Read particle index
+            unsigned int j = m_group->getMemberIndex(group_idx);
 
 
-        // Sum velocities
-        fluid_vel_x_sum += h_velocity.data[j].x;
-        fluid_vel_y_sum += h_velocity.data[j].y;
-        fluid_vel_z_sum += h_velocity.data[j].z;
-        abs_velocity  += sqrt(h_velocity.data[j].x * h_velocity.data[j].x + h_velocity.data[j].y * h_velocity.data[j].y + h_velocity.data[j].z * h_velocity.data[j].z);
-        sum_density     += h_density.data[j];
-        // Sum kinematic energy
-        e_kin_fluid += abs( 0.5 * h_velocity.data[j].w * abs_velocity * abs_velocity );
-    }
+            // Sum velocities
+            fluid_vel_x_sum += h_velocity.data[j].x;
+            fluid_vel_y_sum += h_velocity.data[j].y;
+            fluid_vel_z_sum += h_velocity.data[j].z;
+            abs_velocity  += sqrt(h_velocity.data[j].x * h_velocity.data[j].x + h_velocity.data[j].y * h_velocity.data[j].y + h_velocity.data[j].z * h_velocity.data[j].z);
+            sum_density     += h_density.data[j];
+            // Sum kinematic energy
+            e_kin_fluid += abs( 0.5 * h_velocity.data[j].w * abs_velocity * abs_velocity );
+            }
 
-    ArrayHandle<Scalar> h_properties(m_properties, access_location::host, access_mode::overwrite);
-    h_properties.data[singlephaseflow_logger_index::sum_fluid_velocity_x]  = Scalar(fluid_vel_x_sum);
-    h_properties.data[singlephaseflow_logger_index::sum_fluid_velocity_y]  = Scalar(fluid_vel_y_sum);
-    h_properties.data[singlephaseflow_logger_index::sum_fluid_velocity_z]  = Scalar(fluid_vel_z_sum);
-    h_properties.data[singlephaseflow_logger_index::sum_fluid_density]     = Scalar(sum_density);
-    h_properties.data[singlephaseflow_logger_index::abs_velocity]          = Scalar(abs_velocity);
-    h_properties.data[singlephaseflow_logger_index::e_kin_fluid]           = Scalar(e_kin_fluid);
-    // h_properties.data[singlephaseflow_logger_index::dt_adapt] = Scalar(adaptive_tstep);
+        ArrayHandle<Scalar> h_properties(m_properties, access_location::host, access_mode::overwrite);
+        h_properties.data[singlephaseflow_logger_index::sum_fluid_velocity_x]  = Scalar(fluid_vel_x_sum);
+        h_properties.data[singlephaseflow_logger_index::sum_fluid_velocity_y]  = Scalar(fluid_vel_y_sum);
+        h_properties.data[singlephaseflow_logger_index::sum_fluid_velocity_z]  = Scalar(fluid_vel_z_sum);
+        h_properties.data[singlephaseflow_logger_index::sum_fluid_density]     = Scalar(sum_density);
+        h_properties.data[singlephaseflow_logger_index::abs_velocity]          = Scalar(abs_velocity);
+        h_properties.data[singlephaseflow_logger_index::e_kin_fluid]           = Scalar(e_kin_fluid);
+        // h_properties.data[singlephaseflow_logger_index::dt_adapt] = Scalar(adaptive_tstep);
 
 #ifdef ENABLE_MPI
-    // in MPI, reduce extensive quantities only when they're needed
-    m_properties_reduced = !m_pdata->getDomainDecomposition();
+        // in MPI, reduce extensive quantities only when they're needed
+        m_properties_reduced = !m_pdata->getDomainDecomposition();
 #endif // ENABLE_MPI
-}
+        } // End GPU Array Scope
+    }
 
 
 #ifdef ENABLE_MPI
@@ -165,5 +166,5 @@ void export_ComputeSPFMechanicalProperties(pybind11::module& m)
     }
 
     } // end namespace detail
-    } // end namespace md
+    } // end namespace sph
     } // end namespace hoomd

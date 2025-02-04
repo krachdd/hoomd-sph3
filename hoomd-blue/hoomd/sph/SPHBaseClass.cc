@@ -65,58 +65,60 @@ void SPHBaseClass<KT_, SET_>::constructTypeVectors(std::shared_ptr<ParticleGroup
     // Clear the input vector
     global_typeids->clear();
 
-    // Position and type read handle
-    ArrayHandle<Scalar4> h_pos(m_pdata->getPositions(), access_location::host, access_mode::read);
+    const unsigned int group_size = pgroup->getNumMembers();
+        { // GPU Array Scope 
+        // Position and type read handle
+        ArrayHandle<Scalar4> h_pos(m_pdata->getPositions(), access_location::host, access_mode::read);
 
-    // Types vectors
-    vector<unsigned int> local_typeids;
+        // Types vectors
+        vector<unsigned int> local_typeids;
 
-    // Loop through all local group particles
-    unsigned int group_size = pgroup->getNumMembers();
-    for (unsigned int group_idx = 0; group_idx < group_size; group_idx++)
-        {
-        // Read particle index
-        unsigned int i = pgroup->getMemberIndex(group_idx);
-
-        // Read particle type
-        unsigned int type = __scalar_as_int(h_pos.data[i].w);
-
-        // Check if type is already present in vector. If not, push to vector
-        if ( find(local_typeids.begin(), local_typeids.end(), type) != local_typeids.end() )
-            continue;
-        else
-            local_typeids.push_back(type);
-        }
-
-    // Construct global list in parallel
-#ifdef ENABLE_MPI
-        // Number of ranks
-        unsigned int n_ranks = m_exec_conf->getNRanks();
-
-        // Gather results from all processors for fluid types
-        vector< vector<unsigned int> > typeids_proc(n_ranks);
-        all_gather_v(local_typeids, typeids_proc, m_exec_conf->getMPICommunicator());
-
-        // Combine all types into an ordered set
-        set<unsigned int> typeids_set;
-        for (unsigned int irank = 0; irank < n_ranks; ++irank)
+        // Loop through all local group particles
+        for (unsigned int group_idx = 0; group_idx < group_size; group_idx++)
             {
-            typeids_set.insert(typeids_proc[irank].begin(), typeids_proc[irank].end());
+            // Read particle index
+            unsigned int i = pgroup->getMemberIndex(group_idx);
+
+            // Read particle type
+            unsigned int type = __scalar_as_int(h_pos.data[i].w);
+
+            // Check if type is already present in vector. If not, push to vector
+            if ( find(local_typeids.begin(), local_typeids.end(), type) != local_typeids.end() )
+                continue;
+            else
+                local_typeids.push_back(type);
             }
 
-        // Store in vector
-        for (set<unsigned int>::iterator it=typeids_set.begin(); it!=typeids_set.end(); ++it)
-            global_typeids->push_back(*it);
+        // Construct global list in parallel
+#ifdef ENABLE_MPI
+            // Number of ranks
+            unsigned int n_ranks = m_exec_conf->getNRanks();
+
+            // Gather results from all processors for fluid types
+            vector< vector<unsigned int> > typeids_proc(n_ranks);
+            all_gather_v(local_typeids, typeids_proc, m_exec_conf->getMPICommunicator());
+
+            // Combine all types into an ordered set
+            set<unsigned int> typeids_set;
+            for (unsigned int irank = 0; irank < n_ranks; ++irank)
+                {
+                typeids_set.insert(typeids_proc[irank].begin(), typeids_proc[irank].end());
+                }
+
+            // Store in vector
+            for (set<unsigned int>::iterator it=typeids_set.begin(); it!=typeids_set.end(); ++it)
+                global_typeids->push_back(*it);
 
 #else
-        // Copy data
-        for (unsigned int i=0;i<local_typeids.size();i++)
-            global_typeids->push_back(local_typeids[i]);
+            // Copy data
+            for (unsigned int i=0;i<local_typeids.size();i++)
+                global_typeids->push_back(local_typeids[i]);
 #endif
-
+        } // End GPU Array Scope
     m_exec_conf->msg->notice(7) << "Available types of requested group: " << std::endl;
     for (unsigned int i=0;i<global_typeids->size();i++)
         m_exec_conf->msg->notice(7) << "Typenumber " << i << ": " << (*global_typeids)[i] << std::endl;
+    
     }
 
 /*! \post Return current body force
@@ -190,6 +192,7 @@ void SPHBaseClass<KT_, SET_>::applyBodyForce(uint64_t timestep, std::shared_ptr<
     {
     if ( m_body_acceleration )
         {
+        m_exec_conf->msg->notice(7) << "Computing SPHBaseClass::applyBodyForce" << std::endl;
 
         Scalar damp = Scalar(1);
         if ( m_damptime > 0 && timestep < m_damptime )
@@ -198,26 +201,34 @@ void SPHBaseClass<KT_, SET_>::applyBodyForce(uint64_t timestep, std::shared_ptr<
 
         m_exec_conf->msg->notice(7) << "Computing SPHBaseClass::applyBodyForce with damp factor " << damp << std::endl;
 
+        m_exec_conf->msg->notice(7) << "Computing SPHBaseClass::applyBodyForce assered "<< std::endl;
+
+        const unsigned int group_size = pgroup->getNumMembers();
         // Grab handles for particle data
-        ArrayHandle<Scalar4> h_force(m_force,access_location::host, access_mode::readwrite);
-        ArrayHandle<Scalar4> h_velocity(m_pdata->getVelocities(), access_location::host, access_mode::read);
-
-        // for each particle in given group
-        unsigned int group_size = pgroup->getNumMembers();
-        for (unsigned int group_idx = 0; group_idx < group_size; group_idx++)
             {
-            // Read particle index
-            unsigned int i = pgroup->getMemberIndex(group_idx);
+            ArrayHandle<Scalar4> h_velocity(m_pdata->getVelocities(), access_location::host, access_mode::read);
+            m_exec_conf->msg->notice(7) << "Computing SPHBaseClass::applyBodyForce velocity getter done!" << std::endl;
+            ArrayHandle<Scalar4> h_force(m_force,access_location::host, access_mode::readwrite);
+            m_exec_conf->msg->notice(7) << "Computing SPHBaseClass::applyBodyForce force getter done!" << std::endl;
+        
+            // for each particle in given group
+            for (unsigned int group_idx = 0; group_idx < group_size; group_idx++)
+                {
+                // Read particle index
+                unsigned int i = pgroup->getMemberIndex(group_idx);
 
-            // Read particle mass
-            Scalar mi = h_velocity.data[i].w;
+                // Read particle mass
+                Scalar mi = h_velocity.data[i].w;
 
-            // Add contribution to force
-            h_force.data[i].x += bforce.x*mi;
-            h_force.data[i].y += bforce.y*mi;
-            h_force.data[i].z += bforce.z*mi;
+                // Add contribution to force
+                h_force.data[i].x += bforce.x*mi;
+                h_force.data[i].y += bforce.y*mi;
+                h_force.data[i].z += bforce.z*mi;
+                }
             }
         }
+        m_exec_conf->msg->notice(7) << "Computing SPHBaseClass::applyBodyForce done!" << std::endl;
+
     }
 
 // #ifdef ENABLE_HIP

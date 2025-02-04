@@ -165,7 +165,6 @@ vec3<double> Integrator::computeLinearMomentum()
 */
 void Integrator::computeNetForce(uint64_t timestep)
     {
-
     for (auto& force : m_forces)
         {
             force->compute(timestep);

@@ -110,40 +110,43 @@ Scalar SPHIntegrationMethodTwoStep::getTranslationalDOF(std::shared_ptr<Particle
 */
 void SPHIntegrationMethodTwoStep::validateGroup()
     {
-    ArrayHandle<unsigned int> h_group_index(m_group->getIndexArray(),
-                                            access_location::host,
-                                            access_mode::read);
-    ArrayHandle<unsigned int> h_body(m_pdata->getBodies(),
-                                     access_location::host,
-                                     access_mode::read);
-    ArrayHandle<unsigned int> h_rtag(m_pdata->getRTags(), access_location::host, access_mode::read);
-    ArrayHandle<unsigned int> h_tag(m_pdata->getTags(), access_location::host, access_mode::read);
-
+    const unsigned int group_size = m_group->getNumMembers(); 
     unsigned int error = 0;
-    for (unsigned int gidx = 0; gidx < m_group->getNumMembers(); gidx++)
-        {
-        unsigned int i = h_group_index.data[gidx];
-        unsigned int tag = h_tag.data[i];
-        unsigned int body = h_body.data[i];
 
-        if (body < MIN_FLOPPY && body != tag)
+        { // GPU Array Scope 
+        ArrayHandle<unsigned int> h_group_index(m_group->getIndexArray(),
+                                                access_location::host,
+                                                access_mode::read);
+        ArrayHandle<unsigned int> h_body(m_pdata->getBodies(),
+                                         access_location::host,
+                                         access_mode::read);
+        ArrayHandle<unsigned int> h_rtag(m_pdata->getRTags(), access_location::host, access_mode::read);
+        ArrayHandle<unsigned int> h_tag(m_pdata->getTags(), access_location::host, access_mode::read);
+
+        for (unsigned int gidx = 0; gidx < group_size; gidx++)
             {
-            error = 1;
+            unsigned int i = h_group_index.data[gidx];
+            unsigned int tag = h_tag.data[i];
+            unsigned int body = h_body.data[i];
+
+            if (body < MIN_FLOPPY && body != tag)
+                {
+                error = 1;
+                }
             }
-        }
 
 #ifdef ENABLE_MPI
-    if (this->m_sysdef->isDomainDecomposed())
-        {
-        MPI_Allreduce(MPI_IN_PLACE,
-                      &error,
-                      1,
-                      MPI_UNSIGNED,
-                      MPI_LOR,
-                      this->m_exec_conf->getMPICommunicator());
-        }
+        if (this->m_sysdef->isDomainDecomposed())
+            {
+            MPI_Allreduce(MPI_IN_PLACE,
+                          &error,
+                          1,
+                          MPI_UNSIGNED,
+                          MPI_LOR,
+                          this->m_exec_conf->getMPICommunicator());
+            }
 #endif
-
+        } // End GPU Array Scope 
     if (error)
         {
         throw std::runtime_error("Integration methods may not be applied to constituents.");

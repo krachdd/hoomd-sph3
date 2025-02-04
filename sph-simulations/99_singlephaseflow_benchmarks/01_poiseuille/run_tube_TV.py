@@ -20,8 +20,8 @@ import gsd.hoomd
 # ------------------------------------------------------------
 
 
-# device = hoomd.device.CPU(notice_level=2)
-device = hoomd.device.CPU(notice_level=10)
+device = hoomd.device.CPU(notice_level=2)
+# device = hoomd.device.CPU(notice_level=10)
 sim = hoomd.Simulation(device=device)
 
 filename = str(sys.argv[2])
@@ -164,8 +164,6 @@ sim.operations.integrator = integrator
 
 if device.communicator.rank == 0:
     print(f'Starting Run at {dt_string}')
-
-print("###\nSTART RUN\n ###")
 
 sim.run(steps, write_at_start=True)
 

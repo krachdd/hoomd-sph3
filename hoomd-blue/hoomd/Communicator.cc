@@ -1327,13 +1327,13 @@ Communicator::Communicator(std::shared_ptr<SystemDefinition> sysdef,
 
     initializeNeighborArrays();
 
-    // create a type for pdata_element
-    {
-    const MPI_Datatype mpi_scalar3 = m_exec_conf->getMPIConfig()->getScalar3Datatype();
-    const MPI_Datatype mpi_scalar4 = m_exec_conf->getMPIConfig()->getScalar4Datatype();
-    const int nitems = 16;
-    int blocklengths[nitems] = {1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 3, 1, 1, 1, 1, 1};
-    MPI_Datatype types[nitems] = {mpi_scalar4,
+    	// create a type for pdata_element
+    	{
+   	 const MPI_Datatype mpi_scalar3 = m_exec_conf->getMPIConfig()->getScalar3Datatype();
+    	const MPI_Datatype mpi_scalar4 = m_exec_conf->getMPIConfig()->getScalar4Datatype();
+    	const int nitems = 16;
+    	int blocklengths[nitems] = {1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 3, 1, 1, 1, 1, 1};
+    	MPI_Datatype types[nitems] = {mpi_scalar4,
                               mpi_scalar4,
                               mpi_scalar3,
                               MPI_HOOMD_SCALAR,
@@ -1349,7 +1349,7 @@ Communicator::Communicator(std::shared_ptr<SystemDefinition> sysdef,
                               mpi_scalar4,
                               mpi_scalar4,
                               MPI_HOOMD_SCALAR};
-    MPI_Aint offsets[nitems] = {offsetof(detail::pdata_element, pos),
+   	MPI_Aint offsets[nitems] = {offsetof(detail::pdata_element, pos),
                         offsetof(detail::pdata_element, vel),
                         offsetof(detail::pdata_element, accel),
                         offsetof(detail::pdata_element, density),

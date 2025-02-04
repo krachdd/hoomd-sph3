@@ -62,17 +62,20 @@ SinglePhaseFlow<KT_, SET_>::SinglePhaseFlow(std::shared_ptr<SystemDefinition> sy
         unsigned int num_types = this->m_sysdef->getParticleData()->getNTypes();
 
         m_type_property_map = GPUArray<unsigned int>(num_types, this->m_exec_conf);
-        {
+            { // GPU Array Scope 
             ArrayHandle<unsigned int> h_type_property_map(m_type_property_map, access_location::host, access_mode::overwrite);
             fill_n(h_type_property_map.data, num_types, SolidFluidTypeBit::NONE);
             // no need to parallelize this as there should only be a few particle types
-            for (unsigned int i = 0; i < m_fluidtypes.size(); i++) {
+            for (unsigned int i = 0; i < m_fluidtypes.size(); i++) 
+                {
                 h_type_property_map.data[m_fluidtypes[i]] |= SolidFluidTypeBit::FLUID;
-            }
-            for (unsigned int i = 0; i < m_solidtypes.size(); i++) {
+                }
+            
+            for (unsigned int i = 0; i < m_solidtypes.size(); i++) 
+                {
                 h_type_property_map.data[m_solidtypes[i]] |= SolidFluidTypeBit::SOLID;
-            }
-        }
+                }            
+            } // End GPU Array Scope
 
         // Set simulations methods
         m_density_method = mdensitymethod;
@@ -283,7 +286,7 @@ template<SmoothingKernelType KT_,StateEquationType SET_>
 void SinglePhaseFlow<KT_, SET_>::setRcut(unsigned int typ1, unsigned int typ2, Scalar rcut)
     {
     validateTypes(typ1, typ2, "setting r_cut");
-        {
+        { // GPU Array Scope
         // store r_cut**2 for use internally
         // ArrayHandle<Scalar> h_rcutsq(m_rcutsq, access_location::host, access_mode::readwrite);
         // h_rcutsq.data[m_typpair_idx(typ1, typ2)] = rcut * rcut;
@@ -295,7 +298,7 @@ void SinglePhaseFlow<KT_, SET_>::setRcut(unsigned int typ1, unsigned int typ2, S
                                           access_mode::readwrite);
         h_r_cut_nlist.data[m_typpair_idx(typ1, typ2)] = rcut;
         h_r_cut_nlist.data[m_typpair_idx(typ2, typ1)] = rcut;
-        }
+        } // End GPU Array Scope
 
     // notify the neighbor list that we have changed r_cut values
     this->m_nlist->notifyRCutMatrixChange();
@@ -319,48 +322,50 @@ template<SmoothingKernelType KT_,StateEquationType SET_>
 void SinglePhaseFlow<KT_, SET_>::mark_solid_particles_toremove(uint64_t timestep)
     {
     this->m_exec_conf->msg->notice(7) << "Computing SinglePhaseFlow::Mark solid Particles to remove at timestep " << timestep << std::endl;
-
-    // Grab handles for particle and neighbor data
-    ArrayHandle<Scalar4> h_pos(this->m_pdata->getPositions(), access_location::host, access_mode::read);
-    ArrayHandle<Scalar4> h_velocity(this->m_pdata->getVelocities(), access_location::host, access_mode::read);
-
-    // Grab handles for neighbor data
-    ArrayHandle<unsigned int> h_n_neigh(this->m_nlist->getNNeighArray(), access_location::host, access_mode::read);
-    ArrayHandle<unsigned int> h_nlist(this->m_nlist->getNListArray(), access_location::host, access_mode::read);
-    ArrayHandle<size_t> h_head_list(this->m_nlist->getHeadList(), access_location::host, access_mode::read);
-    ArrayHandle<unsigned int> h_type_property_map(this->m_type_property_map, access_location::host, access_mode::read);
-
+    
+    const unsigned int group_size = this->m_solidgroup->getNumMembers();
     unsigned int size;
     size_t myHead;
+        { // GPU Array Scope
+        // Grab handles for particle and neighbor data
+        ArrayHandle<Scalar4> h_pos(this->m_pdata->getPositions(), access_location::host, access_mode::read);
+        ArrayHandle<Scalar4> h_velocity(this->m_pdata->getVelocities(), access_location::host, access_mode::read);
 
-    // For all solid particles
-    unsigned int group_size = this->m_solidgroup->getNumMembers();
-    for (unsigned int group_idx = 0; group_idx < group_size; group_idx++)
-        {
-        // Read particle index
-        unsigned int i = this->m_solidgroup->getMemberIndex(group_idx);
+        // Grab handles for neighbor data
+        ArrayHandle<unsigned int> h_n_neigh(this->m_nlist->getNNeighArray(), access_location::host, access_mode::read);
+        ArrayHandle<unsigned int> h_nlist(this->m_nlist->getNListArray(), access_location::host, access_mode::read);
+        ArrayHandle<size_t> h_head_list(this->m_nlist->getHeadList(), access_location::host, access_mode::read);
+        ArrayHandle<unsigned int> h_type_property_map(this->m_type_property_map, access_location::host, access_mode::read);
 
-        // check if solid particle has any fluid neighbor
-        bool solid_w_fluid_neigh = false;
-        myHead = h_head_list.data[i];
-        size = (unsigned int)h_n_neigh.data[i];
-        for (unsigned int j = 0; j < size; j++)
+
+        // For all solid particles
+        for (unsigned int group_idx = 0; group_idx < group_size; group_idx++)
             {
-            unsigned int k = h_nlist.data[myHead + j];
-            if ( checkfluid(h_type_property_map.data, h_pos.data[k].w) )
+            // Read particle index
+            unsigned int i = this->m_solidgroup->getMemberIndex(group_idx);
+
+            // check if solid particle has any fluid neighbor
+            bool solid_w_fluid_neigh = false;
+            myHead = h_head_list.data[i];
+            size = (unsigned int)h_n_neigh.data[i];
+            for (unsigned int j = 0; j < size; j++)
                 {
-                solid_w_fluid_neigh = true;
-                break;
+                unsigned int k = h_nlist.data[myHead + j];
+                if ( checkfluid(h_type_property_map.data, h_pos.data[k].w) )
+                    {
+                    solid_w_fluid_neigh = true;
+                    break;
+                    }
                 }
-            }
-        if ( !(solid_w_fluid_neigh) )
-            {
-            // Solid particles which do not have fluid neighbors are marked
-            // using mass=-999 so that they can be deleted during simulation
-            h_velocity.data[i].w = Scalar(-999.0);
-            }
+            if ( !(solid_w_fluid_neigh) )
+                {
+                // Solid particles which do not have fluid neighbors are marked
+                // using mass=-999 so that they can be deleted during simulation
+                h_velocity.data[i].w = Scalar(-999.0);
+                }
 
-        } // End solid particle loop
+            } // End solid particle loop
+        } // End GPU Array Scope
 
     } // End mark solid particles to remove
 
@@ -374,33 +379,35 @@ template<SmoothingKernelType KT_,StateEquationType SET_>
 void SinglePhaseFlow<KT_, SET_>::compute_particlenumberdensity(uint64_t timestep)
     {
     this->m_exec_conf->msg->notice(7) << "Computing SinglePhaseFlow::Particle Number Density" << std::endl;
+    const unsigned int group_size = this->m_fluidgroup->getNumMembers();
 
-    // Grab handles for particle data
-    ArrayHandle<Scalar> h_density(this->m_pdata->getDensities(), access_location::host, access_mode::readwrite);
-    ArrayHandle<Scalar4> h_velocity(this->m_pdata->getVelocities(), access_location::host, access_mode::read);
+        { // GPU Array Scope
+        // Grab handles for particle data
+        ArrayHandle<Scalar> h_density(this->m_pdata->getDensities(), access_location::host, access_mode::readwrite);
+        ArrayHandle<Scalar4> h_velocity(this->m_pdata->getVelocities(), access_location::host, access_mode::read);
 
-    // Grab handles for neighbor data
-    ArrayHandle<unsigned int> h_n_neigh(this->m_nlist->getNNeighArray(), access_location::host, access_mode::read);
+        // Grab handles for neighbor data
+        ArrayHandle<unsigned int> h_n_neigh(this->m_nlist->getNNeighArray(), access_location::host, access_mode::read);
 
-    unsigned int size;
+        unsigned int size;
 
-    // Volume of sphere with radius m_rcut
-    double sphere_vol = Scalar(4.0)/Scalar(3.0) * Scalar(3.14159265359) * pow(m_rcut, 3);
+        // Volume of sphere with radius m_rcut
+        double sphere_vol = Scalar(4.0)/Scalar(3.0) * Scalar(3.14159265359) * pow(m_rcut, 3);
 
-    // Particle loop
-    // For each fluid particle
-    unsigned int group_size = this->m_fluidgroup->getNumMembers();
-    for (unsigned int group_idx = 0; group_idx < group_size; group_idx++)
-        {
-        // Read particle index
-        unsigned int i = this->m_fluidgroup->getMemberIndex(group_idx);
-        
-        // All of the neighbors of this particle
-        size = (unsigned int)h_n_neigh.data[i];
-        // +1 because particle itself also contributes to density
-        h_density.data[i] = (size + 1) * h_velocity.data[i].w / sphere_vol;
+        // Particle loop
+        // For each fluid particle
+        for (unsigned int group_idx = 0; group_idx < group_size; group_idx++)
+            {
+            // Read particle index
+            unsigned int i = this->m_fluidgroup->getMemberIndex(group_idx);
+            
+            // All of the neighbors of this particle
+            size = (unsigned int)h_n_neigh.data[i];
+            // +1 because particle itself also contributes to density
+            h_density.data[i] = (size + 1) * h_velocity.data[i].w / sphere_vol;
 
-        } // End of particle loop
+            } // End of particle loop
+        } // End GPU Array Scope
 
     } // End particle number density
 
@@ -415,89 +422,91 @@ void SinglePhaseFlow<KT_, SET_>::compute_ndensity(uint64_t timestep)
 {
     this->m_exec_conf->msg->notice(7) << "Computing SinglePhaseFlow::Number Density" << std::endl;
 
-    // Grab handles for particle data
-    ArrayHandle<Scalar> h_density(this->m_pdata->getDensities(), access_location::host, access_mode::readwrite);
-    ArrayHandle<Scalar4> h_pos(this->m_pdata->getPositions(), access_location::host, access_mode::read);
-    ArrayHandle<Scalar4> h_velocity(this->m_pdata->getVelocities(), access_location::host, access_mode::read);
-    ArrayHandle<Scalar>  h_h(this->m_pdata->getSlengths(), access_location::host, access_mode::read);
-
-    // Grab handles for neighbor data
-    ArrayHandle<unsigned int> h_n_neigh(this->m_nlist->getNNeighArray(), access_location::host, access_mode::read);
-    ArrayHandle<unsigned int> h_nlist(this->m_nlist->getNListArray(), access_location::host, access_mode::read);
-    ArrayHandle<size_t> h_head_list(this->m_nlist->getHeadList(), access_location::host, access_mode::read);
-    ArrayHandle<unsigned int> h_type_property_map(this->m_type_property_map, access_location::host, access_mode::read);
-
-    // Local copy of the simulation box
     const BoxDim& box = this->m_pdata->getGlobalBox();
-
-    unsigned int size;
-    size_t myHead;
-    Scalar ni;
-
-    // Precompute self-density for homogeneous smoothing lengths
-    Scalar w0 = this->m_skernel->w0(m_ch); 
-    
-    // Particle loop
-    // For each fluid particle
     unsigned int group_size = this->m_fluidgroup->getNumMembers();
-    for (unsigned int group_idx = 0; group_idx < group_size; group_idx++)
-    {
-        // Read particle index
-        unsigned int i = this->m_fluidgroup->getMemberIndex(group_idx);
+
+        { // GPU Array Scope
+        // Grab handles for particle data
+        ArrayHandle<Scalar> h_density(this->m_pdata->getDensities(), access_location::host, access_mode::readwrite);
+        ArrayHandle<Scalar4> h_pos(this->m_pdata->getPositions(), access_location::host, access_mode::read);
+        ArrayHandle<Scalar4> h_velocity(this->m_pdata->getVelocities(), access_location::host, access_mode::read);
+        ArrayHandle<Scalar>  h_h(this->m_pdata->getSlengths(), access_location::host, access_mode::read);
+
+        // Grab handles for neighbor data
+        ArrayHandle<unsigned int> h_n_neigh(this->m_nlist->getNNeighArray(), access_location::host, access_mode::read);
+        ArrayHandle<unsigned int> h_nlist(this->m_nlist->getNListArray(), access_location::host, access_mode::read);
+        ArrayHandle<size_t> h_head_list(this->m_nlist->getHeadList(), access_location::host, access_mode::read);
+        ArrayHandle<unsigned int> h_type_property_map(this->m_type_property_map, access_location::host, access_mode::read);
+
+        // Local copy of the simulation box
+        unsigned int size;
+        size_t myHead;
+        Scalar ni;
+
+        // Precompute self-density for homogeneous smoothing lengths
+        Scalar w0 = this->m_skernel->w0(m_ch); 
         
-        // set temp variable to zero 
-        ni = w0;
-
-        // Access the particle's position
-        Scalar3 pi;
-        pi.x = h_pos.data[i].x;
-        pi.y = h_pos.data[i].y;
-        pi.z = h_pos.data[i].z;
-
-        // Loop over all of the neighbors of this particle
-        myHead = h_head_list.data[i];
-        size = (unsigned int)h_n_neigh.data[i];
-
-        for (unsigned int j = 0; j < size; j++)
+        // Particle loop
+        // For each fluid particle
+        for (unsigned int group_idx = 0; group_idx < group_size; group_idx++)
         {
-            // Index of neighbor
-            unsigned int k = h_nlist.data[myHead + j];
+            // Read particle index
+            unsigned int i = this->m_fluidgroup->getMemberIndex(group_idx);
+            
+            // set temp variable to zero 
+            ni = w0;
 
-            // Access neighbor position
-            Scalar3 pj;
-            pj.x = h_pos.data[k].x;
-            pj.y = h_pos.data[k].y;
-            pj.z = h_pos.data[k].z;
+            // Access the particle's position
+            Scalar3 pi;
+            pi.x = h_pos.data[i].x;
+            pi.y = h_pos.data[i].y;
+            pi.z = h_pos.data[i].z;
 
-            // Compute distance vector
-            // Scalar3 dx = pj - pi;
-            Scalar3 dx;
-            dx.x = pi.x - pj.x;
-            dx.y = pi.y - pj.y;
-            dx.z = pi.z - pj.z;
+            // Loop over all of the neighbors of this particle
+            myHead = h_head_list.data[i];
+            size = (unsigned int)h_n_neigh.data[i];
 
-            // Apply periodic boundary conditions
-            dx = box.minImage(dx);
+            for (unsigned int j = 0; j < size; j++)
+            {
+                // Index of neighbor
+                unsigned int k = h_nlist.data[myHead + j];
 
-            // Calculate squared distance
-            Scalar rsq = dot(dx, dx);
+                // Access neighbor position
+                Scalar3 pj;
+                pj.x = h_pos.data[k].x;
+                pj.y = h_pos.data[k].y;
+                pj.z = h_pos.data[k].z;
 
-            // If particle distance is too large, continue with next neighbor in loop
-            if ( this->m_const_slength && rsq > m_rcutsq )
-                continue;
+                // Compute distance vector
+                // Scalar3 dx = pj - pi;
+                Scalar3 dx;
+                dx.x = pi.x - pj.x;
+                dx.y = pi.y - pj.y;
+                dx.z = pi.z - pj.z;
 
-            // Calculate distance
-            Scalar r = sqrt(rsq);
+                // Apply periodic boundary conditions
+                dx = box.minImage(dx);
 
-            ni += this->m_const_slength ? this->m_skernel->wij(m_ch,r) : this->m_skernel->wij(Scalar(0.5)*(h_h.data[i]+h_h.data[k]),r);
+                // Calculate squared distance
+                Scalar rsq = dot(dx, dx);
 
-        } // End neighbour loop
+                // If particle distance is too large, continue with next neighbor in loop
+                if ( this->m_const_slength && rsq > m_rcutsq )
+                    continue;
 
-        // Compute mass density from number density if particle i is a fluid particle
-        // rho_i = m_i * \sum_j wij
-        h_density.data[i] = ni * h_velocity.data[i].w;
+                // Calculate distance
+                Scalar r = sqrt(rsq);
 
-    } // End fluid group loop
+                ni += this->m_const_slength ? this->m_skernel->wij(m_ch,r) : this->m_skernel->wij(Scalar(0.5)*(h_h.data[i]+h_h.data[k]),r);
+
+            } // End neighbour loop
+
+            // Compute mass density from number density if particle i is a fluid particle
+            // rho_i = m_i * \sum_j wij
+            h_density.data[i] = ni * h_velocity.data[i].w;
+
+        } // End fluid group loop
+    } // End GPU Array Scope
 
 } // End compute number density
 
@@ -509,21 +518,23 @@ template<SmoothingKernelType KT_,StateEquationType SET_>
 void SinglePhaseFlow<KT_, SET_>::compute_pressure(uint64_t timestep)
     {
     this->m_exec_conf->msg->notice(7) << "Computing SinglePhaseFlow::Pressure" << std::endl;
-
-    // Define ArrayHandles
-    ArrayHandle<Scalar> h_density(this->m_pdata->getDensities(), access_location::host, access_mode::readwrite);
-    ArrayHandle<Scalar> h_pressure(this->m_pdata->getPressures(), access_location::host, access_mode::readwrite);
-
-    // For each fluid particle
     unsigned int group_size = this->m_fluidgroup->getNumMembers();
-    for (unsigned int group_idx = 0; group_idx < group_size; group_idx++)
-        {
-        // Read particle index
-        unsigned int i = this->m_fluidgroup->getMemberIndex(group_idx);
-        // Evaluate pressure
-        h_pressure.data[i] = this->m_eos->Pressure(h_density.data[i]);
-        
-        } // End fluid group loop
+
+        { // GPU Array Scope
+        // Define ArrayHandles
+        ArrayHandle<Scalar> h_density(this->m_pdata->getDensities(), access_location::host, access_mode::readwrite);
+        ArrayHandle<Scalar> h_pressure(this->m_pdata->getPressures(), access_location::host, access_mode::readwrite);
+
+        // For each fluid particle
+        for (unsigned int group_idx = 0; group_idx < group_size; group_idx++)
+            {
+            // Read particle index
+            unsigned int i = this->m_fluidgroup->getMemberIndex(group_idx);
+            // Evaluate pressure
+            h_pressure.data[i] = this->m_eos->Pressure(h_density.data[i]);
+            
+            } // End fluid group loop
+        } // End GPU Array Scope
 
     } // End compute pressure
 
@@ -536,244 +547,248 @@ template<SmoothingKernelType KT_,StateEquationType SET_>
 void SinglePhaseFlow<KT_, SET_>::compute_noslip(uint64_t timestep)
     {
     this->m_exec_conf->msg->notice(7) << "Computing SinglePhaseFlow::NoSlip NoPenetration" << std::endl;
-
-    // Grab handles for particle and neighbor data
-    ArrayHandle<Scalar3> h_vf(this->m_pdata->getAuxiliaries1(), access_location::host,access_mode::readwrite);
-    ArrayHandle<Scalar4> h_pos(this->m_pdata->getPositions(), access_location::host, access_mode::read);
-    ArrayHandle<Scalar>  h_density(this->m_pdata->getDensities(), access_location::host, access_mode::readwrite);
-    ArrayHandle<Scalar>  h_pressure(this->m_pdata->getPressures(), access_location::host, access_mode::readwrite);
-    ArrayHandle<Scalar4> h_velocity(this->m_pdata->getVelocities(), access_location::host, access_mode::read);
-    ArrayHandle<Scalar3> h_accel(this->m_pdata->getAccelerations(), access_location::host, access_mode::read);
-    ArrayHandle<Scalar>  h_h(this->m_pdata->getSlengths(), access_location::host, access_mode::read);
-
-    // Grab handles for neighbor data
-    ArrayHandle<unsigned int> h_n_neigh(this->m_nlist->getNNeighArray(), access_location::host, access_mode::read);
-    ArrayHandle<unsigned int> h_nlist(this->m_nlist->getNListArray(), access_location::host, access_mode::read);
-    ArrayHandle<size_t> h_head_list(this->m_nlist->getHeadList(), access_location::host, access_mode::read);
-    ArrayHandle<unsigned int> h_type_property_map(this->m_type_property_map, access_location::host, access_mode::read);
-
-    // Local copy of the simulation box
     const BoxDim& box = this->m_pdata->getGlobalBox();
+    const unsigned int group_size = this->m_solidgroup->getNumMembers();
 
-    unsigned int size;
-    size_t myHead;
+        { // GPU Array Scope
 
-    // For all solid particles
-    unsigned int group_size = this->m_solidgroup->getNumMembers();
-    for (unsigned int group_idx = 0; group_idx < group_size; group_idx++)
-        {
-        // Read particle index
-        unsigned int i = this->m_solidgroup->getMemberIndex(group_idx);
+        // Grab handles for particle and neighbor data
+        ArrayHandle<Scalar3> h_vf(this->m_pdata->getAuxiliaries1(), access_location::host,access_mode::readwrite);
+        ArrayHandle<Scalar4> h_pos(this->m_pdata->getPositions(), access_location::host, access_mode::read);
+        ArrayHandle<Scalar>  h_density(this->m_pdata->getDensities(), access_location::host, access_mode::readwrite);
+        ArrayHandle<Scalar>  h_pressure(this->m_pdata->getPressures(), access_location::host, access_mode::readwrite);
+        ArrayHandle<Scalar4> h_velocity(this->m_pdata->getVelocities(), access_location::host, access_mode::read);
+        ArrayHandle<Scalar3> h_accel(this->m_pdata->getAccelerations(), access_location::host, access_mode::read);
+        ArrayHandle<Scalar>  h_h(this->m_pdata->getSlengths(), access_location::host, access_mode::read);
 
-        // Access the particle's position, velocity, mass and type
-        Scalar3 pi;
-        pi.x = h_pos.data[i].x;
-        pi.y = h_pos.data[i].y;
-        pi.z = h_pos.data[i].z;
+        // Grab handles for neighbor data
+        ArrayHandle<unsigned int> h_n_neigh(this->m_nlist->getNNeighArray(), access_location::host, access_mode::read);
+        ArrayHandle<unsigned int> h_nlist(this->m_nlist->getNListArray(), access_location::host, access_mode::read);
+        ArrayHandle<size_t> h_head_list(this->m_nlist->getHeadList(), access_location::host, access_mode::read);
+        ArrayHandle<unsigned int> h_type_property_map(this->m_type_property_map, access_location::host, access_mode::read);
 
-        // Read acceleration of solid particle i if content is not NaN
-        Scalar3 accel_i = make_scalar3(0,0,0);
-        if ( h_accel.data[i].x != h_accel.data[i].x ||
-             h_accel.data[i].y != h_accel.data[i].y ||
-             h_accel.data[i].z != h_accel.data[i].z )
+        // Local copy of the simulation box
+
+        unsigned int size;
+        size_t myHead;
+
+        // For all solid particles
+        for (unsigned int group_idx = 0; group_idx < group_size; group_idx++)
             {
-            }
-        else
-            {
-            accel_i.x = h_accel.data[i].x;
-            accel_i.y = h_accel.data[i].y;
-            accel_i.z = h_accel.data[i].z;
-            }
+            // Read particle index
+            unsigned int i = this->m_solidgroup->getMemberIndex(group_idx);
 
-        // Initialize fictitious solid velocity vector
-        Scalar3 uf_c0 = make_scalar3(0, 0, 0);
+            // Access the particle's position, velocity, mass and type
+            Scalar3 pi;
+            pi.x = h_pos.data[i].x;
+            pi.y = h_pos.data[i].y;
+            pi.z = h_pos.data[i].z;
 
-        // Initialize fictitious solid pressure scalar
-        Scalar pf_c0= Scalar(0);
-
-        // Initialize hydrostatic pressure contribution
-        Scalar3 ph_c0 = make_scalar3(0, 0, 0);
-
-        // Initialize reziprocal solid particle wise zeroth order normalisation constant 
-        Scalar wij_c0 = Scalar(0);
-
-        // Loop over all of the neighbors of this particle
-        // Count fluid neighbors before setting solid particle properties
-        unsigned int fluidneighbors = 0;
-
-        // Skip neighbor loop if this solid particle does not have fluid neighbors
-        bool solid_w_fluid_neigh = false;
-        myHead = h_head_list.data[i];
-        size = (unsigned int)h_n_neigh.data[i];
-        for (unsigned int j = 0; j < size; j++)
-            {
-            unsigned int k = h_nlist.data[myHead + j];
-            if ( checkfluid(h_type_property_map.data, h_pos.data[k].w) )
+            // Read acceleration of solid particle i if content is not NaN
+            Scalar3 accel_i = make_scalar3(0,0,0);
+            if ( h_accel.data[i].x != h_accel.data[i].x ||
+                 h_accel.data[i].y != h_accel.data[i].y ||
+                 h_accel.data[i].z != h_accel.data[i].z )
                 {
-                solid_w_fluid_neigh = true;
-                break;
                 }
-            }
-        if ( !(solid_w_fluid_neigh) )
-            {
-            // Set fictitious solid velocity to zero
-            h_vf.data[i].x = 0;
-            h_vf.data[i].y = 0;
-            h_vf.data[i].z = 0;
-            // If no fluid neighbors are present,
-            // Set pressure to background pressure
-            h_pressure.data[i] = this->m_eos->getBackgroundPressure();
-            // Density to rest density
-            h_density.data[i] = this->m_rho0;
-
-            continue;
-            }
-
-        myHead = h_head_list.data[i];
-        size = (unsigned int)h_n_neigh.data[i];
-        // loop over all neighbours of the solid particle
-        // effectivly, only fluid particles contribute to properties of the solid
-
-        for (unsigned int j = 0; j < size; j++)
-            {
-            // Index of neighbor (MEM TRANSFER: 1 scalar)
-            unsigned int k = h_nlist.data[myHead + j];
-
-            // Sanity check
-            assert(k < this->m_pdata->getN() + this->m_pdata->getNGhosts());
-
-            // If neighbor particle is solid, continue with next element in loop
-            // i.e. interpolations only apply to fluid particles
-            if ( checksolid(h_type_property_map.data, h_pos.data[k].w) )
-                continue;
             else
-                fluidneighbors += 1;
-
-            // Access neighbor position
-            Scalar3 pj;
-            pj.x = h_pos.data[k].x;
-            pj.y = h_pos.data[k].y;
-            pj.z = h_pos.data[k].z;
-
-            // Compute distance vector (FLOPS: 3)
-            // in this case i is the solid particle, j its fluid neighbour
-            Scalar3 dx;
-            dx.x = pi.x - pj.x;
-            dx.y = pi.y - pj.y;
-            dx.z = pi.z - pj.z;
-
-            // Apply periodic boundary conditions (FLOPS: 9)
-            dx = box.minImage(dx);
-
-            // Calculate squared distance (FLOPS: 5)
-            Scalar rsq = dot(dx, dx);
-
-            // If particle distance is too large, skip this loop
-            if ( this->m_const_slength && rsq > this->m_rcutsq )
-                continue;
-
-            // Access neighbor velocity and mass
-            Scalar3 vj;
-            vj.x = h_velocity.data[k].x;
-            vj.y = h_velocity.data[k].y;
-            vj.z = h_velocity.data[k].z;
-
-            // Read particle k pressure
-            Scalar Pj = h_pressure.data[k];
-
-            // Calculate absolute and normalized distance
-            Scalar r = sqrt(rsq);
-
-            // Evaluate kernel function
-            Scalar wij = this->m_const_slength ? this->m_skernel->wij(m_ch,r) : this->m_skernel->wij(Scalar(0.5)*(h_h.data[i]+h_h.data[k]),r);
-
-            // Add contribution to solid fictitious velocity
-            uf_c0.x += vj.x*wij;
-            uf_c0.y += vj.y*wij;
-            uf_c0.z += vj.z*wij;
-
-            // Add contribution to solid fictitious pressure
-            pf_c0 += Pj*wij;
-
-            // Add contribution to hydrostatic pressure term
-            // this also includes a direction (included in dx)
-            // h_density is the density of the fluid and therefore a real density
-            ph_c0.x += h_density.data[k] * dx.x * wij;
-            ph_c0.y += h_density.data[k] * dx.y * wij;
-            ph_c0.z += h_density.data[k] * dx.z * wij;
-
-            wij_c0 += wij;
-
-            // if ( this->m_body_acceleration )
-            //     {
-
-            //     // ehemals rakulan
-
-            //     ph_c0.x += h_dpe.data[k].x * dx.x * wij;
-            //     ph_c0.y += h_dpe.data[k].x * dx.y * wij;
-            //     ph_c0.z += h_dpe.data[k].x * dx.z * wij;
-
-            //     }
-            } // End neighbor loop
-
-        // Store fictitious solid particle velocity
-        // if (fluidneighbors > 0 && h_density.data[i] > 0 )
-        if (fluidneighbors > 0 && wij_c0 > 0 )
-            {
-            //  Compute zeroth order normalization constant
-            // Scalar norm_constant = 1./h_density.data[i];
-            Scalar norm_constant = 1./wij_c0;
-            // Set fictitious velocity
-            h_vf.data[i].x = 2.0 * h_velocity.data[i].x - norm_constant * uf_c0.x;
-            h_vf.data[i].y = 2.0 * h_velocity.data[i].y - norm_constant * uf_c0.y;
-            h_vf.data[i].z = 2.0 * h_velocity.data[i].z - norm_constant * uf_c0.z;
-            // compute fictitious pressure
-            // TODO: There is an addition necessary if the acceleration of the solid 
-            // phase is not constant, since there is no function that is updating it
-            // see ISSUE # 23
-            Scalar3 bodyforce = this->getAcceleration(timestep);
-            Scalar3 hp_factor;
-            hp_factor.x = bodyforce.x - accel_i.x;
-            hp_factor.y = bodyforce.y - accel_i.y;
-            hp_factor.z = bodyforce.z - accel_i.z;
-
-            ph_c0.x *= norm_constant;
-            ph_c0.y *= norm_constant;
-            ph_c0.z *= norm_constant;
-
-            h_pressure.data[i] = norm_constant * pf_c0 + dot(hp_factor , ph_c0);
-            // Compute solid densities by inverting equation of state
-            // Here: overwrite the normalisation constant
-            // If interpolated solid pressure is negative, set to background pressure
-            if ( h_pressure.data[i] < 0 )
                 {
+                accel_i.x = h_accel.data[i].x;
+                accel_i.y = h_accel.data[i].y;
+                accel_i.z = h_accel.data[i].z;
+                }
+
+            // Initialize fictitious solid velocity vector
+            Scalar3 uf_c0 = make_scalar3(0, 0, 0);
+
+            // Initialize fictitious solid pressure scalar
+            Scalar pf_c0= Scalar(0);
+
+            // Initialize hydrostatic pressure contribution
+            Scalar3 ph_c0 = make_scalar3(0, 0, 0);
+
+            // Initialize reziprocal solid particle wise zeroth order normalisation constant 
+            Scalar wij_c0 = Scalar(0);
+
+            // Loop over all of the neighbors of this particle
+            // Count fluid neighbors before setting solid particle properties
+            unsigned int fluidneighbors = 0;
+
+            // Skip neighbor loop if this solid particle does not have fluid neighbors
+            bool solid_w_fluid_neigh = false;
+            myHead = h_head_list.data[i];
+            size = (unsigned int)h_n_neigh.data[i];
+            for (unsigned int j = 0; j < size; j++)
+                {
+                unsigned int k = h_nlist.data[myHead + j];
+                if ( checkfluid(h_type_property_map.data, h_pos.data[k].w) )
+                    {
+                    solid_w_fluid_neigh = true;
+                    break;
+                    }
+                }
+            if ( !(solid_w_fluid_neigh) )
+                {
+                // Set fictitious solid velocity to zero
+                h_vf.data[i].x = 0;
+                h_vf.data[i].y = 0;
+                h_vf.data[i].z = 0;
+                // If no fluid neighbors are present,
                 // Set pressure to background pressure
                 h_pressure.data[i] = this->m_eos->getBackgroundPressure();
-                // Set Density to rest density
+                // Density to rest density
+                h_density.data[i] = this->m_rho0;
+
+                continue;
+                }
+
+            myHead = h_head_list.data[i];
+            size = (unsigned int)h_n_neigh.data[i];
+            // loop over all neighbours of the solid particle
+            // effectivly, only fluid particles contribute to properties of the solid
+
+            for (unsigned int j = 0; j < size; j++)
+                {
+                // Index of neighbor (MEM TRANSFER: 1 scalar)
+                unsigned int k = h_nlist.data[myHead + j];
+
+                // Sanity check
+                assert(k < this->m_pdata->getN() + this->m_pdata->getNGhosts());
+
+                // If neighbor particle is solid, continue with next element in loop
+                // i.e. interpolations only apply to fluid particles
+                if ( checksolid(h_type_property_map.data, h_pos.data[k].w) )
+                    continue;
+                else
+                    fluidneighbors += 1;
+
+                // Access neighbor position
+                Scalar3 pj;
+                pj.x = h_pos.data[k].x;
+                pj.y = h_pos.data[k].y;
+                pj.z = h_pos.data[k].z;
+
+                // Compute distance vector (FLOPS: 3)
+                // in this case i is the solid particle, j its fluid neighbour
+                Scalar3 dx;
+                dx.x = pi.x - pj.x;
+                dx.y = pi.y - pj.y;
+                dx.z = pi.z - pj.z;
+
+                // Apply periodic boundary conditions (FLOPS: 9)
+                dx = box.minImage(dx);
+
+                // Calculate squared distance (FLOPS: 5)
+                Scalar rsq = dot(dx, dx);
+
+                // If particle distance is too large, skip this loop
+                if ( this->m_const_slength && rsq > this->m_rcutsq )
+                    continue;
+
+                // Access neighbor velocity and mass
+                Scalar3 vj;
+                vj.x = h_velocity.data[k].x;
+                vj.y = h_velocity.data[k].y;
+                vj.z = h_velocity.data[k].z;
+
+                // Read particle k pressure
+                Scalar Pj = h_pressure.data[k];
+
+                // Calculate absolute and normalized distance
+                Scalar r = sqrt(rsq);
+
+                // Evaluate kernel function
+                Scalar wij = this->m_const_slength ? this->m_skernel->wij(m_ch,r) : this->m_skernel->wij(Scalar(0.5)*(h_h.data[i]+h_h.data[k]),r);
+
+                // Add contribution to solid fictitious velocity
+                uf_c0.x += vj.x*wij;
+                uf_c0.y += vj.y*wij;
+                uf_c0.z += vj.z*wij;
+
+                // Add contribution to solid fictitious pressure
+                pf_c0 += Pj*wij;
+
+                // Add contribution to hydrostatic pressure term
+                // this also includes a direction (included in dx)
+                // h_density is the density of the fluid and therefore a real density
+                ph_c0.x += h_density.data[k] * dx.x * wij;
+                ph_c0.y += h_density.data[k] * dx.y * wij;
+                ph_c0.z += h_density.data[k] * dx.z * wij;
+
+                wij_c0 += wij;
+
+                // if ( this->m_body_acceleration )
+                //     {
+
+                //     // ehemals rakulan
+
+                //     ph_c0.x += h_dpe.data[k].x * dx.x * wij;
+                //     ph_c0.y += h_dpe.data[k].x * dx.y * wij;
+                //     ph_c0.z += h_dpe.data[k].x * dx.z * wij;
+
+                //     }
+                } // End neighbor loop
+
+            // Store fictitious solid particle velocity
+            // if (fluidneighbors > 0 && h_density.data[i] > 0 )
+            if (fluidneighbors > 0 && wij_c0 > 0 )
+                {
+                //  Compute zeroth order normalization constant
+                // Scalar norm_constant = 1./h_density.data[i];
+                Scalar norm_constant = 1./wij_c0;
+                // Set fictitious velocity
+                h_vf.data[i].x = 2.0 * h_velocity.data[i].x - norm_constant * uf_c0.x;
+                h_vf.data[i].y = 2.0 * h_velocity.data[i].y - norm_constant * uf_c0.y;
+                h_vf.data[i].z = 2.0 * h_velocity.data[i].z - norm_constant * uf_c0.z;
+                // compute fictitious pressure
+                // TODO: There is an addition necessary if the acceleration of the solid 
+                // phase is not constant, since there is no function that is updating it
+                // see ISSUE # 23
+                Scalar3 bodyforce = this->getAcceleration(timestep);
+                Scalar3 hp_factor;
+                hp_factor.x = bodyforce.x - accel_i.x;
+                hp_factor.y = bodyforce.y - accel_i.y;
+                hp_factor.z = bodyforce.z - accel_i.z;
+
+                ph_c0.x *= norm_constant;
+                ph_c0.y *= norm_constant;
+                ph_c0.z *= norm_constant;
+
+                h_pressure.data[i] = norm_constant * pf_c0 + dot(hp_factor , ph_c0);
+                // Compute solid densities by inverting equation of state
+                // Here: overwrite the normalisation constant
+                // If interpolated solid pressure is negative, set to background pressure
+                if ( h_pressure.data[i] < 0 )
+                    {
+                    // Set pressure to background pressure
+                    h_pressure.data[i] = this->m_eos->getBackgroundPressure();
+                    // Set Density to rest density
+                    h_density.data[i] = this->m_rho0;
+                    }
+                else 
+                    {
+                    // Compute solid densities by inverting equation of state
+                    h_density.data[i] = this->m_eos->Density(h_pressure.data[i]);
+                    }
+                }
+            else
+                {
+                // Set fictitious solid velocity to zero
+                h_vf.data[i].x = 0.0;
+                h_vf.data[i].y = 0.0;
+                h_vf.data[i].z = 0.0;
+
+                // If no fluid neighbors are present,
+                // Set pressure to background pressure
+                h_pressure.data[i] = this->m_eos->getBackgroundPressure();
+                // Density to rest density
+                // Here: overwrite the normalisation constant
                 h_density.data[i] = this->m_rho0;
                 }
-            else 
-                {
-                // Compute solid densities by inverting equation of state
-                h_density.data[i] = this->m_eos->Density(h_pressure.data[i]);
-                }
-            }
-        else
-            {
-            // Set fictitious solid velocity to zero
-            h_vf.data[i].x = 0.0;
-            h_vf.data[i].y = 0.0;
-            h_vf.data[i].z = 0.0;
 
-            // If no fluid neighbors are present,
-            // Set pressure to background pressure
-            h_pressure.data[i] = this->m_eos->getBackgroundPressure();
-            // Density to rest density
-            // Here: overwrite the normalisation constant
-            h_density.data[i] = this->m_rho0;
-            }
+            } // End solid particle loop
 
-        } // End solid particle loop
+        } // End  GPU Array Scope
 
     } // End compute noslip computation
 
@@ -784,60 +799,107 @@ template<SmoothingKernelType KT_,StateEquationType SET_>
 void SinglePhaseFlow<KT_, SET_>::renormalize_density(uint64_t timestep)
     {
     this->m_exec_conf->msg->notice(7) << "Computing SinglePhaseFlow::Density renormalization" << std::endl;
-
-    // Grab handles for particle data
-    ArrayHandle<Scalar>  h_density(this->m_pdata->getDensities(), access_location::host, access_mode::readwrite);
-    ArrayHandle<Scalar4> h_pos(this->m_pdata->getPositions(), access_location::host, access_mode::read);
-    ArrayHandle<Scalar4> h_velocity(this->m_pdata->getVelocities(), access_location::host, access_mode::read);
-    ArrayHandle<Scalar>  h_h(this->m_pdata->getSlengths(), access_location::host, access_mode::read);
-
-    // Grab handles for neighbor data
-    ArrayHandle<unsigned int> h_n_neigh(this->m_nlist->getNNeighArray(), access_location::host, access_mode::read);
-    ArrayHandle<unsigned int> h_nlist(this->m_nlist->getNListArray(), access_location::host, access_mode::read);
-    // ArrayHandle<unsigned int> h_head_list(this->m_nlist->getHeadList(), access_location::host, access_mode::read);
-    ArrayHandle<size_t> h_head_list(this->m_nlist->getHeadList(), access_location::host, access_mode::read);
-
-    auto tmp_density = this->m_pdata->getDensities();
-    ArrayHandle<Scalar> h_density_old(tmp_density, access_location::host, access_mode::read);
-
-
-    // Local copy of the simulation box
     const BoxDim& box = this->m_pdata->getGlobalBox();
+    const unsigned int group_size = this->m_fluidgroup->getNumMembers();
 
-    // Precompute self-density for homogeneous smoothing lengths
-    Scalar w0 = this->m_skernel->w0(this->m_ch);
+        { // GPU Array Scope
+        // Grab handles for particle data
+        ArrayHandle<Scalar>  h_density(this->m_pdata->getDensities(), access_location::host, access_mode::readwrite);
+        ArrayHandle<Scalar4> h_pos(this->m_pdata->getPositions(), access_location::host, access_mode::read);
+        ArrayHandle<Scalar4> h_velocity(this->m_pdata->getVelocities(), access_location::host, access_mode::read);
+        ArrayHandle<Scalar>  h_h(this->m_pdata->getSlengths(), access_location::host, access_mode::read);
 
-    unsigned int size;
-    long unsigned int myHead;
+        // Grab handles for neighbor data
+        ArrayHandle<unsigned int> h_n_neigh(this->m_nlist->getNNeighArray(), access_location::host, access_mode::read);
+        ArrayHandle<unsigned int> h_nlist(this->m_nlist->getNListArray(), access_location::host, access_mode::read);
+        // ArrayHandle<unsigned int> h_head_list(this->m_nlist->getHeadList(), access_location::host, access_mode::read);
+        ArrayHandle<size_t> h_head_list(this->m_nlist->getHeadList(), access_location::host, access_mode::read);
+
+        auto tmp_density = this->m_pdata->getDensities();
+        ArrayHandle<Scalar> h_density_old(tmp_density, access_location::host, access_mode::read);
 
 
-    // Particle loop
-    // For each fluid particle
-    unsigned int group_size = this->m_fluidgroup->getNumMembers();
-    for (unsigned int group_idx = 0; group_idx < group_size; group_idx++)
-        {
-        // Read particle index
-        unsigned int i = this->m_fluidgroup->getMemberIndex(group_idx);
+        // Local copy of the simulation box
 
-        // Access the particle's position
-        Scalar3 pi;
-        pi.x = h_pos.data[i].x;
-        pi.y = h_pos.data[i].y;
-        pi.z = h_pos.data[i].z;
-        Scalar mi = h_velocity.data[i].w;
-        Scalar rhoi = h_density.data[i];
+        // Precompute self-density for homogeneous smoothing lengths
+        Scalar w0 = this->m_skernel->w0(this->m_ch);
 
-        // First compute renormalization factor
-        // Initialize with self density of kernel
-        Scalar normalization = this->m_const_slength ? w0 : this->m_skernel->w0(h_h.data[i]);
-        normalization = normalization * ( mi / rhoi );
+        unsigned int size;
+        long unsigned int myHead;
 
-        // Loop over all of the neighbors of this particle
-        // and compute normalization constant normwij = \sum_j wij*Vj
-        myHead = h_head_list.data[i];
-        size = (unsigned int)h_n_neigh.data[i];
-        for (unsigned int j = 0; j < size; j++)
+
+        // Particle loop
+        // For each fluid particle
+        for (unsigned int group_idx = 0; group_idx < group_size; group_idx++)
             {
+            // Read particle index
+            unsigned int i = this->m_fluidgroup->getMemberIndex(group_idx);
+
+            // Access the particle's position
+            Scalar3 pi;
+            pi.x = h_pos.data[i].x;
+            pi.y = h_pos.data[i].y;
+            pi.z = h_pos.data[i].z;
+            Scalar mi = h_velocity.data[i].w;
+            Scalar rhoi = h_density.data[i];
+
+            // First compute renormalization factor
+            // Initialize with self density of kernel
+            Scalar normalization = this->m_const_slength ? w0 : this->m_skernel->w0(h_h.data[i]);
+            normalization = normalization * ( mi / rhoi );
+
+            // Loop over all of the neighbors of this particle
+            // and compute normalization constant normwij = \sum_j wij*Vj
+            myHead = h_head_list.data[i];
+            size = (unsigned int)h_n_neigh.data[i];
+            for (unsigned int j = 0; j < size; j++)
+                {
+                    // Index of neighbor
+                    unsigned int k = h_nlist.data[myHead + j];
+
+                    // Access neighbor position
+                    Scalar3 pj;
+                    pj.x = h_pos.data[k].x;
+                    pj.y = h_pos.data[k].y;
+                    pj.z = h_pos.data[k].z;
+
+                    // Compute distance vector
+                    // Scalar3 dx = pj - pi;
+                    Scalar3 dx;
+                    dx.x = pj.x - pi.x;
+                    dx.y = pj.y - pi.y;
+                    dx.z = pj.z - pi.z;
+
+                    // Apply periodic boundary conditions
+                    dx = box.minImage(dx);
+
+                    // Calculate squared distance
+                    Scalar rsq = dot(dx, dx);
+
+                    // If particle distance is too large, continue with next neighbor in loop
+                    if ( this->m_const_slength && rsq > this->m_rcutsq )
+                        continue;
+
+                    // Calculate distance
+                    Scalar r = sqrt(rsq);
+
+                    // Add contribution to renormalization
+                    Scalar Vj =  h_velocity.data[k].w / h_density_old.data[k] ;
+                    normalization += this->m_const_slength ? Vj*this->m_skernel->wij(m_ch,r) : Vj*this->m_skernel->wij(Scalar(0.5)*(h_h.data[i]+h_h.data[k]),r);
+
+                } // End of neighbor loop
+
+            normalization = Scalar(1.0)/normalization;
+
+            // Initialize density with normalized kernel self density
+            h_density.data[i] = this->m_const_slength ? w0*(mi*normalization): this->m_skernel->w0(h_h.data[i])*(mi*normalization);
+
+            // Loop over all of the neighbors of this particle
+            // and compute renormalied density rho_i = \sum_j wij*mj / normwij
+            myHead = h_head_list.data[i];
+            size = (unsigned int)h_n_neigh.data[i];
+            for (unsigned int j = 0; j < size; j++)
+                {
                 // Index of neighbor
                 unsigned int k = h_nlist.data[myHead + j];
 
@@ -867,57 +929,13 @@ void SinglePhaseFlow<KT_, SET_>::renormalize_density(uint64_t timestep)
                 // Calculate distance
                 Scalar r = sqrt(rsq);
 
-                // Add contribution to renormalization
-                Scalar Vj =  h_velocity.data[k].w / h_density_old.data[k] ;
-                normalization += this->m_const_slength ? Vj*this->m_skernel->wij(m_ch,r) : Vj*this->m_skernel->wij(Scalar(0.5)*(h_h.data[i]+h_h.data[k]),r);
+                // Add contribution to normalized density interpolation
+                Scalar factor =  h_velocity.data[k].w * normalization ;
+                h_density.data[i] += this->m_const_slength ? factor*this->m_skernel->wij(m_ch,r) : factor*this->m_skernel->wij(Scalar(0.5)*(h_h.data[i]+h_h.data[k]),r);
+                }
+            } // End of particle loop
+        } // End GPU Array Scope
 
-            } // End of neighbor loop
-
-        normalization = Scalar(1.0)/normalization;
-
-        // Initialize density with normalized kernel self density
-        h_density.data[i] = this->m_const_slength ? w0*(mi*normalization): this->m_skernel->w0(h_h.data[i])*(mi*normalization);
-
-        // Loop over all of the neighbors of this particle
-        // and compute renormalied density rho_i = \sum_j wij*mj / normwij
-        myHead = h_head_list.data[i];
-        size = (unsigned int)h_n_neigh.data[i];
-        for (unsigned int j = 0; j < size; j++)
-            {
-            // Index of neighbor
-            unsigned int k = h_nlist.data[myHead + j];
-
-            // Access neighbor position
-            Scalar3 pj;
-            pj.x = h_pos.data[k].x;
-            pj.y = h_pos.data[k].y;
-            pj.z = h_pos.data[k].z;
-
-            // Compute distance vector
-            // Scalar3 dx = pj - pi;
-            Scalar3 dx;
-            dx.x = pj.x - pi.x;
-            dx.y = pj.y - pi.y;
-            dx.z = pj.z - pi.z;
-
-            // Apply periodic boundary conditions
-            dx = box.minImage(dx);
-
-            // Calculate squared distance
-            Scalar rsq = dot(dx, dx);
-
-            // If particle distance is too large, continue with next neighbor in loop
-            if ( this->m_const_slength && rsq > this->m_rcutsq )
-                continue;
-
-            // Calculate distance
-            Scalar r = sqrt(rsq);
-
-            // Add contribution to normalized density interpolation
-            Scalar factor =  h_velocity.data[k].w * normalization ;
-            h_density.data[i] += this->m_const_slength ? factor*this->m_skernel->wij(m_ch,r) : factor*this->m_skernel->wij(Scalar(0.5)*(h_h.data[i]+h_h.data[k]),r);
-            }
-        } // End of particle loop
     } // End renormalize density
 
 /*! Perform force computation
@@ -931,244 +949,247 @@ void SinglePhaseFlow<KT_, SET_>::forcecomputation(uint64_t timestep)
         this->m_exec_conf->msg->notice(7) << "Computing SinglePhaseFlow::Forces using SUMMATION approach " << m_density_method << endl;
     else if ( m_density_method == DENSITYCONTINUITY )
         this->m_exec_conf->msg->notice(7) << "Computing SinglePhaseFlow::Forces using CONTINUITY approach " << m_density_method << endl;
-
-    // Grab handles for particle data
-    // Access mode overwrite implies that data does not need to be read in
-    ArrayHandle<Scalar4> h_force(this->m_force,access_location::host, access_mode::readwrite);
-    ArrayHandle<Scalar4> h_ratedpe(this->m_ratedpe,access_location::host, access_mode::readwrite);
-
-    // Check input data, can be omitted if need be
-    assert(h_force.data);
-    assert(h_ratedpe.data);
-
-    // Zero data before force calculation
-    memset((void*)h_force.data,0,sizeof(Scalar4)*this->m_force.getNumElements());
-    memset((void*)h_ratedpe.data,0,sizeof(Scalar4)*this->m_ratedpe.getNumElements());
-
-    // access the particle data
-    ArrayHandle<Scalar4> h_pos(this->m_pdata->getPositions(), access_location::host, access_mode::read);
-    ArrayHandle<Scalar4> h_velocity(this->m_pdata->getVelocities(), access_location::host, access_mode::read);
-    ArrayHandle<Scalar>  h_density(this->m_pdata->getDensities(), access_location::host, access_mode::readwrite);
-    ArrayHandle<Scalar>  h_pressure(this->m_pdata->getPressures(), access_location::host, access_mode::readwrite);
-    ArrayHandle<Scalar3> h_vf(this->m_pdata->getAuxiliaries1(), access_location::host,access_mode::read);
-    ArrayHandle<Scalar>  h_h(this->m_pdata->getSlengths(), access_location::host, access_mode::read);
-
-    // access the neighbor list
-    ArrayHandle<unsigned int> h_n_neigh(this->m_nlist->getNNeighArray(), access_location::host, access_mode::read);
-    ArrayHandle<unsigned int> h_nlist(this->m_nlist->getNListArray(), access_location::host, access_mode::read);
-    // ArrayHandle<unsigned int> h_head_list(this->m_nlist->getHeadList(), access_location::host, access_mode::read);
-    ArrayHandle<size_t> h_head_list(this->m_nlist->getHeadList(), access_location::host, access_mode::read);
-    ArrayHandle<unsigned int> h_type_property_map(this->m_type_property_map, access_location::host, access_mode::read);
-
-    // Check input data
-    assert(h_pos.data != NULL);
-
-    unsigned int size;
-    size_t myHead;
-
-    // Local copy of the simulation box
+    
     const BoxDim& box = this->m_pdata->getGlobalBox();
+    const unsigned int group_size = m_fluidgroup->getNumMembers();
 
-    // Local variable to store things
-    Scalar temp0 = 0;
+        { // GPU Array Scope
+        // Grab handles for particle data
+        // Access mode overwrite implies that data does not need to be read in
+        ArrayHandle<Scalar4> h_force(this->m_force,access_location::host, access_mode::readwrite);
+        ArrayHandle<Scalar4> h_ratedpe(this->m_ratedpe,access_location::host, access_mode::readwrite);
 
-    // maximum velocity variable for adaptive timestep
-    double max_vel = 0.0;
+        // Check input data, can be omitted if need be
+        assert(h_force.data);
+        assert(h_ratedpe.data);
 
-    // for each fluid particle
-    unsigned int group_size = m_fluidgroup->getNumMembers();
-    for (unsigned int group_idx = 0; group_idx < group_size; group_idx++)
-        {
-        // Read particle index
-        unsigned int i = m_fluidgroup->getMemberIndex(group_idx);
+        // Zero data before force calculation
+        memset((void*)h_force.data,0,sizeof(Scalar4)*this->m_force.getNumElements());
+        memset((void*)h_ratedpe.data,0,sizeof(Scalar4)*this->m_ratedpe.getNumElements());
 
-        // Access the particle's position, velocity, mass and type
-        Scalar3 pi;
-        pi.x = h_pos.data[i].x;
-        pi.y = h_pos.data[i].y;
-        pi.z = h_pos.data[i].z;
+        // access the particle data
+        ArrayHandle<Scalar4> h_pos(this->m_pdata->getPositions(), access_location::host, access_mode::read);
+        ArrayHandle<Scalar4> h_velocity(this->m_pdata->getVelocities(), access_location::host, access_mode::read);
+        ArrayHandle<Scalar>  h_density(this->m_pdata->getDensities(), access_location::host, access_mode::readwrite);
+        ArrayHandle<Scalar>  h_pressure(this->m_pdata->getPressures(), access_location::host, access_mode::readwrite);
+        ArrayHandle<Scalar3> h_vf(this->m_pdata->getAuxiliaries1(), access_location::host,access_mode::read);
+        ArrayHandle<Scalar>  h_h(this->m_pdata->getSlengths(), access_location::host, access_mode::read);
 
-        Scalar3 vi;
-        vi.x = h_velocity.data[i].x;
-        vi.y = h_velocity.data[i].y;
-        vi.z = h_velocity.data[i].z;
-        Scalar mi = h_velocity.data[i].w;
+        // access the neighbor list
+        ArrayHandle<unsigned int> h_n_neigh(this->m_nlist->getNNeighArray(), access_location::host, access_mode::read);
+        ArrayHandle<unsigned int> h_nlist(this->m_nlist->getNListArray(), access_location::host, access_mode::read);
+        // ArrayHandle<unsigned int> h_head_list(this->m_nlist->getHeadList(), access_location::host, access_mode::read);
+        ArrayHandle<size_t> h_head_list(this->m_nlist->getHeadList(), access_location::host, access_mode::read);
+        ArrayHandle<unsigned int> h_type_property_map(this->m_type_property_map, access_location::host, access_mode::read);
 
-        // Read particle i pressure
-        Scalar Pi = h_pressure.data[i];
+        // Check input data
+        assert(h_pos.data != NULL);
 
-        // Read particle i density and volume
-        Scalar rhoi = h_density.data[i];
-        Scalar Vi   = mi / rhoi;
+        unsigned int size;
+        size_t myHead;
 
-        // // Total velocity of particle
-        Scalar vi_total = sqrt((vi.x * vi.x) + (vi.y * vi.y) + (vi.z * vi.z));
+        // Local copy of the simulation box
 
-        // Properties needed for adaptive timestep
-        if (i == 0) { max_vel = vi_total; }
-        else if (vi_total > max_vel) { max_vel = vi_total; }
+        // Local variable to store things
+        Scalar temp0 = 0;
 
-        // Loop over all of the neighbors of this particle
-        myHead = h_head_list.data[i];
-        size = (unsigned int)h_n_neigh.data[i];
+        // maximum velocity variable for adaptive timestep
+        double max_vel = 0.0;
 
-        for (unsigned int j = 0; j < size; j++)
+        // for each fluid particle
+        for (unsigned int group_idx = 0; group_idx < group_size; group_idx++)
             {
-            // Index of neighbor (MEM TRANSFER: 1 scalar)
-            unsigned int k = h_nlist.data[myHead + j];
+            // Read particle index
+            unsigned int i = m_fluidgroup->getMemberIndex(group_idx);
 
-            // Sanity check
-            assert(k < this->m_pdata->getN() + this->m_pdata->getNGhosts());
+            // Access the particle's position, velocity, mass and type
+            Scalar3 pi;
+            pi.x = h_pos.data[i].x;
+            pi.y = h_pos.data[i].y;
+            pi.z = h_pos.data[i].z;
 
-            // Access neighbor position
-            Scalar3 pj;
-            pj.x = h_pos.data[k].x;
-            pj.y = h_pos.data[k].y;
-            pj.z = h_pos.data[k].z;
+            Scalar3 vi;
+            vi.x = h_velocity.data[i].x;
+            vi.y = h_velocity.data[i].y;
+            vi.z = h_velocity.data[i].z;
+            Scalar mi = h_velocity.data[i].w;
 
-            // Determine neighbor type
-            bool issolid = checksolid(h_type_property_map.data, h_pos.data[k].w);
+            // Read particle i pressure
+            Scalar Pi = h_pressure.data[i];
 
-            // Compute distance vector (FLOPS: 3)
-            // Scalar3 dx = pi - pj;
-            Scalar3 dx;
-            dx.x = pi.x - pj.x;
-            dx.y = pi.y - pj.y;
-            dx.z = pi.z - pj.z;
+            // Read particle i density and volume
+            Scalar rhoi = h_density.data[i];
+            Scalar Vi   = mi / rhoi;
 
-            // Apply periodic boundary conditions (FLOPS: 9)
-            dx = box.minImage(dx);
+            // // Total velocity of particle
+            Scalar vi_total = sqrt((vi.x * vi.x) + (vi.y * vi.y) + (vi.z * vi.z));
 
-            // Calculate squared distance (FLOPS: 5)
-            Scalar rsq = dot(dx, dx);
+            // Properties needed for adaptive timestep
+            if (i == 0) { max_vel = vi_total; }
+            else if (vi_total > max_vel) { max_vel = vi_total; }
 
-            // If particle distance is too large, skip this loop
-            if ( m_const_slength && rsq > m_rcutsq )
-                continue;
+            // Loop over all of the neighbors of this particle
+            myHead = h_head_list.data[i];
+            size = (unsigned int)h_n_neigh.data[i];
 
-            // Access neighbor velocity; depends on fluid or fictitious solid particle
-            Scalar3 vj  = make_scalar3(0.0, 0.0, 0.0);
-            Scalar mj   = h_velocity.data[k].w;
-            if ( issolid )
+            for (unsigned int j = 0; j < size; j++)
                 {
-                vj.x = h_vf.data[k].x;
-                vj.y = h_vf.data[k].y;
-                vj.z = h_vf.data[k].z;
-                }
-            else
-                {
-                vj.x = h_velocity.data[k].x;
-                vj.y = h_velocity.data[k].y;
-                vj.z = h_velocity.data[k].z;
-                }
-            Scalar rhoj = h_density.data[k];
-            Scalar Vj   = mj / rhoj;
+                // Index of neighbor (MEM TRANSFER: 1 scalar)
+                unsigned int k = h_nlist.data[myHead + j];
 
-            // Read particle k pressure
-            Scalar Pj = h_pressure.data[k];
+                // Sanity check
+                assert(k < this->m_pdata->getN() + this->m_pdata->getNGhosts());
 
-            // Compute velocity difference
-            Scalar3 dv;
-            dv.x = vi.x - vj.x;
-            dv.y = vi.y - vj.y;
-            dv.z = vi.z - vj.z;
+                // Access neighbor position
+                Scalar3 pj;
+                pj.x = h_pos.data[k].x;
+                pj.y = h_pos.data[k].y;
+                pj.z = h_pos.data[k].z;
 
-            // Calculate absolute and normalized distance
-            Scalar r = sqrt(rsq);
+                // Determine neighbor type
+                bool issolid = checksolid(h_type_property_map.data, h_pos.data[k].w);
 
-            // Mean smoothing length and denominator modifier
-            Scalar meanh  = m_const_slength ? m_ch : Scalar(0.5)*(h_h.data[i]+h_h.data[k]);
-            Scalar epssqr = Scalar(0.01) * meanh * meanh;
+                // Compute distance vector (FLOPS: 3)
+                // Scalar3 dx = pi - pj;
+                Scalar3 dx;
+                dx.x = pi.x - pj.x;
+                dx.y = pi.y - pj.y;
+                dx.z = pi.z - pj.z;
 
-            // Kernel function derivative evaluation
-            Scalar dwdr   = this->m_skernel->dwijdr(meanh,r);
-            Scalar dwdr_r = dwdr/(r+epssqr);
+                // Apply periodic boundary conditions (FLOPS: 9)
+                dx = box.minImage(dx);
 
-            // Evaluate inter-particle pressure forces
-            //temp0 = -((mi*mj)/(rhoj*rhoi))*(Pi+Pj);
-            //temp0 = -Vi*Vj*( Pi + Pj );
-            //temp0 = -mi*mj*(Pi+Pj)/(rhoi*rhoj);
-            //temp0 = -mi*mj*( Pi/(rhoi*rhoj) + Pj/(rhoj*rhoj) );
-            if ( m_density_method == DENSITYSUMMATION )
-            {
-                // Transport formulation proposed by Adami 2013
-                temp0 = (Vi*Vi+Vj*Vj)*((rhoj*Pi+rhoi*Pj)/(rhoi+rhoj)); 
-            }
-            else if ( m_density_method == DENSITYCONTINUITY) 
-            { 
-                temp0 = mi*mj*(Pi+Pj)/(rhoi*rhoj);
-            }
+                // Calculate squared distance (FLOPS: 5)
+                Scalar rsq = dot(dx, dx);
 
-            Scalar avc = 0.0;
-            // Optionally add artificial viscosity
-            // Monaghan (1983) J. Comput. Phys. 52 (2) 374–389
-            if ( this->m_artificial_viscosity && !issolid )
-                {
-                Scalar dotdvdx = dot(dv,dx);
-                if ( dotdvdx < Scalar(0) )
-                    {
-                    Scalar muij    = meanh*dotdvdx/(rsq+epssqr);
-                    Scalar meanrho = Scalar(0.5)*(rhoi+rhoj);
-                    avc = (-this->m_avalpha*this->m_c*muij+this->m_avbeta*muij*muij)/meanrho;
+                // If particle distance is too large, skip this loop
+                if ( m_const_slength && rsq > m_rcutsq )
+                    continue;
 
-                    if ( m_density_method == DENSITYSUMMATION ) 
-                        {
-                        avc *= (Vi*Vi+Vj*Vj);
-                        }
-                    else if ( m_density_method == DENSITYCONTINUITY ) 
-                        {
-                        avc *= mi*mj;
-                        }
-                    }
-                }
-
-            // Add contribution to fluid particle
-            h_force.data[i].x -= ( temp0 + avc ) * dwdr_r * dx.x;
-            h_force.data[i].y -= ( temp0 + avc ) * dwdr_r * dx.y;
-            h_force.data[i].z -= ( temp0 + avc ) * dwdr_r * dx.z;
-
-            // Evaluate viscous interaction forces
-            temp0 = m_mu * (Vi*Vi+Vj*Vj) * dwdr_r;
-            h_force.data[i].x  += temp0*dv.x;
-            h_force.data[i].y  += temp0*dv.y;
-            h_force.data[i].z  += temp0*dv.z;
-
-            // Evaluate rate of change of density if CONTINUITY approach is used
-            if ( m_density_method == DENSITYCONTINUITY )
-                {
+                // Access neighbor velocity; depends on fluid or fictitious solid particle
+                Scalar3 vj  = make_scalar3(0.0, 0.0, 0.0);
+                Scalar mj   = h_velocity.data[k].w;
                 if ( issolid )
                     {
-                    // Use physical advection velocity rather than fictitious velocity here
+                    vj.x = h_vf.data[k].x;
+                    vj.y = h_vf.data[k].y;
+                    vj.z = h_vf.data[k].z;
+                    }
+                else
+                    {
                     vj.x = h_velocity.data[k].x;
                     vj.y = h_velocity.data[k].y;
                     vj.z = h_velocity.data[k].z;
-
-                    // Recompute velocity difference
-                    // dv = vi - vj;
-                    dv.x = vi.x - vj.x;
-                    dv.y = vi.y - vj.y;
-                    dv.z = vi.z - vj.z;
-                    //Vj = mj / m_rho0;
                     }
+                Scalar rhoj = h_density.data[k];
+                Scalar Vj   = mj / rhoj;
 
-                // Compute density rate of change
-                // std::cout << "Compute density rate of change: rhoi " << rhoi << " Vj " << Vj << " dot(dv,dwdr_r*dx) " << dot(dv,dwdr_r*dx) << std::endl;
-                h_ratedpe.data[i].x += rhoi*Vj*dot(dv,dwdr_r*dx);
-                // std::cout << "Compute density rate of change: h_ratedpe.data[i].x " << h_ratedpe.data[i].x << std::endl;
+                // Read particle k pressure
+                Scalar Pj = h_pressure.data[k];
 
-                //h_ratedpe.data[i].x += mj*dot(dv,dwdr_r*dx);
+                // Compute velocity difference
+                Scalar3 dv;
+                dv.x = vi.x - vj.x;
+                dv.y = vi.y - vj.y;
+                dv.z = vi.z - vj.z;
 
-                // Add density diffusion if requested
-                // Molteni and Colagrossi, Computer Physics Communications 180 (2009) 861–872
-                if ( !issolid && m_density_diffusion )
-                    h_ratedpe.data[i].x -= (Scalar(2)*m_ddiff*meanh*m_c*mj*(rhoi/rhoj-Scalar(1))*dot(dx,dwdr_r*dx))/(rsq+epssqr);
+                // Calculate absolute and normalized distance
+                Scalar r = sqrt(rsq);
+
+                // Mean smoothing length and denominator modifier
+                Scalar meanh  = m_const_slength ? m_ch : Scalar(0.5)*(h_h.data[i]+h_h.data[k]);
+                Scalar epssqr = Scalar(0.01) * meanh * meanh;
+
+                // Kernel function derivative evaluation
+                Scalar dwdr   = this->m_skernel->dwijdr(meanh,r);
+                Scalar dwdr_r = dwdr/(r+epssqr);
+
+                // Evaluate inter-particle pressure forces
+                //temp0 = -((mi*mj)/(rhoj*rhoi))*(Pi+Pj);
+                //temp0 = -Vi*Vj*( Pi + Pj );
+                //temp0 = -mi*mj*(Pi+Pj)/(rhoi*rhoj);
+                //temp0 = -mi*mj*( Pi/(rhoi*rhoj) + Pj/(rhoj*rhoj) );
+                if ( m_density_method == DENSITYSUMMATION )
+                {
+                    // Transport formulation proposed by Adami 2013
+                    temp0 = (Vi*Vi+Vj*Vj)*((rhoj*Pi+rhoi*Pj)/(rhoi+rhoj)); 
+                }
+                else if ( m_density_method == DENSITYCONTINUITY) 
+                { 
+                    temp0 = mi*mj*(Pi+Pj)/(rhoi*rhoj);
                 }
 
-            } // Closing Neighbor Loop
+                Scalar avc = 0.0;
+                // Optionally add artificial viscosity
+                // Monaghan (1983) J. Comput. Phys. 52 (2) 374–389
+                if ( this->m_artificial_viscosity && !issolid )
+                    {
+                    Scalar dotdvdx = dot(dv,dx);
+                    if ( dotdvdx < Scalar(0) )
+                        {
+                        Scalar muij    = meanh*dotdvdx/(rsq+epssqr);
+                        Scalar meanrho = Scalar(0.5)*(rhoi+rhoj);
+                        avc = (-this->m_avalpha*this->m_c*muij+this->m_avbeta*muij*muij)/meanrho;
 
-        } // Closing Fluid Particle Loop
+                        if ( m_density_method == DENSITYSUMMATION ) 
+                            {
+                            avc *= (Vi*Vi+Vj*Vj);
+                            }
+                        else if ( m_density_method == DENSITYCONTINUITY ) 
+                            {
+                            avc *= mi*mj;
+                            }
+                        }
+                    }
 
-    m_timestep_list[5] = max_vel;
+                // Add contribution to fluid particle
+                h_force.data[i].x -= ( temp0 + avc ) * dwdr_r * dx.x;
+                h_force.data[i].y -= ( temp0 + avc ) * dwdr_r * dx.y;
+                h_force.data[i].z -= ( temp0 + avc ) * dwdr_r * dx.z;
+
+                // Evaluate viscous interaction forces
+                temp0 = m_mu * (Vi*Vi+Vj*Vj) * dwdr_r;
+                h_force.data[i].x  += temp0*dv.x;
+                h_force.data[i].y  += temp0*dv.y;
+                h_force.data[i].z  += temp0*dv.z;
+
+                // Evaluate rate of change of density if CONTINUITY approach is used
+                if ( m_density_method == DENSITYCONTINUITY )
+                    {
+                    if ( issolid )
+                        {
+                        // Use physical advection velocity rather than fictitious velocity here
+                        vj.x = h_velocity.data[k].x;
+                        vj.y = h_velocity.data[k].y;
+                        vj.z = h_velocity.data[k].z;
+
+                        // Recompute velocity difference
+                        // dv = vi - vj;
+                        dv.x = vi.x - vj.x;
+                        dv.y = vi.y - vj.y;
+                        dv.z = vi.z - vj.z;
+                        //Vj = mj / m_rho0;
+                        }
+
+                    // Compute density rate of change
+                    // std::cout << "Compute density rate of change: rhoi " << rhoi << " Vj " << Vj << " dot(dv,dwdr_r*dx) " << dot(dv,dwdr_r*dx) << std::endl;
+                    h_ratedpe.data[i].x += rhoi*Vj*dot(dv,dwdr_r*dx);
+                    // std::cout << "Compute density rate of change: h_ratedpe.data[i].x " << h_ratedpe.data[i].x << std::endl;
+
+                    //h_ratedpe.data[i].x += mj*dot(dv,dwdr_r*dx);
+
+                    // Add density diffusion if requested
+                    // Molteni and Colagrossi, Computer Physics Communications 180 (2009) 861–872
+                    if ( !issolid && m_density_diffusion )
+                        h_ratedpe.data[i].x -= (Scalar(2)*m_ddiff*meanh*m_c*mj*(rhoi/rhoj-Scalar(1))*dot(dx,dwdr_r*dx))/(rsq+epssqr);
+                    }
+
+                } // Closing Neighbor Loop
+
+            } // Closing Fluid Particle Loop
+
+        m_timestep_list[5] = max_vel;
+        } // End GPU Array Scope
 
     // Add volumetric force (gravity)
     this->applyBodyForce(timestep, m_fluidgroup);
@@ -1185,166 +1206,169 @@ void SinglePhaseFlow<KT_, SET_>::compute_solid_forces(uint64_t timestep)
     {
 
     this->m_exec_conf->msg->notice(7) << "Computing SinglePhaseFlow::Compute Solid Forces." << endl;
-
-    // Grab handles for particle data
-    // Access mode overwrite implies that data does not need to be read in
-    ArrayHandle<Scalar4> h_force(this->m_force,access_location::host, access_mode::readwrite);
-    ArrayHandle<Scalar4> h_ratedpe(this->m_ratedpe,access_location::host, access_mode::readwrite);
-
-    // access the particle data
-    ArrayHandle<Scalar4> h_pos(this->m_pdata->getPositions(), access_location::host, access_mode::read);
-    ArrayHandle<Scalar4> h_velocity(this->m_pdata->getVelocities(), access_location::host, access_mode::read);
-    ArrayHandle<Scalar>  h_density(this->m_pdata->getDensities(), access_location::host, access_mode::read);
-    ArrayHandle<Scalar>  h_pressure(this->m_pdata->getPressures(), access_location::host, access_mode::read);
-    ArrayHandle<Scalar>  h_h(this->m_pdata->getSlengths(), access_location::host, access_mode::read);
-
-    // access the neighbor list
-    ArrayHandle<unsigned int> h_n_neigh(this->m_nlist->getNNeighArray(), access_location::host, access_mode::read);
-    ArrayHandle<unsigned int> h_nlist(this->m_nlist->getNListArray(), access_location::host, access_mode::read);
-    // ArrayHandle<unsigned int> h_head_list(this->m_nlist->getHeadList(), access_location::host, access_mode::read);
-    ArrayHandle<size_t> h_head_list(this->m_nlist->getHeadList(), access_location::host, access_mode::read);
-    ArrayHandle<unsigned int> h_type_property_map(this->m_type_property_map, access_location::host, access_mode::read);
-
-    // Check input data
-    assert(h_pos.data != NULL);
-
-    unsigned int size;
-    size_t myHead;
-
-    // Local copy of the simulation box
+    
     const BoxDim& box = this->m_pdata->getGlobalBox();
+    const unsigned int group_size = m_solidgroup->getNumMembers();
 
-    // Local variable to store things
-    Scalar temp0 = 0;
+        { // GPU Array Scope  
+        // Grab handles for particle data
+        // Access mode overwrite implies that data does not need to be read in
+        ArrayHandle<Scalar4> h_force(this->m_force,access_location::host, access_mode::readwrite);
+        ArrayHandle<Scalar4> h_ratedpe(this->m_ratedpe,access_location::host, access_mode::readwrite);
 
-    // for each fluid particle
-    unsigned int group_size = m_solidgroup->getNumMembers();
-    for (unsigned int group_idx = 0; group_idx < group_size; group_idx++)
-        {
-        // Read particle index
-        unsigned int i = m_solidgroup->getMemberIndex(group_idx);
+        // access the particle data
+        ArrayHandle<Scalar4> h_pos(this->m_pdata->getPositions(), access_location::host, access_mode::read);
+        ArrayHandle<Scalar4> h_velocity(this->m_pdata->getVelocities(), access_location::host, access_mode::read);
+        ArrayHandle<Scalar>  h_density(this->m_pdata->getDensities(), access_location::host, access_mode::read);
+        ArrayHandle<Scalar>  h_pressure(this->m_pdata->getPressures(), access_location::host, access_mode::read);
+        ArrayHandle<Scalar>  h_h(this->m_pdata->getSlengths(), access_location::host, access_mode::read);
 
-        // Access the particle's position, velocity, mass and type
-        Scalar3 pi;
-        pi.x = h_pos.data[i].x;
-        pi.y = h_pos.data[i].y;
-        pi.z = h_pos.data[i].z;
+        // access the neighbor list
+        ArrayHandle<unsigned int> h_n_neigh(this->m_nlist->getNNeighArray(), access_location::host, access_mode::read);
+        ArrayHandle<unsigned int> h_nlist(this->m_nlist->getNListArray(), access_location::host, access_mode::read);
+        // ArrayHandle<unsigned int> h_head_list(this->m_nlist->getHeadList(), access_location::host, access_mode::read);
+        ArrayHandle<size_t> h_head_list(this->m_nlist->getHeadList(), access_location::host, access_mode::read);
+        ArrayHandle<unsigned int> h_type_property_map(this->m_type_property_map, access_location::host, access_mode::read);
 
-        Scalar3 vi;
-        vi.x = h_velocity.data[i].x;
-        vi.y = h_velocity.data[i].y;
-        vi.z = h_velocity.data[i].z;
-        Scalar mi = h_velocity.data[i].w;
+        // Check input data
+        assert(h_pos.data != NULL);
 
-        // Read particle i pressure
-        Scalar Pi = h_pressure.data[i];
+        unsigned int size;
+        size_t myHead;
 
-        // Read particle i density and volume
-        Scalar rhoi = h_density.data[i];
-        Scalar Vi   = mi / rhoi;
+        // Local copy of the simulation box
 
-        // Loop over all of the neighbors of this particle
-        myHead = h_head_list.data[i];
-        size = (unsigned int)h_n_neigh.data[i];
+        // Local variable to store things
+        Scalar temp0 = 0;
 
-        for (unsigned int j = 0; j < size; j++)
+        // for each fluid particle
+        for (unsigned int group_idx = 0; group_idx < group_size; group_idx++)
             {
-            // Index of neighbor (MEM TRANSFER: 1 scalar)
-            unsigned int k = h_nlist.data[myHead + j];
+            // Read particle index
+            unsigned int i = m_solidgroup->getMemberIndex(group_idx);
 
-            // Sanity check
-            assert(k < this->m_pdata->getN() + this->m_pdata->getNGhosts());
+            // Access the particle's position, velocity, mass and type
+            Scalar3 pi;
+            pi.x = h_pos.data[i].x;
+            pi.y = h_pos.data[i].y;
+            pi.z = h_pos.data[i].z;
 
-            // Interrupt, if neighbour is solid
-            bool issolid = checksolid(h_type_property_map.data, h_pos.data[k].w);
-            if ( issolid ) { continue; }
+            Scalar3 vi;
+            vi.x = h_velocity.data[i].x;
+            vi.y = h_velocity.data[i].y;
+            vi.z = h_velocity.data[i].z;
+            Scalar mi = h_velocity.data[i].w;
 
-            // Access neighbor position
-            Scalar3 pj;
-            pj.x = h_pos.data[k].x;
-            pj.y = h_pos.data[k].y;
-            pj.z = h_pos.data[k].z;
+            // Read particle i pressure
+            Scalar Pi = h_pressure.data[i];
 
-            // Determine neighbor type
+            // Read particle i density and volume
+            Scalar rhoi = h_density.data[i];
+            Scalar Vi   = mi / rhoi;
 
-            // Compute distance vector (FLOPS: 3)
-            // Scalar3 dx = pi - pj;
-            Scalar3 dx;
-            dx.x = pi.x - pj.x;
-            dx.y = pi.y - pj.y;
-            dx.z = pi.z - pj.z;
+            // Loop over all of the neighbors of this particle
+            myHead = h_head_list.data[i];
+            size = (unsigned int)h_n_neigh.data[i];
 
-            // Apply periodic boundary conditions (FLOPS: 9)
-            dx = box.minImage(dx);
+            for (unsigned int j = 0; j < size; j++)
+                {
+                // Index of neighbor (MEM TRANSFER: 1 scalar)
+                unsigned int k = h_nlist.data[myHead + j];
 
-            // Calculate squared distance (FLOPS: 5)
-            Scalar rsq = dot(dx, dx);
+                // Sanity check
+                assert(k < this->m_pdata->getN() + this->m_pdata->getNGhosts());
 
-            // If particle distance is too large, skip this loop
-            if ( m_const_slength && rsq > m_rcutsq )
-                continue;
+                // Interrupt, if neighbour is solid
+                bool issolid = checksolid(h_type_property_map.data, h_pos.data[k].w);
+                if ( issolid ) { continue; }
 
-            // Access neighbor velocity; depends on fluid or fictitious solid particle
-            Scalar3 vj  = make_scalar3(0.0, 0.0, 0.0);
-            Scalar mj   = h_velocity.data[k].w;
+                // Access neighbor position
+                Scalar3 pj;
+                pj.x = h_pos.data[k].x;
+                pj.y = h_pos.data[k].y;
+                pj.z = h_pos.data[k].z;
 
-            // Only fluid neighbours are considered -> therefore only fluid velocity
-            vj.x = h_velocity.data[k].x;
-            vj.y = h_velocity.data[k].y;
-            vj.z = h_velocity.data[k].z;
+                // Determine neighbor type
 
-            Scalar rhoj = h_density.data[k];
-            Scalar Vj   = mj / rhoj;
+                // Compute distance vector (FLOPS: 3)
+                // Scalar3 dx = pi - pj;
+                Scalar3 dx;
+                dx.x = pi.x - pj.x;
+                dx.y = pi.y - pj.y;
+                dx.z = pi.z - pj.z;
 
-            // Read particle k pressure
-            Scalar Pj = h_pressure.data[k];
+                // Apply periodic boundary conditions (FLOPS: 9)
+                dx = box.minImage(dx);
 
-            // Compute velocity difference
-            Scalar3 dv;
-            dv.x = vi.x - vj.x;
-            dv.y = vi.y - vj.y;
-            dv.z = vi.z - vj.z;
+                // Calculate squared distance (FLOPS: 5)
+                Scalar rsq = dot(dx, dx);
 
-            // Calculate absolute and normalized distance
-            Scalar r = sqrt(rsq);
+                // If particle distance is too large, skip this loop
+                if ( m_const_slength && rsq > m_rcutsq )
+                    continue;
 
-            // Mean smoothing length and denominator modifier
-            Scalar meanh  = m_const_slength ? m_ch : Scalar(0.5)*(h_h.data[i]+h_h.data[k]);
-            Scalar epssqr = Scalar(0.01) * meanh * meanh;
+                // Access neighbor velocity; depends on fluid or fictitious solid particle
+                Scalar3 vj  = make_scalar3(0.0, 0.0, 0.0);
+                Scalar mj   = h_velocity.data[k].w;
 
-            // Kernel function derivative evaluation
-            Scalar dwdr   = this->m_skernel->dwijdr(meanh,r);
-            Scalar dwdr_r = dwdr/(r+epssqr);
+                // Only fluid neighbours are considered -> therefore only fluid velocity
+                vj.x = h_velocity.data[k].x;
+                vj.y = h_velocity.data[k].y;
+                vj.z = h_velocity.data[k].z;
 
-            // Evaluate inter-particle pressure forces
-            //temp0 = -((mi*mj)/(rhoj*rhoi))*(Pi+Pj);
-            //temp0 = -Vi*Vj*( Pi + Pj );
-            //temp0 = -mi*mj*(Pi+Pj)/(rhoi*rhoj);
-            //temp0 = -mi*mj*( Pi/(rhoi*rhoj) + Pj/(rhoj*rhoj) );
-            if ( m_density_method == DENSITYSUMMATION )
-            {
-                // Transport formulation proposed by Adami 2013
-                temp0 = -(Vi*Vi+Vj*Vj)*((rhoj*Pi+rhoi*Pj)/(rhoi+rhoj)); 
-            }
-            else if ( m_density_method == DENSITYCONTINUITY) 
-            { 
-                temp0 = -mi*mj*(Pi+Pj)/(rhoi*rhoj);
-            }
+                Scalar rhoj = h_density.data[k];
+                Scalar Vj   = mj / rhoj;
 
-            // Add contribution to solid particle
-            h_force.data[i].x -= ( mj/mi ) * temp0*dwdr_r*dx.x;
-            h_force.data[i].y -= ( mj/mi ) * temp0*dwdr_r*dx.y;
-            h_force.data[i].z -= ( mj/mi ) * temp0*dwdr_r*dx.z;
+                // Read particle k pressure
+                Scalar Pj = h_pressure.data[k];
 
-            // Evaluate viscous interaction forces
-            temp0 = m_mu * (Vi*Vi+Vj*Vj) * dwdr_r;
-            h_force.data[i].x  -= ( mj/mi ) * temp0*dv.x;
-            h_force.data[i].y  -= ( mj/mi ) * temp0*dv.y;
-            h_force.data[i].z  -= ( mj/mi ) * temp0*dv.z;
+                // Compute velocity difference
+                Scalar3 dv;
+                dv.x = vi.x - vj.x;
+                dv.y = vi.y - vj.y;
+                dv.z = vi.z - vj.z;
 
-            } // Closing Neighbor Loop
+                // Calculate absolute and normalized distance
+                Scalar r = sqrt(rsq);
 
-        } // Closing Solid Particle Loop
+                // Mean smoothing length and denominator modifier
+                Scalar meanh  = m_const_slength ? m_ch : Scalar(0.5)*(h_h.data[i]+h_h.data[k]);
+                Scalar epssqr = Scalar(0.01) * meanh * meanh;
+
+                // Kernel function derivative evaluation
+                Scalar dwdr   = this->m_skernel->dwijdr(meanh,r);
+                Scalar dwdr_r = dwdr/(r+epssqr);
+
+                // Evaluate inter-particle pressure forces
+                //temp0 = -((mi*mj)/(rhoj*rhoi))*(Pi+Pj);
+                //temp0 = -Vi*Vj*( Pi + Pj );
+                //temp0 = -mi*mj*(Pi+Pj)/(rhoi*rhoj);
+                //temp0 = -mi*mj*( Pi/(rhoi*rhoj) + Pj/(rhoj*rhoj) );
+                if ( m_density_method == DENSITYSUMMATION )
+                {
+                    // Transport formulation proposed by Adami 2013
+                    temp0 = -(Vi*Vi+Vj*Vj)*((rhoj*Pi+rhoi*Pj)/(rhoi+rhoj)); 
+                }
+                else if ( m_density_method == DENSITYCONTINUITY) 
+                { 
+                    temp0 = -mi*mj*(Pi+Pj)/(rhoi*rhoj);
+                }
+
+                // Add contribution to solid particle
+                h_force.data[i].x -= ( mj/mi ) * temp0*dwdr_r*dx.x;
+                h_force.data[i].y -= ( mj/mi ) * temp0*dwdr_r*dx.y;
+                h_force.data[i].z -= ( mj/mi ) * temp0*dwdr_r*dx.z;
+
+                // Evaluate viscous interaction forces
+                temp0 = m_mu * (Vi*Vi+Vj*Vj) * dwdr_r;
+                h_force.data[i].x  -= ( mj/mi ) * temp0*dv.x;
+                h_force.data[i].y  -= ( mj/mi ) * temp0*dv.y;
+                h_force.data[i].z  -= ( mj/mi ) * temp0*dv.z;
+
+                } // Closing Neighbor Loop
+
+            } // Closing Solid Particle Loop
+        } // End GPU Array Scope
 
     }
 
@@ -1360,7 +1384,6 @@ void SinglePhaseFlow<KT_, SET_>::computeForces(uint64_t timestep)
 
     // start by updating the neighborlist
     this->m_nlist->compute(timestep);
-
     // This is executed once to initialize protected/private variables
     if (!m_params_set)
         {

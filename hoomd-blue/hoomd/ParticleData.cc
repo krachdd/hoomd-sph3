@@ -4684,8 +4684,6 @@ void ParticleData::removeParticlesGPU(GPUVector<detail::pdata_element>& out,
 
             if (m_exec_conf->isCUDAErrorCheckingEnabled())
                 CHECK_CUDA_ERROR();
-
-            m_exec_conf->endMultiGPU();
             }
 
         // resize output vector
