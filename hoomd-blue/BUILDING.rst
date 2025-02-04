@@ -74,8 +74,7 @@ Install prerequisites
 ---------------------
 
 You will need to install a number of tools and libraries to build **HOOMD-blue**. The options
-``ENABLE_MPI``, ``ENABLE_GPU``, ``ENABLE_TBB``, and ``ENABLE_LLVM`` each require additional
-libraries when enabled.
+``ENABLE_MPI`` and ``ENABLE_GPU`` each require additional libraries when enabled.
 
 Install the required dependencies:
 
@@ -141,15 +140,6 @@ Install additional packages needed to build the documentation:
 
     When ``ENABLE_GPU=on``, HOOMD-blue will default to CUDA. Set ``HOOMD_GPU_PLATFORM=HIP`` to
     choose HIP.
-
-**For threaded parallelism on the CPU** (required when ``ENABLE_TBB=on``):
-
-- **Intel Threading Building Blocks**
-
-**For runtime code generation** (required when ``ENABLE_LLVM=on``):
-
-- **LLVM**
-- **libclang-cpp**
 
 **To build the documentation:**
 
@@ -244,7 +234,6 @@ Other option changes take effect at any time:
 
 - ``CMAKE_INSTALL_PREFIX`` - Directory to install **HOOMD-blue**. Defaults to the root path of the
   found Python executable.
-- ``ENABLE_LLVM`` - Enable run time code generation with LLVM.
 - ``ENABLE_GPU`` - When enabled, compiled GPU accelerated computations (default: ``off``).
 - ``HOOMD_GPU_PLATFORM`` - Choose either ``CUDA`` or ``HIP`` as a GPU backend (default: ``CUDA``).
 - ``HOOMD_SHORTREAL_SIZE`` - Size in bits of the ``ShortReal`` type (default: ``32``).
@@ -265,11 +254,6 @@ Other option changes take effect at any time:
 
   - When set to ``on``, multi-processor/multi-GPU simulations are supported.
   - When set to ``off`` (the default), always run in single-processor/single-GPU mode.
-
-- ``ENABLE_TBB`` - Enable support for Intel's Threading Building Blocks (TBB).
-
-  - When set to ``on``, **HOOMD-blue** will use TBB to speed up calculations in some classes on
-    multiple CPU cores.
 
 - ``PYTHON_SITE_INSTALL_DIR`` - Directory to install ``hoomd`` to relative to
   ``CMAKE_INSTALL_PREFIX``. Defaults to the ``site-packages`` directory used by the found Python

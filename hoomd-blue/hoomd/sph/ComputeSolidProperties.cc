@@ -31,21 +31,9 @@ ComputeSolidProperties::ComputeSolidProperties(std::shared_ptr<SystemDefinition>
     m_exec_conf->msg->notice(5) << "Constructing ComputeSolidProperties" << endl;
 
     assert(m_pdata);
-    GlobalArray<Scalar> properties(solidphase_logger_index::num_quantities, m_exec_conf);
+    GPUArray<Scalar> properties(solidphase_logger_index::num_quantities, m_exec_conf);
     m_properties.swap(properties);
-    TAG_ALLOCATION(m_properties);
 
-#if defined(ENABLE_HIP) && defined(__HIP_PLATFORM_NVCC__)
-    if (m_exec_conf->isCUDAEnabled() && m_exec_conf->allConcurrentManagedAccess())
-        {
-        // store in host memory for faster access from CPU
-        cudaMemAdvise(m_properties.get(),
-                      m_properties.getNumElements() * sizeof(Scalar),
-                      cudaMemAdviseSetPreferredLocation,
-                      cudaCpuDeviceId);
-        CHECK_CUDA_ERROR();
-        }
-#endif
 
     m_computed_flags.reset();
 
@@ -81,35 +69,36 @@ void ComputeSolidProperties::computeProperties()
     if (m_group->getNumMembersGlobal() == 0)
         return;
 
-    unsigned int group_size = m_group->getNumMembers();
+    const unsigned int group_size = m_group->getNumMembers();
 
     assert(m_pdata);
 
     // PDataFlags flags = m_pdata->getFlags();
 
-    // access the particle data
-    ArrayHandle<Scalar4> h_net_force(m_pdata->getNetForce(), access_location::host, access_mode::read); // that is the net force of ts -1 
+        { // GPU Array scope
+        // access the particle data
+        ArrayHandle<Scalar4> h_net_force(m_pdata->getNetForce(), access_location::host, access_mode::read); // that is the net force of ts -1 
 
-    double total_drag_x = 0.0;
-    double total_drag_y = 0.0;
-    double total_drag_z = 0.0;
-    
-    for (unsigned int group_idx = 0; group_idx < group_size; group_idx++)
-    {
-        // Read particle index
-        unsigned int j = m_group->getMemberIndex(group_idx);
+        double total_drag_x = 0.0;
+        double total_drag_y = 0.0;
+        double total_drag_z = 0.0;
+        
+        for (unsigned int group_idx = 0; group_idx < group_size; group_idx++)
+            {
+            // Read particle index
+            unsigned int j = m_group->getMemberIndex(group_idx);
 
-        // Sum up drag forces
-        total_drag_x += h_net_force.data[j].x;
-        total_drag_y += h_net_force.data[j].y;
-        total_drag_z += h_net_force.data[j].z;
-    }
+            // Sum up drag forces
+            total_drag_x += h_net_force.data[j].x;
+            total_drag_y += h_net_force.data[j].y;
+            total_drag_z += h_net_force.data[j].z;
+            }
 
-    ArrayHandle<Scalar> h_properties(m_properties, access_location::host, access_mode::overwrite);
-    h_properties.data[solidphase_logger_index::total_drag_x]  = Scalar(total_drag_x);
-    h_properties.data[solidphase_logger_index::total_drag_y]  = Scalar(total_drag_y);
-    h_properties.data[solidphase_logger_index::total_drag_z]  = Scalar(total_drag_z);
-
+        ArrayHandle<Scalar> h_properties(m_properties, access_location::host, access_mode::overwrite);
+        h_properties.data[solidphase_logger_index::total_drag_x]  = Scalar(total_drag_x);
+        h_properties.data[solidphase_logger_index::total_drag_y]  = Scalar(total_drag_y);
+        h_properties.data[solidphase_logger_index::total_drag_z]  = Scalar(total_drag_z);
+        } // end GPU Array scope
 #ifdef ENABLE_MPI
     // in MPI, reduce extensive quantities only when they're needed
     m_properties_reduced = !m_pdata->getDomainDecomposition();
@@ -121,18 +110,22 @@ void ComputeSolidProperties::computeProperties()
 void ComputeSolidProperties::reduceProperties()
     {
     if (m_properties_reduced)
+        {
         return;
+        }
 
-    // reduce properties
-    ArrayHandle<Scalar> h_properties(m_properties, access_location::host, access_mode::readwrite);
-    MPI_Allreduce(MPI_IN_PLACE,
-                  h_properties.data,
-                  solidphase_logger_index::num_quantities,
-                  MPI_HOOMD_SCALAR,
-                  MPI_SUM,
-                  m_exec_conf->getMPICommunicator());
+        { // GPU Array Scope
+        // reduce properties
+        ArrayHandle<Scalar> h_properties(m_properties, access_location::host, access_mode::readwrite);
+        MPI_Allreduce(MPI_IN_PLACE,
+                      h_properties.data,
+                      solidphase_logger_index::num_quantities,
+                      MPI_HOOMD_SCALAR,
+                      MPI_SUM,
+                      m_exec_conf->getMPICommunicator());
 
-    m_properties_reduced = true;
+        m_properties_reduced = true;
+        } // end GPU Array Scope
     }
 #endif
 
@@ -150,5 +143,5 @@ void export_ComputeSolidProperties(pybind11::module& m)
     }
 
     } // end namespace detail
-    } // end namespace md
+    } // end namespace sph
     } // end namespace hoomd

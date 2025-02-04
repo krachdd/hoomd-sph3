@@ -1,7 +1,7 @@
-# Copyright (c) 2009-2024 The Regents of the University of Michigan.
+# Copyright (c) 2009-2025 The Regents of the University of Michigan.
 # Part of HOOMD-blue, released under the BSD 3-Clause License.
 
-"""Implement Box."""
+""":py:class:`Box`-adjacent types."""
 
 import abc
 import typing
@@ -32,24 +32,23 @@ def _make_vec3(vec, vec_factory, scalar_type):
             return vec_factory(v, v, v)
     if l_vec == 3:
         try:
-            return vec_factory(scalar_type(vec[0]), scalar_type(vec[1]),
-                               scalar_type(vec[2]))
+            return vec_factory(
+                scalar_type(vec[0]), scalar_type(vec[1]), scalar_type(vec[2])
+            )
         except (ValueError, TypeError):
             raise ValueError("Expected values of type {}.".format(scalar_type))
     else:
-        raise ValueError("Expected a sequence of three values or a single "
-                         "value. Received {} values.".format(len(vec)))
+        raise ValueError(
+            "Expected a sequence of three values or a single "
+            "value. Received {} values.".format(len(vec))
+        )
 
 
-_make_scalar3 = partial(_make_vec3,
-                        vec_factory=_hoomd.make_scalar3,
-                        scalar_type=float)
+_make_scalar3 = partial(_make_vec3, vec_factory=_hoomd.make_scalar3, scalar_type=float)
 
 _make_int3 = partial(_make_vec3, vec_factory=_hoomd.make_int3, scalar_type=int)
 
-_make_char3 = partial(_make_vec3,
-                      vec_factory=_hoomd.make_char3,
-                      scalar_type=int)
+_make_char3 = partial(_make_vec3, vec_factory=_hoomd.make_char3, scalar_type=int)
 
 
 def _vec3_to_array(vec, dtype=None):
@@ -67,7 +66,7 @@ class Box:
         xz (float): tilt factor xz :math:`[\\mathrm{dimensionless}]`.
         yz (float): tilt factor yz :math:`[\\mathrm{dimensionless}]`.
 
-    .. image:: box.svg
+    .. image:: /box.svg
        :alt: Example simulation box labelled with lengths and vectors.
 
     Particles in a simulation exist in a triclinic box with
@@ -251,9 +250,8 @@ class Box:
 
             points = np.array([[0, 0, 0], [0.5, 0, 0], [0.25, 0.25, 0]])
             box, rotation = hoomd.Box.from_basis_vectors(
-                box_matrix = [[ 1,  1,  0],
-                              [ 1, -1,  0],
-                              [ 0,  0,  1]])
+                box_matrix=[[1, 1, 0], [1, -1, 0], [0, 0, 1]]
+            )
             rotated_points = rotation @ points
         """
         box_matrix = np.asarray(box_matrix, dtype=np.float64)
@@ -273,16 +271,21 @@ class Box:
             a3x = np.dot(v0, v2) / Lx
             xz = a3x / Lz
             yz = (np.dot(v1, v2) - a2x * a3x) / (Ly * Lz)
-            upper_triangular_box_matrix = np.array([[Lx, Ly * xy, Lz * xz],
-                                                    [0, Ly, Lz * yz],
-                                                    [0, 0, Lz]])
+            upper_triangular_box_matrix = np.array(
+                [[Lx, Ly * xy, Lz * xz], [0, Ly, Lz * yz], [0, 0, Lz]]
+            )
         else:
             xz = yz = 0
-            if not (np.allclose(v2, [0, 0, 0]) and np.allclose(v0[2], 0)
-                    and np.allclose(v1[2], 0)):
-                error_string = ("A 2D box matrix must have a third vector and"
-                                "third component of first two vectors set to"
-                                "zero.")
+            if not (
+                np.allclose(v2, [0, 0, 0])
+                and np.allclose(v0[2], 0)
+                and np.allclose(v1[2], 0)
+            ):
+                error_string = (
+                    "A 2D box matrix must have a third vector and"
+                    "third component of first two vectors set to"
+                    "zero."
+                )
                 raise ValueError(error_string)
             upper_triangular_box_matrix = np.array([[Lx, Ly * xy], [0, Ly]])
             box_matrix = box_matrix[:2, :2]
@@ -333,8 +336,12 @@ class Box:
         if not np.allclose(box_matrix, np.triu(box_matrix)):
             raise ValueError("Box matrix must be upper triangular.")
         L = np.diag(box_matrix)
-        return cls(*L, box_matrix[0, 1] / L[1], box_matrix[0, 2] / L[2],
-                   box_matrix[1, 2] / L[2])
+        return cls(
+            *L,
+            box_matrix[0, 1] / L[1],
+            box_matrix[0, 2] / L[2],
+            box_matrix[1, 2] / L[2],
+        )
 
     @classmethod
     def _from_cpp(cls, cpp_obj):
@@ -375,30 +382,31 @@ class Box:
             # Handles hoomd.box.Box and objects with attributes
             Lx = box.Lx
             Ly = box.Ly
-            Lz = getattr(box, 'Lz', 0)
-            xy = getattr(box, 'xy', 0)
-            xz = getattr(box, 'xz', 0)
-            yz = getattr(box, 'yz', 0)
+            Lz = getattr(box, "Lz", 0)
+            xy = getattr(box, "xy", 0)
+            xz = getattr(box, "xz", 0)
+            yz = getattr(box, "yz", 0)
         except AttributeError:
             try:
                 # Handle dictionary-like
-                Lx = box['Lx']
-                Ly = box['Ly']
-                Lz = box.get('Lz', 0)
-                xy = box.get('xy', 0)
-                xz = box.get('xz', 0)
-                yz = box.get('yz', 0)
+                Lx = box["Lx"]
+                Ly = box["Ly"]
+                Lz = box.get("Lz", 0)
+                xy = box.get("xy", 0)
+                xz = box.get("xz", 0)
+                yz = box.get("yz", 0)
             except (IndexError, KeyError, TypeError):
-                if not len(box) in [2, 3, 6]:
+                if len(box) not in [2, 3, 6]:
                     raise ValueError(
                         "List-like objects must have length 2, 3, or 6 to be "
-                        "converted to hoomd.Box.")
+                        "converted to hoomd.Box."
+                    )
                 # Handle list-like
                 Lx = box[0]
                 Ly = box[1]
                 Lz = box[2] if len(box) > 2 else 0
                 xy, xz, yz = box[3:6] if len(box) == 6 else (0, 0, 0)
-        except:  # noqa
+        except:
             raise
 
         return cls(Lx=Lx, Ly=Ly, Lz=Lz, xy=xy, xz=xz, yz=yz)
@@ -625,7 +633,7 @@ class Box:
 
     @volume.setter
     def volume(self, volume):
-        self.scale((volume / self.volume)**(1 / self.dimensions))
+        self.scale((volume / self.volume) ** (1 / self.dimensions))
 
     def to_matrix(self):
         """(3, 3) `numpy.ndarray` `float`: The upper triangular matrix that \
@@ -679,7 +687,8 @@ class Box:
     def __repr__(self):
         """Executable representation of the object."""
         return "hoomd.box.Box(Lx={}, Ly={}, Lz={}, xy={}, xz={}, yz={})".format(
-            self.Lx, self.Ly, self.Lz, self.xy, self.xz, self.yz)
+            self.Lx, self.Ly, self.Lz, self.xy, self.xz, self.yz
+        )
 
     def __eq__(self, other):
         """Test if boxes are equal."""
@@ -743,8 +752,9 @@ class BoxInterface(abc.ABC):
         pass
 
 
-box_like = typing.Union[Box, BoxInterface, typing.Sequence[float],
-                        typing.Mapping[str, float], np.ndarray]
+box_like = typing.Union[
+    Box, BoxInterface, typing.Sequence[float], typing.Mapping[str, float], np.ndarray
+]
 """Objects that are or can be converted to `Box`.
 
 This includes
@@ -760,3 +770,8 @@ Note:
     If any of ``Lz, xy, xz, yz`` for these different types are not provided,
     they are considered 0.
 """
+
+__all__ = [
+    "BoxInterface",
+    "box_like",
+]

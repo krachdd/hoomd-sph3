@@ -1,0 +1,13 @@
+add_executable(raw_speed_cpu raw_speed_cpu.cpp)
+target_link_libraries(raw_speed_cpu PRIVATE benchmark::benchmark ${PROJECT_NAME})
+
+include(CheckLanguage)
+check_language(CUDA)
+if (CMAKE_CUDA_COMPILER)
+    message(STATUS "CUDA FOUND: Building CUDA benchmarks")
+    enable_language(CUDA)
+    add_executable(raw_speed_cuda raw_speed_cuda.cu)
+    target_link_libraries(raw_speed_cuda PRIVATE ${PROJECT_NAME})
+else()
+    message(STATUS "CUDA not found: Skipping CUDA benchmarks")
+endif()

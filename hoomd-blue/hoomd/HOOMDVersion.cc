@@ -1,4 +1,4 @@
-// Copyright (c) 2009-2024 The Regents of the University of Michigan.
+// Copyright (c) 2009-2025 The Regents of the University of Michigan.
 // Part of HOOMD-blue, released under the BSD 3-Clause License.
 
 #include "HOOMDVersion.h"
@@ -43,10 +43,6 @@ std::string BuildInfo::getCompileFlags()
 
 #ifdef ENABLE_MPI
     o << "MPI ";
-#endif
-
-#ifdef ENABLE_TBB
-    o << "TBB ";
 #endif
 
 #ifdef __SSE__
@@ -141,15 +137,6 @@ std::string BuildInfo::getCXXCompiler()
 
 #else
     return string("unknown");
-#endif
-    }
-
-bool BuildInfo::getEnableTBB()
-    {
-#ifdef ENABLE_TBB
-    return true;
-#else
-    return false;
 #endif
     }
 

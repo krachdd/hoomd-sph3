@@ -1,4 +1,4 @@
-# Copyright (c) 2009-2024 The Regents of the University of Michigan.
+# Copyright (c) 2009-2025 The Regents of the University of Michigan.
 # Part of HOOMD-blue, released under the BSD 3-Clause License.
 
 """Define the Null filter."""
@@ -10,14 +10,14 @@ from hoomd._hoomd import ParticleFilterNull
 class Null(ParticleFilter, ParticleFilterNull):
     """Select no particles.
 
-    Base: `ParticleFilter`
-
     .. rubric:: Example:
 
     .. code-block:: python
 
         null = hoomd.filter.Null()
     """
+
+    __doc__ += ParticleFilter._doc_inherited
 
     def __init__(self):
         ParticleFilter.__init__(self)

@@ -1,4 +1,4 @@
-# Copyright (c) 2009-2024 The Regents of the University of Michigan.
+# Copyright (c) 2009-2025 The Regents of the University of Michigan.
 # Part of HOOMD-blue, released under the BSD 3-Clause License.
 
 """Define the Rigid filter."""
@@ -26,17 +26,20 @@ class Rigid(ParticleFilter, ParticleFilterRigid):
 
     .. code-block:: python
 
-        rigid_center_and_free = hoomd.filter.Rigid(flags=('center', 'free'))
+        rigid_center_and_free = hoomd.filter.Rigid(flags=("center", "free"))
 
     .. code-block:: python
 
-        rigid_center = hoomd.filter.Rigid(flags=('center',))
+        rigid_center = hoomd.filter.Rigid(flags=("center",))
     """
+
+    __doc__ += ParticleFilter._doc_inherited
 
     def __init__(self, flags=("center",)):
         if not all(flag in {"center", "constituent", "free"} for flag in flags):
             raise ValueError(
-                "Only allowed flags are 'center', 'constituent', and 'free'.")
+                "Only allowed flags are 'center', 'constituent', and 'free'."
+            )
         ParticleFilter.__init__(self)
         ParticleFilterRigid.__init__(self, flags)
         self._flags = flags

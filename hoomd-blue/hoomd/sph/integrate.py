@@ -1,4 +1,4 @@
-# Copyright (c) 2009-2024 The Regents of the University of Michigan.
+# Copyright (c) 2009-2025 The Regents of the University of Michigan.
 # Part of HOOMD-blue, released under the BSD 3-Clause License.
 
 """Implement SPH  Integrator."""
@@ -28,17 +28,17 @@ class _DynamicIntegrator(BaseIntegrator):
         constraints = [] if constraints is None else constraints
         methods = [] if methods is None else methods
         self._forces = syncedlist.SyncedList(
-            Force, syncedlist._PartialGetAttr('_cpp_obj'), iterable=forces)
+            Force, syncedlist._PartialGetAttr("_cpp_obj"), iterable=forces)
 
 
         self._constraints = syncedlist.SyncedList(
             OnlyTypes(Constraint#, disallow_types=(Rigid,)
                 ),
-            syncedlist._PartialGetAttr('_cpp_obj'),
+            syncedlist._PartialGetAttr("_cpp_obj"),
             iterable=constraints)
 
         self._methods = syncedlist.SyncedList(
-            Method, syncedlist._PartialGetAttr('_cpp_obj'), iterable=methods)
+            Method, syncedlist._PartialGetAttr("_cpp_obj"), iterable=methods)
 
         # param_dict = ParameterDict(rigid=OnlyTypes(Rigid, allow_none=True))
         # if rigid is not None and rigid._attached:
@@ -203,7 +203,7 @@ class Integrator(_DynamicIntegrator):
     special type of force used to enforce specific constraints on the system
     state, such as distances between particles with
     `hoomd.md.constrain.Distance`. `Integrator` handles rigid bodies as a
-    special case, as it only integrates the degrees of freedom of each body's
+    special case, as it only integrates the degrees of freedom of each body"s
     center of mass. See `hoomd.md.constrain.Rigid` for details.
 
     .. rubric:: Degrees of freedom
@@ -252,7 +252,7 @@ class Integrator(_DynamicIntegrator):
         nlist = hoomd.md.nlist.Cell()
         lj = hoomd.md.pair.LJ(nlist=nlist)
         lj.params.default = dict(epsilon=1.0, sigma=1.0)
-        lj.r_cut[('A', 'A')] = 2**(1/6)
+        lj.r_cut[("A", "A")] = 2**(1/6)
         nve = hoomd.md.methods.NVE(filter=hoomd.filter.All())
         integrator = hoomd.md.Integrator(dt=0.001, methods=[nve], forces=[lj])
         sim.operations.integrator = integrator
@@ -315,7 +315,7 @@ class Integrator(_DynamicIntegrator):
     def __setattr__(self, attr, value):
         """Hande group DOF update when setting integrate_rotational_dof."""
         super().__setattr__(attr, value)
-        # if (attr == 'integrate_rotational_dof' and self._simulation is not None
+        # if (attr == "integrate_rotational_dof" and self._simulation is not None
         #         and self._simulation.state is not None):
         #     self._simulation.state.update_group_dof()
 

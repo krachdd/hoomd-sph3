@@ -229,7 +229,7 @@ class PYBIND11_EXPORT SinglePhaseFlow : public SPHBaseClass<KT_, SET_>
         std::shared_ptr<ParticleGroup> m_solidgroup; //!< Group of fluid particles
 
         /// r_cut (not squared) given to the neighbor list
-        std::shared_ptr<GlobalArray<Scalar>> m_r_cut_nlist;
+        std::shared_ptr<GPUArray<Scalar>> m_r_cut_nlist;
 
 
         // Index for rcut pair info -> nlist

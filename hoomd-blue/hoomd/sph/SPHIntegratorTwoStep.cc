@@ -52,7 +52,6 @@ SPHIntegratorTwoStep::~SPHIntegratorTwoStep()
 void SPHIntegratorTwoStep::update(uint64_t timestep)
     {
     Integrator::update(timestep);
-
     // ensure that prepRun() has been called
     assert(m_prepared);
 
@@ -276,7 +275,7 @@ void SPHIntegratorTwoStep::prepRun(uint64_t timestep)
         computeNetForceGPU(timestep);
     else
 #endif
-        computeNetForce(timestep);
+    computeNetForce(timestep);
 
     // accelerations only need to be calculated if the accelerations have not yet been set
     if (!m_pdata->isAccelSet())

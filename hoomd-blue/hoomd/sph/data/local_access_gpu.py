@@ -1,4 +1,4 @@
-# Copyright (c) 2009-2024 The Regents of the University of Michigan.
+# Copyright (c) 2009-2025 The Regents of the University of Michigan.
 # Part of HOOMD-blue, released under the BSD 3-Clause License.
 
 """Implement local access classes for the GPU."""
@@ -7,7 +7,10 @@ import hoomd
 from hoomd import _hoomd
 from hoomd.sph import _sph
 from hoomd.data.array import HOOMDGPUArray
-from hoomd.sph.data.local_access import _ForceLocalAccessBase, _NeighborListLocalAccessBase
+from hoomd.sph.data.local_access import (
+    _ForceLocalAccessBase, 
+    _NeighborListLocalAccessBase,
+)
 
 if hoomd.version.gpu_enabled:
 

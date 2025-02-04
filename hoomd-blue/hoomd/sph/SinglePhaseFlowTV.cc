@@ -62,17 +62,19 @@ SinglePhaseFlowTV<KT_, SET_>::SinglePhaseFlowTV(std::shared_ptr<SystemDefinition
         unsigned int num_types = this->m_sysdef->getParticleData()->getNTypes();
 
         this->m_type_property_map = GPUArray<unsigned int>(num_types, this->m_exec_conf);
-        {
+            { // GPU Array Scope 
             ArrayHandle<unsigned int> h_type_property_map(this->m_type_property_map, access_location::host, access_mode::overwrite);
             fill_n(h_type_property_map.data, num_types, SolidFluidTypeBit::NONE);
             // no need to parallelize this as there should only be a few particle types
-            for (unsigned int i = 0; i < this->m_fluidtypes.size(); i++) {
+            for (unsigned int i = 0; i < this->m_fluidtypes.size(); i++) 
+                {
                 h_type_property_map.data[this->m_fluidtypes[i]] |= SolidFluidTypeBit::FLUID;
-            }
-            for (unsigned int i = 0; i < this->m_solidtypes.size(); i++) {
+                }
+            for (unsigned int i = 0; i < this->m_solidtypes.size(); i++) 
+                {
                 h_type_property_map.data[this->m_solidtypes[i]] |= SolidFluidTypeBit::SOLID;
-            }
-        }
+                }
+            } // End GPU Array Scope
 
         // Set simulations methods
         this->m_density_method = mdensitymethod;
@@ -83,7 +85,7 @@ SinglePhaseFlowTV<KT_, SET_>::SinglePhaseFlowTV(std::shared_ptr<SystemDefinition
         this->m_c     = equationofstate->getSpeedOfSound();
         this->m_kappa = skernel->getKernelKappa();
 
-        this->m_r_cut_nlist = std::make_shared<GlobalArray<Scalar>>(this->m_typpair_idx.getNumElements(), this->m_exec_conf);
+        this->m_r_cut_nlist = std::make_shared<GPUArray<Scalar>>(this->m_typpair_idx.getNumElements(), this->m_exec_conf);
         this->m_nlist->addRCutMatrix(this->m_r_cut_nlist);
 
 #ifdef ENABLE_MPI
@@ -150,279 +152,285 @@ void SinglePhaseFlowTV<KT_, SET_>::forcecomputation(uint64_t timestep)
     else if ( this->m_density_method == DENSITYCONTINUITY )
         this->m_exec_conf->msg->notice(7) << "Computing SinglePhaseFlowTV::Forces using CONTINUITY approach " << this->m_density_method << endl;
 
-    // Grab handles for particle data
-    // Access mode overwrite implies that data does not need to be read in
-    ArrayHandle<Scalar4> h_force(this->m_force,access_location::host, access_mode::readwrite);
-    ArrayHandle<Scalar4> h_ratedpe(this->m_ratedpe,access_location::host, access_mode::readwrite);
-
-    // Check input data, can be omitted if need be
-    assert(h_force.data);
-    assert(h_ratedpe.data);
-
-    // Zero data before force calculation
-    memset((void*)h_force.data,0,sizeof(Scalar4)*this->m_force.getNumElements());
-    memset((void*)h_ratedpe.data,0,sizeof(Scalar4)*this->m_ratedpe.getNumElements());
-
-    // access the particle data
-    ArrayHandle<Scalar4> h_pos(this->m_pdata->getPositions(), access_location::host, access_mode::read);
-    ArrayHandle<Scalar4> h_velocity(this->m_pdata->getVelocities(), access_location::host, access_mode::read);
-    ArrayHandle<Scalar>  h_density(this->m_pdata->getDensities(), access_location::host, access_mode::readwrite);
-    ArrayHandle<Scalar>  h_pressure(this->m_pdata->getPressures(), access_location::host, access_mode::readwrite);
-    ArrayHandle<Scalar3> h_vf(this->m_pdata->getAuxiliaries1(), access_location::host,access_mode::read);
-    ArrayHandle<Scalar3> h_bpc(this->m_pdata->getAuxiliaries2(), access_location::host,access_mode::readwrite); // background pressure contribution to tv
-    ArrayHandle<Scalar3> h_tv(this->m_pdata->getAuxiliaries3(), access_location::host,access_mode::read); // transport velocity of the particle tv
-    ArrayHandle<Scalar>  h_h(this->m_pdata->getSlengths(), access_location::host, access_mode::read);
-    
-    // access the neighbor list
-    ArrayHandle<unsigned int> h_n_neigh(this->m_nlist->getNNeighArray(), access_location::host, access_mode::read);
-    ArrayHandle<unsigned int> h_nlist(this->m_nlist->getNListArray(), access_location::host, access_mode::read);
-    // ArrayHandle<unsigned int> h_head_list(this->m_nlist->getHeadList(), access_location::host, access_mode::read);
-    ArrayHandle<size_t> h_head_list(this->m_nlist->getHeadList(), access_location::host, access_mode::read);
-    ArrayHandle<unsigned int> h_type_property_map(this->m_type_property_map, access_location::host, access_mode::read);
-
-    // Check input data
-    assert(h_pos.data != NULL);
-
-    unsigned int size;
-    size_t myHead;
-
     // Local copy of the simulation box
     const BoxDim& box = this->m_pdata->getGlobalBox();
 
-    // Local variable to store things
-    Scalar temp0 = 0; 
+    const unsigned int group_size = this->m_fluidgroup->getNumMembers();
 
-    // maximum velocity variable for adaptive timestep
-    double max_vel = 0.0;
+        { // GPU Array Scope
+        // Grab handles for particle data
+        // Access mode overwrite implies that data does not need to be read in
+        ArrayHandle<Scalar4> h_force(this->m_force,access_location::host, access_mode::readwrite);
+        ArrayHandle<Scalar4> h_ratedpe(this->m_ratedpe,access_location::host, access_mode::readwrite);
 
-    // for each fluid particle
-    unsigned int group_size = this->m_fluidgroup->getNumMembers();
-    for (unsigned int group_idx = 0; group_idx < group_size; group_idx++)
-        {
-        // Read particle index
-        unsigned int i = this->m_fluidgroup->getMemberIndex(group_idx);
+        // Check input data, can be omitted if need be
+        assert(h_force.data);
+        assert(h_ratedpe.data);
 
-        // set background pressure contribution for tv to zero 
-        h_bpc.data[i].x = 0.0;
-        h_bpc.data[i].y = 0.0;
-        h_bpc.data[i].z = 0.0;
+        // Zero data before force calculation
+        memset((void*)h_force.data,0,sizeof(Scalar4)*this->m_force.getNumElements());
+        memset((void*)h_ratedpe.data,0,sizeof(Scalar4)*this->m_ratedpe.getNumElements());
 
-        // Access the particle's position, velocity, mass and type
-        Scalar3 pi;
-        pi.x = h_pos.data[i].x;
-        pi.y = h_pos.data[i].y;
-        pi.z = h_pos.data[i].z;
+        // access the particle data
+        ArrayHandle<Scalar4> h_pos(this->m_pdata->getPositions(), access_location::host, access_mode::read);
+        ArrayHandle<Scalar4> h_velocity(this->m_pdata->getVelocities(), access_location::host, access_mode::read);
+        ArrayHandle<Scalar>  h_density(this->m_pdata->getDensities(), access_location::host, access_mode::readwrite);
+        ArrayHandle<Scalar>  h_pressure(this->m_pdata->getPressures(), access_location::host, access_mode::readwrite);
+        ArrayHandle<Scalar3> h_vf(this->m_pdata->getAuxiliaries1(), access_location::host,access_mode::read);
+        ArrayHandle<Scalar3> h_bpc(this->m_pdata->getAuxiliaries2(), access_location::host,access_mode::readwrite); // background pressure contribution to tv
+        ArrayHandle<Scalar3> h_tv(this->m_pdata->getAuxiliaries3(), access_location::host,access_mode::read); // transport velocity of the particle tv
+        ArrayHandle<Scalar>  h_h(this->m_pdata->getSlengths(), access_location::host, access_mode::read);
+        
+        // access the neighbor list
+        ArrayHandle<unsigned int> h_n_neigh(this->m_nlist->getNNeighArray(), access_location::host, access_mode::read);
+        ArrayHandle<unsigned int> h_nlist(this->m_nlist->getNListArray(), access_location::host, access_mode::read);
+        // ArrayHandle<unsigned int> h_head_list(this->m_nlist->getHeadList(), access_location::host, access_mode::read);
+        ArrayHandle<size_t> h_head_list(this->m_nlist->getHeadList(), access_location::host, access_mode::read);
+        ArrayHandle<unsigned int> h_type_property_map(this->m_type_property_map, access_location::host, access_mode::read);
 
-        Scalar3 vi;
-        vi.x = h_velocity.data[i].x;
-        vi.y = h_velocity.data[i].y;
-        vi.z = h_velocity.data[i].z;
-        Scalar mi = h_velocity.data[i].w;
+        // Check input data
+        assert(h_pos.data != NULL);
 
-        Scalar3 tvi;
-        tvi.x = h_tv.data[i].x;
-        tvi.y = h_tv.data[i].y;
-        tvi.z = h_tv.data[i].z;
+        unsigned int size;
+        size_t myHead;
 
-        // Read particle i pressure
-        Scalar Pi = h_pressure.data[i];
 
-        // Read particle i density and volume
-        Scalar rhoi = h_density.data[i];
-        Scalar Vi   = mi / rhoi;
+        // Local variable to store things
+        Scalar temp0 = 0; 
 
-        // // Total velocity of particle
-        Scalar vi_total = sqrt((vi.x * vi.x) + (vi.y * vi.y) + (vi.z * vi.z));
+        // maximum velocity variable for adaptive timestep
+        double max_vel = 0.0;
 
-        // compute \mathbf{A}_i, artificial stress tensor of particle i 
-        Scalar A11i = rhoi * vi.x * ( tvi.x - vi.x );
-        Scalar A12i = rhoi * vi.x * ( tvi.y - vi.y );
-        Scalar A13i = rhoi * vi.x * ( tvi.z - vi.z );
-        Scalar A21i = rhoi * vi.y * ( tvi.x - vi.x );
-        Scalar A22i = rhoi * vi.y * ( tvi.y - vi.y );
-        Scalar A23i = rhoi * vi.y * ( tvi.z - vi.z );
-        Scalar A31i = rhoi * vi.z * ( tvi.x - vi.x );
-        Scalar A32i = rhoi * vi.z * ( tvi.y - vi.y );
-        Scalar A33i = rhoi * vi.z * ( tvi.z - vi.z );
-
-        // Properties needed for adaptive timestep
-        if (i == 0) { max_vel = vi_total; }
-        else if (vi_total > max_vel) { max_vel = vi_total; }
-
-        // Loop over all of the neighbors of this particle
-        myHead = h_head_list.data[i];
-        size = (unsigned int)h_n_neigh.data[i];
-
-        for (unsigned int j = 0; j < size; j++)
+        // for each fluid particle
+        for (unsigned int group_idx = 0; group_idx < group_size; group_idx++)
             {
-            // Index of neighbor (MEM TRANSFER: 1 scalar)
-            unsigned int k = h_nlist.data[myHead + j];
+            // Read particle index
+            unsigned int i = this->m_fluidgroup->getMemberIndex(group_idx);
 
-            // Sanity check
-            assert(k < this->m_pdata->getN() + this->m_pdata->getNGhosts());
+            // set background pressure contribution for tv to zero 
+            h_bpc.data[i].x = 0.0;
+            h_bpc.data[i].y = 0.0;
+            h_bpc.data[i].z = 0.0;
 
-            // Access neighbor position
-            Scalar3 pj;
-            pj.x = h_pos.data[k].x;
-            pj.y = h_pos.data[k].y;
-            pj.z = h_pos.data[k].z;
+            // Access the particle's position, velocity, mass and type
+            Scalar3 pi;
+            pi.x = h_pos.data[i].x;
+            pi.y = h_pos.data[i].y;
+            pi.z = h_pos.data[i].z;
 
-            // Determine neighbor type
-            bool issolid = checksolid(h_type_property_map.data, h_pos.data[k].w);
+            Scalar3 vi;
+            vi.x = h_velocity.data[i].x;
+            vi.y = h_velocity.data[i].y;
+            vi.z = h_velocity.data[i].z;
+            Scalar mi = h_velocity.data[i].w;
 
-            // Compute distance vector (FLOPS: 3)
-            // Scalar3 dx = pi - pj;
-            Scalar3 dx;
-            dx.x = pi.x - pj.x;
-            dx.y = pi.y - pj.y;
-            dx.z = pi.z - pj.z;
+            Scalar3 tvi;
+            tvi.x = h_tv.data[i].x;
+            tvi.y = h_tv.data[i].y;
+            tvi.z = h_tv.data[i].z;
 
-            // Apply periodic boundary conditions (FLOPS: 9)
-            dx = box.minImage(dx);
+            // Read particle i pressure
+            Scalar Pi = h_pressure.data[i];
 
-            // Calculate squared distance (FLOPS: 5)
-            Scalar rsq = dot(dx, dx);
+            // Read particle i density and volume
+            Scalar rhoi = h_density.data[i];
+            Scalar Vi   = mi / rhoi;
 
-            // If particle distance is too large, skip this loop
-            if ( this->m_const_slength && rsq > this->m_rcutsq )
-                continue;
+            // // Total velocity of particle
+            Scalar vi_total = sqrt((vi.x * vi.x) + (vi.y * vi.y) + (vi.z * vi.z));
 
-            // Access neighbor velocity; depends on fluid or fictitious solid particle
-            Scalar3 vj  = make_scalar3(0.0, 0.0, 0.0);
-            Scalar mj   = h_velocity.data[k].w;
-            if ( issolid )
+            // compute \mathbf{A}_i, artificial stress tensor of particle i 
+            Scalar A11i = rhoi * vi.x * ( tvi.x - vi.x );
+            Scalar A12i = rhoi * vi.x * ( tvi.y - vi.y );
+            Scalar A13i = rhoi * vi.x * ( tvi.z - vi.z );
+            Scalar A21i = rhoi * vi.y * ( tvi.x - vi.x );
+            Scalar A22i = rhoi * vi.y * ( tvi.y - vi.y );
+            Scalar A23i = rhoi * vi.y * ( tvi.z - vi.z );
+            Scalar A31i = rhoi * vi.z * ( tvi.x - vi.x );
+            Scalar A32i = rhoi * vi.z * ( tvi.y - vi.y );
+            Scalar A33i = rhoi * vi.z * ( tvi.z - vi.z );
+
+            // Properties needed for adaptive timestep
+            if (i == 0) { max_vel = vi_total; }
+            else if (vi_total > max_vel) { max_vel = vi_total; }
+
+            // Loop over all of the neighbors of this particle
+            myHead = h_head_list.data[i];
+            size = (unsigned int)h_n_neigh.data[i];
+
+            for (unsigned int j = 0; j < size; j++)
                 {
-                vj.x = h_vf.data[k].x;
-                vj.y = h_vf.data[k].y;
-                vj.z = h_vf.data[k].z;
-                }
-            else
-                {
-                vj.x = h_velocity.data[k].x;
-                vj.y = h_velocity.data[k].y;
-                vj.z = h_velocity.data[k].z;
-                }
-            Scalar rhoj = h_density.data[k];
-            Scalar Vj   = mj / rhoj;
+                // Index of neighbor (MEM TRANSFER: 1 scalar)
+                unsigned int k = h_nlist.data[myHead + j];
 
-            Scalar3 tvj;
-            tvj.x = h_tv.data[k].x;
-            tvj.y = h_tv.data[k].y;
-            tvj.z = h_tv.data[k].z;
+                // Sanity check
+                assert(k < this->m_pdata->getN() + this->m_pdata->getNGhosts());
 
-            // compute \mathbf{A}_j, artificial stress tensor of particle j 
-            Scalar A11j = rhoj * vj.x * ( tvj.x - vj.x );
-            Scalar A12j = rhoj * vj.x * ( tvj.y - vj.y );
-            Scalar A13j = rhoj * vj.x * ( tvj.z - vj.z );
-            Scalar A21j = rhoj * vj.y * ( tvj.x - vj.x );
-            Scalar A22j = rhoj * vj.y * ( tvj.y - vj.y );
-            Scalar A23j = rhoj * vj.y * ( tvj.z - vj.z );
-            Scalar A31j = rhoj * vj.z * ( tvj.x - vj.x );
-            Scalar A32j = rhoj * vj.z * ( tvj.y - vj.y );
-            Scalar A33j = rhoj * vj.z * ( tvj.z - vj.z );
+                // Access neighbor position
+                Scalar3 pj;
+                pj.x = h_pos.data[k].x;
+                pj.y = h_pos.data[k].y;
+                pj.z = h_pos.data[k].z;
 
+                // Determine neighbor type
+                bool issolid = checksolid(h_type_property_map.data, h_pos.data[k].w);
 
-            // Read particle k pressure
-            Scalar Pj = h_pressure.data[k];
+                // Compute distance vector (FLOPS: 3)
+                // Scalar3 dx = pi - pj;
+                Scalar3 dx;
+                dx.x = pi.x - pj.x;
+                dx.y = pi.y - pj.y;
+                dx.z = pi.z - pj.z;
 
-            // Compute velocity difference
-            Scalar3 dv;
-            dv.x = vi.x - vj.x;
-            dv.y = vi.y - vj.y;
-            dv.z = vi.z - vj.z;
+                // Apply periodic boundary conditions (FLOPS: 9)
+                dx = box.minImage(dx);
 
-            // Calculate absolute and normalized distance
-            Scalar r = sqrt(rsq);
+                // Calculate squared distance (FLOPS: 5)
+                Scalar rsq = dot(dx, dx);
 
-            // Mean smoothing length and denominator modifier
-            Scalar meanh  = this->m_const_slength ? this->m_ch : Scalar(0.5)*(h_h.data[i]+h_h.data[k]);
-            Scalar epssqr = Scalar(0.01) * meanh * meanh;
+                // If particle distance is too large, skip this loop
+                if ( this->m_const_slength && rsq > this->m_rcutsq )
+                    continue;
 
-            // Kernel function derivative evaluation
-            Scalar dwdr   = this->m_skernel->dwijdr(meanh,r);
-            Scalar dwdr_r = dwdr/(r+epssqr);
-
-            // Evaluate inter-particle pressure force
-            // Transport formulation proposed by Adami 2013
-            temp0 = (rhoj*Pi+rhoi*Pj)/(rhoi+rhoj); 
-
-            Scalar avc = 0.0;
-            // Optionally add artificial viscosity
-            // Monaghan (1983) J. Comput. Phys. 52 (2) 374–389
-            if ( this->m_artificial_viscosity && !issolid )
-                {
-                Scalar dotdvdx = dot(dv,dx);
-                if ( dotdvdx < Scalar(0) )
-                    {
-                    Scalar muij    = meanh*dotdvdx/(rsq+epssqr);
-                    Scalar meanrho = Scalar(0.5)*(rhoi+rhoj);
-                    avc = (-this->m_avalpha*this->m_c*muij+this->m_avbeta*muij*muij)/meanrho;
-                    }
-                }
-
-            // Add contribution to fluid particle; pressure interaction force
-            Scalar vijsqr = Vi*Vi+Vj*Vj;
-            h_force.data[i].x -= vijsqr * ( temp0 + avc )* dwdr_r * dx.x;
-            h_force.data[i].y -= vijsqr * ( temp0 + avc )* dwdr_r * dx.y;
-            h_force.data[i].z -= vijsqr * ( temp0 + avc )* dwdr_r * dx.z;
-
-            // Evaluate viscous interaction forces
-            temp0 = this->m_mu * vijsqr * dwdr_r;
-            h_force.data[i].x  += temp0 * dv.x;
-            h_force.data[i].y  += temp0 * dv.y;
-            h_force.data[i].z  += temp0 * dv.z;
-
-            // Evaluate and add artificial stress part
-            temp0 = 0.5 * vijsqr * dwdr_r;
-            Scalar A1ij = ( A11i + A11j ) * dx.x + ( A12i + A12j ) * dx.y + ( A13i + A13j ) * dx.z;
-            Scalar A2ij = ( A21i + A21j ) * dx.x + ( A22i + A22j ) * dx.y + ( A23i + A23j ) * dx.z;
-            Scalar A3ij = ( A31i + A31j ) * dx.x + ( A32i + A32j ) * dx.y + ( A33i + A33j ) * dx.z;
-
-            h_force.data[k].x += temp0 * A1ij; 
-            h_force.data[k].y += temp0 * A2ij; 
-            h_force.data[k].z += temp0 * A3ij; 
-
-            // Evaluate background pressure contribution in aux2
-            h_bpc.data[i].x -= vijsqr * this->m_eos->getTransportVelocityPressure()/mi * dwdr_r * dx.x;
-            h_bpc.data[i].y -= vijsqr * this->m_eos->getTransportVelocityPressure()/mi * dwdr_r * dx.y;
-            h_bpc.data[i].z -= vijsqr * this->m_eos->getTransportVelocityPressure()/mi * dwdr_r * dx.z;
-
-            // Evaluate rate of change of density if CONTINUITY approach is used
-            if ( this->m_density_method == DENSITYCONTINUITY )
-                {
+                // Access neighbor velocity; depends on fluid or fictitious solid particle
+                Scalar3 vj  = make_scalar3(0.0, 0.0, 0.0);
+                Scalar mj   = h_velocity.data[k].w;
                 if ( issolid )
                     {
-                    // Use physical advection velocity rather than fictitious velocity here
+                    vj.x = h_vf.data[k].x;
+                    vj.y = h_vf.data[k].y;
+                    vj.z = h_vf.data[k].z;
+                    }
+                else
+                    {
                     vj.x = h_velocity.data[k].x;
                     vj.y = h_velocity.data[k].y;
                     vj.z = h_velocity.data[k].z;
+                    }
+                Scalar rhoj = h_density.data[k];
+                Scalar Vj   = mj / rhoj;
 
-                    // Recompute velocity difference
-                    // dv = vi - vj;
-                    dv.x = vi.x - vj.x;
-                    dv.y = vi.y - vj.y;
-                    dv.z = vi.z - vj.z;
-                    //Vj = mj / m_rho0;
+                Scalar3 tvj;
+                tvj.x = h_tv.data[k].x;
+                tvj.y = h_tv.data[k].y;
+                tvj.z = h_tv.data[k].z;
+
+                // compute \mathbf{A}_j, artificial stress tensor of particle j 
+                Scalar A11j = rhoj * vj.x * ( tvj.x - vj.x );
+                Scalar A12j = rhoj * vj.x * ( tvj.y - vj.y );
+                Scalar A13j = rhoj * vj.x * ( tvj.z - vj.z );
+                Scalar A21j = rhoj * vj.y * ( tvj.x - vj.x );
+                Scalar A22j = rhoj * vj.y * ( tvj.y - vj.y );
+                Scalar A23j = rhoj * vj.y * ( tvj.z - vj.z );
+                Scalar A31j = rhoj * vj.z * ( tvj.x - vj.x );
+                Scalar A32j = rhoj * vj.z * ( tvj.y - vj.y );
+                Scalar A33j = rhoj * vj.z * ( tvj.z - vj.z );
+
+
+                // Read particle k pressure
+                Scalar Pj = h_pressure.data[k];
+
+                // Compute velocity difference
+                Scalar3 dv;
+                dv.x = vi.x - vj.x;
+                dv.y = vi.y - vj.y;
+                dv.z = vi.z - vj.z;
+
+                // Calculate absolute and normalized distance
+                Scalar r = sqrt(rsq);
+
+                // Mean smoothing length and denominator modifier
+                Scalar meanh  = this->m_const_slength ? this->m_ch : Scalar(0.5)*(h_h.data[i]+h_h.data[k]);
+                Scalar epssqr = Scalar(0.01) * meanh * meanh;
+
+                // Kernel function derivative evaluation
+                Scalar dwdr   = this->m_skernel->dwijdr(meanh,r);
+                Scalar dwdr_r = dwdr/(r+epssqr);
+
+                // Evaluate inter-particle pressure force
+                // Transport formulation proposed by Adami 2013
+                temp0 = (rhoj*Pi+rhoi*Pj)/(rhoi+rhoj); 
+
+                Scalar avc = 0.0;
+                // Optionally add artificial viscosity
+                // Monaghan (1983) J. Comput. Phys. 52 (2) 374–389
+                if ( this->m_artificial_viscosity && !issolid )
+                    {
+                    Scalar dotdvdx = dot(dv,dx);
+                    if ( dotdvdx < Scalar(0) )
+                        {
+                        Scalar muij    = meanh*dotdvdx/(rsq+epssqr);
+                        Scalar meanrho = Scalar(0.5)*(rhoi+rhoj);
+                        avc = (-this->m_avalpha*this->m_c*muij+this->m_avbeta*muij*muij)/meanrho;
+                        }
                     }
 
-                // Compute density rate of change
-                // std::cout << "Compute density rate of change: rhoi " << rhoi << " Vj " << Vj << " dot(dv,dwdr_r*dx) " << dot(dv,dwdr_r*dx) << std::endl;
-                h_ratedpe.data[i].x += rhoi*Vj*dot(dv,dwdr_r*dx);
-                // std::cout << "Compute density rate of change: h_ratedpe.data[i].x " << h_ratedpe.data[i].x << std::endl;
+                // Add contribution to fluid particle; pressure interaction force
+                Scalar vijsqr = Vi*Vi+Vj*Vj;
+                h_force.data[i].x -= vijsqr * ( temp0 + avc )* dwdr_r * dx.x;
+                h_force.data[i].y -= vijsqr * ( temp0 + avc )* dwdr_r * dx.y;
+                h_force.data[i].z -= vijsqr * ( temp0 + avc )* dwdr_r * dx.z;
 
-                //h_ratedpe.data[i].x += mj*dot(dv,dwdr_r*dx);
+                // Evaluate viscous interaction forces
+                temp0 = this->m_mu * vijsqr * dwdr_r;
+                h_force.data[i].x  += temp0 * dv.x;
+                h_force.data[i].y  += temp0 * dv.y;
+                h_force.data[i].z  += temp0 * dv.z;
 
-                // Add density diffusion if requested
-                // Molteni and Colagrossi, Computer Physics Communications 180 (2009) 861–872
-                if ( !issolid && this->m_density_diffusion )
-                    h_ratedpe.data[i].x -= (Scalar(2)*this->m_ddiff*meanh*this->m_c*mj*(rhoi/rhoj-Scalar(1))*dot(dx,dwdr_r*dx))/(rsq+epssqr);
-                }
+                // Evaluate and add artificial stress part
+                temp0 = 0.5 * vijsqr * dwdr_r;
+                Scalar A1ij = ( A11i + A11j ) * dx.x + ( A12i + A12j ) * dx.y + ( A13i + A13j ) * dx.z;
+                Scalar A2ij = ( A21i + A21j ) * dx.x + ( A22i + A22j ) * dx.y + ( A23i + A23j ) * dx.z;
+                Scalar A3ij = ( A31i + A31j ) * dx.x + ( A32i + A32j ) * dx.y + ( A33i + A33j ) * dx.z;
 
-            } // Closing Neighbor Loop
+                h_force.data[k].x += temp0 * A1ij; 
+                h_force.data[k].y += temp0 * A2ij; 
+                h_force.data[k].z += temp0 * A3ij; 
 
-        } // Closing Fluid Particle Loop
+                // Evaluate background pressure contribution in aux2
+                h_bpc.data[i].x -= vijsqr * this->m_eos->getTransportVelocityPressure()/mi * dwdr_r * dx.x;
+                h_bpc.data[i].y -= vijsqr * this->m_eos->getTransportVelocityPressure()/mi * dwdr_r * dx.y;
+                h_bpc.data[i].z -= vijsqr * this->m_eos->getTransportVelocityPressure()/mi * dwdr_r * dx.z;
 
-    this->m_timestep_list[5] = max_vel;
+                // Evaluate rate of change of density if CONTINUITY approach is used
+                if ( this->m_density_method == DENSITYCONTINUITY )
+                    {
+                    if ( issolid )
+                        {
+                        // Use physical advection velocity rather than fictitious velocity here
+                        vj.x = h_velocity.data[k].x;
+                        vj.y = h_velocity.data[k].y;
+                        vj.z = h_velocity.data[k].z;
+
+                        // Recompute velocity difference
+                        // dv = vi - vj;
+                        dv.x = vi.x - vj.x;
+                        dv.y = vi.y - vj.y;
+                        dv.z = vi.z - vj.z;
+                        //Vj = mj / m_rho0;
+                        }
+
+                    // Compute density rate of change
+                    // std::cout << "Compute density rate of change: rhoi " << rhoi << " Vj " << Vj << " dot(dv,dwdr_r*dx) " << dot(dv,dwdr_r*dx) << std::endl;
+                    h_ratedpe.data[i].x += rhoi*Vj*dot(dv,dwdr_r*dx);
+                    // std::cout << "Compute density rate of change: h_ratedpe.data[i].x " << h_ratedpe.data[i].x << std::endl;
+
+                    //h_ratedpe.data[i].x += mj*dot(dv,dwdr_r*dx);
+
+                    // Add density diffusion if requested
+                    // Molteni and Colagrossi, Computer Physics Communications 180 (2009) 861–872
+                    if ( !issolid && this->m_density_diffusion )
+                        h_ratedpe.data[i].x -= (Scalar(2)*this->m_ddiff*meanh*this->m_c*mj*(rhoi/rhoj-Scalar(1))*dot(dx,dwdr_r*dx))/(rsq+epssqr);
+                    }
+
+                } // Closing Neighbor Loop
+
+            } // Closing Fluid Particle Loop
+
+        this->m_timestep_list[5] = max_vel;
+
+        } // End GPU Array Scope
+
     // Add volumetric force (gravity)
     this->applyBodyForce(timestep, this->m_fluidgroup);
 
@@ -434,6 +442,7 @@ void SinglePhaseFlowTV<KT_, SET_>::forcecomputation(uint64_t timestep)
 template<SmoothingKernelType KT_,StateEquationType SET_>
 void SinglePhaseFlowTV<KT_, SET_>::computeForces(uint64_t timestep)
     {
+
 
     // start by updating the neighborlist
     this->m_nlist->compute(timestep);

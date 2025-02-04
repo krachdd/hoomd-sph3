@@ -4,7 +4,6 @@ maintainer: dkrach, david.krach@mib.uni-stuttgart.de
 
 #include "ComputeMechanicalPropTypes.h"
 #include "hoomd/Compute.h"
-#include "hoomd/GlobalArray.h"
 #include "hoomd/ParticleGroup.h"
 
 #include <limits>
@@ -30,13 +29,13 @@ namespace sph
 
 //! Computes properties of a group of particles
 /*! ComputeSPFMechanical properties calculates instantaneous properties and provides them in Python.
-    All computed values are stored in a GlobalArray so that they can be accessed on the GPU without
+    All computed values are stored in a GPUArray so that they can be accessed on the GPU without
    intermediate copies. Use the enum values in singlephaseflow_logger_index to index the array and extract the
    properties of interest. Convenience functions are provided for accessing the values on the CPU.
    Certain properties, like ndof and num_particles are always known and there is no need for them to
-   be accessible via the GlobalArray.
+   be accessible via the GPUArray.
 
-    Computed quantities available in the GlobalArray:
+    Computed quantities available in the GPUArray:
      - ergaenzen
 
     Values available all the time
@@ -66,10 +65,12 @@ class PYBIND11_EXPORT ComputeSPFBasicProperties : public Compute
         if (!m_properties_reduced)
             reduceProperties();
 #endif
-
-        // return only translational component if the flags are not valid
-        ArrayHandle<Scalar> h_properties(m_properties, access_location::host, access_mode::read);
-        return h_properties.data[singlephaseflow_logger_index::abs_velocity]/m_group->getNumMembersGlobal();
+        const unsigned int num_global = m_group->getNumMembersGlobal();
+            { // GPU Array Scope
+            // return only translational component if the flags are not valid
+            ArrayHandle<Scalar> h_properties(m_properties, access_location::host, access_mode::read);
+            return h_properties.data[singlephaseflow_logger_index::abs_velocity]/num_global;
+            } // End GPU Array Scope
         }
 
     //! Returns the total kinetic energy last computed by compute()
@@ -146,10 +147,12 @@ class PYBIND11_EXPORT ComputeSPFBasicProperties : public Compute
         if (!m_properties_reduced)
             reduceProperties();
 #endif
-
-        // return only translational component if the flags are not valid
-        ArrayHandle<Scalar> h_properties(m_properties, access_location::host, access_mode::read);
-        return h_properties.data[singlephaseflow_logger_index::sum_fluid_density]/m_group->getNumMembersGlobal();
+        const unsigned int num_global = m_group->getNumMembersGlobal();
+            { // GPU Array Scope 
+            // return only translational component if the flags are not valid
+            ArrayHandle<Scalar> h_properties(m_properties, access_location::host, access_mode::read);
+            return h_properties.data[singlephaseflow_logger_index::sum_fluid_density]/num_global;
+            } // End GPU Array Scope
         }
 
     unsigned int getNumParticles()
@@ -158,7 +161,7 @@ class PYBIND11_EXPORT ComputeSPFBasicProperties : public Compute
         }
 
     //! Get the gpu array of properties
-    const GlobalArray<Scalar>& getProperties()
+    const GPUArray<Scalar>& getProperties()
         {
 #ifdef ENABLE_MPI
         if (!m_properties_reduced)
@@ -177,7 +180,7 @@ class PYBIND11_EXPORT ComputeSPFBasicProperties : public Compute
 
     protected:
     std::shared_ptr<ParticleGroup> m_group; //!< Group to compute properties for
-    GlobalArray<Scalar> m_properties;       //!< Stores the computed properties
+    GPUArray<Scalar> m_properties;       //!< Stores the computed properties
 
     /// Store the particle data flags used during the last computation
     PDataFlags m_computed_flags;

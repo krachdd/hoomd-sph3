@@ -1,9 +1,8 @@
-# Copyright (c) 2009-2024 The Regents of the University of Michigan.
+# Copyright (c) 2009-2025 The Regents of the University of Michigan.
 # Part of HOOMD-blue, released under the BSD 3-Clause License.
 
-r"""Neighbor list acceleration structures.
-
-Pair forces (`hoomd.md.pair`) use neighbor list data structures to find
+r"""Pair forces (`hoomd.md.pair`) use neighbor list data structures to find
+(`hoomd.md.pair`) use neighbor list data structures to find
 neighboring particle pairs (those within a distance of :math:`r_\mathrm{cut}`)
 efficiently. HOOMD-blue provides a several types of neighbor list construction
 algorithms that you can select from: `Cell`, `Tree`, and `Stencil`.
@@ -47,9 +46,10 @@ Note:
     Python.
 
 Attention:
-    Users should only set this attribute when utilizing the accessor APIs,
-    `pair_list`, `local_pair_list`, `cpu_local_nlist_arrays`, or
-    `gpu_local_nlist_arrays`.
+    `pair_list <NeighborList.pair_list>`,
+    `local_pair_list <NeighborList.local_pair_list>`,
+    `cpu_local_nlist_arrays <NeighborList.cpu_local_nlist_arrays>`, or
+    `gpu_local_nlist_arrays <NeighborList.gpu_local_nlist_arrays>`.
 
 .. rubric:: Exclusions
 
@@ -589,3 +589,12 @@ class Tree(NeighborList):
         self._cpp_obj = nlist_cls(self._simulation.state._cpp_sys_def,
                                   self.buffer)
         super()._attach_hook()     
+
+
+
+__all__ = [
+    "Cell",
+    "NeighborList",
+    "Stencil",
+    "Tree",
+]

@@ -1,4 +1,4 @@
-// Copyright (c) 2009-2024 The Regents of the University of Michigan.
+// Copyright (c) 2009-2025 The Regents of the University of Michigan.
 // Part of HOOMD-blue, released under the BSD 3-Clause License.
 
 #include "ConstantForceCompute.h"
@@ -21,43 +21,27 @@ ConstantForceCompute::ConstantForceCompute(std::shared_ptr<SystemDefinition> sys
     : ForceCompute(sysdef), m_group(group), m_parameters_updated(false)
     {
     // allocate memory for the per-type constant_force storage and initialize them to (1.0,0,0)
-    GlobalVector<Scalar3> tmp_f(m_pdata->getNTypes(), m_exec_conf);
+    GPUVector<Scalar3> tmp_f(m_pdata->getNTypes(), m_exec_conf);
 
     m_constant_force.swap(tmp_f);
-    TAG_ALLOCATION(m_constant_force);
+        { // GPU Array Scope 
+        ArrayHandle<Scalar3> h_constant_force(m_constant_force,
+                                              access_location::host,
+                                              access_mode::overwrite);
+        for (unsigned int i = 0; i < m_constant_force.size(); i++)
+            h_constant_force.data[i] = make_scalar3(0.0, 0.0, 0.0);
 
-    ArrayHandle<Scalar3> h_constant_force(m_constant_force,
-                                          access_location::host,
-                                          access_mode::overwrite);
-    for (unsigned int i = 0; i < m_constant_force.size(); i++)
-        h_constant_force.data[i] = make_scalar3(0.0, 0.0, 0.0);
+        // allocate memory for the per-type constant_torque storage and initialize them to (0,0,0)
+        // GPUVector<Scalar3> tmp_t(m_pdata->getNTypes(), m_exec_conf);
 
-    // allocate memory for the per-type constant_torque storage and initialize them to (0,0,0)
-    // GlobalVector<Scalar3> tmp_t(m_pdata->getNTypes(), m_exec_conf);
+        // m_constant_torque.swap(tmp_t);
 
-    // m_constant_torque.swap(tmp_t);
-    // TAG_ALLOCATION(m_constant_torque);
-
-    // ArrayHandle<Scalar3> h_constant_torque(m_constant_torque,
-    //                                        access_location::host,
-    //                                        access_mode::overwrite);
-    // for (unsigned int i = 0; i < m_constant_torque.size(); i++)
-    //     h_constant_torque.data[i] = make_scalar3(0.0, 0.0, 0.0);
-
-#if defined(ENABLE_HIP) && defined(__HIP_PLATFORM_NVCC__)
-    if (m_exec_conf->isCUDAEnabled() && m_exec_conf->allConcurrentManagedAccess())
-        {
-        cudaMemAdvise(m_constant_force.get(),
-                      sizeof(Scalar3) * m_constant_force.getNumElements(),
-                      cudaMemAdviseSetReadMostly,
-                      0);
-
-        // cudaMemAdvise(m_constant_torque.get(),
-        //               sizeof(Scalar3) * m_constant_torque.getNumElements(),
-        //               cudaMemAdviseSetReadMostly,
-        //               0);
-        }
-#endif
+        // ArrayHandle<Scalar3> h_constant_torque(m_constant_torque,
+        //                                        access_location::host,
+        //                                        access_mode::overwrite);
+        // for (unsigned int i = 0; i < m_constant_torque.size(); i++)
+        //     h_constant_torque.data[i] = make_scalar3(0.0, 0.0, 0.0);
+        } // GPU Array Scope
     }
 
 ConstantForceCompute::~ConstantForceCompute()
@@ -84,12 +68,12 @@ void ConstantForceCompute::setConstantForce(const std::string& type_name, pybind
     force.x = pybind11::cast<Scalar>(v[0]);
     force.y = pybind11::cast<Scalar>(v[1]);
     force.z = pybind11::cast<Scalar>(v[2]);
-
-    ArrayHandle<Scalar3> h_constant_force(m_constant_force,
-                                          access_location::host,
-                                          access_mode::readwrite);
-    h_constant_force.data[typ] = force;
-
+        { // GPU Array Scope
+        ArrayHandle<Scalar3> h_constant_force(m_constant_force,
+                                              access_location::host,
+                                              access_mode::readwrite);
+        h_constant_force.data[typ] = force;
+        } // end GPU Array Scope
     m_parameters_updated = true;
     }
 
@@ -98,14 +82,17 @@ pybind11::tuple ConstantForceCompute::getConstantForce(const std::string& type_n
     pybind11::list v;
     unsigned int typ = this->m_pdata->getTypeByName(type_name);
 
-    ArrayHandle<Scalar3> h_constant_force(m_constant_force,
-                                          access_location::host,
-                                          access_mode::read);
+        { // GPU Array Scope
+        ArrayHandle<Scalar3> h_constant_force(m_constant_force,
+                                              access_location::host,
+                                              access_mode::read);
 
-    Scalar3 f_constantVec = h_constant_force.data[typ];
-    v.append(f_constantVec.x);
-    v.append(f_constantVec.y);
-    v.append(f_constantVec.z);
+        Scalar3 f_constantVec = h_constant_force.data[typ];
+
+        v.append(f_constantVec.x);
+        v.append(f_constantVec.y);
+        v.append(f_constantVec.z);
+        } // end GPU Array Scope
     return pybind11::tuple(v);
     }
 
@@ -156,31 +143,36 @@ pybind11::tuple ConstantForceCompute::getConstantForce(const std::string& type_n
  */
 void ConstantForceCompute::setForces()
     {
-    //  array handles
-    ArrayHandle<Scalar3> h_f_actVec(m_constant_force, access_location::host, access_mode::read);
-    // ArrayHandle<Scalar3> h_t_actVec(m_constant_torque, access_location::host, access_mode::read);
-    ArrayHandle<Scalar4> h_force(m_force, access_location::host, access_mode::overwrite);
-    // ArrayHandle<Scalar4> h_torque(m_torque, access_location::host, access_mode::overwrite);
-    ArrayHandle<Scalar4> h_pos(m_pdata->getPositions(), access_location::host, access_mode::read);
 
-    // sanity check
-    assert(h_f_actVec.data != NULL);
-    // assert(h_t_actVec.data != NULL);
+    const unsigned int group_size = m_group->getNumMembers();
+        { // GPU Array Scope
+        
+        //  array handles
+        ArrayHandle<Scalar3> h_f_actVec(m_constant_force, access_location::host, access_mode::read);
+        // ArrayHandle<Scalar3> h_t_actVec(m_constant_torque, access_location::host, access_mode::read);
+        ArrayHandle<Scalar4> h_force(m_force, access_location::host, access_mode::overwrite);
+        // ArrayHandle<Scalar4> h_torque(m_torque, access_location::host, access_mode::overwrite);
+        ArrayHandle<Scalar4> h_pos(m_pdata->getPositions(), access_location::host, access_mode::read);
 
-    // zero forces so we don't leave any forces set for indices that are no longer part of our group
-    memset(h_force.data, 0, sizeof(Scalar4) * m_force.getNumElements());
-    // memset(h_torque.data, 0, sizeof(Scalar4) * m_force.getNumElements());
+        // sanity check
+        assert(h_f_actVec.data != NULL);
+        // assert(h_t_actVec.data != NULL);
 
-    for (unsigned int i = 0; i < m_group->getNumMembers(); i++)
-        {
-        unsigned int idx = m_group->getMemberIndex(i);
-        unsigned int type = __scalar_as_int(h_pos.data[idx].w);
+        // zero forces so we don't leave any forces set for indices that are no longer part of our group
+        memset(h_force.data, 0, sizeof(Scalar4) * m_force.getNumElements());
+        // memset(h_torque.data, 0, sizeof(Scalar4) * m_force.getNumElements());
 
-        vec3<Scalar> fi(h_f_actVec.data[type].x, h_f_actVec.data[type].y, h_f_actVec.data[type].z);
-        h_force.data[idx] = vec_to_scalar4(fi, 0);
+        for (unsigned int i = 0; i < group_size; i++)
+            {
+            unsigned int idx = m_group->getMemberIndex(i);
+            unsigned int type = __scalar_as_int(h_pos.data[idx].w);
 
-        // vec3<Scalar> ti(h_t_actVec.data[type].x, h_t_actVec.data[type].y, h_t_actVec.data[type].z);
-        // h_torque.data[idx] = vec_to_scalar4(ti, 0);
+            vec3<Scalar> fi(h_f_actVec.data[type].x, h_f_actVec.data[type].y, h_f_actVec.data[type].z);
+            h_force.data[idx] = vec_to_scalar4(fi, 0);
+
+            // vec3<Scalar> ti(h_t_actVec.data[type].x, h_t_actVec.data[type].y, h_t_actVec.data[type].z);
+            // h_torque.data[idx] = vec_to_scalar4(ti, 0);
+            } // End GPU Array Scope
         }
     }
 

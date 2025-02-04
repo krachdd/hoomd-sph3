@@ -6,9 +6,6 @@ MARK_AS_ADVANCED(ALWAYS_USE_MANAGED_MEMORY)
 # setup CUDA compile options
 if (ENABLE_HIP)
     if (HIP_PLATFORM STREQUAL "nvcc")
-        # supress warnings in random123
-        set(CMAKE_CUDA_FLAGS "${CMAKE_CUDA_FLAGS} -Xcudafe --diag_suppress=code_is_unreachable -Xcompiler=-Wall -Xcompiler=-Wconversion -Xcompiler=-Wno-attributes")
-
         # setup nvcc to build for all CUDA architectures. Allow user to modify the list if desired
         if (CMAKE_CUDA_COMPILER_VERSION VERSION_GREATER_EQUAL 11.0)
             set(CUDA_ARCH_LIST 60 70 80 CACHE STRING "List of target sm_ architectures to compile CUDA code for. Separate with semicolons.")
@@ -17,6 +14,9 @@ if (ENABLE_HIP)
         elseif (CMAKE_CUDA_COMPILER_VERSION VERSION_GREATER_EQUAL 8.0)
             set(CUDA_ARCH_LIST 60 CACHE STRING "List of target sm_ architectures to compile CUDA code for. Separate with semicolons.")
         endif()
+
+        # ignore warnings about unused results
+        set(CMAKE_CUDA_FLAGS "${CMAKE_CUDA_FLAGS} -Wno-unused-result -diag-suppress 2810")
 
         if (CMAKE_CUDA_COMPILER_VERSION VERSION_GREATER_EQUAL 11.2)
           set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -DCUSPARSE_NEW_API")
@@ -53,6 +53,9 @@ if (ENABLE_HIP)
 
     elseif(HIP_PLATFORM STREQUAL "hip-clang")
         set(_cuda_min_arch 35)
+
+        # ignore warnings about unused results
+        set(CMAKE_HIP_FLAGS "${CMAKE_CUDA_FLAGS} -Wno-unused-result")
     endif()
 endif (ENABLE_HIP)
 

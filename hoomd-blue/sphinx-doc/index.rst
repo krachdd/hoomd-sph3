@@ -1,6 +1,3 @@
-.. Copyright (c) 2009-2024 The Regents of the University of Michigan.
-.. Part of HOOMD-blue, released under the BSD 3-Clause License.
-
 ==========
 HOOMD-blue
 ==========
@@ -142,10 +139,10 @@ Molecular dynamics:
    :maxdepth: 1
    :caption: Python API
 
-   package-hoomd
-   package-hpmc
-   package-md
-   package-mpcd
+   module-hoomd
+   hoomd/module-hpmc
+   hoomd/module-md
+   hoomd/module-mpcd
 
 .. toctree::
    :maxdepth: 2

@@ -1,11 +1,10 @@
-// Copyright (c) 2009-2024 The Regents of the University of Michigan.
+// Copyright (c) 2009-2025 The Regents of the University of Michigan.
 // Part of HOOMD-blue, released under the BSD 3-Clause License.
 
 /*! \file TwoStepNVEGPU.cuh
     \brief Declares GPU kernel code for NVE integration on the GPU. Used by TwoStepNVEGPU.
 */
 
-#include "hoomd/GPUPartition.cuh"
 #include "hoomd/HOOMDMath.h"
 #include "hoomd/ParticleData.cuh"
 
@@ -24,7 +23,7 @@ hipError_t gpu_nve_step_one(Scalar4* d_pos,
                             const Scalar3* d_accel,
                             int3* d_image,
                             unsigned int* d_group_members,
-                            const GPUPartition& gpu_partition,
+                            const unsigned int group_size,
                             const BoxDim& box,
                             Scalar deltaT,
                             bool limit,
@@ -36,7 +35,7 @@ hipError_t gpu_nve_step_one(Scalar4* d_pos,
 hipError_t gpu_nve_step_two(Scalar4* d_vel,
                             Scalar3* d_accel,
                             unsigned int* d_group_members,
-                            const GPUPartition& gpu_partition,
+                            const unsigned int group_size,
                             Scalar4* d_net_force,
                             Scalar deltaT,
                             bool limit,
@@ -50,7 +49,7 @@ hipError_t gpu_nve_angular_step_one(Scalar4* d_orientation,
                                     const Scalar3* d_inertia,
                                     const Scalar4* d_net_torque,
                                     unsigned int* d_group_members,
-                                    const GPUPartition& gpu_partition,
+                                    const unsigned int group_size,
                                     Scalar deltaT,
                                     Scalar scale,
                                     const unsigned int block_size);
@@ -61,7 +60,7 @@ hipError_t gpu_nve_angular_step_two(const Scalar4* d_orientation,
                                     const Scalar3* d_inertia,
                                     const Scalar4* d_net_torque,
                                     unsigned int* d_group_members,
-                                    const GPUPartition& gpu_partition,
+                                    const unsigned int group_size,
                                     Scalar deltaT,
                                     Scalar scale,
                                     const unsigned int block_size);

@@ -1,4 +1,4 @@
-# Copyright (c) 2009-2024 The Regents of the University of Michigan.
+# Copyright (c) 2009-2025 The Regents of the University of Michigan.
 # Part of HOOMD-blue, released under the BSD 3-Clause License.
 
 """Angular-step pair potential.
@@ -22,7 +22,7 @@ from hoomd.data.typeconverter import OnlyIf, to_type_converter
 from .pair import Pair
 
 
-@hoomd.logging.modify_namespace(('hpmc', 'pair', 'AngularStep'))
+@hoomd.logging.modify_namespace(("hpmc", "pair", "AngularStep"))
 class AngularStep(Pair):
     r"""Angular-step pair potential (HPMC).
 
@@ -76,6 +76,12 @@ class AngularStep(Pair):
     that represent the patch locations on a particle, and deltas are the half
     opening angles of the patch in radian.
 
+    {inherited}
+
+    ----------
+
+    **Members defined in** `AngularStep`:
+
     .. py:attribute:: mask
 
         The mask definition.
@@ -93,20 +99,28 @@ class AngularStep(Pair):
 
         Type: `TypeParameter` [``particle_type``, `dict`]
     """
+
     _cpp_class_name = "PairPotentialAngularStep"
+    __doc__ = __doc__.replace("{inherited}", Pair._doc_inherited)
 
     def __init__(self, isotropic_potential):
         mask = TypeParameter(
-            'mask', 'particle_types',
-            TypeParameterDict(OnlyIf(to_type_converter(
-                dict(directors=[(float,) * 3], deltas=[float])),
-                                     allow_none=True),
-                              len_keys=1))
+            "mask",
+            "particle_types",
+            TypeParameterDict(
+                OnlyIf(
+                    to_type_converter(dict(directors=[(float,) * 3], deltas=[float])),
+                    allow_none=True,
+                ),
+                len_keys=1,
+            ),
+        )
         self._add_typeparam(mask)
 
         if not isinstance(isotropic_potential, hoomd.hpmc.pair.Pair):
             raise TypeError(
-                "isotropic_potential must be subclass of hoomd.hpmc.pair.Pair")
+                "isotropic_potential must be subclass of hoomd.hpmc.pair.Pair"
+            )
         self._isotropic_potential = isotropic_potential
 
     @property

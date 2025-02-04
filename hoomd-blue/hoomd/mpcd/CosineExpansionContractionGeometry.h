@@ -1,4 +1,4 @@
-// Copyright (c) 2009-2024 The Regents of the University of Michigan.
+// Copyright (c) 2009-2025 The Regents of the University of Michigan.
 // Part of HOOMD-blue, released under the BSD 3-Clause License.
 
 /*!
@@ -296,6 +296,15 @@ class __attribute__((visibility("default"))) CosineExpansionContractionGeometry
         const Scalar lo = box.getLo().y;
         return ((hi - m_H_wide) >= cell_size && (-m_H_wide - lo) >= cell_size);
         }
+
+    //! Add a contribution to random virtual particle velocity.
+    /*!
+     * \param vel Velocity of virtual particle
+     * \param pos Position of virtual particle
+     *
+     * No velocity contribution is needed as the wall is stationary.
+     */
+    HOSTDEVICE void addToVirtualParticleVelocity(Scalar3& vel, const Scalar3& pos) const { }
 
     //! Get channel width at widest point
     /*!

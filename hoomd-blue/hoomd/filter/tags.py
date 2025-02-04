@@ -1,4 +1,4 @@
-# Copyright (c) 2009-2024 The Regents of the University of Michigan.
+# Copyright (c) 2009-2025 The Regents of the University of Michigan.
 # Part of HOOMD-blue, released under the BSD 3-Clause License.
 
 """Define the Tags filter."""
@@ -25,7 +25,15 @@ class Tags(ParticleFilter, ParticleFilterTags):
     .. code-block:: python
 
         tags = hoomd.filter.Tags([0, 1, 2])
+
+    {inherited}
+
+    ----------
+
+    **Members defined in** `Tags`:
     """
+
+    __doc__ = __doc__.replace("{inherited}", ParticleFilter._doc_inherited)
 
     def __init__(self, tags):
         ParticleFilter.__init__(self)
@@ -34,14 +42,13 @@ class Tags(ParticleFilter, ParticleFilterTags):
 
     def __hash__(self):
         """Return a hash of the filter parameters."""
-        if not hasattr(self, '_id'):
+        if not hasattr(self, "_id"):
             self._id = hash(self._tags.tobytes())
         return self._id
 
     def __eq__(self, other):
         """Test for equality between two particle filters."""
-        return type(self) is type(other) and np.array_equal(
-            self.tags, other.tags)
+        return type(self) is type(other) and np.array_equal(self.tags, other.tags)
 
     @property
     def tags(self):

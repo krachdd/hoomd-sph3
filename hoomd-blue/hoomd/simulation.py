@@ -1,4 +1,4 @@
-# Copyright (c) 2009-2024 The Regents of the University of Michigan.
+# Copyright (c) 2009-2025 The Regents of the University of Michigan.
 # Part of HOOMD-blue, released under the BSD 3-Clause License.
 
 """Define the Simulation class.
@@ -17,6 +17,7 @@
 
     logger = hoomd.logging.Logger()
 """
+
 import inspect
 
 import hoomd._hoomd as _hoomd
@@ -38,15 +39,15 @@ class Simulation(metaclass=Loggable):
         seed (int): Random number seed.
 
     `Simulation` is the central class that defines a simulation, including the
-    `state` of the system, the `operations` that apply to the state during a
-    simulation `run`, and the `device` to use when executing the simulation.
+    :py:attr:`state` of the system, the :py:attr:`operations` that apply to the state
+    during a simulation `run`, and the `device` to use when executing the simulation.
 
     `seed` sets the seed for the random number generator used by all operations
     added to this `Simulation`.
 
     Newly initialized `Simulation` objects have no state. Call
     `create_state_from_gsd` or `create_state_from_snapshot` to initialize the
-    simulation's `state`.
+    simulation's :py:attr:`state`.
 
     .. rubric:: Example:
 
@@ -72,8 +73,9 @@ class Simulation(metaclass=Loggable):
 
     @device.setter
     def device(self, value):
-        raise ValueError("Device cannot be removed or replaced once in "
-                         "Simulation object.")
+        raise ValueError(
+            "Device cannot be removed or replaced once in " "Simulation object."
+        )
 
     @log
     def timestep(self):
@@ -87,10 +89,10 @@ class Simulation(metaclass=Loggable):
             to override values from ``create_`` methods::
 
                 sim.timestep = 5000
-                sim.create_state_from_gsd('gsd_at_step_10000000.gsd')
+                sim.create_state_from_gsd("gsd_at_step_10000000.gsd")
                 assert sim.timestep == 5000
         """
-        if not hasattr(self, '_cpp_sys'):
+        if not hasattr(self, "_cpp_sys"):
             return self._timestep
         else:
             return self._cpp_sys.getCurrentTimeStep()
@@ -136,7 +138,8 @@ class Simulation(metaclass=Loggable):
             v_int = v_int & SEED_MAX
             self.device._cpp_msg.warning(
                 f"Provided seed {v} is larger than {SEED_MAX}. "
-                f"Truncating to {v_int}.\n")
+                f"Truncating to {v_int}.\n"
+            )
 
         self._seed = v_int
 
@@ -166,10 +169,12 @@ class Simulation(metaclass=Loggable):
                 # create the c++ Communicator
                 if isinstance(self.device, hoomd.device.CPU):
                     cpp_communicator = _hoomd.Communicator(
-                        self.state._cpp_sys_def, decomposition)
+                        self.state._cpp_sys_def, decomposition
+                    )
                 else:
                     cpp_communicator = _hoomd.CommunicatorGPU(
-                        self.state._cpp_sys_def, decomposition)
+                        self.state._cpp_sys_def, decomposition
+                    )
 
                 # set Communicator in C++ System and SystemDefinition
                 self._cpp_sys.setCommunicator(cpp_communicator)
@@ -183,12 +188,12 @@ class Simulation(metaclass=Loggable):
     def _warn_if_seed_unset(self):
         if self.seed is None:
             self.device._cpp_msg.warning(
-                "Simulation.seed is not set, using default seed=0\n")
+                "Simulation.seed is not set, using default seed=0\n"
+            )
 
-    def create_state_from_gsd(self,
-                              filename,
-                              frame=-1,
-                              domain_decomposition=(None, None, None)):
+    def create_state_from_gsd(
+        self, filename, frame=-1, domain_decomposition=(None, None, None)
+    ):
         """Create the simulation state from a GSD file.
 
         Args:
@@ -227,10 +232,12 @@ class Simulation(metaclass=Loggable):
             raise RuntimeError("Cannot initialize more than once\n")
         filename = _hoomd.mpi_bcast_str(filename, self.device._cpp_exec_conf)
         # Grab snapshot and timestep
-        reader = _hoomd.GSDReader(self.device._cpp_exec_conf, filename,
-                                  abs(frame), frame < 0)
-        snapshot = Snapshot._from_cpp_snapshot(reader.getSnapshot(),
-                                               self.device.communicator)
+        reader = _hoomd.GSDReader(
+            self.device._cpp_exec_conf, filename, abs(frame), frame < 0
+        )
+        snapshot = Snapshot._from_cpp_snapshot(
+            reader.getSnapshot(), self.device.communicator
+        )
 
         step = reader.getTimeStep() if self.timestep is None else self.timestep
         self._state = State(self, snapshot, domain_decomposition)
@@ -345,10 +352,9 @@ class Simulation(metaclass=Loggable):
         if isinstance(snapshot, Snapshot):
             # snapshot is hoomd.Snapshot
             self._state = State(self, snapshot, domain_decomposition)
-        elif _match_class_path(snapshot, 'gsd.hoomd.Frame'):
+        elif _match_class_path(snapshot, "gsd.hoomd.Frame"):
             # snapshot is gsd.hoomd.Frame (gsd 2.8+, 3.x)
-            snapshot = Snapshot.from_gsd_frame(snapshot,
-                                               self._device.communicator)
+            snapshot = Snapshot.from_gsd_frame(snapshot, self._device.communicator)
             self._state = State(self, snapshot, domain_decomposition)
         elif _match_class_path(snapshot, 'gsd.hoomd.Snapshot'):
             # snapshot is gsd.hoomd.Snapshot (gsd 2.x)
@@ -368,13 +374,12 @@ class Simulation(metaclass=Loggable):
             self._state = State(self, snapshot, domain_decomposition, distributed = True)
         # PGSD ---
         else:
-            raise TypeError(
-                "Snapshot must be a hoomd.Snapshot, gsd.hoomd.Snapshot, "
-                "or gsd.hoomd.Frame")
+            raise TypeError("Snapshot must be a hoomd.Snapshot or gsd.hoomd.Frame")
 
         step = 0
         if self.timestep is not None:
             step = self.timestep
+
         self._init_system(step)
 
     @property
@@ -405,7 +410,8 @@ class Simulation(metaclass=Loggable):
             if operations._scheduled or operations._simulation is not None:
                 raise RuntimeError(
                     "Cannot add `hoomd.Operations` object that belongs to "
-                    "another `hoomd.Simulation` object.")
+                    "another `hoomd.Simulation` object."
+                )
             # Switch out `hoomd.Operations` objects.
             reschedule = False
             if self._operations._scheduled:
@@ -441,7 +447,7 @@ class Simulation(metaclass=Loggable):
 
         .. code-block:: python
 
-            logger.add(obj=simulation, quantities=['tps'])
+            logger.add(obj=simulation, quantities=["tps"])
         """
         if self._state is None:
             return None
@@ -466,7 +472,7 @@ class Simulation(metaclass=Loggable):
 
         .. code-block:: python
 
-            logger.add(obj=simulation, quantities=['walltime'])
+            logger.add(obj=simulation, quantities=["walltime"])
         """
         if self._state is None:
             return 0.0
@@ -484,7 +490,7 @@ class Simulation(metaclass=Loggable):
 
         .. code-block:: python
 
-            logger.add(obj=simulation, quantities=['final_timestep'])
+            logger.add(obj=simulation, quantities=["final_timestep"])
         """
         if self._state is None:
             return self.timestep
@@ -502,7 +508,7 @@ class Simulation(metaclass=Loggable):
 
         .. code-block:: python
 
-            logger.add(obj=simulation, quantities=['initial_timestep'])
+            logger.add(obj=simulation, quantities=["initial_timestep"])
         """
         if self._state is None:
             return self.timestep
@@ -568,7 +574,7 @@ class Simulation(metaclass=Loggable):
         Note:
             Initialize the simulation's state before calling `run`.
 
-        `Simulation` applies its `operations` to the
+        `Simulation` applies its :py:attr:`operations` to the
         state during each time step in the order: tuners, updaters, integrator,
         then writers following the logic in this pseudocode::
 
@@ -619,18 +625,18 @@ class Simulation(metaclass=Loggable):
             simulation.run(1_000)
         """
         # check if initialization has occurred
-        if not hasattr(self, '_cpp_sys'):
-            raise RuntimeError('Cannot run before state is set.')
+        if not hasattr(self, "_cpp_sys"):
+            raise RuntimeError("Cannot run before state is set.")
         if self._state._in_context_manager:
             raise RuntimeError(
-                "Cannot call run inside of a local snapshot context manager.")
+                "Cannot call run inside of a local snapshot context manager."
+            )
         if not self.operations._scheduled:
             self.operations._schedule()
 
         steps_int = int(steps)
         if steps_int < 0 or steps_int > TIMESTEP_MAX - 1:
-            raise ValueError(f"steps must be in the range [0, "
-                             f"{TIMESTEP_MAX - 1}]")
+            raise ValueError(f"steps must be in the range [0, " f"{TIMESTEP_MAX - 1}]")
 
         self._cpp_sys.run(steps_int, write_at_start, adaptive_dt)
 
@@ -642,5 +648,7 @@ class Simulation(metaclass=Loggable):
 
 
 def _match_class_path(obj, *matches):
-    return any(cls.__module__ + '.' + cls.__name__ in matches
-               for cls in inspect.getmro(type(obj)))
+    return any(
+        cls.__module__ + "." + cls.__name__ in matches
+        for cls in inspect.getmro(type(obj))
+    )

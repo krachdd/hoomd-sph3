@@ -1,9 +1,7 @@
-# Copyright (c) 2009-2024 The Regents of the University of Michigan.
+# Copyright (c) 2009-2025 The Regents of the University of Michigan.
 # Part of HOOMD-blue, released under the BSD 3-Clause License.
 
-"""MPCD collision methods.
-
-An MPCD collision method is required to update the particle velocities over
+"""An MPCD collision method is required to update the particle velocities over
 time. Particles are binned into cells based on their positions, and all
 particles in a cell undergo a stochastic collision that updates their velocities
 while conserving linear momentum. Collision rules can optionally be extended to
@@ -31,8 +29,10 @@ class CellList(Compute):
     Args:
         shift (bool): When True, randomly shift underlying collision cells.
 
-    The MPCD `CellList` bins particles into cubic cells of edge length 1.0.
-    The simulation box must be orthorhombic, and its edges must be an integer.
+    The MPCD `CellList` bins particles into cells aligned with the lattice
+    vectors that define the simulation box. The default number of cells along
+    each lattice vector is computed from :math:`L_x`, :math:`L_y`, and
+    :math:`L_z` with a length of 1.0.
 
     When the total mean-free path of the MPCD particles is small, the cells
     should be randomly shifted in order to ensure Galilean invariance of the
@@ -49,6 +49,12 @@ class CellList(Compute):
 
         cell_list = simulation.operations.integrator.cell_list
 
+    {inherited}
+
+    ----------
+
+    **Members defined in** `CellList`:
+
     Attributes:
         shift (bool): When True, randomly shift underlying collision cells.
 
@@ -60,10 +66,14 @@ class CellList(Compute):
 
     """
 
+    __doc__ = __doc__.replace("{inherited}", Operation._doc_inherited)
+
     def __init__(self, shift=True):
         super().__init__()
 
-        param_dict = ParameterDict(shift=bool(shift),)
+        param_dict = ParameterDict(
+            shift=bool(shift),
+        )
         self._param_dict.update(param_dict)
 
     def _attach_hook(self):
@@ -79,6 +89,11 @@ class CellList(Compute):
 
         super()._attach_hook()
 
+    @property
+    def num_cells(self):
+        """tuple[int]: Number of cells along each lattice vector."""
+        return self._cpp_obj.num_cells
+
 
 class CollisionMethod(Operation):
     """Base collision method.
@@ -87,6 +102,12 @@ class CollisionMethod(Operation):
         period (int): Number of integration steps between collisions.
         embedded_particles (hoomd.filter.filter_like): HOOMD particles to
             include in collision.
+
+    {inherited}
+
+    ----------
+
+    **Members defined in** `CollisionMethod`:
 
     Attributes:
         embedded_particles (hoomd.filter.filter_like): HOOMD particles to
@@ -118,13 +139,33 @@ class CollisionMethod(Operation):
 
     """
 
+    __doc__ = __doc__.replace("{inherited}", Operation._doc_inherited)
+    _doc_inherited = (
+        Operation._doc_inherited
+        + """
+    ----------
+
+    **Members inherited from**
+    `CollisionMethod <hoomd.mpcd.collide.CollisionMethod>`:
+
+    .. py:attribute:: embedded_particiles
+
+        HOOMD particles to include in collision.
+        `Read more... <hoomd.mpcd.collide.CollisionMethod.embedded_particles>`
+
+    .. py:attribute:: period
+
+        Number of integration steps between collisions.
+        `Read more... <hoomd.mpcd.collide.CollisionMethod.period>`
+    """
+    )
+
     def __init__(self, period, embedded_particles=None):
         super().__init__()
 
         param_dict = ParameterDict(
             period=int(period),
-            embedded_particles=OnlyTypes(hoomd.filter.ParticleFilter,
-                                         allow_none=True),
+            embedded_particles=OnlyTypes(hoomd.filter.ParticleFilter, allow_none=True),
         )
         param_dict["embedded_particles"] = embedded_particles
         self._param_dict.update(param_dict)
@@ -158,8 +199,8 @@ class AndersenThermostat(CollisionMethod):
     .. code-block:: python
 
         andersen_thermostat = hoomd.mpcd.collide.AndersenThermostat(
-            period=1,
-            kT=1.0)
+            period=1, kT=1.0
+        )
         simulation.operations.integrator.collision_method = andersen_thermostat
 
     Collision including embedded particles.
@@ -169,8 +210,15 @@ class AndersenThermostat(CollisionMethod):
         andersen_thermostat = hoomd.mpcd.collide.AndersenThermostat(
             period=20,
             kT=1.0,
-            embedded_particles=hoomd.filter.All())
+            embedded_particles=hoomd.filter.All(),
+        )
         simulation.operations.integrator.collision_method = andersen_thermostat
+
+    {inherited}
+
+    ----------
+
+    **Members defined in** `AndersenThermostat`:
 
     Attributes:
         kT (hoomd.variant.variant_like): Temperature of the thermostat
@@ -195,6 +243,8 @@ class AndersenThermostat(CollisionMethod):
 
     """
 
+    __doc__ = __doc__.replace("{inherited}", CollisionMethod._doc_inherited)
+
     def __init__(self, period, kT, embedded_particles=None):
         super().__init__(period, embedded_particles)
 
@@ -211,12 +261,14 @@ class AndersenThermostat(CollisionMethod):
         else:
             cpp_class = _mpcd.ATCollisionMethod
 
-        self._cpp_obj = cpp_class(sim.state._cpp_sys_def, sim.timestep,
-                                  self.period, 0, self.kT)
+        self._cpp_obj = cpp_class(
+            sim.state._cpp_sys_def, sim.timestep, self.period, 0, self.kT
+        )
 
         if self.embedded_particles is not None:
             self._cpp_obj.setEmbeddedGroup(
-                sim.state._get_group(self.embedded_particles))
+                sim.state._get_group(self.embedded_particles)
+            )
 
         super()._attach_hook()
 
@@ -266,9 +318,8 @@ class StochasticRotationDynamics(CollisionMethod):
     .. code-block:: python
 
         srd = hoomd.mpcd.collide.StochasticRotationDynamics(
-            period=1,
-            angle=130,
-            kT=1.0)
+            period=1, angle=130, kT=1.0
+        )
         simulation.operations.integrator.collision_method = srd
 
     Collision including embedded particles.
@@ -279,8 +330,15 @@ class StochasticRotationDynamics(CollisionMethod):
             period=20,
             angle=130,
             kT=1.0,
-            embedded_particles=hoomd.filter.All())
+            embedded_particles=hoomd.filter.All(),
+        )
         simulation.operations.integrator.collision_method = srd
+
+    {inherited}
+
+    ----------
+
+    **Members defined in** `StochasticRotationDynamics`:
 
     Attributes:
         angle (float): Rotation angle (in degrees)
@@ -310,14 +368,16 @@ class StochasticRotationDynamics(CollisionMethod):
 
     """
 
+    __doc__ = __doc__.replace("{inherited}", CollisionMethod._doc_inherited)
+
     def __init__(self, period, angle, kT=None, embedded_particles=None):
         super().__init__(period, embedded_particles)
 
         param_dict = ParameterDict(
             angle=float(angle),
-            kT=OnlyTypes(hoomd.variant.Variant,
-                         allow_none=True,
-                         preprocess=variant_preprocessing),
+            kT=OnlyTypes(
+                hoomd.variant.Variant, allow_none=True, preprocess=variant_preprocessing
+            ),
         )
         param_dict["kT"] = kT
         self._param_dict.update(param_dict)
@@ -331,11 +391,21 @@ class StochasticRotationDynamics(CollisionMethod):
         else:
             cpp_class = _mpcd.SRDCollisionMethod
 
-        self._cpp_obj = cpp_class(sim.state._cpp_sys_def, sim.timestep,
-                                  self.period, 0, self.angle)
+        self._cpp_obj = cpp_class(
+            sim.state._cpp_sys_def, sim.timestep, self.period, 0, self.angle
+        )
 
         if self.embedded_particles is not None:
             self._cpp_obj.setEmbeddedGroup(
-                sim.state._get_group(self.embedded_particles))
+                sim.state._get_group(self.embedded_particles)
+            )
 
         super()._attach_hook()
+
+
+__all__ = [
+    "AndersenThermostat",
+    "CellList",
+    "CollisionMethod",
+    "StochasticRotationDynamics",
+]
