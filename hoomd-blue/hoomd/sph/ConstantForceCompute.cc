@@ -143,31 +143,36 @@ pybind11::tuple ConstantForceCompute::getConstantForce(const std::string& type_n
  */
 void ConstantForceCompute::setForces()
     {
-    //  array handles
-    ArrayHandle<Scalar3> h_f_actVec(m_constant_force, access_location::host, access_mode::read);
-    // ArrayHandle<Scalar3> h_t_actVec(m_constant_torque, access_location::host, access_mode::read);
-    ArrayHandle<Scalar4> h_force(m_force, access_location::host, access_mode::overwrite);
-    // ArrayHandle<Scalar4> h_torque(m_torque, access_location::host, access_mode::overwrite);
-    ArrayHandle<Scalar4> h_pos(m_pdata->getPositions(), access_location::host, access_mode::read);
 
-    // sanity check
-    assert(h_f_actVec.data != NULL);
-    // assert(h_t_actVec.data != NULL);
+    const unsigned int group_size = m_group->getNumMembers();
+        { // GPU Array Scope
+        
+        //  array handles
+        ArrayHandle<Scalar3> h_f_actVec(m_constant_force, access_location::host, access_mode::read);
+        // ArrayHandle<Scalar3> h_t_actVec(m_constant_torque, access_location::host, access_mode::read);
+        ArrayHandle<Scalar4> h_force(m_force, access_location::host, access_mode::overwrite);
+        // ArrayHandle<Scalar4> h_torque(m_torque, access_location::host, access_mode::overwrite);
+        ArrayHandle<Scalar4> h_pos(m_pdata->getPositions(), access_location::host, access_mode::read);
 
-    // zero forces so we don't leave any forces set for indices that are no longer part of our group
-    memset(h_force.data, 0, sizeof(Scalar4) * m_force.getNumElements());
-    // memset(h_torque.data, 0, sizeof(Scalar4) * m_force.getNumElements());
+        // sanity check
+        assert(h_f_actVec.data != NULL);
+        // assert(h_t_actVec.data != NULL);
 
-    for (unsigned int i = 0; i < m_group->getNumMembers(); i++)
-        {
-        unsigned int idx = m_group->getMemberIndex(i);
-        unsigned int type = __scalar_as_int(h_pos.data[idx].w);
+        // zero forces so we don't leave any forces set for indices that are no longer part of our group
+        memset(h_force.data, 0, sizeof(Scalar4) * m_force.getNumElements());
+        // memset(h_torque.data, 0, sizeof(Scalar4) * m_force.getNumElements());
 
-        vec3<Scalar> fi(h_f_actVec.data[type].x, h_f_actVec.data[type].y, h_f_actVec.data[type].z);
-        h_force.data[idx] = vec_to_scalar4(fi, 0);
+        for (unsigned int i = 0; i < group_size; i++)
+            {
+            unsigned int idx = m_group->getMemberIndex(i);
+            unsigned int type = __scalar_as_int(h_pos.data[idx].w);
 
-        // vec3<Scalar> ti(h_t_actVec.data[type].x, h_t_actVec.data[type].y, h_t_actVec.data[type].z);
-        // h_torque.data[idx] = vec_to_scalar4(ti, 0);
+            vec3<Scalar> fi(h_f_actVec.data[type].x, h_f_actVec.data[type].y, h_f_actVec.data[type].z);
+            h_force.data[idx] = vec_to_scalar4(fi, 0);
+
+            // vec3<Scalar> ti(h_t_actVec.data[type].x, h_t_actVec.data[type].y, h_t_actVec.data[type].z);
+            // h_torque.data[idx] = vec_to_scalar4(ti, 0);
+            } // End GPU Array Scope
         }
     }
 

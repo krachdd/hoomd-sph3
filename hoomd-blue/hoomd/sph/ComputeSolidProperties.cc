@@ -69,7 +69,7 @@ void ComputeSolidProperties::computeProperties()
     if (m_group->getNumMembersGlobal() == 0)
         return;
 
-    unsigned int group_size = m_group->getNumMembers();
+    const unsigned int group_size = m_group->getNumMembers();
 
     assert(m_pdata);
 

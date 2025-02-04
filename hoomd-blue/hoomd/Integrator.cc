@@ -165,14 +165,10 @@ vec3<double> Integrator::computeLinearMomentum()
 */
 void Integrator::computeNetForce(uint64_t timestep)
     {
-    std::cout << "Integrator::computeNetForce starting force compute!" << std::endl;
     for (auto& force : m_forces)
         {
-            std::cout << "Integrator::computeNetForce starting force:" << force << std::endl;
             force->compute(timestep);
         }
-    std::cout << "Integrator::computeNetForce done force compute!" << std::endl;
-
 
     // Scalar external_virial[6];
     Scalar external_energy;

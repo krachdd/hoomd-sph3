@@ -694,7 +694,6 @@ class PYBIND11_EXPORT ParticleData
     //! Return velocities and masses
     const GPUArray<Scalar4>& getVelocities() const
         {
-        std::cout << "get Velocities" << std::endl;
         return m_vel;
         }
 
@@ -1682,7 +1681,6 @@ class PYBIND11_EXPORT LocalParticleData : public GhostLocalDataAccess<Output, Pa
 
     Output getVelocities(GhostDataFlag flag)
         {
-        std::cout << "Output get velocities!" << std::endl;
         return this->template getLocalBuffer<Scalar4, Scalar>(m_velocities_handle,
                                                          &ParticleData::getVelocities,
                                                          flag,
