@@ -383,9 +383,9 @@ void SinglePhaseFlowTV<KT_, SET_>::forcecomputation(uint64_t timestep)
                 Scalar A2ij = ( A21i + A21j ) * dx.x + ( A22i + A22j ) * dx.y + ( A23i + A23j ) * dx.z;
                 Scalar A3ij = ( A31i + A31j ) * dx.x + ( A32i + A32j ) * dx.y + ( A33i + A33j ) * dx.z;
 
-                h_force.data[k].x += temp0 * A1ij; 
-                h_force.data[k].y += temp0 * A2ij; 
-                h_force.data[k].z += temp0 * A3ij; 
+                h_force.data[i].x += temp0 * A1ij; 
+                h_force.data[i].y += temp0 * A2ij; 
+                h_force.data[i].z += temp0 * A3ij; 
 
                 // Evaluate background pressure contribution in aux2
                 h_bpc.data[i].x -= vijsqr * this->m_eos->getTransportVelocityPressure()/mi * dwdr_r * dx.x;
