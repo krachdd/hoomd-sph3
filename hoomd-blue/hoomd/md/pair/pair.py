@@ -12,7 +12,12 @@ from hoomd.md import force
 from hoomd.data.parameterdicts import ParameterDict, TypeParameterDict
 from hoomd.data.typeparam import TypeParameter
 import numpy as np
-from hoomd.data.typeconverter import OnlyFrom, nonnegative_real, positive_real
+from hoomd.data.typeconverter import (
+    OnlyFrom,
+    nonnegative_real,
+    positive_real,
+    positive_int,
+)
 
 
 class Pair(force.Force):
@@ -2019,4 +2024,93 @@ class LJGauss(Pair):
             "particle_types",
             TypeParameterDict(epsilon=float, sigma=positive_real, r0=float, len_keys=2),
         )
+        self._add_typeparam(params)
+
+
+class WangFrenkel(Pair):
+    r"""Wang-Frenkel pair potential.
+
+    Args:
+        nlist (hoomd.md.nlist.NeighborList): Neighbor list
+        default_r_cut (float): Default cutoff radius :math:`[\mathrm{length}]`.
+        default_r_on (float): Default turn-on radius :math:`[\mathrm{length}]`.
+        mode (str): Energy shifting/smoothing mode.
+
+    `WangFrenkel` computes the Wang-Frenkel pair force on every particle
+    in the simulation state:
+
+    .. math::
+        U(r) = \epsilon \alpha \left( \left[\frac{\sigma}{r}\right]^{2\mu} -1\right)
+               \left(\left[\frac{R}{r}\right]^{2\mu} -1 \right)^{2\nu}
+
+    .. math::
+        \alpha = 2 \nu \left(\frac{R}{\sigma}\right)^{2\mu}
+                 \left(\frac{2 \nu + 1}
+                 {2\nu \left(\left(\frac{R}{\sigma}\right)^{2\mu} - 1\right)}\right)
+                 ^{2\nu + 1}
+
+    The potential was introduced in `Xipeng Wang et al. 2020`_.
+
+    .. _Xipeng Wang et al. 2020:
+       https://dx.doi.org/10.1039/c9cp05445f
+
+    Warning:
+        Set ``R`` and `r_cut` to the same value so the potential goes to
+        0 smoothly at the cutoff.
+
+    Example::
+
+        nl = nlist.Cell()
+        WangFrenkel = pair.WangFrenkel(nlist=nl, default_r_cut=3.0)
+        WangFrenkel.params[("A", "A")] = dict(
+            epsilon=1.0, sigma=1.0, R=2 ** (1 / 6), mu=12, nu=6
+        )
+        WangFrenkel.r_cut[("A", "A")] = 2 ** (1.0 / 6.0)
+        WangFrenkel.params[(["A", "B"], ["C", "D"])] = dict(
+            epsilon=1.5, sigma=2.0, R=2.5, mu=2, nu=2
+        )
+
+    {inherited}
+
+    ----------
+
+    **Members defined in** `WangFrenkel`:
+
+    .. py:attribute:: params
+
+        The potential parameters. The dictionary has the following keys:
+
+        * ``epsilon`` (`float`, **required**) - :math:`\varepsilon`
+          :math:`[\mathrm{energy}]`
+        * ``sigma`` (`float`, **required**) - :math:`\sigma`
+          :math:`[\mathrm{length}]`
+        * ``R`` (`float`, **required**) - :math:`R`
+          :math:`[\mathrm{length}]`
+        * ``mu`` (`int`, **required**) - :math:`\mu`
+          :math:`[\mathrm{dimensionless}]`
+        * ``nu`` (`int`, **required**) - :math:`\nu`
+          :math:`[\mathrm{dimensionless}]`
+
+        Type: `TypeParameter` [`tuple` [``particle_type``, ``particle_type``],
+        `dict`]
+    """
+
+    _cpp_class_name = "PotentialPairWangFrenkel"
+    __doc__ = __doc__.replace("{inherited}", Pair._doc_inherited)
+
+    def __init__(self, nlist, default_r_cut=None, default_r_on=0.0, mode="none"):
+        super().__init__(nlist, default_r_cut, default_r_on, mode)
+        params = TypeParameter(
+            "params",
+            "particle_types",
+            TypeParameterDict(
+                epsilon=float,
+                sigma=float,
+                R=float,
+                mu=positive_int,
+                nu=positive_int,
+                len_keys=2,
+            ),
+        )
+
         self._add_typeparam(params)

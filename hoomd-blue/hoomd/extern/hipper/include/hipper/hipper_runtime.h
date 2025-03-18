@@ -1,5 +1,8 @@
 /*
-Copyright (c) 2020, Michael P. Howard. All rights reserved.
+Copyright (c) 2020, Michael P. Howard
+Copyright (c) 2021, Auburn University
+
+All rights reserved.
 
 Redistribution and use in source and binary forms, with or without modification,
 are permitted provided that the following conditions are met:
@@ -380,12 +383,6 @@ inline error_t deviceGetPCIBusId(char* pciBusId, int len, int device)
     return HIPPER(DeviceGetPCIBusId)(pciBusId, len, device);
     }
 
-//! Returns the shared memory configuration for the current device.
-inline error_t deviceGetSharedMemConfig(sharedMemConfig_t* config)
-    {
-    return HIPPER(DeviceGetSharedMemConfig)(config);
-    }
-
 //! Returns numerical values that correspond to the least and greatest stream priorities.
 inline error_t deviceGetStreamPriorityRange(int* leastPriority, int* greatestPriority)
     {
@@ -411,12 +408,6 @@ inline error_t deviceSetLimit(limit lim, size_t value)
     return HIPPER(DeviceSetLimit)(castLimit(lim), value);
     }
 #endif
-
-//! Sets the shared memory configuration for the current device.
-inline error_t deviceSetSharedMemConfig(sharedMemConfig config)
-    {
-    return HIPPER(DeviceSetSharedMemConfig)(castSharedMemConfig(config));
-    }
 
 //! Wait for compute device to finish.
 inline error_t deviceSynchronize(void)

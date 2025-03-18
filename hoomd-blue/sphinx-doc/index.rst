@@ -56,7 +56,7 @@ Related tools
 
 - `freud <https://freud.readthedocs.io/>`_:
   Analyze HOOMD-blue simulation results with the **freud** Python library.
-- `signac <https://signac.io/>`_:
+- `signac <https://signac.readthedocs.io/>`_:
   Manage your workflow with **signac**.
 - `Molecular Simulation Design Framework (MoSDeF)`_ tools:
 

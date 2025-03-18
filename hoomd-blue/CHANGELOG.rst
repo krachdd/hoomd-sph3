@@ -4,13 +4,27 @@ Change Log
 5.x
 ---
 
-5.0.2 (not yet released)
-^^^^^^^^^^^^^^^^^^^^^^^^
+5.1.0 (2025-02-20)
+^^^^^^^^^^^^^^^^^^
+
+*Added*
+
+* The ``WangFrenkel`` potential
+  (`#1970 <https://github.com/glotzerlab/hoomd-blue/pull/1970>`__).
+* ``mpcd.update.ReverseNonequilibriumShearFlow``
+  (`#1983 <https://github.com/glotzerlab/hoomd-blue/pull/1983>`__).
+* Support rocm 6
+  (`#2002 <https://github.com/glotzerlab/hoomd-blue/pull/2002>`__).
+
+*Fixed*
 
 * Correctly reference ``TriggeredOperation`` in inherited documentation
   (`#1990 <https://github.com/glotzerlab/hoomd-blue/pull/1990>`__).
 
-*Fixed*
+*Removed*
+
+* Support for rocm5
+  (`#2002 <https://github.com/glotzerlab/hoomd-blue/pull/2002>`__).
 
 5.0.1 (2025-01-20)
 ^^^^^^^^^^^^^^^^^^
@@ -23,6 +37,7 @@ Change Log
   (`#1972 <https://github.com/glotzerlab/hoomd-blue/pull/1972>`__).
 * Provide a navigation bar on the 404 not found page in the documentation
   (`#1986 <https://github.com/glotzerlab/hoomd-blue/pull/1986>`__).
+
 
 
 5.0.0 (2024-12-02)

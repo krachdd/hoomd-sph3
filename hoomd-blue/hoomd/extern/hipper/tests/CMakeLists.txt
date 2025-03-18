@@ -1,3 +1,7 @@
+# Copyright (c) 2020, Michael P. Howard
+# Copyright (c) 2021, Auburn University
+# This file is released under the Modified BSD License.
+
 # the list of all source files
 set(HIPPER_TEST_FILES
     test_hipper.cc
