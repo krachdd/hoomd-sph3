@@ -106,6 +106,21 @@ def nonnegative_real(number):
     return float_number
 
 
+def positive_int(number):
+    """Ensures that a value is a positive integer"""
+    if isinstance(number, float) and not number.is_integer():
+        raise TypeConversionError(
+            f"Expected integer, {number} has a non-zero decimal part"
+        )
+    try:
+        int_number = int(number)
+    except Exception as err:
+        raise TypeConversionError(f"{number} is not convertible to int.") from err
+    if int_number <= 0:
+        raise TypeConversionError("Expected a positive integer")
+    return int_number
+
+
 def identity(value):
     """Return the given value."""
     return value

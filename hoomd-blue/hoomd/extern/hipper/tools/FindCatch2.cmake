@@ -1,3 +1,7 @@
+# Copyright (c) 2020, Michael P. Howard
+# Copyright (c) 2021, Auburn University
+# This file is released under the Modified BSD License.
+
 if(Catch2_FOUND)
     return()
 endif()

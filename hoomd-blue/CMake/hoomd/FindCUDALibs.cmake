@@ -105,8 +105,11 @@ else()
     add_library(CUDA::cusparse UNKNOWN IMPORTED)
 endif()
 
-if (HIP_PLATFORM STREQUAL "hip-clang")
-    find_package(hipfft)
+if (HIP_PLATFORM STREQUAL "amd")
+    find_package(hipfft REQUIRED)
+    include_directories("${hipfft_INCLUDE_DIR}")
+    include_directories("${hipfft_INCLUDE_DIR}/hipfft")
+    message("Found hipfft includes: ${hipfft_INCLUDE_DIR}")
 endif()
 
 if (HIP_PLATFORM STREQUAL "nvcc")
