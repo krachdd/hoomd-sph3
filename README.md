@@ -1,5 +1,5 @@
 # hoomd-sph3 - A SPH Implementation in HOOMD-Blue
-SPH Implementation in HOOMD-Blue 5.0.1 (as of 04.02.2025)
+SPH Implementation in HOOMD-Blue 5.1.0 (as of 18.03.2025)
 
 GSD Version 3.4.2 (as of 12.11.2024)
 
