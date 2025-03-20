@@ -798,7 +798,7 @@ struct is_center
     };
 
 // create a lookup table ptl idx -> center idx
-struct lookup_op : thrust::unary_function<unsigned int, unsigned int>
+struct lookup_op
     {
     __host__ __device__ lookup_op(const unsigned int* _d_rtag) : d_rtag(_d_rtag) { }
 

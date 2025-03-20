@@ -66,6 +66,8 @@ void ConstantForceComputeGPU::setForces()
         assert(d_pos.data != NULL);
         assert(d_index_array.data != NULL);
 
+        m_force.zeroFill();
+
         // compute the forces on the GPU
         m_tuner->begin();
 

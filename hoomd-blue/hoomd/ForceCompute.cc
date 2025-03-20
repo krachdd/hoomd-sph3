@@ -50,8 +50,8 @@ ForceCompute::ForceCompute(std::shared_ptr<SystemDefinition> sysdef)
         ArrayHandle<Scalar4> h_ratedpe(m_ratedpe, access_location::host, access_mode::overwrite);
         // ArrayHandle<Scalar4> h_torque(m_torque, access_location::host, access_mode::overwrite);
         // ArrayHandle<Scalar> h_virial(m_virial, access_location::host, access_mode::overwrite);
-        memset(h_force.data, 0, sizeof(Scalar4) * m_force.getNumElements());
-        memset(h_ratedpe.data, 0, sizeof(Scalar4) * m_ratedpe.getNumElements());
+        m_force.zeroFill();
+        m_ratedpe.zeroFill();
         // memset(h_torque.data, 0, sizeof(Scalar4) * m_torque.getNumElements());
         // memset(h_virial.data, 0, sizeof(Scalar) * m_virial.getNumElements());
         }
@@ -97,8 +97,8 @@ void ForceCompute::reallocate()
         ArrayHandle<Scalar4> h_ratedpe(m_ratedpe, access_location::host, access_mode::overwrite);
         // ArrayHandle<Scalar4> h_torque(m_torque, access_location::host, access_mode::overwrite);
         // ArrayHandle<Scalar> h_virial(m_virial, access_location::host, access_mode::overwrite);
-        memset(h_force.data, 0, sizeof(Scalar4) * m_force.getNumElements());
-        memset(h_ratedpe.data, 0, sizeof(Scalar4) * m_ratedpe.getNumElements());
+        m_force.zeroFill();
+        m_ratedpe.zeroFill();
         // memset(h_torque.data, 0, sizeof(Scalar4) * m_torque.getNumElements());
         // memset(h_virial.data, 0, sizeof(Scalar) * m_virial.getNumElements());
         }

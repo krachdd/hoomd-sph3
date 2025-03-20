@@ -291,15 +291,6 @@ if (ENABLE_HIP)
     endif()
     target_compile_definitions(_hoomd PUBLIC ENABLE_HIP CUDA_ARCH=${_cuda_min_arch})
 
-    if(ALWAYS_USE_MANAGED_MEMORY)
-        target_compile_definitions(_hoomd PUBLIC ALWAYS_USE_MANAGED_MEMORY)
-    endif()
-
-    if (ENABLE_NVTOOLS)
-        target_link_libraries(_hoomd PUBLIC CUDA::nvToolsExt)
-        target_compile_definitions(_hoomd PUBLIC ENABLE_NVTOOLS)
-    endif()
-
     if (CUSOLVER_AVAILABLE)
         target_compile_definitions(_hoomd PUBLIC CUSOLVER_AVAILABLE)
     endif()

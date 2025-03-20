@@ -4,6 +4,23 @@ Change Log
 5.x
 ---
 
+5.1.1 (2025-03-19)
+^^^^^^^^^^^^^^^^^^
+
+*Fixed*
+
+* Prevent warnings about forces that provide torques (or not)
+  (`#2015 <https://github.com/glotzerlab/hoomd-blue/pull/2015>`__).
+* Compile without errors or warnings with CUDA 12.8
+  (`#2019 <https://github.com/glotzerlab/hoomd-blue/pull/2019>`__).
+* `force.Active` applies torques correctly when the filter is not `All`
+  (`#2020 <https://github.com/glotzerlab/hoomd-blue/pull/2020>`__).
+* MD integrators no longer integrate the z degree of freedom in 2D simulation boxes
+  (`#2021 <https://github.com/glotzerlab/hoomd-blue/pull/2021>`__).
+* HPMC integrators no longer miss pairwise interactions when updaters, such as
+  ``RemoveDrift`` move particles
+  (`#2022 <https://github.com/glotzerlab/hoomd-blue/pull/2022>`__).
+
 5.1.0 (2025-02-20)
 ^^^^^^^^^^^^^^^^^^
 

@@ -42,7 +42,7 @@ void CustomForceCompute::computeForces(uint64_t timestep)
         // zero necessary arrays
         {
         ArrayHandle<Scalar4> h_force(m_force, access_location::host, access_mode::overwrite);
-        memset(h_force.data, 0, sizeof(Scalar4) * m_pdata->getN());
+        m_force.zeroFill();
         }
     // if (m_aniso)
     //     {
