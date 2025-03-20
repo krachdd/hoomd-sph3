@@ -705,9 +705,9 @@ void ForceComposite::computeForces(uint64_t timestep)
     ArrayHandle<unsigned int> h_body_len(m_body_len, access_location::host, access_mode::read);
 
     // reset constraint forces and torques
-    memset(h_force.data, 0, sizeof(Scalar4) * m_pdata->getN());
-    memset(h_torque.data, 0, sizeof(Scalar4) * m_pdata->getN());
-    memset(h_virial.data, 0, sizeof(Scalar) * m_virial.getNumElements());
+    m_force.zeroFill();
+    m_torque.zeroFill();
+    m_virial.zeroFill();
 
     unsigned int n_particles_local = m_pdata->getN() + m_pdata->getNGhosts();
     size_t net_virial_pitch = m_pdata->getNetVirial().getPitch();

@@ -186,8 +186,8 @@ void Integrator::computeNetForce(uint64_t timestep)
         //                                   access_mode::overwrite);
 
         // start by zeroing the net force and virial arrays
-        memset((void*)h_net_force.data, 0, sizeof(Scalar4) * net_force.getNumElements());
-        memset((void*)h_net_ratedpe.data, 0, sizeof(Scalar4) * net_ratedpe.getNumElements());
+        net_force.zeroFill();
+        net_ratedpe.zeroFill();
         // memset((void*)h_net_virial.data, 0, sizeof(Scalar) * net_virial.getNumElements());
         // memset((void*)h_net_torque.data, 0, sizeof(Scalar4) * net_torque.getNumElements());
 
@@ -409,8 +409,8 @@ void Integrator::computeNetForceGPU(uint64_t timestep)
         if (m_forces.size() == 0)
             {
             // start by zeroing the net force and virial arrays
-            hipMemset(d_net_force.data, 0, sizeof(Scalar4) * net_force.getNumElements());
-            hipMemset(d_net_ratedpe.data, 0, sizeof(Scalar4) * net_ratedpe.getNumElements());
+            net_force.zeroFill();
+            net_ratedpe.zeroFill();
             // hipMemset(d_net_torque.data, 0, sizeof(Scalar4) * net_torque.getNumElements());
             // hipMemset(d_net_virial.data, 0, 6 * sizeof(Scalar) * net_virial_pitch);
             if (m_exec_conf->isCUDAErrorCheckingEnabled())
@@ -959,23 +959,6 @@ void Integrator::computeCallback(uint64_t timestep)
         }
     }
 #endif
-
-bool Integrator::getComputesDPE()
-    {
-    bool computesdpe = false;
-
-    for (const auto& force : m_forces)
-        {
-        computesdpe |= force->ComputesDPE();
-        }
-
-    for (const auto& constraint_force : m_constraint_forces)
-        {
-        computesdpe |= constraint_force->ComputesDPE();
-        }
-
-    return computesdpe;
-    }
 
 namespace detail
     {
