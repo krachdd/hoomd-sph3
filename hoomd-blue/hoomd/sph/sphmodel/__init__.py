@@ -5,10 +5,12 @@ maintainer: dkrach, david.krach@mib.uni-stuttgart.de
 
 """
 
-from .sphmodel import (SPHModel, SinglePhaseFlow, SinglePhaseFlowTV)
+from .sphmodel import (SPHModel, SinglePhaseFlow, SinglePhaseFlowTV,
+                        TwoPhaseFlow)
 
 __all__ = [
     "SPHModel",
     "SinglePhaseFlow",
-    "SinglePhaseFlowTV"
+    "SinglePhaseFlowTV",
+    "TwoPhaseFlow"
 ]

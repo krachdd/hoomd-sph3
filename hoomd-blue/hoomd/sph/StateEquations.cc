@@ -94,24 +94,6 @@ namespace detail
 {
 
 
-// void export_StateEquation_Tait(pybind11::module& m)
-//     {
-//     pybind11::class_<StateEquation<tait>, std::shared_ptr<StateEquation<tait>>>(m, "Tait")
-//         .def(pybind11::init<>())
-//         .def("Pressure", &StateEquation<tait>::Pressure)
-//         .def("Density", &StateEquation<tait>::Density)
-//         .def("setParams", &StateEquation<tait>::setParams);
-//     }
-
-// void export_StateEquation_Linear(pybind11::module& m)
-//     {
-//     pybind11::class_<StateEquation<linear>, std::shared_ptr<StateEquation<linear>>>(m, "Linear")
-//         .def(pybind11::init<>())
-//         .def("Pressure", &StateEquation<linear>::Pressure)
-//         .def("Density", &StateEquation<linear>::Density)
-//         .def("setParams", &StateEquation<linear>::setParams);
-//     }
-
 template<StateEquationType SET_>
 void export_StateEquation(pybind11::module& m, std::string name)
 {
@@ -125,6 +107,9 @@ void export_StateEquation(pybind11::module& m, std::string name)
 
 // template class PYBIND11_EXPORT StateEquation<tait>;
 // template class PYBIND11_EXPORT StateEquation<linear>;
+
+template void StateEquation<tait>::setBackPressure(Scalar bp);
+template void StateEquation<linear>::setBackPressure(Scalar bp);
 
 namespace detail
 {
