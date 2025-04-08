@@ -86,7 +86,7 @@ class SPHModel(force.Force):
     #     # We need to check if the force is added since if it is not then this is
     #     # being called by a SyncedList object and a disagreement between the
     #     # simulation and nlist._simulation is an error. If the force is added
-    #     # then the nlist is compatible. We cannot just check the nlist's _added
+    #     # then the nlist is compatible. We cannot just check the nlist"s _added
     #     # property because _add is also called when the SyncedList is synced.
     #     if deepcopy or nlist._added and nlist._simulation != self._simulation:
     #         warnings.warn(
@@ -108,7 +108,7 @@ class SPHModel(force.Force):
     #     # This should never happen, but leaving it in case the logic for adding
     #     # missed some edge case.
     #     if self.nlist._attached and self._simulation != self.nlist._simulation:
-    #         raise RuntimeError("{} object's neighbor list is used in a "
+    #         raise RuntimeError("{} object"s neighbor list is used in a "
     #                            "different simulation.".format(type(self)))
     #     self.nlist._attach()
     #     if isinstance(self._simulation.device, hoomd.device.CPU):
@@ -119,7 +119,7 @@ class SPHModel(force.Force):
     #     # self._cpp_obj = cls(self._simulation.state._cpp_sys_def,
     #     #                      self.nlist._cpp_obj)
 
-    #     self._cpp_baseclass_name = 'SPHBaseClass' + '_' + Kernel[self.kernel.name] + '_' + EOS[self.eos.name]
+    #     self._cpp_baseclass_name = "SPHBaseClass" + "_" + Kernel[self.kernel.name] + "_" + EOS[self.eos.name]
     #     base_cls = getattr(_sph, self._cpp_baseclass_name)
     #     self._cpp_base_obj = base_cls(self._simulation.state._cpp_sys_def, self.kernel.cpp_smoothingkernel,
     #                              self.eos.cpp_stateequation, self.nlist._cpp_obj)
@@ -147,7 +147,7 @@ class SPHModel(force.Force):
         # self._cpp_obj = cls(self._simulation.state._cpp_sys_def,
         #                     self.nlist._cpp_obj)
 
-        self._cpp_baseclass_name = 'SPHBaseClass' + '_' + Kernel[self.kernel.name] + '_' + EOS[self.eos.name]
+        self._cpp_baseclass_name = "SPHBaseClass" + "_" + Kernel[self.kernel.name] + "_" + EOS[self.eos.name]
         base_cls = getattr(_sph, self._cpp_baseclass_name)
         self._cpp_base_obj = base_cls(self._simulation.state._cpp_sys_def, self.kernel.cpp_smoothingkernel,
                                  self.eos.cpp_stateequation, self.nlist._cpp_obj)
@@ -206,10 +206,10 @@ class SPHModel(force.Force):
 class SinglePhaseFlow(SPHModel):
     R""" SinglePhaseFlow solver
     """
-    DENSITYMETHODS = {'SUMMATION':_sph.PhaseFlowDensityMethod.DENSITYSUMMATION,
-                      'CONTINUITY':_sph.PhaseFlowDensityMethod.DENSITYCONTINUITY}
+    DENSITYMETHODS = {"SUMMATION":_sph.PhaseFlowDensityMethod.DENSITYSUMMATION,
+                      "CONTINUITY":_sph.PhaseFlowDensityMethod.DENSITYCONTINUITY}
 
-    VISCOSITYMETHODS = {'HARMONICAVERAGE':_sph.PhaseFlowViscosityMethod.HARMONICAVERAGE}
+    VISCOSITYMETHODS = {"HARMONICAVERAGE":_sph.PhaseFlowViscosityMethod.HARMONICAVERAGE}
 
     def __init__(self,
                  kernel,
@@ -218,7 +218,7 @@ class SinglePhaseFlow(SPHModel):
                  fluidgroup_filter = None,
                  solidgroup_filter = None,
                  densitymethod=None,
-                 viscositymethod='HARMONICAVERAGE'):
+                 viscositymethod="HARMONICAVERAGE"):
 
         super().__init__(kernel, eos, nlist)
 
@@ -232,16 +232,17 @@ class SinglePhaseFlow(SPHModel):
                           densitydiffusion = bool(False),
                           ddiff = float(0.0),
                           shepardrenormanlization = bool(False),
+                          densityreinitialization = bool(False),
                           shepardfreq = int(0),
+                          densityreinitfreq = int(0),
                           compute_solid_forces = bool(False),
                           max_sl = float(0.0)
                           ))
 
 
 
-
         # self._state = self._simulation.state
-        self._cpp_SPFclass_name = 'SinglePF' '_' + Kernel[self.kernel.name] + '_' + EOS[self.eos.name]
+        self._cpp_SPFclass_name = "SinglePF" "_" + Kernel[self.kernel.name] + "_" + EOS[self.eos.name]
         self.fluidgroup_filter = fluidgroup_filter
         self.solidgroup_filter = solidgroup_filter
         self.str_densitymethod = densitymethod
@@ -249,14 +250,14 @@ class SinglePhaseFlow(SPHModel):
         self.accel_set = False
         self.params_set = False
 
-        if self.str_densitymethod == str('SUMMATION'):
+        if self.str_densitymethod == str("SUMMATION"):
             self.cpp_densitymethod = hoomd.sph._sph.PhaseFlowDensityMethod.DENSITYSUMMATION
-        elif self.str_densitymethod == str('CONTINUITY'):
+        elif self.str_densitymethod == str("CONTINUITY"):
             self.cpp_densitymethod = hoomd.sph._sph.PhaseFlowDensityMethod.DENSITYCONTINUITY
         else:
             raise ValueError("Using undefined DensityMethod.")
 
-        if self.str_viscositymethod == str('HARMONICAVERAGE'):
+        if self.str_viscositymethod == str("HARMONICAVERAGE"):
             self.cpp_viscositymethod = hoomd.sph._sph.PhaseFlowViscosityMethod.HARMONICAVERAGE
         else:
             raise ValueError("Using undefined ViscosityMethod.")
@@ -265,7 +266,7 @@ class SinglePhaseFlow(SPHModel):
         # IMPORTANT TO ADD CUDA! 
         # create the c++ mirror class
         # if isinstance(self._simulation.device, hoomd.device.CPU):
-        #     _cpp_class_name += 'GPU'
+        #     _cpp_class_name += "GPU"
 
 
         # print(self._cpp_class_name)
@@ -350,16 +351,16 @@ class SinglePhaseFlow(SPHModel):
         if self.consth:
             self.maxh = pdata.getSlength(0)
             if (self._simulation.device.communicator.rank == 0):
-                print(f'Using constant Smooting Length: {self.maxh}')
+                print(f"Using constant Smooting Length: {self.maxh}")
 
             self._cpp_obj.setConstSmoothingLength(self.maxh)
         else: 
             self.maxh      = pdata.getMaxSmoothingLength()
             if (self._simulation.device.communicator.rank == 0):
-                print('Non-Constant Smooting length')
+                print("Non-Constant Smooting length")
         self.rcut = kappa * self.maxh
 
-        # print(f'self.rcut {self.rcut}')
+        # print(f"self.rcut {self.rcut}")
 
         # Set rcut in neigbour list
         self._param_dict.update(ParameterDict(
@@ -371,30 +372,32 @@ class SinglePhaseFlow(SPHModel):
         self.str_densitymethod = self._param_dict._dict["densitymethod"]
         self.str_viscositymethod = self._param_dict._dict["viscositymethod"]
 
-        if self.str_densitymethod == str('SUMMATION'):
+        if self.str_densitymethod == str("SUMMATION"):
             self.cpp_densitymethod = hoomd.sph._sph.PhaseFlowDensityMethod.DENSITYSUMMATION
-        elif self.str_densitymethod == str('CONTINUITY'):
+        elif self.str_densitymethod == str("CONTINUITY"):
             self.cpp_densitymethod = hoomd.sph._sph.PhaseFlowDensityMethod.DENSITYCONTINUITY
         else:
             raise ValueError("Using undefined DensityMethod.")
 
-        if self.str_viscositymethod == str('HARMONICAVERAGE'):
+        if self.str_viscositymethod == str("HARMONICAVERAGE"):
             self.cpp_viscositymethod = hoomd.sph._sph.PhaseFlowViscosityMethod.HARMONICAVERAGE
         else:
             raise ValueError("Using undefined ViscosityMethod.")
 
         # get all params in line
-        self.mu = self._param_dict['mu']
-        self.artificialviscosity = self._param_dict['artificialviscosity']
-        self.alpha = self._param_dict['alpha']
-        self.beta = self._param_dict['beta']
-        self.densitydiffusion = self._param_dict['densitydiffusion']
-        self.ddiff = self._param_dict['ddiff']
-        self.shepardrenormanlization = self._param_dict['shepardrenormanlization']
-        self.shepardfreq = self._param_dict['shepardfreq']
-        print(self.shepardfreq)
-        print(self.mu)
-        self.compute_solid_forces = self._param_dict['compute_solid_forces']
+        self.mu = self._param_dict["mu"]
+        self.artificialviscosity = self._param_dict["artificialviscosity"]
+        self.alpha = self._param_dict["alpha"]
+        self.beta = self._param_dict["beta"]
+        self.densitydiffusion = self._param_dict["densitydiffusion"]
+        self.ddiff = self._param_dict["ddiff"]
+        self.shepardrenormanlization = self._param_dict["shepardrenormanlization"]
+        self.densityreinitialization = self._param_dict["densityreinitialization"]
+        self.shepardfreq = self._param_dict["shepardfreq"]
+        self.densityreinitfreq = self._param_dict["densityreinitfreq"]
+        # print(self.shepardfreq)
+        # print(self.mu)
+        self.compute_solid_forces = self._param_dict["compute_solid_forces"]
 
         self.set_params(self.mu)
         self.setdensitymethod(self.str_densitymethod)
@@ -414,6 +417,11 @@ class SinglePhaseFlow(SPHModel):
             self.activateShepardRenormalization(self.shepardfreq)
         else:
             self.deactivateShepardRenormalization()
+
+        if (self.densityreinitialization == True):
+            self.activateDensityReinitialization(self.densityreinitfreq)
+        else:
+            self.deactivateDensityReinitialization()
         
         if (self.compute_solid_forces == True):
             self.computeSolidForces()
@@ -432,7 +440,7 @@ class SinglePhaseFlow(SPHModel):
         # self.mu   = mu.item()   if isinstance(mu, np.generic)   else mu
         self._cpp_obj.setParams(self.mu)
         self.params_set = True
-        self._param_dict.__setattr__('params_set', True)
+        self._param_dict.__setattr__("params_set", True)
 
     # @rcut.setter
     def setrcut(self, rcut, types):
@@ -487,12 +495,20 @@ class SinglePhaseFlow(SPHModel):
     def deactivateShepardRenormalization(self):
         self._cpp_obj.deactivateShepardRenormalization()
 
+    def activateDensityReinitialization(self, densityreinitfreq=20):
+        self.densityreinitfreq   = densityreinitfreq.item()   if isinstance(densityreinitfreq, np.generic)   else densityreinitfreq
+        self._cpp_obj.activateDensityReinitialization(int(densityreinitfreq))
+
+    def deactivateDensityReinitialization(self):
+        self._cpp_obj.deactivateDensityReinitialization()
+
+
     def computeSolidForces(self):
         self._cpp_obj.computeSolidForces()
 
     def setBodyAcceleration(self,gx,gy,gz,damp=0):
         self.accel_set = True
-        self._param_dict.__setattr__('accel_set', True)
+        self._param_dict.__setattr__("accel_set", True)
         # self.check_initialization();
         # self.gx   = gx.item() if isinstance(gx, np.generic) else gx
         # self.gy   = gy.item() if isinstance(gy, np.generic) else gy
@@ -502,7 +518,7 @@ class SinglePhaseFlow(SPHModel):
 
         if ( self.gx == 0 and self.gy == 0 and self.gz == 0):
             if ( self._simulation.device.communicator.rank == 0 ):
-                print(f'{self._cpp_SPFclass_name} does NOT use a body force!' )
+                print(f"{self._cpp_SPFclass_name} does NOT use a body force!" )
 
         # self.cpp_force.setAcceleration(self.gx,self.gy,self.gz,self.damp)
         self._cpp_obj.setAcceleration(self.gx,self.gy,self.gz,self.damp)
@@ -523,11 +539,11 @@ class SinglePhaseFlow(SPHModel):
     def compute_speedofsound(self, LREF, UREF, DX, DRHO, H, MU, RHO0):
         # Input sanity
         if LREF == 0.0:
-            raise ValueError('Reference length LREF may not be zero.')
+            raise ValueError("Reference length LREF may not be zero.")
         if DRHO == 0.0:
-            raise ValueError('Maximum density variation DRHO may not be zero.')
+            raise ValueError("Maximum density variation DRHO may not be zero.")
         if DX <= 0.0:
-            raise ValueError('DX may not be zero or negative.')
+            raise ValueError("DX may not be zero or negative.")
 
         UREF = np.abs(UREF)
 
@@ -542,7 +558,7 @@ class SinglePhaseFlow(SPHModel):
         # Maximum speed of sound
         
         C_a = np.asarray(C_a)
-        conditions = ['CFL-condition', 'Gravity_waves-condition', 'Fourier-condition']
+        conditions = ["CFL-condition", "Gravity_waves-condition", "Fourier-condition"]
         condition = [conditions[i] for i in np.where(C_a == C_a.max())[0]]
         C = np.sqrt(np.max(C_a))
 
@@ -555,17 +571,17 @@ class SinglePhaseFlow(SPHModel):
     def compute_dt(self, LREF, UREF, DX, DRHO, H, MU, RHO0, COURANT=0.25):
         # Input sanity
         if LREF == 0.0:
-            raise ValueError('Reference length LREF may not be zero.')
+            raise ValueError("Reference length LREF may not be zero.")
         if DRHO == 0.0:
-            raise ValueError('Maximum density variation DRHO may not be zero.')
+            raise ValueError("Maximum density variation DRHO may not be zero.")
         if DX <= 0.0:
-            raise ValueError('DX may not be zero or negative.')
-        if H != self._param_dict['max_sl']:
-            raise ValueError('Given H not equal to stored H self._param_dict[max_sl]!')
-        if MU != self._param_dict['mu']:
-            raise ValueError('Given MU not equal to stored MU self._param_dict[mu]!')
+            raise ValueError("DX may not be zero or negative.")
+        if H != self._param_dict["max_sl"]:
+            raise ValueError("Given H not equal to stored H self._param_dict[max_sl]!")
+        if MU != self._param_dict["mu"]:
+            raise ValueError("Given MU not equal to stored MU self._param_dict[mu]!")
         if RHO0 != self.eos.RestDensity:
-            raise ValueError('Given RHO0 not equal to stored RHO0 self.eos.RestDensity!')
+            raise ValueError("Given RHO0 not equal to stored RHO0 self.eos.RestDensity!")
         
         UREF = np.abs(UREF)
 
@@ -582,7 +598,7 @@ class SinglePhaseFlow(SPHModel):
             # Gravity waves condition
             DT_a.append(np.sqrt(H/(16.0*self.get_GMAG())))
         DT_a = np.asarray(DT_a)
-        conditions = ['CFL-condition', 'Fourier-condition', 'Gravity_waves-condition']
+        conditions = ["CFL-condition", "Fourier-condition", "Gravity_waves-condition"]
         condition = [conditions[i] for i in np.where(DT_a == DT_a.min())[0]]
         DT = COURANT * np.min(DT_a)
 
@@ -592,10 +608,10 @@ class SinglePhaseFlow(SPHModel):
 class SinglePhaseFlowTV(SPHModel):
     R""" SinglePhaseFlow solver
     """
-    DENSITYMETHODS = {'SUMMATION':_sph.PhaseFlowDensityMethod.DENSITYSUMMATION,
-                      'CONTINUITY':_sph.PhaseFlowDensityMethod.DENSITYCONTINUITY}
+    DENSITYMETHODS = {"SUMMATION":_sph.PhaseFlowDensityMethod.DENSITYSUMMATION,
+                      "CONTINUITY":_sph.PhaseFlowDensityMethod.DENSITYCONTINUITY}
 
-    VISCOSITYMETHODS = {'HARMONICAVERAGE':_sph.PhaseFlowViscosityMethod.HARMONICAVERAGE}
+    VISCOSITYMETHODS = {"HARMONICAVERAGE":_sph.PhaseFlowViscosityMethod.HARMONICAVERAGE}
 
     def __init__(self,
                  kernel,
@@ -604,7 +620,7 @@ class SinglePhaseFlowTV(SPHModel):
                  fluidgroup_filter = None,
                  solidgroup_filter = None,
                  densitymethod=None,
-                 viscositymethod='HARMONICAVERAGE'):
+                 viscositymethod="HARMONICAVERAGE"):
 
         super().__init__(kernel, eos, nlist)
 
@@ -618,7 +634,9 @@ class SinglePhaseFlowTV(SPHModel):
                           densitydiffusion = bool(False),
                           ddiff = float(0.0),
                           shepardrenormanlization = bool(False),
+                          densityreinitialization = bool(False),
                           shepardfreq = int(0),
+                          densityreinitfreq = int(0),
                           compute_solid_forces = bool(False),
                           max_sl = float(0.0)
                           ))
@@ -627,7 +645,7 @@ class SinglePhaseFlowTV(SPHModel):
 
 
         # self._state = self._simulation.state
-        self._cpp_SPFclass_name = 'SinglePFTV' '_' + Kernel[self.kernel.name] + '_' + EOS[self.eos.name]
+        self._cpp_SPFclass_name = "SinglePFTV" "_" + Kernel[self.kernel.name] + "_" + EOS[self.eos.name]
         self.fluidgroup_filter = fluidgroup_filter
         self.solidgroup_filter = solidgroup_filter
         self.str_densitymethod = densitymethod
@@ -635,14 +653,14 @@ class SinglePhaseFlowTV(SPHModel):
         self.accel_set = False
         self.params_set = False
 
-        if self.str_densitymethod == str('SUMMATION'):
+        if self.str_densitymethod == str("SUMMATION"):
             self.cpp_densitymethod = hoomd.sph._sph.PhaseFlowDensityMethod.DENSITYSUMMATION
-        elif self.str_densitymethod == str('CONTINUITY'):
+        elif self.str_densitymethod == str("CONTINUITY"):
             self.cpp_densitymethod = hoomd.sph._sph.PhaseFlowDensityMethod.DENSITYCONTINUITY
         else:
             raise ValueError("Using undefined DensityMethod.")
 
-        if self.str_viscositymethod == str('HARMONICAVERAGE'):
+        if self.str_viscositymethod == str("HARMONICAVERAGE"):
             self.cpp_viscositymethod = hoomd.sph._sph.PhaseFlowViscosityMethod.HARMONICAVERAGE
         else:
             raise ValueError("Using undefined ViscosityMethod.")
@@ -699,16 +717,16 @@ class SinglePhaseFlowTV(SPHModel):
         if self.consth:
             self.maxh = pdata.getSlength(0)
             if (self._simulation.device.communicator.rank == 0):
-                print(f'Using constant Smooting Length: {self.maxh}')
+                print(f"Using constant Smooting Length: {self.maxh}")
 
             self._cpp_obj.setConstSmoothingLength(self.maxh)
         else: 
             self.maxh      = pdata.getMaxSmoothingLength()
             if (self._simulation.device.communicator.rank == 0):
-                print('Non-Constant Smooting length')
+                print("Non-Constant Smooting length")
         self.rcut = kappa * self.maxh
 
-        # print(f'self.rcut {self.rcut}')
+        # print(f"self.rcut {self.rcut}")
 
         # Set rcut in neigbour list
         self._param_dict.update(ParameterDict(
@@ -720,28 +738,30 @@ class SinglePhaseFlowTV(SPHModel):
         self.str_densitymethod = self._param_dict._dict["densitymethod"]
         self.str_viscositymethod = self._param_dict._dict["viscositymethod"]
 
-        if self.str_densitymethod == str('SUMMATION'):
+        if self.str_densitymethod == str("SUMMATION"):
             self.cpp_densitymethod = hoomd.sph._sph.PhaseFlowDensityMethod.DENSITYSUMMATION
-        elif self.str_densitymethod == str('CONTINUITY'):
+        elif self.str_densitymethod == str("CONTINUITY"):
             self.cpp_densitymethod = hoomd.sph._sph.PhaseFlowDensityMethod.DENSITYCONTINUITY
         else:
             raise ValueError("Using undefined DensityMethod.")
 
-        if self.str_viscositymethod == str('HARMONICAVERAGE'):
+        if self.str_viscositymethod == str("HARMONICAVERAGE"):
             self.cpp_viscositymethod = hoomd.sph._sph.PhaseFlowViscosityMethod.HARMONICAVERAGE
         else:
             raise ValueError("Using undefined ViscosityMethod.")
 
         # get all params in line
-        self.mu = self._param_dict['mu']
-        self.artificialviscosity = self._param_dict['artificialviscosity']
-        self.alpha = self._param_dict['alpha']
-        self.beta = self._param_dict['beta']
-        self.densitydiffusion = self._param_dict['densitydiffusion']
-        self.ddiff = self._param_dict['ddiff']
-        self.shepardrenormanlization = self._param_dict['shepardrenormanlization']
-        self.shepardfreq = self._param_dict['shepardfreq']
-        self.compute_solid_forces = self._param_dict['compute_solid_forces']
+        self.mu = self._param_dict["mu"]
+        self.artificialviscosity = self._param_dict["artificialviscosity"]
+        self.alpha = self._param_dict["alpha"]
+        self.beta = self._param_dict["beta"]
+        self.densitydiffusion = self._param_dict["densitydiffusion"]
+        self.ddiff = self._param_dict["ddiff"]
+        self.shepardrenormanlization = self._param_dict["shepardrenormanlization"]
+        self.densityreinitialization = self._param_dict["densityreinitialization"]
+        self.shepardfreq = self._param_dict["shepardfreq"]
+        self.densityreinitfreq = self._param_dict["densityreinitfreq"]
+        self.compute_solid_forces = self._param_dict["compute_solid_forces"]
 
         self.set_params(self.mu)
         self.setdensitymethod(self.str_densitymethod)
@@ -762,6 +782,11 @@ class SinglePhaseFlowTV(SPHModel):
         else:
             self.deactivateShepardRenormalization()
         
+        if (self.densityreinitialization == True):
+            self.activateDensityReinitialization(self.densityreinitfreq)
+        else:
+            self.deactivateDensityReinitialization()
+
         if (self.compute_solid_forces == True):
             self.computeSolidForces()
 
@@ -779,7 +804,7 @@ class SinglePhaseFlowTV(SPHModel):
         # self.mu   = mu.item()   if isinstance(mu, np.generic)   else mu
         self._cpp_obj.setParams(self.mu)
         self.params_set = True
-        self._param_dict.__setattr__('params_set', True)
+        self._param_dict.__setattr__("params_set", True)
 
     # @rcut.setter
     def setrcut(self, rcut, types):
@@ -834,12 +859,19 @@ class SinglePhaseFlowTV(SPHModel):
     def deactivateShepardRenormalization(self):
         self._cpp_obj.deactivateShepardRenormalization()
 
+    def activateDensityReinitialization(self, densityreinitfreq=20):
+        self.densityreinitfreq   = densityreinitfreq.item()   if isinstance(densityreinitfreq, np.generic)   else densityreinitfreq
+        self._cpp_obj.activateDensityReinitialization(int(densityreinitfreq))
+
+    def deactivateDensityReinitialization(self):
+        self._cpp_obj.deactivateDensityReinitialization()
+
     def computeSolidForces(self):
         self._cpp_obj.computeSolidForces()
 
     def setBodyAcceleration(self,gx,gy,gz,damp=0):
         self.accel_set = True
-        self._param_dict.__setattr__('accel_set', True)
+        self._param_dict.__setattr__("accel_set", True)
         # self.check_initialization();
         # self.gx   = gx.item() if isinstance(gx, np.generic) else gx
         # self.gy   = gy.item() if isinstance(gy, np.generic) else gy
@@ -849,7 +881,7 @@ class SinglePhaseFlowTV(SPHModel):
 
         if ( self.gx == 0 and self.gy == 0 and self.gz == 0):
             if ( self._simulation.device.communicator.rank == 0 ):
-                print(f'{self._cpp_SPFclass_name} does NOT use a body force!' )
+                print(f"{self._cpp_SPFclass_name} does NOT use a body force!" )
 
         # self.cpp_force.setAcceleration(self.gx,self.gy,self.gz,self.damp)
         self._cpp_obj.setAcceleration(self.gx,self.gy,self.gz,self.damp)
@@ -870,11 +902,11 @@ class SinglePhaseFlowTV(SPHModel):
     def compute_speedofsound(self, LREF, UREF, DX, DRHO, H, MU, RHO0):
         # Input sanity
         if LREF == 0.0:
-            raise ValueError('Reference length LREF may not be zero.')
+            raise ValueError("Reference length LREF may not be zero.")
         if DRHO == 0.0:
-            raise ValueError('Maximum density variation DRHO may not be zero.')
+            raise ValueError("Maximum density variation DRHO may not be zero.")
         if DX <= 0.0:
-            raise ValueError('DX may not be zero or negative.')
+            raise ValueError("DX may not be zero or negative.")
 
         UREF = np.abs(UREF)
 
@@ -891,7 +923,7 @@ class SinglePhaseFlowTV(SPHModel):
 
         # Maximum speed of sound
         C_a = np.asarray(C_a)
-        conditions = ['CFL-condition', 'Gravity_waves-condition', 'Fourier-condition', 'Adami-condition']
+        conditions = ["CFL-condition", "Gravity_waves-condition", "Fourier-condition", "Adami-condition"]
         condition = [conditions[i] for i in np.where(C_a == C_a.max())[0]]
         C = np.sqrt(np.max(C_a))
 
@@ -904,17 +936,17 @@ class SinglePhaseFlowTV(SPHModel):
     def compute_dt(self, LREF, UREF, DX, DRHO, H, MU, RHO0, COURANT=0.25):
         # Input sanity
         if LREF == 0.0:
-            raise ValueError('Reference length LREF may not be zero.')
+            raise ValueError("Reference length LREF may not be zero.")
         if DRHO == 0.0:
-            raise ValueError('Maximum density variation DRHO may not be zero.')
+            raise ValueError("Maximum density variation DRHO may not be zero.")
         if DX <= 0.0:
-            raise ValueError('DX may not be zero or negative.')
-        if H != self._param_dict['max_sl']:
-            raise ValueError('Given H not equal to stored H self._param_dict[max_sl]!')
-        if MU != self._param_dict['mu']:
-            raise ValueError('Given MU not equal to stored MU self._param_dict[mu]!')
+            raise ValueError("DX may not be zero or negative.")
+        if H != self._param_dict["max_sl"]:
+            raise ValueError("Given H not equal to stored H self._param_dict[max_sl]!")
+        if MU != self._param_dict["mu"]:
+            raise ValueError("Given MU not equal to stored MU self._param_dict[mu]!")
         if RHO0 != self.eos.RestDensity:
-            raise ValueError('Given RHO0 not equal to stored RHO0 self.eos.RestDensity!')
+            raise ValueError("Given RHO0 not equal to stored RHO0 self.eos.RestDensity!")
         
         UREF = np.abs(UREF)
 
@@ -936,7 +968,7 @@ class SinglePhaseFlowTV(SPHModel):
             DT_a.append(np.sqrt(H/(16.0*self.get_GMAG())))
         
         DT_a = np.asarray(DT_a)
-        conditions = ['CFL-condition', 'Fourier-condition', 'Adami_max_flow-condition', 'Adami_viscous-condition' 'Gravity_waves-condition']
+        conditions = ["CFL-condition", "Fourier-condition", "Adami_max_flow-condition", "Adami_viscous-condition" "Gravity_waves-condition"]
         condition = [conditions[i] for i in np.where(DT_a == DT_a.min())[0]]
         
         DT = COURANT * np.min(DT_a)
@@ -1369,7 +1401,7 @@ class TwoPhaseFlow(SPHModel):
 
 
 # Dicts
-Kernel = {'_WendlandC2':'WC2','_WendlandC4':'WC4','_WendlandC6':'WC6','_Quintic':'Q','_CubicSpline':'CS'}
-EOS = {'_Linear':'L','_Tait':'T'}
+Kernel = {"_WendlandC2":"WC2","_WendlandC4":"WC4","_WendlandC6":"WC6","_Quintic":"Q","_CubicSpline":"CS"}
+EOS = {"_Linear":"L","_Tait":"T"}
 
 

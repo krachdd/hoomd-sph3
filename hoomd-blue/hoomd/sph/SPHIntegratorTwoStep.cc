@@ -52,7 +52,6 @@ SPHIntegratorTwoStep::~SPHIntegratorTwoStep()
 void SPHIntegratorTwoStep::update(uint64_t timestep)
     {
     Integrator::update(timestep);
-
     // ensure that prepRun() has been called
     assert(m_prepared);
 
@@ -237,21 +236,6 @@ Scalar SPHIntegratorTwoStep::getTranslationalDOF(std::shared_ptr<ParticleGroup> 
 void SPHIntegratorTwoStep::prepRun(uint64_t timestep)
     {
     Integrator::prepRun(timestep);
-    // if (m_integrate_rotational_dof && !areForcesAnisotropic())
-    //     {
-    //     m_exec_conf->msg->warning() << "Requested integration of orientations, but no forces"
-    //                                    " provide torques."
-    //                                 << endl;
-    //     }
-    // if (!m_integrate_rotational_dof && areForcesAnisotropic())
-    //     {
-    //     m_exec_conf->msg->warning() << "Forces provide torques, but integrate_rotational_dof is"
-    //                                    "false."
-    //                                 << endl;
-    //     }
-
-    // for (auto& method : m_methods)
-    //     method->setAnisotropic(m_integrate_rotational_dof);
 
 #ifdef ENABLE_MPI
     if (m_sysdef->isDomainDecomposed())
@@ -276,7 +260,7 @@ void SPHIntegratorTwoStep::prepRun(uint64_t timestep)
         computeNetForceGPU(timestep);
     else
 #endif
-        computeNetForce(timestep);
+    computeNetForce(timestep);
 
     // accelerations only need to be calculated if the accelerations have not yet been set
     if (!m_pdata->isAccelSet())
@@ -382,17 +366,6 @@ CommFlags SPHIntegratorTwoStep::determineFlags(uint64_t timestep)
     return flags;
     }
 #endif
-
-// /// Check if any forces introduce anisotropic degrees of freedom
-// bool SPHIntegratorTwoStep::areForcesAnisotropic()
-//     {
-//     auto is_anisotropic = Integrator::areForcesAnisotropic();
-//     if (m_rigid_bodies)
-//         {
-//         is_anisotropic |= m_rigid_bodies->isAnisotropic();
-//         }
-//     return is_anisotropic;
-//     }
 
 void SPHIntegratorTwoStep::validateGroups()
     {

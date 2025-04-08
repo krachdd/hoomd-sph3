@@ -1,4 +1,4 @@
-// Copyright (c) 2009-2024 The Regents of the University of Michigan.
+// Copyright (c) 2009-2025 The Regents of the University of Michigan.
 // Part of HOOMD-blue, released under the BSD 3-Clause License.
 
 /*! \file ParticleData.h
@@ -13,12 +13,10 @@
 #define __PARTICLE_DATA_H__
 
 #include "GPUVector.h"
-#include "GlobalArray.h"
 #include "HOOMDMath.h"
 #include "PythonLocalDataAccess.h"
 
 #ifdef ENABLE_HIP
-#include "GPUPartition.cuh"
 #include "ParticleData.cuh"
 #endif
 
@@ -583,7 +581,6 @@ class PYBIND11_EXPORT ParticleData
         return m_o_image;
         }
 
-
     //! Get the maximum diameter of the particle set
     /*! \return Maximum Diameter Value
      */
@@ -689,91 +686,91 @@ class PYBIND11_EXPORT ParticleData
         }
 
     //! Return positions and types
-    const GlobalArray<Scalar4>& getPositions() const
+    const GPUArray<Scalar4>& getPositions() const
         {
         return m_pos;
         }
 
     //! Return velocities and masses
-    const GlobalArray<Scalar4>& getVelocities() const
+    const GPUArray<Scalar4>& getVelocities() const
         {
         return m_vel;
         }
 
     // //! Return densities, pressures and energies
-    // const GlobalArray< Scalar3 >& getDPEs() const { return m_dpe; }
+    // const GPUArray< Scalar3 >& getDPEs() const { return m_dpe; }
 
     //! Return densities
-    const GlobalArray< Scalar >& getDensities() const { return m_density; }
+    const GPUArray< Scalar >& getDensities() const { return m_density; }
     
     //! Return pressures
-    const GlobalArray< Scalar >& getPressures() const { return m_pressure; }
+    const GPUArray< Scalar >& getPressures() const { return m_pressure; }
     
     //! Return energies
-    const GlobalArray< Scalar >& getEnergies() const { return m_energy; }
+    const GPUArray< Scalar >& getEnergies() const { return m_energy; }
 
     //! Return auxiliary vector 1
-    const GlobalArray< Scalar3 >& getAuxiliaries1() const { return m_aux1; }
+    const GPUArray< Scalar3 >& getAuxiliaries1() const { return m_aux1; }
 
     //! Return auxiliary vector 2
-    const GlobalArray< Scalar3 >& getAuxiliaries2() const { return m_aux2; }
+    const GPUArray< Scalar3 >& getAuxiliaries2() const { return m_aux2; }
 
     //! Return auxiliary vector 3
-    const GlobalArray< Scalar3 >& getAuxiliaries3() const { return m_aux3; }
+    const GPUArray< Scalar3 >& getAuxiliaries3() const { return m_aux3; }
 
     //! Return auxiliary vector 4
-    const GlobalArray< Scalar3 >& getAuxiliaries4() const { return m_aux4; }
+    const GPUArray< Scalar3 >& getAuxiliaries4() const { return m_aux4; }
 
     //! Return smoothing length
-    const GlobalArray< Scalar >& getSlengths() const { return m_slength; }
+    const GPUArray< Scalar >& getSlengths() const { return m_slength; }
 
     //! Return accelerations
-    const GlobalArray< Scalar3 >& getAccelerations() const { return m_accel; }
+    const GPUArray< Scalar3 >& getAccelerations() const { return m_accel; }
 
     //! Return densities, pressures and energies rate of change
-    const GlobalArray< Scalar3 >& getDPEdts() const { return m_dpedt; }
+    const GPUArray< Scalar3 >& getDPEdts() const { return m_dpedt; }
 
     // //! Return charges
-    // const GlobalArray<Scalar>& getCharges() const
+    // const GPUArray<Scalar>& getCharges() const
     //     {
     //     return m_charge;
     //     }
 
     // //! Return diameters
-    // const GlobalArray<Scalar>& getDiameters() const
+    // const GPUArray<Scalar>& getDiameters() const
     //     {
     //     return m_diameter;
     //     }
 
     //! Return images
-    const GlobalArray<int3>& getImages() const
+    const GPUArray<int3>& getImages() const
         {
         return m_image;
         }
 
     //! Return tags
-    const GlobalArray<unsigned int>& getTags() const
+    const GPUArray<unsigned int>& getTags() const
         {
         return m_tag;
         }
 
     //! Return reverse-lookup tags
-    const GlobalVector<unsigned int>& getRTags() const
+    const GPUVector<unsigned int>& getRTags() const
         {
         return m_rtag;
         }
 
     //! Return body ids
-    const GlobalArray<unsigned int>& getBodies() const
+    const GPUArray<unsigned int>& getBodies() const
         {
         return m_body;
         }
 
     //! Get the net force array
-    const GlobalArray< Scalar4 >& getNetForceArray() const { return m_net_force; }
+    const GPUArray< Scalar4 >& getNetForceArray() const { return m_net_force; }
 
     //! Get the net dpe rate of change array
-    const GlobalArray< Scalar4 >& getNetRateDPEArray() const { return m_net_ratedpe; }
+    const GPUArray< Scalar4 >& getNetRateDPEArray() const { return m_net_ratedpe; }
 
     /*!
      * Access methods to stand-by arrays for fast swapping in of reordered particle data
@@ -797,7 +794,7 @@ class PYBIND11_EXPORT ParticleData
      */
 
     //! Return positions and types (alternate array)
-    const GlobalArray<Scalar4>& getAltPositions() const
+    const GPUArray<Scalar4>& getAltPositions() const
         {
         return m_pos_alt;
         }
@@ -809,7 +806,7 @@ class PYBIND11_EXPORT ParticleData
         }
 
     //! Return velocities and masses (alternate array)
-    const GlobalArray<Scalar4>& getAltVelocities() const
+    const GPUArray<Scalar4>& getAltVelocities() const
         {
         return m_vel_alt;
         }
@@ -821,62 +818,62 @@ class PYBIND11_EXPORT ParticleData
         }
 
     // //! Return densities, pressures and energies (alternate array)
-    // const GlobalArray< Scalar3 >& getAltDPEs() const { return m_dpe_alt; }
+    // const GPUArray< Scalar3 >& getAltDPEs() const { return m_dpe_alt; }
     // //! Swap in densities, pressures and energies
     // inline void swapDPEs() { m_dpe.swap(m_dpe_alt); }
 
     //! Return densities (alternate array)
-    const GlobalArray< Scalar >& getAltDensities() const { return m_density_alt; }
+    const GPUArray< Scalar >& getAltDensities() const { return m_density_alt; }
     //! Swap in densities
     inline void swapDensities() { m_density.swap(m_density_alt); }
 
     //! Return pressures (alternate array)
-    const GlobalArray< Scalar >& getAltPressures() const { return m_pressure_alt; }
+    const GPUArray< Scalar >& getAltPressures() const { return m_pressure_alt; }
     //! Swap in pressures
     inline void swapPressures() { m_pressure.swap(m_pressure_alt); }
 
     //! Return energies (alternate array)
-    const GlobalArray< Scalar >& getAltEnergies() const { return m_energy_alt; }
+    const GPUArray< Scalar >& getAltEnergies() const { return m_energy_alt; }
     //! Swap in energys
     inline void swapEnergies() { m_energy.swap(m_energy_alt); }
 
     //! Return auxiliary vector 1 (alternate array)
-    const GlobalArray< Scalar3 >& getAltAuxiliaries1() const { return m_aux1_alt; }
+    const GPUArray< Scalar3 >& getAltAuxiliaries1() const { return m_aux1_alt; }
     //! Swap in auxiliary vector 1
     inline void swapAuxiliaries1() { m_aux1.swap(m_aux1_alt); }
 
     //! Return auxiliary vector 2 (alternate array)
-    const GlobalArray< Scalar3 >& getAltAuxiliaries2() const { return m_aux2_alt; }
+    const GPUArray< Scalar3 >& getAltAuxiliaries2() const { return m_aux2_alt; }
     //! Swap in auxiliary vector 2
     inline void swapAuxiliaries2() { m_aux2.swap(m_aux2_alt); }
 
     //! Return auxiliary vector 3 (alternate array)
-    const GlobalArray< Scalar3 >& getAltAuxiliaries3() const { return m_aux3_alt; }
+    const GPUArray< Scalar3 >& getAltAuxiliaries3() const { return m_aux3_alt; }
     //! Swap in auxiliary vector 3
     inline void swapAuxiliaries3() { m_aux3.swap(m_aux3_alt); }
 
     //! Return auxiliary vector 1 (alternate array)
-    const GlobalArray< Scalar3 >& getAltAuxiliaries4() const { return m_aux4_alt; }
+    const GPUArray< Scalar3 >& getAltAuxiliaries4() const { return m_aux4_alt; }
     //! Swap in auxiliary vector 1
     inline void swapAuxiliaries4() { m_aux4.swap(m_aux4_alt); }
 
     //! Return smoothing length (alternate array)
-    const GlobalArray< Scalar >& getAltSlenghts() const { return m_slength_alt; }
+    const GPUArray< Scalar >& getAltSlenghts() const { return m_slength_alt; }
     //! Swap in  smoothing length
     inline void swapSlengths() { m_slength.swap(m_slength_alt); }
 
     //! Return accelerations (alternate array)
-    const GlobalArray< Scalar3 >& getAltAccelerations() const { return m_accel_alt; }
+    const GPUArray< Scalar3 >& getAltAccelerations() const { return m_accel_alt; }
     //! Swap in accelerations
     inline void swapAccelerations() { m_accel.swap(m_accel_alt); }
 
     //! Return densities, pressures and energies rate of change (alternate array)
-    const GlobalArray< Scalar3 >& getAltDPEdts() const { return m_dpedt_alt; }
+    const GPUArray< Scalar3 >& getAltDPEdts() const { return m_dpedt_alt; }
     //! Swap in densities, pressures and energies rate of change
     inline void swapDPEdts() { m_dpedt.swap(m_dpedt_alt); }
 
     // //! Return charges (alternate array)
-    // const GlobalArray<Scalar>& getAltCharges() const
+    // const GPUArray<Scalar>& getAltCharges() const
     //     {
     //     return m_charge_alt;
     //     }
@@ -888,7 +885,7 @@ class PYBIND11_EXPORT ParticleData
     //     }
 
     // //! Return diameters (alternate array)
-    // const GlobalArray<Scalar>& getAltDiameters() const
+    // const GPUArray<Scalar>& getAltDiameters() const
     //     {
     //     return m_diameter_alt;
     //     }
@@ -900,7 +897,7 @@ class PYBIND11_EXPORT ParticleData
     //     }
 
     //! Return images (alternate array)
-    const GlobalArray<int3>& getAltImages() const
+    const GPUArray<int3>& getAltImages() const
         {
         return m_image_alt;
         }
@@ -912,7 +909,7 @@ class PYBIND11_EXPORT ParticleData
         }
 
     //! Return tags (alternate array)
-    const GlobalArray<unsigned int>& getAltTags() const
+    const GPUArray<unsigned int>& getAltTags() const
         {
         return m_tag_alt;
         }
@@ -924,7 +921,7 @@ class PYBIND11_EXPORT ParticleData
         }
 
     //! Return body ids (alternate array)
-    const GlobalArray<unsigned int>& getAltBodies() const
+    const GPUArray<unsigned int>& getAltBodies() const
         {
         return m_body_alt;
         }
@@ -936,7 +933,7 @@ class PYBIND11_EXPORT ParticleData
         }
 
     //! Get the net force array (alternate array)
-    const GlobalArray<Scalar4>& getAltNetForce() const
+    const GPUArray<Scalar4>& getAltNetForce() const
         {
         return m_net_force_alt;
         }
@@ -948,12 +945,12 @@ class PYBIND11_EXPORT ParticleData
         }
 
     //! Get the net dpe rate of change array (alternate array)
-    const GlobalArray< Scalar4 >& getAltNetRateDPE() const { return m_net_ratedpe_alt; }
+    const GPUArray< Scalar4 >& getAltNetRateDPE() const { return m_net_ratedpe_alt; }
     //! Swap in net dpe rate of change
     inline void swapNetRateDPE() { m_net_ratedpe.swap(m_net_ratedpe_alt); }
 
     // //! Get the net virial array (alternate array)
-    // const GlobalArray<Scalar>& getAltNetVirial() const
+    // const GPUArray<Scalar>& getAltNetVirial() const
     //     {
     //     return m_net_virial_alt;
     //     }
@@ -965,7 +962,7 @@ class PYBIND11_EXPORT ParticleData
     //     }
 
     // //! Get the net torque array (alternate array)
-    // const GlobalArray<Scalar4>& getAltNetTorqueArray() const
+    // const GPUArray<Scalar4>& getAltNetTorqueArray() const
     //     {
     //     return m_net_torque_alt;
     //     }
@@ -977,7 +974,7 @@ class PYBIND11_EXPORT ParticleData
     //     }
 
     // //! Get the orientations (alternate array)
-    // const GlobalArray<Scalar4>& getAltOrientationArray() const
+    // const GPUArray<Scalar4>& getAltOrientationArray() const
     //     {
     //     return m_orientation_alt;
     //     }
@@ -989,13 +986,13 @@ class PYBIND11_EXPORT ParticleData
     //     }
 
     // //! Get the angular momenta (alternate array)
-    // const GlobalArray<Scalar4>& getAltAngularMomentumArray() const
+    // const GPUArray<Scalar4>& getAltAngularMomentumArray() const
     //     {
     //     return m_angmom_alt;
     //     }
 
     // //! Get the moments of inertia array (alternate array)
-    // const GlobalArray<Scalar3>& getAltMomentsOfInertiaArray() const
+    // const GPUArray<Scalar3>& getAltMomentsOfInertiaArray() const
     //     {
     //     return m_inertia_alt;
     //     }
@@ -1083,48 +1080,48 @@ class PYBIND11_EXPORT ParticleData
     void setTypeName(unsigned int type, const std::string& name);
 
     //! Get the net force array
-    const GlobalArray<Scalar4>& getNetForce() const
+    const GPUArray<Scalar4>& getNetForce() const
         {
         return m_net_force;
         }
 
-    const GlobalArray<Scalar4>& getNetRateDPE() const
+    const GPUArray<Scalar4>& getNetRateDPE() const
         {
         return m_net_ratedpe;
         }
 
     // //! Get the net virial array
-    // const GlobalArray<Scalar>& getNetVirial() const
+    // const GPUArray<Scalar>& getNetVirial() const
     //     {
     //     return m_net_virial;
     //     }
 
     // //! Get the net torque array
-    // const GlobalArray<Scalar4>& getNetTorqueArray() const
+    // const GPUArray<Scalar4>& getNetTorqueArray() const
     //     {
     //     return m_net_torque;
     //     }
 
     // //! Get the orientation array
-    // const GlobalArray<Scalar4>& getOrientationArray() const
+    // const GPUArray<Scalar4>& getOrientationArray() const
     //     {
     //     return m_orientation;
     //     }
 
     // //! Get the angular momentum array
-    // const GlobalArray<Scalar4>& getAngularMomentumArray() const
+    // const GPUArray<Scalar4>& getAngularMomentumArray() const
     //     {
     //     return m_angmom;
     //     }
 
     // //! Get the angular momentum array
-    // const GlobalArray<Scalar3>& getMomentsOfInertiaArray() const
+    // const GPUArray<Scalar3>& getMomentsOfInertiaArray() const
     //     {
     //     return m_inertia;
     //     }
 
     //! Get the communication flags array
-    const GlobalArray<unsigned int>& getCommFlags() const
+    const GPUArray<unsigned int>& getCommFlags() const
         {
         return m_comm_flags;
         }
@@ -1452,13 +1449,13 @@ class PYBIND11_EXPORT ParticleData
      *        are invalidated. (call removeAllGhostAtoms() before or after
      *        this method).
      */
-    void removeParticlesGPU(GlobalVector<detail::pdata_element>& out,
-                            GlobalVector<unsigned int>& comm_flags);
+    void removeParticlesGPU(GPUVector<detail::pdata_element>& out,
+                            GPUVector<unsigned int>& comm_flags);
 
     //! Remove particles from local domain and add new particle data (GPU version)
     /*! \param in List of particle data elements to fill the particle data with
      */
-    void addParticlesGPU(const GlobalVector<detail::pdata_element>& in);
+    void addParticlesGPU(const GPUVector<detail::pdata_element>& in);
 #endif // ENABLE_HIP
 
 #endif // ENABLE_MPI
@@ -1498,14 +1495,6 @@ class PYBIND11_EXPORT ParticleData
         m_o_image = make_int3(0, 0, 0);
         }
 
-#ifdef ENABLE_HIP
-    //! Return the load balancing GPU partition
-    const GPUPartition& getGPUPartition() const
-        {
-        return m_gpu_partition;
-        }
-#endif
-
     private:
     std::shared_ptr<const BoxDim> m_box;                 //!< The simulation box
     std::shared_ptr<const BoxDim> m_global_box;          //!< Global simulation box
@@ -1538,30 +1527,30 @@ class PYBIND11_EXPORT ParticleData
     bool m_accel_set;              //!< Flag to tell if acceleration data has been set
 
     // per-particle data
-    GlobalArray<Scalar4> m_pos;        //!< particle positions and types
-    GlobalArray<Scalar4> m_vel;        //!< particle velocities and masses
-    // GlobalArray<Scalar3> m_dpe;               //!< Density, pressure and energy
-    GlobalArray<Scalar> m_density;               //!< Density
-    GlobalArray<Scalar> m_pressure;               //!< Pressure 
-    GlobalArray<Scalar> m_energy;               //!< Energy
-    GlobalArray<Scalar3> m_aux1;              //!< Auxiliary vector field 1
-    GlobalArray<Scalar3> m_aux2;              //!< Auxiliary vector field 2
-    GlobalArray<Scalar3> m_aux3;              //!< Auxiliary vector field 3
-    GlobalArray<Scalar3> m_aux4;              //!< Auxiliary vector field 4
-    GlobalArray<Scalar> m_slength;             //!< Smoothing length
-    GlobalArray<Scalar3> m_accel;             //!< Acceleration
-    GlobalArray<Scalar3> m_dpedt;             //!< Density, pressure and energy rate of change
-    // GlobalArray<Scalar> m_charge;      //!< particle charges
-    // GlobalArray<Scalar> m_diameter;    //!< particle diameters
-    GlobalArray<int3> m_image;         //!< particle images
-    GlobalArray<unsigned int> m_tag;   //!< particle tags
-    GlobalVector<unsigned int> m_rtag; //!< reverse lookup tags
-    GlobalArray<unsigned int> m_body;  //!< rigid body ids
-    // GlobalArray<Scalar4>
+    GPUArray<Scalar4> m_pos;        //!< particle positions and types
+    GPUArray<Scalar4> m_vel;        //!< particle velocities and masses
+    // GPUArray<Scalar3> m_dpe;               //!< Density, pressure and energy
+    GPUArray<Scalar> m_density;               //!< Density
+    GPUArray<Scalar> m_pressure;               //!< Pressure 
+    GPUArray<Scalar> m_energy;               //!< Energy
+    GPUArray<Scalar3> m_aux1;              //!< Auxiliary vector field 1
+    GPUArray<Scalar3> m_aux2;              //!< Auxiliary vector field 2
+    GPUArray<Scalar3> m_aux3;              //!< Auxiliary vector field 3
+    GPUArray<Scalar3> m_aux4;              //!< Auxiliary vector field 4
+    GPUArray<Scalar> m_slength;             //!< Smoothing length
+    GPUArray<Scalar3> m_accel;             //!< Acceleration
+    GPUArray<Scalar3> m_dpedt;             //!< Density, pressure and energy rate of change
+    // GPUArray<Scalar> m_charge;      //!< particle charges
+    // GPUArray<Scalar> m_diameter;    //!< particle diameters
+    GPUArray<int3> m_image;         //!< particle images
+    GPUArray<unsigned int> m_tag;   //!< particle tags
+    GPUVector<unsigned int> m_rtag; //!< reverse lookup tags
+    GPUArray<unsigned int> m_body;  //!< rigid body ids
+    // GPUArray<Scalar4>
     //     m_orientation; //!< Orientation quaternion for each particle (ignored if not anisotropic)
-    // GlobalArray<Scalar4> m_angmom;          //!< Angular momementum quaternion for each particle
-    // GlobalArray<Scalar3> m_inertia;         //!< Principal moments of inertia for each particle
-    GlobalArray<unsigned int> m_comm_flags; //!< Array of communication flags
+    // GPUArray<Scalar4> m_angmom;          //!< Angular momementum quaternion for each particle
+    // GPUArray<Scalar3> m_inertia;         //!< Principal moments of inertia for each particle
+    GPUArray<unsigned int> m_comm_flags; //!< Array of communication flags
 
     std::stack<unsigned int> m_recycled_tags; //!< Global tags of removed particles
     std::set<unsigned int> m_tag_set;         //!< Lookup table for tags by active index
@@ -1578,38 +1567,38 @@ class PYBIND11_EXPORT ParticleData
        data can be written to the alternate arrays, which are then swapped in for
        the real particle data at effectively zero cost.
      */
-    GlobalArray<Scalar4> m_pos_alt;         //!< particle positions and type (swap-in)
-    GlobalArray<Scalar4> m_vel_alt;         //!< particle velocities and masses (swap-in)
-    // GlobalArray<Scalar3> m_dpe_alt;               //!< Density, pressure and energy (swap-in)
-    GlobalArray<Scalar> m_density_alt;               //!< Density (swap-in)
-    GlobalArray<Scalar> m_pressure_alt;               //!< Pressure (swap-in)
-    GlobalArray<Scalar> m_energy_alt;               //!< Energy (swap-in)
-    GlobalArray<Scalar3> m_aux1_alt;              //!< Auxiliary vector field 1 (swap-in)
-    GlobalArray<Scalar3> m_aux2_alt;              //!< Auxiliary vector field 2 (swap-in)
-    GlobalArray<Scalar3> m_aux3_alt;              //!< Auxiliary vector field 3 (swap-in)
-    GlobalArray<Scalar3> m_aux4_alt;              //!< Auxiliary vector field 4 (swap-in)
-    GlobalArray<Scalar> m_slength_alt;             //!< Smoothing length (swap-in)
-    GlobalArray<Scalar3> m_accel_alt;             //!< Acceleration (swap-in)
-    GlobalArray<Scalar3> m_dpedt_alt;             //!< Density, pressure and energy rate of change (swap-in)
-    // GlobalArray<Scalar> m_charge_alt;       //!< particle charges (swap-in)
-    // GlobalArray<Scalar> m_diameter_alt;     //!< particle diameters (swap-in)
-    GlobalArray<int3> m_image_alt;          //!< particle images (swap-in)
-    GlobalArray<unsigned int> m_tag_alt;    //!< particle tags (swap-in)
-    GlobalArray<unsigned int> m_body_alt;   //!< rigid body ids (swap-in)
-    // GlobalArray<Scalar4> m_orientation_alt; //!< orientations (swap-in)
-    // GlobalArray<Scalar4> m_angmom_alt;      //!< angular momenta (swap-in)
-    // GlobalArray<Scalar3>
+    GPUArray<Scalar4> m_pos_alt;         //!< particle positions and type (swap-in)
+    GPUArray<Scalar4> m_vel_alt;         //!< particle velocities and masses (swap-in)
+    // GPUArray<Scalar3> m_dpe_alt;               //!< Density, pressure and energy (swap-in)
+    GPUArray<Scalar> m_density_alt;               //!< Density (swap-in)
+    GPUArray<Scalar> m_pressure_alt;               //!< Pressure (swap-in)
+    GPUArray<Scalar> m_energy_alt;               //!< Energy (swap-in)
+    GPUArray<Scalar3> m_aux1_alt;              //!< Auxiliary vector field 1 (swap-in)
+    GPUArray<Scalar3> m_aux2_alt;              //!< Auxiliary vector field 2 (swap-in)
+    GPUArray<Scalar3> m_aux3_alt;              //!< Auxiliary vector field 3 (swap-in)
+    GPUArray<Scalar3> m_aux4_alt;              //!< Auxiliary vector field 4 (swap-in)
+    GPUArray<Scalar> m_slength_alt;             //!< Smoothing length (swap-in)
+    GPUArray<Scalar3> m_accel_alt;             //!< Acceleration (swap-in)
+    GPUArray<Scalar3> m_dpedt_alt;             //!< Density, pressure and energy rate of change (swap-in)
+    // GPUArray<Scalar> m_charge_alt;       //!< particle charges (swap-in)
+    // GPUArray<Scalar> m_diameter_alt;     //!< particle diameters (swap-in)
+    GPUArray<int3> m_image_alt;          //!< particle images (swap-in)
+    GPUArray<unsigned int> m_tag_alt;    //!< particle tags (swap-in)
+    GPUArray<unsigned int> m_body_alt;   //!< rigid body ids (swap-in)
+    // GPUArray<Scalar4> m_orientation_alt; //!< orientations (swap-in)
+    // GPUArray<Scalar4> m_angmom_alt;      //!< angular momenta (swap-in)
+    // GPUArray<Scalar3>
     //     m_inertia_alt; //!< Principal moments of inertia for each particle (swap-in)
-    GlobalArray<Scalar4> m_net_force_alt;  //!< Net force (swap-in)
-    GlobalArray<Scalar4> m_net_ratedpe_alt;  //!< Net ratedpe (swap-in)
-    // GlobalArray<Scalar> m_net_virial_alt;  //!< Net virial (swap-in)
-    // GlobalArray<Scalar4> m_net_torque_alt; //!< Net torque (swap-in)
+    GPUArray<Scalar4> m_net_force_alt;  //!< Net force (swap-in)
+    GPUArray<Scalar4> m_net_ratedpe_alt;  //!< Net ratedpe (swap-in)
+    // GPUArray<Scalar> m_net_virial_alt;  //!< Net virial (swap-in)
+    // GPUArray<Scalar4> m_net_torque_alt; //!< Net torque (swap-in)
 
-    GlobalArray<Scalar4> m_net_force;  //!< Net force calculated for each particle
-    GlobalArray<Scalar4> m_net_ratedpe;  //!< Net ratedpe calculated for each particle
-    // GlobalArray<Scalar> m_net_virial;  //!< Net virial calculated for each particle (2D GPU array of
+    GPUArray<Scalar4> m_net_force;  //!< Net force calculated for each particle
+    GPUArray<Scalar4> m_net_ratedpe;  //!< Net ratedpe calculated for each particle
+    // GPUArray<Scalar> m_net_virial;  //!< Net virial calculated for each particle (2D GPU array of
     //                                    //!< dimensions 6*number of particles)
-    // GlobalArray<Scalar4> m_net_torque; //!< Net torque calculated for each particle
+    // GPUArray<Scalar4> m_net_torque; //!< Net torque calculated for each particle
 
     // Scalar m_external_virial[6]; //!< External potential contribution to the virial
     Scalar m_external_energy;    //!< External potential energy
@@ -1621,11 +1610,6 @@ class PYBIND11_EXPORT ParticleData
     int3 m_o_image;   //!< Tracks the origin image
 
     bool m_arrays_allocated; //!< True if arrays have been initialized
-
-#ifdef ENABLE_HIP
-    GPUPartition m_gpu_partition; //!< The partition of the local number of particles across GPUs
-    unsigned int m_memory_advice_last_Nmax; //!< Nmax at which memory hints were last set
-#endif
 
     //! Helper function to allocate particle data
     void allocate(unsigned int N);
@@ -1647,9 +1631,6 @@ class PYBIND11_EXPORT ParticleData
      * \param Snapshot to check
      */
     template<class Real> bool inBox(const SnapshotParticleData<Real>& snap);
-
-    //! Update the CUDA memory hints
-    void setGPUAdvice();
     };
 
 /// Allow the usage of Particle Data arrays in Python.

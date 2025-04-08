@@ -1,4 +1,4 @@
-// Copyright (c) 2009-2024 The Regents of the University of Michigan.
+// Copyright (c) 2009-2025 The Regents of the University of Michigan.
 // Part of HOOMD-blue, released under the BSD 3-Clause License.
 
 #include "GSDDumpWriter.h"
@@ -297,7 +297,9 @@ void GSDDumpWriter::flush()
         {
         m_exec_conf->msg->notice(5) << "GSD: flush gsd file " << m_fname << endl;
         int retval = gsd_flush(&m_handle);
+        m_exec_conf->msg->notice(5) << "GSD: flush gsd file done " << m_fname << endl;
         GSDUtils::checkError(retval, m_fname);
+        m_exec_conf->msg->notice(5) << "GSD: flush gsd file Check error success " << m_fname << endl;
         }
     }
 
@@ -572,8 +574,8 @@ void GSDDumpWriter::writeFrameHeader(const GSDDumpWriter::GSDFrame& frame)
 
     if (m_nframes == 0 || m_dynamic[gsd_flag::particles_N])
         {
+        m_exec_conf->msg->notice(10) << "GSD: writing particles/N" << endl;
         uint32_t N = m_group->getNumMembersGlobal();
-        m_exec_conf->msg->notice(10) << "GSD: writing particles/N: " << N << endl;
         retval = gsd_write_chunk(&m_handle, "particles/N", GSD_TYPE_UINT32, 1, 1, 0, (void*)&N);
         GSDUtils::checkError(retval, m_fname);
         }

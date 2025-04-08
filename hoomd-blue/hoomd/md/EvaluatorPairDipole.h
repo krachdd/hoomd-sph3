@@ -1,4 +1,4 @@
-// Copyright (c) 2009-2024 The Regents of the University of Michigan.
+// Copyright (c) 2009-2025 The Regents of the University of Michigan.
 // Part of HOOMD-blue, released under the BSD 3-Clause License.
 
 // $Id$
@@ -323,7 +323,10 @@ class EvaluatorPairDipole
         {
         return "dipole";
         }
-
+    static std::string getShapeParamName()
+        {
+        return "Mu";
+        }
     std::string getShapeSpec() const
         {
         throw std::runtime_error("Shape definition not supported for this pair potential.");

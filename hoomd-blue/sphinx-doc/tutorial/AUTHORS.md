@@ -6,3 +6,6 @@
 * Tobias Dwyer - University of Michigan
 * Brandon Butler - University of Michigan
 * Tim Moore - University of Michigan
+* Jinny Cha - Auburn University
+* Michael P. Howard - Auburn University
+* C. Levi Petix - Auburn University

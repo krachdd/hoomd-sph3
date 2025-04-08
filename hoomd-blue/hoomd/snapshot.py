@@ -1,4 +1,4 @@
-# Copyright (c) 2009-2024 The Regents of the University of Michigan.
+# Copyright (c) 2009-2025 The Regents of the University of Michigan.
 # Part of HOOMD-blue, released under the BSD 3-Clause License.
 
 """Implement Snapshot.
@@ -13,11 +13,9 @@
 
 import hoomd
 from hoomd import _hoomd
-import warnings
 
 
 class _ConfigurationData:
-
     def __init__(self, cpp_obj):
         self._cpp_obj = cpp_obj
 
@@ -29,8 +27,14 @@ class _ConfigurationData:
     def box(self):
         b = self._cpp_obj._global_box
         L = b.getL()
-        return (L.x, L.y, L.z, b.getTiltFactorXY(), b.getTiltFactorXZ(),
-                b.getTiltFactorYZ())
+        return (
+            L.x,
+            L.y,
+            L.z,
+            b.getTiltFactorXY(),
+            b.getTiltFactorXZ(),
+            b.getTiltFactorYZ(),
+        )
 
     @box.setter
     def box(self, box):
@@ -39,19 +43,20 @@ class _ConfigurationData:
         except Exception:
             raise ValueError(
                 f"{box} is not convertible to a hoomd.Box object using "
-                "hoomd.Box.from_box.")
+                "hoomd.Box.from_box."
+            )
         self._cpp_obj._dimensions = new_box.dimensions
         self._cpp_obj._global_box = new_box._cpp_obj
 
 
 class Snapshot:
-    """Self-contained copy of the simulation `State`.
+    """Self-contained copy of the simulation :py:class:`State`.
 
     Args:
         communicator (Communicator): MPI communicator to be used when accessing
             the snapshot.
 
-    See `State` and `gsd.hoomd.Frame` for detailed documentation on the
+    See :py:class:`State` and `gsd.hoomd.Frame` for detailed documentation on the
     components of `Snapshot`.
 
     Note:
@@ -68,7 +73,7 @@ class Snapshot:
                 pos = snapshot.particles.position[0]
 
     See Also:
-        `State`
+        :py:class:`State`
 
         `Simulation.create_state_from_snapshot`
 
@@ -92,6 +97,7 @@ class Snapshot:
             self.communicator = hoomd.communicator.Communicator()
         else:
             self.communicator = communicator
+
         self._cpp_obj = _hoomd.SnapshotSystemData_double()
 
     @property
@@ -210,13 +216,13 @@ class Snapshot:
             if snapshot.communicator.rank == 0:
                 snapshot.bonds.N = 2
                 snapshot.bonds.group[:] = [[0, 1], [2, 3]]
-                snapshot.bonds.types = ['A-B']
+                snapshot.bonds.types = ["A-B"]
                 snapshot.bonds.typeid[:] = [0, 0]
         """
         if self.communicator.rank == 0:
             return self._cpp_obj.bonds
         else:
-            raise RuntimeError('Snapshot data is only present on rank 0')
+            raise RuntimeError("Snapshot data is only present on rank 0")
 
     # @property
     # def angles(self):
@@ -471,33 +477,33 @@ class Snapshot:
 
             gsd_snap.validate()
 
-            set_properties(snap.particles, gsd_snap.particles, ('N', 'types'),
+            set_properties(snap.particles, gsd_snap.particles, ("N", "types"),
                            (
-                            # 'angmom', 
-                            'body', 
-                            # 'charge', 'diameter', 
-                            'image',
-                            'mass', 
-                            # 'moment_inertia', 'orientation', 
-                            'position',
-                            'typeid', 'velocity',
-                            'slength', 'density', 'pressure',  
-                            'energy', 'auxiliary1', 
-                            'auxiliary2', 'auxiliary3', 'auxiliary4', 
+                            # "angmom", 
+                            "body", 
+                            # "charge", "diameter", 
+                            "image",
+                            "mass", 
+                            # "moment_inertia", "orientation", 
+                            "position",
+                            "typeid", "velocity",
+                            "slength", "density", "pressure",  
+                            "energy", "auxiliary1", 
+                            "auxiliary2", "auxiliary3", "auxiliary4", 
                             ))
 
             # for section in (
-            #     # 'angles', 
-            #     'bonds'
-            #     # 'dihedrals', 'impropers',
-            #                 # 'pairs'
+            #     # "angles", 
+            #     "bonds"
+            #     # "dihedrals", "impropers",
+            #                 # "pairs"
             #                 ):
             #     set_properties(getattr(snap,
             #                            section), getattr(gsd_snap, section),
-            #                    ('N', 'types'), ('group', 'typeid'))
+            #                    ("N", "types"), ("group", "typeid"))
 
-            set_properties(snap.constraints, gsd_snap.constraints, ('N',),
-                           ('group', 'value'))
+            set_properties(snap.constraints, gsd_snap.constraints, ("N",),
+                           ("group", "value"))
 
             # Set box attribute
             if gsd_snap.configuration.box is not None:
@@ -508,18 +514,6 @@ class Snapshot:
 
         snap._broadcast_box()
         return snap
-
-    @classmethod
-    def from_gsd_snapshot(cls, gsd_snap, communicator):
-        """Constructs a `hoomd.Snapshot` from a ``gsd.hoomd.Snapshot`` object.
-
-        .. deprecated:: 4.0.0
-
-            Use `from_gsd_frame`.
-        """
-        warnings.warn("gsd.hoomd.Snapshot is deprecated, use gsd.hoomd.Frame",
-                      FutureWarning)
-        return cls.from_gsd_frame(gsd_snap, communicator)
 
     ### PGSD ---
     @classmethod
@@ -563,33 +557,33 @@ class Snapshot:
 
         pgsd_snap.validate()
 
-        set_properties(snap.particles, pgsd_snap.particles, ('N', 'types'),
+        set_properties(snap.particles, pgsd_snap.particles, ("N", "types"),
                        (
-                        # 'angmom', 
-                        'body', 
-                        # 'charge', 'diameter', 
-                        'image',
-                        'mass', 
-                        # 'moment_inertia', 'orientation', 
-                        'position',
-                        'typeid', 'velocity',
-                        'slength', 'density', 'pressure',  
-                        'energy', 'auxiliary1', 
-                        'auxiliary2', 'auxiliary3', 'auxiliary4', 
+                        # "angmom", 
+                        "body", 
+                        # "charge", "diameter", 
+                        "image",
+                        "mass", 
+                        # "moment_inertia", "orientation", 
+                        "position",
+                        "typeid", "velocity",
+                        "slength", "density", "pressure",  
+                        "energy", "auxiliary1", 
+                        "auxiliary2", "auxiliary3", "auxiliary4", 
                         ))
 
         # for section in (
-        #     # 'angles', 
-        #     'bonds'
-        #     # 'dihedrals', 'impropers',
-        #                 # 'pairs'
+        #     # "angles", 
+        #     "bonds"
+        #     # "dihedrals", "impropers",
+        #                 # "pairs"
         #                 ):
         #     set_properties(getattr(snap,
         #                            section), getattr(gsd_snap, section),
-        #                    ('N', 'types'), ('group', 'typeid'))
+        #                    ("N", "types"), ("group", "typeid"))
 
-        set_properties(snap.constraints, pgsd_snap.constraints, ('N',),
-                       ('group', 'value'))
+        set_properties(snap.constraints, pgsd_snap.constraints, ("N",),
+                       ("group", "value"))
 
 
         # Set box attribute

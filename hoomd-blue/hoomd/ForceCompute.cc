@@ -1,4 +1,4 @@
-// Copyright (c) 2009-2024 The Regents of the University of Michigan.
+// Copyright (c) 2009-2025 The Regents of the University of Michigan.
 // Part of HOOMD-blue, released under the BSD 3-Clause License.
 
 /*! \file ForceCompute.cc
@@ -33,19 +33,15 @@ ForceCompute::ForceCompute(std::shared_ptr<SystemDefinition> sysdef)
 
     // allocate data on the host
     unsigned int max_num_particles = m_pdata->getMaxN();
-    GlobalArray<Scalar4> force(max_num_particles, m_exec_conf);
-    GlobalArray<Scalar4> ratedpe(max_num_particles, m_exec_conf);
-    // GlobalArray<Scalar> virial(max_num_particles, 6, m_exec_conf);
-    // GlobalArray<Scalar4> torque(max_num_particles, m_exec_conf);
+    GPUArray<Scalar4> force(max_num_particles, m_exec_conf);
+    GPUArray<Scalar4> ratedpe(max_num_particles, m_exec_conf);
+    // GPUArray<Scalar> virial(max_num_particles, 6, m_exec_conf);
+    // GPUArray<Scalar4> torque(max_num_particles, m_exec_conf);
     m_force.swap(force);
-    TAG_ALLOCATION(m_force);
     m_ratedpe.swap(ratedpe);
-    TAG_ALLOCATION(m_ratedpe);
 
     // m_virial.swap(virial);
-    // TAG_ALLOCATION(m_virial);
     // m_torque.swap(torque);
-    // TAG_ALLOCATION(m_torque);
 
 
 
@@ -54,40 +50,11 @@ ForceCompute::ForceCompute(std::shared_ptr<SystemDefinition> sysdef)
         ArrayHandle<Scalar4> h_ratedpe(m_ratedpe, access_location::host, access_mode::overwrite);
         // ArrayHandle<Scalar4> h_torque(m_torque, access_location::host, access_mode::overwrite);
         // ArrayHandle<Scalar> h_virial(m_virial, access_location::host, access_mode::overwrite);
-        memset(h_force.data, 0, sizeof(Scalar4) * m_force.getNumElements());
-        memset(h_ratedpe.data, 0, sizeof(Scalar4) * m_ratedpe.getNumElements());
+        m_force.zeroFill();
+        m_ratedpe.zeroFill();
         // memset(h_torque.data, 0, sizeof(Scalar4) * m_torque.getNumElements());
         // memset(h_virial.data, 0, sizeof(Scalar) * m_virial.getNumElements());
         }
-
-#if defined(ENABLE_HIP) && defined(__HIP_PLATFORM_NVCC__)
-    if (m_exec_conf->isCUDAEnabled() && m_exec_conf->allConcurrentManagedAccess())
-        {
-        auto gpu_map = m_exec_conf->getGPUIds();
-
-        // set up GPU memory mappings
-        for (unsigned int idev = 0; idev < m_exec_conf->getNumActiveGPUs(); ++idev)
-            {
-            cudaMemAdvise(m_force.get(),
-                          sizeof(Scalar4) * m_force.getNumElements(),
-                          cudaMemAdviseSetAccessedBy,
-                          gpu_map[idev]);
-            cudaMemAdvise(m_ratedpe.get(),
-                          sizeof(Scalar4) * m_ratedpe.getNumElements(),
-                          cudaMemAdviseSetAccessedBy,
-                          gpu_map[idev]);
-            // cudaMemAdvise(m_virial.get(),
-            //               sizeof(Scalar) * m_virial.getNumElements(),
-            //               cudaMemAdviseSetAccessedBy,
-            //               gpu_map[idev]);
-            // cudaMemAdvise(m_torque.get(),
-            //               sizeof(Scalar4) * m_torque.getNumElements(),
-            //               cudaMemAdviseSetAccessedBy,
-            //               gpu_map[idev]);
-            }
-        CHECK_CUDA_ERROR();
-        }
-#endif
 
     // m_virial_pitch = m_virial.getPitch();
 
@@ -104,9 +71,6 @@ ForceCompute::ForceCompute(std::shared_ptr<SystemDefinition> sysdef)
     //     m_external_virial[i] = Scalar(0.0);
 
     m_external_energy = Scalar(0.0);
-
-    // initialize GPU memory hints
-    updateGPUAdvice();
 
     // start with no flags computed
     m_computed_flags.reset();
@@ -133,95 +97,14 @@ void ForceCompute::reallocate()
         ArrayHandle<Scalar4> h_ratedpe(m_ratedpe, access_location::host, access_mode::overwrite);
         // ArrayHandle<Scalar4> h_torque(m_torque, access_location::host, access_mode::overwrite);
         // ArrayHandle<Scalar> h_virial(m_virial, access_location::host, access_mode::overwrite);
-        memset(h_force.data, 0, sizeof(Scalar4) * m_force.getNumElements());
-        memset(h_ratedpe.data, 0, sizeof(Scalar4) * m_ratedpe.getNumElements());
+        m_force.zeroFill();
+        m_ratedpe.zeroFill();
         // memset(h_torque.data, 0, sizeof(Scalar4) * m_torque.getNumElements());
         // memset(h_virial.data, 0, sizeof(Scalar) * m_virial.getNumElements());
         }
 
     // the pitch of the virial array may have changed
     // m_virial_pitch = m_virial.getPitch();
-
-    // update memory hints
-    updateGPUAdvice();
-    }
-
-void ForceCompute::updateGPUAdvice()
-    {
-#if defined(ENABLE_HIP) && defined(__HIP_PLATFORM_NVCC__)
-    if (m_exec_conf->isCUDAEnabled() && m_exec_conf->allConcurrentManagedAccess())
-        {
-        auto gpu_map = m_exec_conf->getGPUIds();
-
-        // split preferred location of particle data across GPUs
-        const GPUPartition& gpu_partition = m_pdata->getGPUPartition();
-
-        for (unsigned int idev = 0; idev < m_exec_conf->getNumActiveGPUs(); ++idev)
-            {
-            // set preferred location
-            auto range = gpu_partition.getRange(idev);
-            unsigned int nelem = range.second - range.first;
-
-            if (!nelem)
-                continue;
-
-            cudaMemAdvise(m_force.get() + range.first,
-                          sizeof(Scalar4) * nelem,
-                          cudaMemAdviseSetPreferredLocation,
-                          gpu_map[idev]);
-            cudaMemAdvise(m_ratedpe.get() + range.first,
-                          sizeof(Scalar4) * nelem,
-                          cudaMemAdviseSetPreferredLocation,
-                          gpu_map[idev]);
-            // for (unsigned int i = 0; i < 6; ++i)
-            //     cudaMemAdvise(m_virial.get() + i * m_virial.getPitch() + range.first,
-            //                   sizeof(Scalar) * nelem,
-            //                   cudaMemAdviseSetPreferredLocation,
-            //                   gpu_map[idev]);
-            // cudaMemAdvise(m_torque.get() + range.first,
-            //               sizeof(Scalar4) * nelem,
-            //               cudaMemAdviseSetPreferredLocation,
-            //               gpu_map[idev]);
-
-            cudaMemPrefetchAsync(m_force.get() + range.first,
-                                 sizeof(Scalar4) * nelem,
-                                 gpu_map[idev]);
-            cudaMemPrefetchAsync(m_ratedpe.get() + range.first,
-                                 sizeof(Scalar4) * nelem,
-                                 gpu_map[idev]);
-            // for (unsigned int i = 0; i < 6; ++i)
-            //     cudaMemPrefetchAsync(m_virial.get() + i * m_virial.getPitch() + range.first,
-            //                          sizeof(Scalar) * nelem,
-            //                          gpu_map[idev]);
-            // cudaMemPrefetchAsync(m_torque.get() + range.first,
-            //                      sizeof(Scalar4) * nelem,
-            //                      gpu_map[idev]);
-            }
-        CHECK_CUDA_ERROR();
-
-        // set up GPU memory mappings
-        for (unsigned int idev = 0; idev < m_exec_conf->getNumActiveGPUs(); ++idev)
-            {
-            cudaMemAdvise(m_force.get(),
-                          sizeof(Scalar4) * m_force.getNumElements(),
-                          cudaMemAdviseSetAccessedBy,
-                          gpu_map[idev]);
-            cudaMemAdvise(m_ratedpe.get(),
-                          sizeof(Scalar4) * m_force.getNumElements(),
-                          cudaMemAdviseSetAccessedBy,
-                          gpu_map[idev]);
-            // cudaMemAdvise(m_virial.get(),
-            //               sizeof(Scalar) * m_virial.getNumElements(),
-            //               cudaMemAdviseSetAccessedBy,
-            //               gpu_map[idev]);
-            // cudaMemAdvise(m_torque.get(),
-            //               sizeof(Scalar4) * m_torque.getNumElements(),
-            //               cudaMemAdviseSetAccessedBy,
-            //               gpu_map[idev]);
-            }
-        CHECK_CUDA_ERROR();
-        }
-#endif
     }
 
 /*! Frees allocated memory
@@ -372,12 +255,12 @@ pybind11::object ForceCompute::getEnergiesPython()
     std::vector<double> global_energy(dims[0]);
 
     // sort energies by particle tag
+    sortLocalTags();
     std::vector<double> local_energy;
     local_energy.reserve(m_pdata->getN());
     ArrayHandle<unsigned int> h_tag(m_pdata->getTags(), access_location::host, access_mode::read);
     ArrayHandle<unsigned int> h_rtag(m_pdata->getRTags(), access_location::host, access_mode::read);
     ArrayHandle<Scalar4> h_force(m_force, access_location::host, access_mode::read);
-    sortLocalTags();
     for (unsigned int i = 0; i < m_pdata->getN(); i++)
         {
         local_energy.push_back(h_force.data[h_rtag.data[m_local_tag[i]]].w);
@@ -424,11 +307,11 @@ pybind11::object ForceCompute::getForcesPython()
     std::vector<vec3<double>> global_force(dims[0]);
 
     // sort forces by particle tag
+    sortLocalTags();
     std::vector<vec3<double>> local_force(m_pdata->getN());
     ArrayHandle<unsigned int> h_tag(m_pdata->getTags(), access_location::host, access_mode::read);
     ArrayHandle<unsigned int> h_rtag(m_pdata->getRTags(), access_location::host, access_mode::read);
     ArrayHandle<Scalar4> h_force(m_force, access_location::host, access_mode::read);
-    sortLocalTags();
     for (unsigned int i = 0; i < m_pdata->getN(); i++)
         {
         local_force[i].x = h_force.data[h_rtag.data[m_local_tag[i]]].x;
@@ -541,11 +424,11 @@ pybind11::object ForceCompute::getVirialsPython()
     std::vector<hoomd::detail::vec6<double>> global_virial(dims[0]);
 
     // sort virials by particle tag
+    sortLocalTags();
     std::vector<hoomd::detail::vec6<double>> local_virial(m_pdata->getN());
     ArrayHandle<unsigned int> h_tag(m_pdata->getTags(), access_location::host, access_mode::read);
     ArrayHandle<unsigned int> h_rtag(m_pdata->getRTags(), access_location::host, access_mode::read);
     ArrayHandle<Scalar> h_virial(m_virial, access_location::host, access_mode::read);
-    sortLocalTags();
     for (unsigned int i = 0; i < m_pdata->getN(); i++)
         {
         local_virial[i].xx = h_virial.data[m_virial_pitch * 0 + h_rtag.data[m_local_tag[i]]];

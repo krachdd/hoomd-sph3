@@ -1,4 +1,4 @@
-# Copyright (c) 2009-2024 The Regents of the University of Michigan.
+# Copyright (c) 2009-2025 The Regents of the University of Michigan.
 # Part of HOOMD-blue, released under the BSD 3-Clause License.
 
 """Define the Type filter."""
@@ -19,8 +19,16 @@ class Type(ParticleFilter, ParticleFilterType):
 
     .. code-block:: python
 
-        type_A_B = hoomd.filter.Type(['A', 'B'])
+        type_A_B = hoomd.filter.Type(["A", "B"])
+
+    {inherited}
+
+    ----------
+
+    **Members defined in** `Type`:
     """
+
+    __doc__ = __doc__.replace("{inherited}", ParticleFilter._doc_inherited)
 
     def __init__(self, types):
         ParticleFilter.__init__(self)

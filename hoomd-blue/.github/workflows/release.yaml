@@ -1,0 +1,95 @@
+name: GitHub Release
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+on:
+  pull_request:
+
+  push:
+    branches:
+    - "trunk-*"
+    tags:
+      - "v*"
+
+  workflow_dispatch:
+
+
+env:
+  name: hoomd
+
+defaults:
+  run:
+    shell: bash
+
+
+jobs:
+  release:
+    name: Build release tarball
+    runs-on: ubuntu-latest
+
+    steps:
+    - name: Checkout
+      uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
+      with:
+        fetch-depth: 0
+        submodules: true
+        path: code
+
+    - name: Install tools
+      run: sudo apt-get install pcregrep pandoc
+
+    - name: Determine last tag via git describe
+      if: ${{ ! startsWith(github.ref, 'refs/tags/v') }}
+      run: echo "tag=$(git describe --abbrev=0)" >> $GITHUB_ENV
+      working-directory: code
+
+    # git describe does not return the current tag in tag pushes on GitHub Actions, use GITHUB_REF instead
+    - name: Determine tag from GITHUB_REF
+      if:  startsWith(github.ref, 'refs/tags/v')
+      run: echo "tag=$(echo ${GITHUB_REF} | sed  -e 's/refs\/tags\///g')" >> $GITHUB_ENV
+
+    - name: Write version change log
+      run: .github/workflows/make-changelog-md.sh  ${tag:1} | tee ${GITHUB_WORKSPACE}/changelog.md
+      working-directory: code
+
+    - name: Copy source
+      run: cp -R code ${name}-${tag:1}
+
+    - name: Remove .git
+      run: rm -rf ${name}-${tag:1}/.git && ls -laR ${name}-${tag:1}
+
+    - name: Tar source
+      run: tar -cvzf ${name}-${tag:1}.tar.gz ${name}-${tag:1}
+
+    - name: Tar source
+      run: tar -cvJf ${name}-${tag:1}.tar.xz ${name}-${tag:1}
+
+    - name: Upload release files
+      uses: actions/upload-artifact@4cec3d8aa04e39d1a68397de0c4cd6fb9dce8ec1 # v4.6.1
+      with:
+        name: release
+        path: |
+          *.tar.gz
+          changelog.md
+
+  publish:
+    name: Publish [GitHub]
+    needs: [release]
+    runs-on: ubuntu-latest
+
+    steps:
+    - name: Download artifacts
+      uses: actions/download-artifact@cc203385981b70ca67e1cc392babf9cc229d5806 # v4.1.9
+      with:
+        name: release
+
+    - name: Create release
+      uses: softprops/action-gh-release@c95fe1489396fe8a9eb87c0abf8aa5b2ef267fda # v2.2.1
+      if: startsWith(github.ref, 'refs/tags/v')
+      with:
+        files: "*.tar.*"
+        body_path: changelog.md
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

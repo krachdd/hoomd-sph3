@@ -1,4 +1,4 @@
-# Copyright (c) 2009-2024 The Regents of the University of Michigan.
+# Copyright (c) 2009-2025 The Regents of the University of Michigan.
 # Part of HOOMD-blue, released under the BSD 3-Clause License.
 
 """Write PGSD last :math:`N` frames at user direction."""
@@ -33,6 +33,10 @@ class Burst(PGSD):
         write_at_start (bool): When ``True`` **and** the file does not exist or
             has 0 frames: write one frame with the current state of the system
             when `hoomd.Simulation.run` is called. Defaults to ``False``.
+        clear_whole_buffer_after_dump (bool): When ``True`` the buffer is
+            emptied after calling `dump` each time. When ``False``, `dump`
+            removes frames from the buffer until the ``end`` index. Defaults
+            to ``True``.
 
     Warning:
         `Burst` errors when attempting to create a file or writing to one with
@@ -62,6 +66,15 @@ class Burst(PGSD):
         write_at_start (bool): When ``True`` **and** the file does not exist or
             has 0 frames: write one frame with the current state of the system
             when `hoomd.Simulation.run` is called.
+        clear_whole_buffer_after_dump (bool): When ``True`` the buffer is
+            emptied after calling `dump` each time. When ``False``, `dump`
+            removes frames from the buffer until the ``end`` index.
+
+            .. rubric:: Example:
+
+            .. code-block:: python
+
+                    burst.clear_buffer_after_dump = False.
     """
 
     def __init__(self,
@@ -72,7 +85,8 @@ class Burst(PGSD):
                  dynamic=None,
                  logger=None,
                  max_burst_size=-1,
-                 write_at_start=False):
+                 write_at_start=False,
+                 clear_whole_buffer_after_dump=True):
         super().__init__(trigger=trigger,
                          filename=filename,
                          filter=filter,
@@ -84,7 +98,8 @@ class Burst(PGSD):
             ParameterDict(max_burst_size=int, write_at_start=bool))
         self._param_dict.update({
             "max_burst_size": max_burst_size,
-            "write_at_start": write_at_start
+            "write_at_start": write_at_start,
+            "clear_whole_buffer_after_dump": clear_whole_buffer_after_dump
         })
 
     def _attach_hook(self):
@@ -94,16 +109,22 @@ class Burst(PGSD):
                                               sim.state._get_group(self.filter),
                                               self.logger, self.max_burst_size,
                                               self.mode, self.write_at_start,
+                                              self.clear_whole_buffer_after_dump,
                                               sim.timestep)
 
-    def dump(self):
-        """Write all currently stored frames to the file and empties the buffer.
+    def dump(self, start=0, end=-1):
+        """Write all currently stored frames in range to the file and empties the buffer.
 
         This method alllows for custom writing of frames at user specified
         conditions.
+
+        Args:
+            start (int): The first frame to write. Defaults to 0.
+            end (int): The last frame to write.
+                Defaults to -1 (last frame).
         """
         if self._attached:
-            self._cpp_obj.dump()
+            self._cpp_obj.dump(start, end)
 
     def __len__(self):
         """Get the current length of the internal frame buffer."""

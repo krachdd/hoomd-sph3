@@ -4,9 +4,9 @@ set(TEST_LIST
     test_cell_list
     test_cell_list_stencil
     test_gpu_array
-    test_global_array
     test_gridshift_correct
     test_index1d
+    test_math
     test_messenger
     test_pdata
     test_quat
@@ -20,16 +20,10 @@ set(TEST_LIST
     random_numbers_test
     )
 
-if (HIP_PLATFORM STREQUAL "nvcc")
-    set(add TEST_LIST test_gpu_polymorph)
-endif()
-
 if (ENABLE_HIP)
 list(APPEND TEST_LIST
      test_warp_tools
      )
-set(SYNC_TEST_LIST
-    test_warp_tools)
 endif (ENABLE_HIP)
 
 if(ENABLE_MPI)
@@ -82,17 +76,3 @@ foreach (CUR_TEST ${MPI_TEST_LIST})
              ${NProc_${CUR_TEST}} ${MPIEXEC_POSTFLAGS}
              $<TARGET_FILE:${CUR_TEST}>)
 endforeach(CUR_TEST)
-
-# run tests under cuda-memcheck --tool synccheck
-if(ENABLE_HIP AND HIP_PLATFORM STREQUAL "nvcc")
-
-foreach (CUR_TEST ${SYNC_TEST_LIST})
-    if (ENABLE_MPI)
-        add_test(NAME ${CUR_TEST}-synccheck
-                 COMMAND ${MPIEXEC} ${MPIEXEC_NUMPROC_FLAG} 1
-                         ${CUDA_MEMCHECK_EXECUTABLE} --error-exitcode 123 --tool synccheck $<TARGET_FILE:${CUR_TEST}>)
-    else()
-        add_test(NAME ${CUR_TEST}-synccheck COMMAND ${CUDA_MEMCHECK_EXECUTABLE} --error-exitcode 123 --tool synccheck $<TARGET_FILE:${CUR_TEST}>)
-    endif()
-endforeach (CUR_TEST)
-endif()

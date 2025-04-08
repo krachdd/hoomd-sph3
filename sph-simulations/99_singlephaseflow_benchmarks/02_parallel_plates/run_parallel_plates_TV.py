@@ -51,7 +51,8 @@ mass                = rho0 * specific_volume                    # [ kg ]
 fx                  = 0.1                                       # [ m/s^2 ]
 viscosity           = 1e-03                                     # [ Pa s ]
 drho                = 0.01                                      # [ % ]
-backpress           = 0.01                                      # [ - ]
+backpress           = 0.0                                       # [ - ]
+tvpress             = 1.0                                       # [ - ]
 refvel              = fx * lref**2 * 0.25 / (viscosity/rho0)    # [ m/s ]
 
 
@@ -74,8 +75,8 @@ if SHOW_DECOMP_INFO:
 nlist = hoomd.nsearch.nlist.Cell(buffer = rcut*0.05, rebuild_check_delay = 1, kappa = kappa)
 
 # Equation of State
-eos = hoomd.sph.eos.Tait()
-eos.set_params( rho0, backpress )
+eos = hoomd.sph.eos.Linear()
+eos.set_params( rho0, backpress, tvpress )
 
 # Define groups/filters
 filterfluid  = hoomd.filter.Type(['F']) # is zero
@@ -106,7 +107,7 @@ model.beta = 0.0
 model.densitydiffusion = False
 model.shepardrenormanlization = False
 
-maximum_smoothing_length = sph_helper.set_max_sl(sim, device, snapshot, model)
+maximum_smoothing_length = sph_helper.set_max_sl(sim, device, model)
 
 c, c_condition = model.compute_speedofsound(LREF = lref, UREF = refvel, 
                                             DX = dx, DRHO = drho, H = maximum_smoothing_length, 

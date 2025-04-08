@@ -1,4 +1,4 @@
-// Copyright (c) 2009-2024 The Regents of the University of Michigan.
+// Copyright (c) 2009-2025 The Regents of the University of Michigan.
 // Part of HOOMD-blue, released under the BSD 3-Clause License.
 
 #include <pybind11/pybind11.h>
@@ -66,11 +66,21 @@ void export_PotentialPairTWF(pybind11::module& m);
 void export_PotentialPairLJGauss(pybind11::module& m);
 void export_PotentialPairForceShiftedLJ(pybind11::module& m);
 void export_PotentialPairTable(pybind11::module& m);
+void export_PotentialPairWangFrenkel(pybind11::module& m);
 
 void export_AnisoPotentialPairALJ2D(pybind11::module& m);
 void export_AnisoPotentialPairALJ3D(pybind11::module& m);
 void export_AnisoPotentialPairDipole(pybind11::module& m);
 void export_AnisoPotentialPairGB(pybind11::module& m);
+void export_AnisoPotentialPairPatchyExpandedGaussian(pybind11::module& m);
+;
+void export_AnisoPotentialPairPatchyExpandedLJ(pybind11::module& m);
+void export_AnisoPotentialPairPatchyExpandedMie(pybind11::module& m);
+void export_AnisoPotentialPairPatchyGauss(pybind11::module& m);
+void export_AnisoPotentialPairPatchyLJ(pybind11::module& m);
+void export_AnisoPotentialPairPatchyMie(pybind11::module& m);
+void export_AnisoPotentialPairPatchyYukawa(pybind11::module& m);
+void export_AnisoPotentialPairPatchyTable(pybind11::module& m);
 
 void export_PotentialBondHarmonic(pybind11::module& m);
 void export_PotentialBondFENE(pybind11::module& m);
@@ -79,6 +89,12 @@ void export_PotentialBondTether(pybind11::module& m);
 void export_PotentialMeshBondHarmonic(pybind11::module& m);
 void export_PotentialMeshBondFENE(pybind11::module& m);
 void export_PotentialMeshBondTether(pybind11::module& m);
+
+void export_BendingRigidityMeshForceCompute(pybind11::module& m);
+void export_HelfrichMeshForceCompute(pybind11::module& m);
+void export_VolumeConservationMeshForceCompute(pybind11::module& m);
+void export_AreaConservationMeshForceCompute(pybind11::module& m);
+void export_TriangleAreaConservationMeshForceCompute(pybind11::module& m);
 
 void export_PotentialSpecialPairLJ(pybind11::module& m);
 void export_PotentialSpecialPairCoulomb(pybind11::module& m);
@@ -206,6 +222,7 @@ void export_PotentialPairDLVOGPU(pybind11::module& m);
 void export_PotentialPairFourierGPU(pybind11::module& m);
 void export_PotentialPairOPPGPU(pybind11::module& m);
 void export_PotentialPairTWFGPU(pybind11::module& m);
+void export_PotentialPairWangFrenkelGPU(pybind11::module&);
 void export_PotentialPairLJGaussGPU(pybind11::module& m);
 void export_PotentialPairForceShiftedLJGPU(pybind11::module& m);
 void export_PotentialPairTableGPU(pybind11::module& m);
@@ -216,6 +233,15 @@ void export_AnisoPotentialPairALJ3DGPU(pybind11::module& m);
 void export_AnisoPotentialPairDipoleGPU(pybind11::module& m);
 void export_AnisoPotentialPairGBGPU(pybind11::module& m);
 
+void export_AnisoPotentialPairPatchyExpandedGaussianGPU(pybind11::module& m);
+void export_AnisoPotentialPairPatchyExpandedLJGPU(pybind11::module& m);
+void export_AnisoPotentialPairPatchyExpandedMieGPU(pybind11::module& m);
+void export_AnisoPotentialPairPatchyGaussGPU(pybind11::module& m);
+void export_AnisoPotentialPairPatchyLJGPU(pybind11::module& m);
+void export_AnisoPotentialPairPatchyMieGPU(pybind11::module& m);
+void export_AnisoPotentialPairPatchyYukawaGPU(pybind11::module& m);
+void export_AnisoPotentialPairPatchyTableGPU(pybind11::module& m);
+
 void export_PotentialBondHarmonicGPU(pybind11::module& m);
 void export_PotentialBondFENEGPU(pybind11::module& m);
 void export_PotentialBondTetherGPU(pybind11::module& m);
@@ -223,6 +249,12 @@ void export_PotentialBondTetherGPU(pybind11::module& m);
 void export_PotentialMeshBondHarmonicGPU(pybind11::module& m);
 void export_PotentialMeshBondFENEGPU(pybind11::module& m);
 void export_PotentialMeshBondTetherGPU(pybind11::module& m);
+
+void export_BendingRigidityMeshForceComputeGPU(pybind11::module& m);
+void export_HelfrichMeshForceComputeGPU(pybind11::module& m);
+void export_VolumeConservationMeshForceComputeGPU(pybind11::module& m);
+void export_AreaConservationMeshForceComputeGPU(pybind11::module& m);
+void export_TriangleAreaConservationMeshForceComputeGPU(pybind11::module& m);
 
 void export_PotentialSpecialPairLJGPU(pybind11::module& m);
 void export_PotentialSpecialPairCoulombGPU(pybind11::module& m);
@@ -334,8 +366,10 @@ PYBIND11_MODULE(_md, m)
     export_PotentialPairLJGauss(m);
     export_PotentialPairForceShiftedLJ(m);
     export_PotentialPairTable(m);
+    export_PotentialPairWangFrenkel(m);
 
     export_AlchemicalMDParticles(m);
+
     export_PotentialPairAlchemicalLJGauss(m);
 
     export_PotentialTersoff(m);
@@ -346,6 +380,14 @@ PYBIND11_MODULE(_md, m)
     export_AnisoPotentialPairALJ3D(m);
     export_AnisoPotentialPairDipole(m);
     export_AnisoPotentialPairGB(m);
+    export_AnisoPotentialPairPatchyExpandedGaussian(m);
+    export_AnisoPotentialPairPatchyExpandedLJ(m);
+    export_AnisoPotentialPairPatchyExpandedMie(m);
+    export_AnisoPotentialPairPatchyGauss(m);
+    export_AnisoPotentialPairPatchyLJ(m);
+    export_AnisoPotentialPairPatchyMie(m);
+    export_AnisoPotentialPairPatchyYukawa(m);
+    export_AnisoPotentialPairPatchyTable(m);
 
     export_PotentialPairDPDThermoDPD(m);
     export_PotentialPairDPDThermoLJ(m);
@@ -357,6 +399,12 @@ PYBIND11_MODULE(_md, m)
     export_PotentialMeshBondHarmonic(m);
     export_PotentialMeshBondFENE(m);
     export_PotentialMeshBondTether(m);
+
+    export_BendingRigidityMeshForceCompute(m);
+    export_HelfrichMeshForceCompute(m);
+    export_VolumeConservationMeshForceCompute(m);
+    export_AreaConservationMeshForceCompute(m);
+    export_TriangleAreaConservationMeshForceCompute(m);
 
     export_PotentialSpecialPairLJ(m);
     export_PotentialSpecialPairCoulomb(m);
@@ -416,6 +464,7 @@ PYBIND11_MODULE(_md, m)
     export_PotentialPairLJGaussGPU(m);
     export_PotentialPairForceShiftedLJGPU(m);
     export_PotentialPairTableGPU(m);
+    export_PotentialPairWangFrenkelGPU(m);
     export_PotentialPairConservativeDPDGPU(m);
 
     export_PotentialTersoffGPU(m);
@@ -430,6 +479,16 @@ PYBIND11_MODULE(_md, m)
     export_AnisoPotentialPairDipoleGPU(m);
     export_AnisoPotentialPairGBGPU(m);
 
+    export_AnisoPotentialPairPatchyExpandedGaussianGPU(m);
+    ;
+    export_AnisoPotentialPairPatchyExpandedLJGPU(m);
+    export_AnisoPotentialPairPatchyExpandedMieGPU(m);
+    export_AnisoPotentialPairPatchyGaussGPU(m);
+    export_AnisoPotentialPairPatchyLJGPU(m);
+    export_AnisoPotentialPairPatchyMieGPU(m);
+    export_AnisoPotentialPairPatchyYukawaGPU(m);
+    export_AnisoPotentialPairPatchyTableGPU(m);
+
     export_PotentialBondHarmonicGPU(m);
     export_PotentialBondFENEGPU(m);
     export_PotentialBondTetherGPU(m);
@@ -437,6 +496,12 @@ PYBIND11_MODULE(_md, m)
     export_PotentialMeshBondHarmonicGPU(m);
     export_PotentialMeshBondFENEGPU(m);
     export_PotentialMeshBondTetherGPU(m);
+
+    export_BendingRigidityMeshForceComputeGPU(m);
+    export_HelfrichMeshForceComputeGPU(m);
+    export_VolumeConservationMeshForceComputeGPU(m);
+    export_AreaConservationMeshForceComputeGPU(m);
+    export_TriangleAreaConservationMeshForceComputeGPU(m);
 
     export_PotentialSpecialPairLJGPU(m);
     export_PotentialSpecialPairCoulombGPU(m);

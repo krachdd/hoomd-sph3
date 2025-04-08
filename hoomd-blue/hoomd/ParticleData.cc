@@ -1,4 +1,4 @@
-// Copyright (c) 2009-2024 The Regents of the University of Michigan.
+// Copyright (c) 2009-2025 The Regents of the University of Michigan.
 // Part of HOOMD-blue, released under the BSD 3-Clause License.
 
 /*! \file ParticleData.cc
@@ -13,7 +13,6 @@
 
 #ifdef ENABLE_HIP
 #include "CachedAllocator.h"
-#include "GPUPartition.cuh"
 #endif
 
 #include <pybind11/numpy.h>
@@ -80,7 +79,7 @@ ParticleData::ParticleData(unsigned int N,
     : m_exec_conf(exec_conf), m_nparticles(0), m_nghosts(0), m_max_nparticles(0), m_nglobal(0),
       m_accel_set(false), m_resize_factor(9. / 8.), m_arrays_allocated(false)
     {
-    m_exec_conf->msg->notice(5) << "Constructing ParticleData c1 " << endl;
+    m_exec_conf->msg->notice(5) << "Constructing ParticleData" << endl;
 
     // initialize snapshot with default values
     SnapshotParticleData<Scalar> snap(N);
@@ -102,17 +101,9 @@ ParticleData::ParticleData(unsigned int N,
     // initialize box dimensions on all processors
     setGlobalBox(global_box);
 
-#ifdef ENABLE_HIP
-    if (m_exec_conf->isCUDAEnabled())
-        {
-        m_gpu_partition = GPUPartition(m_exec_conf->getGPUIds());
-        m_memory_advice_last_Nmax = UINT_MAX;
-        }
-#endif
-
     // initialize rtag array
-    GlobalVector<unsigned int>(exec_conf).swap(m_rtag);
-    TAG_ALLOCATION(m_rtag);
+    GPUVector<unsigned int>(exec_conf).swap(m_rtag);
+
     if (!distributed){
         // initialize all processors
         initializeFromSnapshot(snap);
@@ -170,17 +161,8 @@ ParticleData::ParticleData(const SnapshotParticleData<Real>& snapshot,
         throw runtime_error("Error initializing ParticleData");
         }
 
-#ifdef ENABLE_HIP
-    if (m_exec_conf->isCUDAEnabled())
-        {
-        m_gpu_partition = GPUPartition(m_exec_conf->getGPUIds());
-        m_memory_advice_last_Nmax = UINT_MAX;
-        }
-#endif
-
     // initialize rtag array
-    GlobalVector<unsigned int>(exec_conf).swap(m_rtag);
-    TAG_ALLOCATION(m_rtag);
+    GPUVector<unsigned int>(exec_conf).swap(m_rtag);
 
     // initialize particle data with snapshot contents
     if(!distributed) 
@@ -299,17 +281,6 @@ const BoxDim ParticleData::getGlobalBox() const
 */
 void ParticleData::notifyParticleSort()
     {
-#ifdef ENABLE_HIP
-    if (m_exec_conf->isCUDAEnabled())
-        {
-        // need to update GPUPartition if particle number changes
-        m_gpu_partition.setN(getN());
-
-        // update our CUDA hints
-        setGPUAdvice();
-        }
-#endif
-
     m_sort_signal.emit();
     }
 
@@ -391,108 +362,88 @@ void ParticleData::allocate(unsigned int N)
     m_max_nparticles = N;
 
     // positions
-    GlobalArray<Scalar4> pos(N, m_exec_conf);
+    GPUArray<Scalar4> pos(N, m_exec_conf);
     m_pos.swap(pos);
-    TAG_ALLOCATION(m_pos);
 
     // velocities
-    GlobalArray<Scalar4> vel(N, m_exec_conf);
+    GPUArray<Scalar4> vel(N, m_exec_conf);
     m_vel.swap(vel);
-    TAG_ALLOCATION(m_vel);
 
     // // dpe
-    // GlobalArray<Scalar3> dpe(N, m_exec_conf);
+    // GPUArray<Scalar3> dpe(N, m_exec_conf);
     // m_dpe.swap(dpe);
-    // TAG_ALLOCATION(m_dpe);
 
     // density
-    GlobalArray<Scalar> density(N, m_exec_conf);
+    GPUArray<Scalar> density(N, m_exec_conf);
     m_density.swap(density);
-    TAG_ALLOCATION(m_density);
 
     // pressure
-    GlobalArray<Scalar> pressure(N, m_exec_conf);
+    GPUArray<Scalar> pressure(N, m_exec_conf);
     m_pressure.swap(pressure);
-    TAG_ALLOCATION(m_pressure);
 
     // energy
-    GlobalArray<Scalar> energy(N, m_exec_conf);
+    GPUArray<Scalar> energy(N, m_exec_conf);
     m_energy.swap(energy);
-    TAG_ALLOCATION(m_energy);
 
     // aux 1
-    GlobalArray<Scalar3> aux1(N, m_exec_conf);
+    GPUArray<Scalar3> aux1(N, m_exec_conf);
     m_aux1.swap(aux1);
-    TAG_ALLOCATION(m_aux1);
 
     // aux2
-    GlobalArray<Scalar3> aux2(N, m_exec_conf);
+    GPUArray<Scalar3> aux2(N, m_exec_conf);
     m_aux2.swap(aux2);
-    TAG_ALLOCATION(m_aux2);
 
     // aux3
-    GlobalArray<Scalar3> aux3(N, m_exec_conf);
+    GPUArray<Scalar3> aux3(N, m_exec_conf);
     m_aux3.swap(aux3);
-    TAG_ALLOCATION(m_aux3);
 
     // aux4
-    GlobalArray<Scalar3> aux4(N, m_exec_conf);
+    GPUArray<Scalar3> aux4(N, m_exec_conf);
     m_aux4.swap(aux4);
-    TAG_ALLOCATION(m_aux4);
 
     // slength
-    GlobalArray<Scalar> slength(N, m_exec_conf);
+    GPUArray<Scalar> slength(N, m_exec_conf);
     m_slength.swap(slength);
-    TAG_ALLOCATION(m_slength);
 
     // dpedt
-    GlobalArray<Scalar3> dpedt(N, m_exec_conf);
+    GPUArray<Scalar3> dpedt(N, m_exec_conf);
     m_dpedt.swap(dpedt);
-    TAG_ALLOCATION(m_dpedt);
 
     // accelerations
-    GlobalArray<Scalar3> accel(N, m_exec_conf);
+    GPUArray<Scalar3> accel(N, m_exec_conf);
     m_accel.swap(accel);
-    TAG_ALLOCATION(m_accel);
 
     // // charge
-    // GlobalArray<Scalar> charge(N, m_exec_conf);
+    // GPUArray<Scalar> charge(N, m_exec_conf);
     // m_charge.swap(charge);
-    // TAG_ALLOCATION(m_charge);
 
     // // diameter
-    // GlobalArray<Scalar> diameter(N, m_exec_conf);
+    // GPUArray<Scalar> diameter(N, m_exec_conf);
     // m_diameter.swap(diameter);
-    // TAG_ALLOCATION(m_diameter);
 
     // image
-    GlobalArray<int3> image(N, m_exec_conf);
+    GPUArray<int3> image(N, m_exec_conf);
     m_image.swap(image);
-    TAG_ALLOCATION(m_image);
 
     // global tag
-    GlobalArray<unsigned int> tag(N, m_exec_conf);
+    GPUArray<unsigned int> tag(N, m_exec_conf);
     m_tag.swap(tag);
-    TAG_ALLOCATION(m_tag);
 
     // body ID
-    GlobalArray<unsigned int> body(N, m_exec_conf);
+    GPUArray<unsigned int> body(N, m_exec_conf);
     m_body.swap(body);
-    TAG_ALLOCATION(m_body);
 
-    GlobalArray<Scalar4> net_force(N, m_exec_conf);
+    GPUArray<Scalar4> net_force(N, m_exec_conf);
     m_net_force.swap(net_force);
-    TAG_ALLOCATION(m_net_force);
 
-    GlobalArray<Scalar4> net_ratedpe(N, m_exec_conf);
+    GPUArray<Scalar4> net_ratedpe(N, m_exec_conf);
     m_net_ratedpe.swap(net_ratedpe);
-    TAG_ALLOCATION(m_net_ratedpe);
-    // GlobalArray<Scalar> net_virial(N, 6, m_exec_conf);
+
+    // GPUArray<Scalar> net_virial(N, 6, m_exec_conf);
     // m_net_virial.swap(net_virial);
-    // TAG_ALLOCATION(m_net_virial);
-    // GlobalArray<Scalar4> net_torque(N, m_exec_conf);
+
+    // GPUArray<Scalar4> net_torque(N, m_exec_conf);
     // m_net_torque.swap(net_torque);
-    // TAG_ALLOCATION(m_net_torque);
 
         {
         ArrayHandle<Scalar4> h_net_force(m_net_force,
@@ -508,93 +459,22 @@ void ParticleData::allocate(unsigned int N)
         // ArrayHandle<Scalar> h_net_virial(m_net_virial,
         //                                  access_location::host,
         //                                  access_mode::overwrite);
-        memset(h_net_force.data, 0, sizeof(Scalar4) * m_net_force.getNumElements());
-        memset(h_net_ratedpe.data, 0, sizeof(Scalar4) * m_net_ratedpe.getNumElements());
+        m_net_force.zeroFill();
+        m_net_ratedpe.zeroFill();
         // memset(h_net_torque.data, 0, sizeof(Scalar4) * m_net_torque.getNumElements());
         // memset(h_net_virial.data, 0, sizeof(Scalar) * m_net_virial.getNumElements());
         }
 
-    // GlobalArray<Scalar4> orientation(N, m_exec_conf);
+    // GPUArray<Scalar4> orientation(N, m_exec_conf);
     // m_orientation.swap(orientation);
-    // TAG_ALLOCATION(m_orientation);
-    // GlobalArray<Scalar4> angmom(N, m_exec_conf);
+
+    // GPUArray<Scalar4> angmom(N, m_exec_conf);
     // m_angmom.swap(angmom);
-    // TAG_ALLOCATION(m_angmom);
-    // GlobalArray<Scalar3> inertia(N, m_exec_conf);
+    // GPUArray<Scalar3> inertia(N, m_exec_conf);
     // m_inertia.swap(inertia);
-    // TAG_ALLOCATION(m_inertia);
 
-    GlobalArray<unsigned int> comm_flags(N, m_exec_conf);
+    GPUArray<unsigned int> comm_flags(N, m_exec_conf);
     m_comm_flags.swap(comm_flags);
-    TAG_ALLOCATION(m_comm_flags);
-
-#if defined(ENABLE_HIP) && defined(__HIP_PLATFORM_NVCC__)
-    if (m_exec_conf->isCUDAEnabled() && m_exec_conf->allConcurrentManagedAccess())
-        {
-        auto gpu_map = m_exec_conf->getGPUIds();
-
-        // set up GPU memory mappings
-        for (unsigned int idev = 0; idev < m_exec_conf->getNumActiveGPUs(); ++idev)
-            {
-            // only optimize access for those fields used in force computation
-            // (i.e. no net_force/virial/torque, also angmom and inertia are only used by the
-            // integrator)
-            cudaMemAdvise(m_pos.get(),
-                          sizeof(Scalar4) * m_pos.getNumElements(),
-                          cudaMemAdviseSetAccessedBy,
-                          gpu_map[idev]);
-            cudaMemAdvise(m_vel.get(),
-                          sizeof(Scalar4) * m_vel.getNumElements(),
-                          cudaMemAdviseSetAccessedBy,
-                          gpu_map[idev]);
-            // cudaMemAdvise(m_dpe.get(),
-            //               sizeof(Scalar3) * m_dpe.getNumElements(),
-            //               cudaMemAdviseSetAccessedBy,
-            //               gpu_map[idev]);
-            cudaMemAdvise(m_density.get(),
-                          sizeof(Scalar) * m_density.getNumElements(),
-                          cudaMemAdviseSetAccessedBy,
-                          gpu_map[idev]);
-            cudaMemAdvise(m_pressure.get(),
-                          sizeof(Scalar) * m_pressure.getNumElements(),
-                          cudaMemAdviseSetAccessedBy,
-                          gpu_map[idev]);
-            cudaMemAdvise(m_energy.get(),
-                          sizeof(Scalar) * m_energy.getNumElements(),
-                          cudaMemAdviseSetAccessedBy,
-                          gpu_map[idev]);
-            cudaMemAdvise(m_accel.get(),
-                          sizeof(Scalar3) * m_accel.getNumElements(),
-                          cudaMemAdviseSetAccessedBy,
-                          gpu_map[idev]);
-            // cudaMemAdvise(m_charge.get(),
-            //               sizeof(Scalar) * m_charge.getNumElements(),
-            //               cudaMemAdviseSetAccessedBy,
-            //               gpu_map[idev]);
-            // cudaMemAdvise(m_diameter.get(),
-            //               sizeof(Scalar) * m_diameter.getNumElements(),
-            //               cudaMemAdviseSetAccessedBy,
-            //               gpu_map[idev]);
-            cudaMemAdvise(m_image.get(),
-                          sizeof(int3) * m_image.getNumElements(),
-                          cudaMemAdviseSetAccessedBy,
-                          gpu_map[idev]);
-            cudaMemAdvise(m_tag.get(),
-                          sizeof(unsigned int) * m_tag.getNumElements(),
-                          cudaMemAdviseSetAccessedBy,
-                          gpu_map[idev]);
-            cudaMemAdvise(m_body.get(),
-                          sizeof(unsigned int) * m_body.getNumElements(),
-                          cudaMemAdviseSetAccessedBy,
-                          gpu_map[idev]);
-            // cudaMemAdvise(m_orientation.get(),
-            //               sizeof(Scalar4) * m_orientation.getNumElements(),
-            //               cudaMemAdviseSetAccessedBy,
-            //               gpu_map[idev]);
-            }
-        CHECK_CUDA_ERROR();
-        }
-#endif
 
     // allocate alternate particle data arrays (for swapping in-out)
     allocateAlternateArrays(N);
@@ -612,129 +492,104 @@ void ParticleData::allocate(unsigned int N)
 void ParticleData::allocateAlternateArrays(unsigned int N)
     {
     // positions
-    GlobalArray<Scalar4> pos_alt(N, m_exec_conf);
+    GPUArray<Scalar4> pos_alt(N, m_exec_conf);
     m_pos_alt.swap(pos_alt);
-    TAG_ALLOCATION(m_pos_alt);
 
     // velocities
-    GlobalArray<Scalar4> vel_alt(N, m_exec_conf);
+    GPUArray<Scalar4> vel_alt(N, m_exec_conf);
     m_vel_alt.swap(vel_alt);
-    TAG_ALLOCATION(m_vel_alt);
 
     // accelerations
-    GlobalArray<Scalar3> accel_alt(N, m_exec_conf);
+    GPUArray<Scalar3> accel_alt(N, m_exec_conf);
     m_accel_alt.swap(accel_alt);
-    TAG_ALLOCATION(m_accel_alt);
 
     // // dpe
-    // GlobalArray<Scalar3> dpe_alt(N, m_exec_conf);
+    // GPUArray<Scalar3> dpe_alt(N, m_exec_conf);
     // m_dpe_alt.swap(dpe_alt);
-    // TAG_ALLOCATION(m_dpe_alt);
 
     // density
-    GlobalArray<Scalar> density_alt(N, m_exec_conf);
+    GPUArray<Scalar> density_alt(N, m_exec_conf);
     m_density_alt.swap(density_alt);
-    TAG_ALLOCATION(m_density_alt);
 
     // pressure
-    GlobalArray<Scalar> pressure_alt(N, m_exec_conf);
+    GPUArray<Scalar> pressure_alt(N, m_exec_conf);
     m_pressure_alt.swap(pressure_alt);
-    TAG_ALLOCATION(m_pressure_alt);
 
     // energy
-    GlobalArray<Scalar> energy_alt(N, m_exec_conf);
+    GPUArray<Scalar> energy_alt(N, m_exec_conf);
     m_energy_alt.swap(energy_alt);
-    TAG_ALLOCATION(m_energy_alt);
 
     // aux1
-    GlobalArray<Scalar3> aux1_alt(N, m_exec_conf);
+    GPUArray<Scalar3> aux1_alt(N, m_exec_conf);
     m_aux1_alt.swap(aux1_alt);
-    TAG_ALLOCATION(m_aux1_alt);
 
     // aux2
-    GlobalArray<Scalar3> aux2_alt(N, m_exec_conf);
+    GPUArray<Scalar3> aux2_alt(N, m_exec_conf);
     m_aux2_alt.swap(aux2_alt);
-    TAG_ALLOCATION(m_aux2_alt);
 
     // aux3
-    GlobalArray<Scalar3> aux3_alt(N, m_exec_conf);
+    GPUArray<Scalar3> aux3_alt(N, m_exec_conf);
     m_aux3_alt.swap(aux3_alt);
-    TAG_ALLOCATION(m_aux3_alt);
 
     // aux4
-    GlobalArray<Scalar3> aux4_alt(N, m_exec_conf);
+    GPUArray<Scalar3> aux4_alt(N, m_exec_conf);
     m_aux4_alt.swap(aux4_alt);
-    TAG_ALLOCATION(m_aux4_alt);
 
     // slength
-    GlobalArray<Scalar> slength_alt(N, m_exec_conf);
+    GPUArray<Scalar> slength_alt(N, m_exec_conf);
     m_slength_alt.swap(slength_alt);
-    TAG_ALLOCATION(m_slength_alt);
 
     // aux4
-    GlobalArray<Scalar3> dpedt_alt(N, m_exec_conf);
+    GPUArray<Scalar3> dpedt_alt(N, m_exec_conf);
     m_dpedt_alt.swap(dpedt_alt);
-    TAG_ALLOCATION(m_dpedt_alt);
 
     // // charge
-    // GlobalArray<Scalar> charge_alt(N, m_exec_conf);
+    // GPUArray<Scalar> charge_alt(N, m_exec_conf);
     // m_charge_alt.swap(charge_alt);
-    // TAG_ALLOCATION(m_charge_alt);
 
     // // diameter
-    // GlobalArray<Scalar> diameter_alt(N, m_exec_conf);
+    // GPUArray<Scalar> diameter_alt(N, m_exec_conf);
     // m_diameter_alt.swap(diameter_alt);
-    // TAG_ALLOCATION(m_diameter_alt);
 
     // image
-    GlobalArray<int3> image_alt(N, m_exec_conf);
+    GPUArray<int3> image_alt(N, m_exec_conf);
     m_image_alt.swap(image_alt);
-    TAG_ALLOCATION(m_image_alt);
 
     // global tag
-    GlobalArray<unsigned int> tag_alt(N, m_exec_conf);
+    GPUArray<unsigned int> tag_alt(N, m_exec_conf);
     m_tag_alt.swap(tag_alt);
-    TAG_ALLOCATION(m_tag_alt);
 
     // body ID
-    GlobalArray<unsigned int> body_alt(N, m_exec_conf);
+    GPUArray<unsigned int> body_alt(N, m_exec_conf);
     m_body_alt.swap(body_alt);
-    TAG_ALLOCATION(m_body_alt);
 
     // // orientation
-    // GlobalArray<Scalar4> orientation_alt(N, m_exec_conf);
+    // GPUArray<Scalar4> orientation_alt(N, m_exec_conf);
     // m_orientation_alt.swap(orientation_alt);
-    // TAG_ALLOCATION(m_orientation_alt);
 
     // // angular momentum
-    // GlobalArray<Scalar4> angmom_alt(N, m_exec_conf);
+    // GPUArray<Scalar4> angmom_alt(N, m_exec_conf);
     // m_angmom_alt.swap(angmom_alt);
-    // TAG_ALLOCATION(m_angmom_alt);
 
     // // moments of inertia
-    // GlobalArray<Scalar3> inertia_alt(N, m_exec_conf);
+    // GPUArray<Scalar3> inertia_alt(N, m_exec_conf);
     // m_inertia_alt.swap(inertia_alt);
-    // TAG_ALLOCATION(m_inertia_alt);
 
     // Net force
-    GlobalArray<Scalar4> net_force_alt(N, m_exec_conf);
+    GPUArray<Scalar4> net_force_alt(N, m_exec_conf);
     m_net_force_alt.swap(net_force_alt);
-    TAG_ALLOCATION(m_net_force_alt);
 
     // ratedpedt
-    GlobalArray<Scalar4> net_ratedpe_alt(N, m_exec_conf);
+    GPUArray<Scalar4> net_ratedpe_alt(N, m_exec_conf);
     m_net_ratedpe_alt.swap(net_ratedpe_alt);
-    TAG_ALLOCATION(m_net_ratedpe_alt);
 
     // // Net virial
-    // GlobalArray<Scalar> net_virial_alt(N, 6, m_exec_conf);
+    // GPUArray<Scalar> net_virial_alt(N, 6, m_exec_conf);
     // m_net_virial_alt.swap(net_virial_alt);
-    // TAG_ALLOCATION(m_net_virial_alt);
 
     // // Net torque
-    // GlobalArray<Scalar4> net_torque_alt(N, m_exec_conf);
+    // GPUArray<Scalar4> net_torque_alt(N, m_exec_conf);
     // m_net_torque_alt.swap(net_torque_alt);
-    // TAG_ALLOCATION(m_net_torque_alt);
 
         {
         ArrayHandle<Scalar4> h_net_force_alt(m_net_force_alt,
@@ -749,76 +604,11 @@ void ParticleData::allocateAlternateArrays(unsigned int N)
         // ArrayHandle<Scalar> h_net_virial_alt(m_net_virial_alt,
         //                                      access_location::host,
         //                                      access_mode::overwrite);
-        memset(h_net_force_alt.data, 0, sizeof(Scalar4) * m_net_force_alt.getNumElements());
-        memset(h_net_ratedpe_alt.data, 0, sizeof(Scalar4) * m_net_ratedpe_alt.getNumElements());
+        m_net_force_alt.zeroFill();
+        m_net_ratedpe_alt.zeroFill();
         // memset(h_net_torque_alt.data, 0, sizeof(Scalar4) * m_net_torque_alt.getNumElements());
         // memset(h_net_virial_alt.data, 0, sizeof(Scalar) * m_net_virial_alt.getNumElements());
         }
-
-#if defined(ENABLE_HIP) && defined(__HIP_PLATFORM_NVCC__)
-    if (m_exec_conf->isCUDAEnabled() && m_exec_conf->allConcurrentManagedAccess())
-        {
-        auto gpu_map = m_exec_conf->getGPUIds();
-
-        // set up GPU memory mappings
-        for (unsigned int idev = 0; idev < m_exec_conf->getNumActiveGPUs(); ++idev)
-            {
-            cudaMemAdvise(m_pos_alt.get(),
-                          sizeof(Scalar4) * m_pos_alt.getNumElements(),
-                          cudaMemAdviseSetAccessedBy,
-                          gpu_map[idev]);
-            cudaMemAdvise(m_vel_alt.get(),
-                          sizeof(Scalar4) * m_vel_alt.getNumElements(),
-                          cudaMemAdviseSetAccessedBy,
-                          gpu_map[idev]);
-            cudaMemAdvise(m_accel_alt.get(),
-                          sizeof(Scalar3) * m_accel_alt.getNumElements(),
-                          cudaMemAdviseSetAccessedBy,
-                          gpu_map[idev]);
-            // cudaMemAdvise(m_dpe_alt.get(),
-            //               sizeof(Scalar3) * m_dpe_alt.getNumElements(),
-            //               cudaMemAdviseSetAccessedBy,
-            //               gpu_map[idev]);
-            cudaMemAdvise(m_density_alt.get(),
-                          sizeof(Scalar) * m_density_alt.getNumElements(),
-                          cudaMemAdviseSetAccessedBy,
-                          gpu_map[idev]);
-            cudaMemAdvise(m_pressure_alt.get(),
-                          sizeof(Scalar) * m_pressure_alt.getNumElements(),
-                          cudaMemAdviseSetAccessedBy,
-                          gpu_map[idev]);
-            cudaMemAdvise(m_energy_alt.get(),
-                          sizeof(Scalar) * m_energy_alt.getNumElements(),
-                          cudaMemAdviseSetAccessedBy,
-                          gpu_map[idev]);
-            // cudaMemAdvise(m_charge_alt.get(),
-            //               sizeof(Scalar) * m_charge_alt.getNumElements(),
-            //               cudaMemAdviseSetAccessedBy,
-            //               gpu_map[idev]);
-            // cudaMemAdvise(m_diameter_alt.get(),
-            //               sizeof(Scalar) * m_diameter_alt.getNumElements(),
-            //               cudaMemAdviseSetAccessedBy,
-            //               gpu_map[idev]);
-            cudaMemAdvise(m_image_alt.get(),
-                          sizeof(int3) * m_image_alt.getNumElements(),
-                          cudaMemAdviseSetAccessedBy,
-                          gpu_map[idev]);
-            cudaMemAdvise(m_tag_alt.get(),
-                          sizeof(unsigned int) * m_tag_alt.getNumElements(),
-                          cudaMemAdviseSetAccessedBy,
-                          gpu_map[idev]);
-            cudaMemAdvise(m_body_alt.get(),
-                          sizeof(unsigned int) * m_body_alt.getNumElements(),
-                          cudaMemAdviseSetAccessedBy,
-                          gpu_map[idev]);
-            // cudaMemAdvise(m_orientation_alt.get(),
-            //               sizeof(Scalar4) * m_orientation_alt.getNumElements(),
-            //               cudaMemAdviseSetAccessedBy,
-            //               gpu_map[idev]);
-            }
-        CHECK_CUDA_ERROR();
-        }
-#endif
     }
 
 //! Set global number of particles
@@ -833,35 +623,12 @@ void ParticleData::setNGlobal(unsigned int nglobal)
 
     // we have changed the global particle number, notify subscribers
     m_global_particle_num_signal.emit();
-
-#if defined(ENABLE_HIP) && defined(__HIP_PLATFORM_NVCC__)
-    if (m_exec_conf->isCUDAEnabled() && m_exec_conf->allConcurrentManagedAccess())
-        {
-        auto gpu_map = m_exec_conf->getGPUIds();
-
-        // set up GPU memory mappings
-        for (unsigned int idev = 0; idev < m_exec_conf->getNumActiveGPUs(); ++idev)
-            {
-            cudaMemAdvise(m_rtag.get(),
-                          sizeof(unsigned int) * m_rtag.getNumElements(),
-                          cudaMemAdviseSetAccessedBy,
-                          gpu_map[idev]);
-            }
-        CHECK_CUDA_ERROR();
-        }
-#endif
     }
 
 /*! \param new_nparticles New particle number
  */
 void ParticleData::resize(unsigned int new_nparticles)
     {
-// update the partition information, so it is available to subscribers of various signals early
-#ifdef ENABLE_HIP
-    if (m_exec_conf->isCUDAEnabled())
-        m_gpu_partition.setN(new_nparticles);
-#endif
-
     if (new_nparticles == 0)
         {
         // guarantee that arrays are allocated
@@ -947,8 +714,8 @@ void ParticleData::reallocate(unsigned int max_n)
         // ArrayHandle<Scalar> h_net_virial(m_net_virial,
         //                                  access_location::host,
         //                                  access_mode::readwrite);
-        memset(h_net_force.data, 0, sizeof(Scalar4) * m_net_force.getNumElements());
-        memset(h_net_ratedpe.data, 0, sizeof(Scalar4) * m_net_ratedpe.getNumElements());
+        m_net_force.zeroFill();
+        m_net_ratedpe.zeroFill();
         // memset(h_net_torque.data, 0, sizeof(Scalar4) * m_net_torque.getNumElements());
         // memset(h_net_virial.data, 0, sizeof(Scalar) * m_net_virial.getNumElements());
         }
@@ -958,71 +725,6 @@ void ParticleData::reallocate(unsigned int max_n)
     // m_inertia.resize(max_n);
 
     m_comm_flags.resize(max_n);
-
-#if defined(ENABLE_HIP) && defined(__HIP_PLATFORM_NVCC__)
-    if (m_exec_conf->isCUDAEnabled() && m_exec_conf->allConcurrentManagedAccess())
-        {
-        auto gpu_map = m_exec_conf->getGPUIds();
-
-        // set up GPU memory mappings
-        for (unsigned int idev = 0; idev < m_exec_conf->getNumActiveGPUs(); ++idev)
-            {
-            cudaMemAdvise(m_pos.get(),
-                          sizeof(Scalar4) * m_pos.getNumElements(),
-                          cudaMemAdviseSetAccessedBy,
-                          gpu_map[idev]);
-            cudaMemAdvise(m_vel.get(),
-                          sizeof(Scalar4) * m_vel.getNumElements(),
-                          cudaMemAdviseSetAccessedBy,
-                          gpu_map[idev]);
-            cudaMemAdvise(m_accel.get(),
-                          sizeof(Scalar3) * m_accel.getNumElements(),
-                          cudaMemAdviseSetAccessedBy,
-                          gpu_map[idev]);
-            // cudaMemAdvise(m_dpe.get(),
-            //               sizeof(Scalar3) * m_dpe.getNumElements(),
-            //               cudaMemAdviseSetAccessedBy,
-            //               gpu_map[idev]);
-            cudaMemAdvise(m_density.get(),
-                          sizeof(Scalar) * m_density.getNumElements(),
-                          cudaMemAdviseSetAccessedBy,
-                          gpu_map[idev]);
-            cudaMemAdvise(m_pressure.get(),
-                          sizeof(Scalar) * m_pressure.getNumElements(),
-                          cudaMemAdviseSetAccessedBy,
-                          gpu_map[idev]);
-            cudaMemAdvise(m_energy.get(),
-                          sizeof(Scalar) * m_energy.getNumElements(),
-                          cudaMemAdviseSetAccessedBy,
-                          gpu_map[idev]);
-            // cudaMemAdvise(m_charge.get(),
-            //               sizeof(Scalar) * m_charge.getNumElements(),
-            //               cudaMemAdviseSetAccessedBy,
-            //               gpu_map[idev]);
-            // cudaMemAdvise(m_diameter.get(),
-            //               sizeof(Scalar) * m_diameter.getNumElements(),
-            //               cudaMemAdviseSetAccessedBy,
-            //               gpu_map[idev]);
-            cudaMemAdvise(m_image.get(),
-                          sizeof(int3) * m_image.getNumElements(),
-                          cudaMemAdviseSetAccessedBy,
-                          gpu_map[idev]);
-            cudaMemAdvise(m_tag.get(),
-                          sizeof(unsigned int) * m_tag.getNumElements(),
-                          cudaMemAdviseSetAccessedBy,
-                          gpu_map[idev]);
-            cudaMemAdvise(m_body.get(),
-                          sizeof(unsigned int) * m_body.getNumElements(),
-                          cudaMemAdviseSetAccessedBy,
-                          gpu_map[idev]);
-            // cudaMemAdvise(m_orientation.get(),
-            //               sizeof(Scalar4) * m_orientation.getNumElements(),
-            //               cudaMemAdviseSetAccessedBy,
-            //               gpu_map[idev]);
-            }
-        CHECK_CUDA_ERROR();
-        }
-#endif
 
     if (!m_pos_alt.isNull())
         {
@@ -1067,76 +769,11 @@ void ParticleData::reallocate(unsigned int max_n)
             // ArrayHandle<Scalar> h_net_virial_alt(m_net_virial_alt,
             //                                      access_location::host,
             //                                      access_mode::overwrite);
-            memset(h_net_force_alt.data, 0, sizeof(Scalar4) * m_net_force_alt.getNumElements());
-            memset(h_net_ratedpe_alt.data, 0, sizeof(Scalar4) * m_net_ratedpe_alt.getNumElements());
+            m_net_force_alt.zeroFill();
+            m_net_ratedpe_alt.zeroFill();
             // memset(h_net_torque_alt.data, 0, sizeof(Scalar4) * m_net_torque_alt.getNumElements());
             // memset(h_net_virial_alt.data, 0, sizeof(Scalar) * m_net_virial_alt.getNumElements());
             }
-
-#if defined(ENABLE_HIP) && defined(__HIP_PLATFORM_NVCC__)
-        if (m_exec_conf->isCUDAEnabled() && m_exec_conf->allConcurrentManagedAccess())
-            {
-            auto gpu_map = m_exec_conf->getGPUIds();
-
-            // set up GPU memory mappings
-            for (unsigned int idev = 0; idev < m_exec_conf->getNumActiveGPUs(); ++idev)
-                {
-                cudaMemAdvise(m_pos_alt.get(),
-                              sizeof(Scalar4) * m_pos_alt.getNumElements(),
-                              cudaMemAdviseSetAccessedBy,
-                              gpu_map[idev]);
-                cudaMemAdvise(m_vel_alt.get(),
-                              sizeof(Scalar4) * m_vel_alt.getNumElements(),
-                              cudaMemAdviseSetAccessedBy,
-                              gpu_map[idev]);
-                cudaMemAdvise(m_accel_alt.get(),
-                              sizeof(Scalar3) * m_accel_alt.getNumElements(),
-                              cudaMemAdviseSetAccessedBy,
-                              gpu_map[idev]);
-                // cudaMemAdvise(m_dpe_alt.get(),
-                //               sizeof(Scalar3) * m_dpe_alt.getNumElements(),
-                //               cudaMemAdviseSetAccessedBy,
-                //               gpu_map[idev]);
-                cudaMemAdvise(m_density_alt.get(),
-                              sizeof(Scalar) * m_density_alt.getNumElements(),
-                              cudaMemAdviseSetAccessedBy,
-                              gpu_map[idev]);
-                cudaMemAdvise(m_pressure_alt.get(),
-                              sizeof(Scalar) * m_pressure_alt.getNumElements(),
-                              cudaMemAdviseSetAccessedBy,
-                              gpu_map[idev]);
-                cudaMemAdvise(m_energy_alt.get(),
-                              sizeof(Scalar) * m_energy_alt.getNumElements(),
-                              cudaMemAdviseSetAccessedBy,
-                              gpu_map[idev]);
-                // cudaMemAdvise(m_charge_alt.get(),
-                //               sizeof(Scalar) * m_charge_alt.getNumElements(),
-                //               cudaMemAdviseSetAccessedBy,
-                //               gpu_map[idev]);
-                // cudaMemAdvise(m_diameter_alt.get(),
-                //               sizeof(Scalar) * m_diameter_alt.getNumElements(),
-                //               cudaMemAdviseSetAccessedBy,
-                //               gpu_map[idev]);
-                cudaMemAdvise(m_image_alt.get(),
-                              sizeof(int3) * m_image_alt.getNumElements(),
-                              cudaMemAdviseSetAccessedBy,
-                              gpu_map[idev]);
-                cudaMemAdvise(m_tag_alt.get(),
-                              sizeof(unsigned int) * m_tag_alt.getNumElements(),
-                              cudaMemAdviseSetAccessedBy,
-                              gpu_map[idev]);
-                cudaMemAdvise(m_body_alt.get(),
-                              sizeof(unsigned int) * m_body_alt.getNumElements(),
-                              cudaMemAdviseSetAccessedBy,
-                              gpu_map[idev]);
-                // cudaMemAdvise(m_orientation_alt.get(),
-                //               sizeof(Scalar4) * m_orientation_alt.getNumElements(),
-                //               cudaMemAdviseSetAccessedBy,
-                //               gpu_map[idev]);
-                }
-            CHECK_CUDA_ERROR();
-            }
-#endif
         }
 
     // notify observers
@@ -1234,7 +871,6 @@ void ParticleData::initializeFromSnapshot(const SnapshotParticleData<Real>& snap
         snapshot.validate();
         }
 
-    m_exec_conf->msg->notice(4) << "ParticleData: snapshot validataed" << std::endl;
     // clear set of active tags
     m_tag_set.clear();
 
@@ -1674,6 +1310,7 @@ void ParticleData::initializeFromSnapshot(const SnapshotParticleData<Real>& snap
 
     // set global number of particles
     setNGlobal(nglobal);
+
     // notify listeners about resorting of local particles
     notifyParticleSort();
 
@@ -2684,7 +2321,6 @@ Scalar3 ParticleData::getPosition(unsigned int tag) const
     m_global_box->wrap(result, img);
     return result;
     }
-
 
 //! Get the current velocity of a particle
 Scalar3 ParticleData::getVelocity(unsigned int tag) const
@@ -4849,8 +4485,8 @@ void ParticleData::addParticles(const std::vector<detail::pdata_element>& in)
  *        no ghost particles are present, because ghost particle values
  *        are undefined after calling this method.
  */
-void ParticleData::removeParticlesGPU(GlobalVector<detail::pdata_element>& out,
-                                      GlobalVector<unsigned int>& comm_flags)
+void ParticleData::removeParticlesGPU(GPUVector<detail::pdata_element>& out,
+                                      GPUVector<unsigned int>& comm_flags)
     {
     // this is the maximum number of elements we can possibly write to out
     unsigned int max_n_out = (unsigned int)out.getNumElements();
@@ -5048,8 +4684,6 @@ void ParticleData::removeParticlesGPU(GlobalVector<detail::pdata_element>& out,
 
             if (m_exec_conf->isCUDAErrorCheckingEnabled())
                 CHECK_CUDA_ERROR();
-
-            m_exec_conf->endMultiGPU();
             }
 
         // resize output vector
@@ -5100,7 +4734,7 @@ void ParticleData::removeParticlesGPU(GlobalVector<detail::pdata_element>& out,
     }
 
 //! Add new particle data (GPU version)
-void ParticleData::addParticlesGPU(const GlobalVector<detail::pdata_element>& in)
+void ParticleData::addParticlesGPU(const GPUVector<detail::pdata_element>& in)
     {
     unsigned int old_nparticles = getN();
     unsigned int num_add_ptls = (unsigned int)in.size();
@@ -5210,396 +4844,6 @@ void ParticleData::addParticlesGPU(const GlobalVector<detail::pdata_element>& in
 #endif // ENABLE_HIP
 #endif // ENABLE_MPI
 
-void ParticleData::setGPUAdvice()
-    {
-#if defined(ENABLE_HIP) && defined(__HIP_PLATFORM_NVCC__)
-    if (m_exec_conf->isCUDAEnabled())
-        {
-        // only call CUDA API when necessary
-        if (m_memory_advice_last_Nmax == m_max_nparticles)
-            return;
-
-        m_memory_advice_last_Nmax = m_max_nparticles;
-
-        auto gpu_map = m_exec_conf->getGPUIds();
-
-        if (!m_exec_conf->allConcurrentManagedAccess())
-            return;
-
-        // split preferred location of particle data across GPUs
-        for (unsigned int idev = 0; idev < m_exec_conf->getNumActiveGPUs(); ++idev)
-            {
-            auto range = m_gpu_partition.getRange(idev);
-            unsigned int nelem = range.second - range.first;
-
-            if (!nelem)
-                continue;
-
-            cudaMemAdvise(m_pos.get() + range.first,
-                          sizeof(Scalar4) * nelem,
-                          cudaMemAdviseSetPreferredLocation,
-                          gpu_map[idev]);
-            cudaMemAdvise(m_vel.get() + range.first,
-                          sizeof(Scalar4) * nelem,
-                          cudaMemAdviseSetPreferredLocation,
-                          gpu_map[idev]);
-            cudaMemAdvise(m_accel.get() + range.first,
-                          sizeof(Scalar3) * nelem,
-                          cudaMemAdviseSetPreferredLocation,
-                          gpu_map[idev]);
-            // cudaMemAdvise(m_dpe.get() + range.first,
-            //               sizeof(Scalar3) * nelem,
-            //               cudaMemAdviseSetPreferredLocation,
-            //               gpu_map[idev]);
-            cudaMemAdvise(m_density.get() + range.first,
-                          sizeof(Scalar) * nelem,
-                          cudaMemAdviseSetPreferredLocation,
-                          gpu_map[idev]);
-            cudaMemAdvise(m_pressure.get() + range.first,
-                          sizeof(Scalar) * nelem,
-                          cudaMemAdviseSetPreferredLocation,
-                          gpu_map[idev]);
-            cudaMemAdvise(m_energy.get() + range.first,
-                          sizeof(Scalar) * nelem,
-                          cudaMemAdviseSetPreferredLocation,
-                          gpu_map[idev]);
-            cudaMemAdvise(m_aux1.get() + range.first,
-                          sizeof(Scalar3) * nelem,
-                          cudaMemAdviseSetPreferredLocation,
-                          gpu_map[idev]);
-            cudaMemAdvise(m_aux2.get() + range.first,
-                          sizeof(Scalar3) * nelem,
-                          cudaMemAdviseSetPreferredLocation,
-                          gpu_map[idev]);
-            cudaMemAdvise(m_aux3.get() + range.first,
-                          sizeof(Scalar3) * nelem,
-                          cudaMemAdviseSetPreferredLocation,
-                          gpu_map[idev]);
-            cudaMemAdvise(m_aux4.get() + range.first,
-                          sizeof(Scalar3) * nelem,
-                          cudaMemAdviseSetPreferredLocation,
-                          gpu_map[idev]);
-            cudaMemAdvise(m_dpedt.get() + range.first,
-                          sizeof(Scalar3) * nelem,
-                          cudaMemAdviseSetPreferredLocation,
-                          gpu_map[idev]);
-            cudaMemAdvise(m_slength.get() + range.first,
-                          sizeof(Scalar) * nelem,
-                          cudaMemAdviseSetPreferredLocation,
-                          gpu_map[idev]);
-            // cudaMemAdvise(m_charge.get() + range.first,
-            //               sizeof(Scalar) * nelem,
-            //               cudaMemAdviseSetPreferredLocation,
-            //               gpu_map[idev]);
-            // cudaMemAdvise(m_diameter.get() + range.first,
-            //               sizeof(Scalar) * nelem,
-            //               cudaMemAdviseSetPreferredLocation,
-            //               gpu_map[idev]);
-            cudaMemAdvise(m_image.get() + range.first,
-                          sizeof(int3) * nelem,
-                          cudaMemAdviseSetPreferredLocation,
-                          gpu_map[idev]);
-            cudaMemAdvise(m_tag.get() + range.first,
-                          sizeof(unsigned int) * nelem,
-                          cudaMemAdviseSetPreferredLocation,
-                          gpu_map[idev]);
-            cudaMemAdvise(m_body.get() + range.first,
-                          sizeof(unsigned int) * nelem,
-                          cudaMemAdviseSetPreferredLocation,
-                          gpu_map[idev]);
-            // cudaMemAdvise(m_orientation.get() + range.first,
-            //               sizeof(Scalar4) * nelem,
-            //               cudaMemAdviseSetPreferredLocation,
-            //               gpu_map[idev]);
-            // cudaMemAdvise(m_angmom.get() + range.first,
-            //               sizeof(Scalar4) * nelem,
-            //               cudaMemAdviseSetPreferredLocation,
-            //               gpu_map[idev]);
-            // cudaMemAdvise(m_inertia.get() + range.first,
-            //               sizeof(Scalar3) * nelem,
-            //               cudaMemAdviseSetPreferredLocation,
-            //               gpu_map[idev]);
-            cudaMemAdvise(m_net_force.get() + range.first,
-                          sizeof(Scalar4) * nelem,
-                          cudaMemAdviseSetPreferredLocation,
-                          gpu_map[idev]);
-            cudaMemAdvise(m_net_ratedpe.get() + range.first,
-                          sizeof(Scalar4) * nelem,
-                          cudaMemAdviseSetPreferredLocation,
-                          gpu_map[idev]);
-            // for (unsigned int i = 0; i < 6; ++i)
-            //     cudaMemAdvise(m_net_virial.get() + i * m_net_virial.getPitch() + range.first,
-            //                   sizeof(Scalar) * nelem,
-            //                   cudaMemAdviseSetPreferredLocation,
-            //                   gpu_map[idev]);
-            // cudaMemAdvise(m_net_torque.get() + range.first,
-            //               sizeof(Scalar4) * nelem,
-            //               cudaMemAdviseSetPreferredLocation,
-            //               gpu_map[idev]);
-
-            // migrate data to preferred location
-            cudaMemPrefetchAsync(m_pos.get() + range.first, sizeof(Scalar4) * nelem, gpu_map[idev]);
-            cudaMemPrefetchAsync(m_vel.get() + range.first, sizeof(Scalar4) * nelem, gpu_map[idev]);
-            cudaMemPrefetchAsync(m_accel.get() + range.first,
-                                 sizeof(Scalar3) * nelem,
-                                 gpu_map[idev]);
-            // cudaMemPrefetchAsync(m_dpe.get() + range.first,
-            //                      sizeof(Scalar3) * nelem,
-            //                      gpu_map[idev]);
-            cudaMemPrefetchAsync(m_density.get() + range.first,
-                                 sizeof(Scalar) * nelem,
-                                 gpu_map[idev]);
-            cudaMemPrefetchAsync(m_pressure.get() + range.first,
-                                 sizeof(Scalar) * nelem,
-                                 gpu_map[idev]);
-            cudaMemPrefetchAsync(m_energy.get() + range.first,
-                                 sizeof(Scalar) * nelem,
-                                 gpu_map[idev]);
-            cudaMemPrefetchAsync(m_aux1.get() + range.first,
-                                 sizeof(Scalar3) * nelem,
-                                 gpu_map[idev]);
-            cudaMemPrefetchAsync(m_aux2.get() + range.first,
-                                 sizeof(Scalar3) * nelem,
-                                 gpu_map[idev]);
-            cudaMemPrefetchAsync(m_aux3.get() + range.first,
-                                 sizeof(Scalar3) * nelem,
-                                 gpu_map[idev]);
-            cudaMemPrefetchAsync(m_aux4.get() + range.first,
-                                 sizeof(Scalar3) * nelem,
-                                 gpu_map[idev]);
-            cudaMemPrefetchAsync(m_dpedt.get() + range.first,
-                                 sizeof(Scalar3) * nelem,
-                                 gpu_map[idev]);
-            cudaMemPrefetchAsync(m_slength.get() + range.first,
-                                 sizeof(Scalar) * nelem,
-                                 gpu_map[idev]);
-            // cudaMemPrefetchAsync(m_charge.get() + range.first,
-            //                      sizeof(Scalar) * nelem,
-            //                      gpu_map[idev]);
-            // cudaMemPrefetchAsync(m_diameter.get() + range.first,
-            //                      sizeof(Scalar) * nelem,
-            //                      gpu_map[idev]);
-            cudaMemPrefetchAsync(m_image.get() + range.first, sizeof(int3) * nelem, gpu_map[idev]);
-            cudaMemPrefetchAsync(m_tag.get() + range.first,
-                                 sizeof(unsigned int) * nelem,
-                                 gpu_map[idev]);
-            cudaMemPrefetchAsync(m_body.get() + range.first,
-                                 sizeof(unsigned int) * nelem,
-                                 gpu_map[idev]);
-            // cudaMemPrefetchAsync(m_orientation.get() + range.first,
-            //                      sizeof(Scalar4) * nelem,
-            //                      gpu_map[idev]);
-            // cudaMemPrefetchAsync(m_angmom.get() + range.first,
-            //                      sizeof(Scalar4) * nelem,
-            //                      gpu_map[idev]);
-            // cudaMemPrefetchAsync(m_inertia.get() + range.first,
-            //                      sizeof(Scalar3) * nelem,
-            //                      gpu_map[idev]);
-            cudaMemPrefetchAsync(m_net_force.get() + range.first,
-                                 sizeof(Scalar4) * nelem,
-                                 gpu_map[idev]);
-            cudaMemPrefetchAsync(m_net_ratedpe.get() + range.first,
-                                 sizeof(Scalar4) * nelem,
-                                 gpu_map[idev]);
-            // for (unsigned int i = 0; i < 6; ++i)
-            //     cudaMemPrefetchAsync(m_net_virial.get() + i * m_net_virial.getPitch() + range.first,
-            //                          sizeof(Scalar) * nelem,
-            //                          gpu_map[idev]);
-            // cudaMemPrefetchAsync(m_net_torque.get() + range.first,
-            //                      sizeof(Scalar4) * nelem,
-            //                      gpu_map[idev]);
-            }
-        CHECK_CUDA_ERROR();
-
-        if (!m_pos_alt.isNull())
-            {
-            for (unsigned int idev = 0; idev < m_exec_conf->getNumActiveGPUs(); ++idev)
-                {
-                auto range = m_gpu_partition.getRange(idev);
-                unsigned int nelem = range.second - range.first;
-
-                if (!nelem)
-                    continue;
-
-                cudaMemAdvise(m_pos_alt.get() + range.first,
-                              sizeof(Scalar4) * nelem,
-                              cudaMemAdviseSetPreferredLocation,
-                              gpu_map[idev]);
-                cudaMemAdvise(m_vel_alt.get() + range.first,
-                              sizeof(Scalar4) * nelem,
-                              cudaMemAdviseSetPreferredLocation,
-                              gpu_map[idev]);
-                cudaMemAdvise(m_accel_alt.get() + range.first,
-                              sizeof(Scalar3) * nelem,
-                              cudaMemAdviseSetPreferredLocation,
-                              gpu_map[idev]);
-                // cudaMemAdvise(m_dpe_alt.get() + range.first,
-                //               sizeof(Scalar3) * nelem,
-                //               cudaMemAdviseSetPreferredLocation,
-                //               gpu_map[idev]);
-                cudaMemAdvise(m_density_alt.get() + range.first,
-                              sizeof(Scalar) * nelem,
-                              cudaMemAdviseSetPreferredLocation,
-                              gpu_map[idev]);
-                cudaMemAdvise(m_pressure_alt.get() + range.first,
-                              sizeof(Scalar) * nelem,
-                              cudaMemAdviseSetPreferredLocation,
-                              gpu_map[idev]);
-                cudaMemAdvise(m_energy_alt.get() + range.first,
-                              sizeof(Scalar) * nelem,
-                              cudaMemAdviseSetPreferredLocation,
-                              gpu_map[idev]);
-                cudaMemAdvise(m_aux1_alt.get() + range.first,
-                              sizeof(Scalar3) * nelem,
-                              cudaMemAdviseSetPreferredLocation,
-                              gpu_map[idev]);
-                cudaMemAdvise(m_aux2_alt.get() + range.first,
-                              sizeof(Scalar3) * nelem,
-                              cudaMemAdviseSetPreferredLocation,
-                              gpu_map[idev]);
-                cudaMemAdvise(m_aux3_alt.get() + range.first,
-                              sizeof(Scalar3) * nelem,
-                              cudaMemAdviseSetPreferredLocation,
-                              gpu_map[idev]);
-                cudaMemAdvise(m_aux4_alt.get() + range.first,
-                              sizeof(Scalar3) * nelem,
-                              cudaMemAdviseSetPreferredLocation,
-                              gpu_map[idev]);
-                cudaMemAdvise(m_dpedt_alt.get() + range.first,
-                              sizeof(Scalar3) * nelem,
-                              cudaMemAdviseSetPreferredLocation,
-                              gpu_map[idev]);
-                cudaMemAdvise(m_slength_alt.get() + range.first,
-                              sizeof(Scalar) * nelem,
-                              cudaMemAdviseSetPreferredLocation,
-                              gpu_map[idev]);
-                // cudaMemAdvise(m_charge_alt.get() + range.first,
-                //               sizeof(Scalar) * nelem,
-                //               cudaMemAdviseSetPreferredLocation,
-                //               gpu_map[idev]);
-                // cudaMemAdvise(m_diameter_alt.get() + range.first,
-                //               sizeof(Scalar) * nelem,
-                //               cudaMemAdviseSetPreferredLocation,
-                //               gpu_map[idev]);
-                cudaMemAdvise(m_image_alt.get() + range.first,
-                              sizeof(int3) * nelem,
-                              cudaMemAdviseSetPreferredLocation,
-                              gpu_map[idev]);
-                cudaMemAdvise(m_tag_alt.get() + range.first,
-                              sizeof(unsigned int) * nelem,
-                              cudaMemAdviseSetPreferredLocation,
-                              gpu_map[idev]);
-                cudaMemAdvise(m_body_alt.get() + range.first,
-                              sizeof(unsigned int) * nelem,
-                              cudaMemAdviseSetPreferredLocation,
-                              gpu_map[idev]);
-                // cudaMemAdvise(m_orientation_alt.get() + range.first,
-                //               sizeof(Scalar4) * nelem,
-                //               cudaMemAdviseSetPreferredLocation,
-                //               gpu_map[idev]);
-                // cudaMemAdvise(m_angmom_alt.get() + range.first,
-                //               sizeof(Scalar4) * nelem,
-                //               cudaMemAdviseSetPreferredLocation,
-                //               gpu_map[idev]);
-                // cudaMemAdvise(m_inertia_alt.get() + range.first,
-                //               sizeof(Scalar3) * nelem,
-                //               cudaMemAdviseSetPreferredLocation,
-                //               gpu_map[idev]);
-                cudaMemAdvise(m_net_force_alt.get() + range.first,
-                              sizeof(Scalar4) * nelem,
-                              cudaMemAdviseSetPreferredLocation,
-                              gpu_map[idev]);
-                cudaMemAdvise(m_net_ratedpe_alt.get() + range.first,
-                              sizeof(Scalar4) * nelem,
-                              cudaMemAdviseSetPreferredLocation,
-                              gpu_map[idev]);
-
-                // for (unsigned int i = 0; i < 6; ++i)
-                //     cudaMemAdvise(m_net_virial_alt.get() + i * m_net_virial_alt.getPitch()
-                //                       + range.first,
-                //                   sizeof(Scalar) * nelem,
-                //                   cudaMemAdviseSetPreferredLocation,
-                //                   gpu_map[idev]);
-                // cudaMemAdvise(m_net_torque_alt.get() + range.first,
-                //               sizeof(Scalar4) * nelem,
-                //               cudaMemAdviseSetPreferredLocation,
-                //               gpu_map[idev]);
-
-                cudaMemPrefetchAsync(m_pos_alt.get() + range.first,
-                                     sizeof(Scalar4) * nelem,
-                                     gpu_map[idev]);
-                cudaMemPrefetchAsync(m_vel_alt.get() + range.first,
-                                     sizeof(Scalar4) * nelem,
-                                     gpu_map[idev]);
-                cudaMemPrefetchAsync(m_accel_alt.get() + range.first,
-                                     sizeof(Scalar3) * nelem,
-                                     gpu_map[idev]);
-                cudaMemPrefetchAsync(m_dpe_alt.get() + range.first,
-                                     sizeof(Scalar3) * nelem,
-                                     gpu_map[idev]);
-                cudaMemPrefetchAsync(m_aux1_alt.get() + range.first,
-                                     sizeof(Scalar3) * nelem,
-                                     gpu_map[idev]);
-                cudaMemPrefetchAsync(m_aux2_alt.get() + range.first,
-                                     sizeof(Scalar3) * nelem,
-                                     gpu_map[idev]);
-                cudaMemPrefetchAsync(m_aux3_alt.get() + range.first,
-                                     sizeof(Scalar3) * nelem,
-                                     gpu_map[idev]);
-                cudaMemPrefetchAsync(m_aux4_alt.get() + range.first,
-                                     sizeof(Scalar3) * nelem,
-                                     gpu_map[idev]);
-                cudaMemPrefetchAsync(m_dpedt_alt.get() + range.first,
-                                     sizeof(Scalar3) * nelem,
-                                     gpu_map[idev]);
-                cudaMemPrefetchAsync(m_slength_alt.get() + range.first,
-                                     sizeof(Scalar) * nelem,
-                                     gpu_map[idev]);
-                // cudaMemPrefetchAsync(m_charge_alt.get() + range.first,
-                //                      sizeof(Scalar) * nelem,
-                //                      gpu_map[idev]);
-                // cudaMemPrefetchAsync(m_diameter_alt.get() + range.first,
-                //                      sizeof(Scalar) * nelem,
-                //                      gpu_map[idev]);
-                cudaMemPrefetchAsync(m_image_alt.get() + range.first,
-                                     sizeof(int3) * nelem,
-                                     gpu_map[idev]);
-                cudaMemPrefetchAsync(m_tag_alt.get() + range.first,
-                                     sizeof(unsigned int) * nelem,
-                                     gpu_map[idev]);
-                cudaMemPrefetchAsync(m_body_alt.get() + range.first,
-                                     sizeof(unsigned int) * nelem,
-                                     gpu_map[idev]);
-                // cudaMemPrefetchAsync(m_orientation_alt.get() + range.first,
-                //                      sizeof(Scalar4) * nelem,
-                //                      gpu_map[idev]);
-                // cudaMemPrefetchAsync(m_angmom_alt.get() + range.first,
-                //                      sizeof(Scalar4) * nelem,
-                //                      gpu_map[idev]);
-                // cudaMemPrefetchAsync(m_inertia_alt.get() + range.first,
-                //                      sizeof(Scalar3) * nelem,
-                //                      gpu_map[idev]);
-                cudaMemPrefetchAsync(m_net_force_alt.get() + range.first,
-                                     sizeof(Scalar4) * nelem,
-                                     gpu_map[idev]);
-                cudaMemPrefetchAsync(m_net_ratedpe_alt.get() + range.first,
-                                     sizeof(Scalar4) * nelem,
-                                     gpu_map[idev]);
-                // for (unsigned int i = 0; i < 6; ++i)
-                //     cudaMemPrefetchAsync(m_net_virial_alt.get() + i * m_net_virial_alt.getPitch()
-                //                              + range.first,
-                //                          sizeof(Scalar) * nelem,
-                //                          gpu_map[idev]);
-                // cudaMemPrefetchAsync(m_net_torque_alt.get() + range.first,
-                //                      sizeof(Scalar4) * nelem,
-                //                      gpu_map[idev]);
-                }
-
-            CHECK_CUDA_ERROR();
-            }
-        }
-#endif
-    }
 
 template<class Real>
 void SnapshotParticleData<Real>::replicate(unsigned int nx,
@@ -5705,7 +4949,11 @@ template<class Real> pybind11::object SnapshotParticleData<Real>::getPosNP(pybin
     std::vector<size_t> dims(2);
     dims[0] = self_cpp->pos.size();
     dims[1] = 3;
-    return pybind11::array(dims, (Real*)&self_cpp->pos[0], self);
+    if (dims[0] == 0)
+        {
+        return pybind11::array(pybind11::dtype::of<Real>(), dims, nullptr);
+        }
+    return pybind11::array(dims, (Real*)self_cpp->pos.data(), self);
     }
 
 /*! \returns a numpy array that wraps the pos data element.
@@ -5721,7 +4969,11 @@ template<class Real> pybind11::object SnapshotParticleData<Real>::getVelNP(pybin
     std::vector<size_t> dims(2);
     dims[0] = self_cpp->pos.size();
     dims[1] = 3;
-    return pybind11::array(dims, (Real*)&self_cpp->vel[0], self);
+    if (dims[0] == 0)
+        {
+        return pybind11::array(pybind11::dtype::of<Real>(), dims, nullptr);
+        }
+    return pybind11::array(dims, (Real*)self_cpp->vel.data(), self);
     }
 
 /*! \returns a numpy array that wraps the pos data element.
@@ -5737,7 +4989,11 @@ template<class Real> pybind11::object SnapshotParticleData<Real>::getAccelNP(pyb
     std::vector<size_t> dims(2);
     dims[0] = self_cpp->pos.size();
     dims[1] = 3;
-    return pybind11::array(dims, (Real*)&self_cpp->accel[0], self);
+    if (dims[0] == 0)
+        {
+        return pybind11::array(pybind11::dtype::of<Real>(), dims, nullptr);
+        }
+    return pybind11::array(dims, (Real*)self_cpp->accel.data(), self);
     }
 
 
@@ -5754,7 +5010,7 @@ template<class Real> pybind11::object SnapshotParticleData<Real>::getAccelNP(pyb
 //     std::vector<size_t> dims(2);
 //     dims[0] = self_cpp->pos.size();
 //     dims[1] = 3;
-//     return pybind11::array(dims, (Real*)&self_cpp->dpe[0], self);
+//     return pybind11::array(dims, (Real*)self_cpp->dpe[0], self);
 //     }
 
 
@@ -5767,8 +5023,11 @@ template<class Real> pybind11::object SnapshotParticleData<Real>::getDensityNP(p
     auto self_cpp = self.cast<SnapshotParticleData<Real>*>();
     // mark as dirty when accessing internal data
     self_cpp->is_accel_set = false;
-
-    return pybind11::array(self_cpp->density.size(), &self_cpp->density[0], self);
+    if (self_cpp->density.size() == 0)
+        {
+        return pybind11::array(pybind11::dtype::of<Real>(), 0, nullptr);
+        }
+    return pybind11::array(self_cpp->density.size(), self_cpp->density.data(), self);
     }
 
 
@@ -5781,8 +5040,11 @@ template<class Real> pybind11::object SnapshotParticleData<Real>::getPressureNP(
     auto self_cpp = self.cast<SnapshotParticleData<Real>*>();
     // mark as dirty when accessing internal data
     self_cpp->is_accel_set = false;
-
-    return pybind11::array(self_cpp->pressure.size(), &self_cpp->pressure[0], self);
+    if (self_cpp->pressure.size() == 0)
+        {
+        return pybind11::array(pybind11::dtype::of<Real>(), 0, nullptr);
+        }
+    return pybind11::array(self_cpp->pressure.size(), self_cpp->pressure.data(), self);
     }
 
 
@@ -5795,8 +5057,11 @@ template<class Real> pybind11::object SnapshotParticleData<Real>::getEnergyNP(py
     auto self_cpp = self.cast<SnapshotParticleData<Real>*>();
     // mark as dirty when accessing internal data
     self_cpp->is_accel_set = false;
-
-    return pybind11::array(self_cpp->energy.size(), &self_cpp->energy[0], self);
+    if (self_cpp->energy.size() == 0)
+        {
+        return pybind11::array(pybind11::dtype::of<Real>(), 0, nullptr);
+        }
+    return pybind11::array(self_cpp->energy.size(), self_cpp->energy.data(), self);
     }
 
 
@@ -5814,7 +5079,11 @@ template<class Real> pybind11::object SnapshotParticleData<Real>::getAux1NP(pybi
     std::vector<size_t> dims(2);
     dims[0] = self_cpp->pos.size();
     dims[1] = 3;
-    return pybind11::array(dims, (Real*)&self_cpp->aux1[0], self);
+    if (dims[0] == 0)
+        {
+        return pybind11::array(pybind11::dtype::of<Real>(), dims, nullptr);
+        }
+    return pybind11::array(dims, (Real*)self_cpp->aux1.data(), self);
     }
 
 
@@ -5831,7 +5100,11 @@ template<class Real> pybind11::object SnapshotParticleData<Real>::getAux2NP(pybi
     std::vector<size_t> dims(2);
     dims[0] = self_cpp->pos.size();
     dims[1] = 3;
-    return pybind11::array(dims, (Real*)&self_cpp->aux2[0], self);
+    if (dims[0] == 0)
+        {
+        return pybind11::array(pybind11::dtype::of<Real>(), dims, nullptr);
+        }
+    return pybind11::array(dims, (Real*)self_cpp->aux2.data(), self);
     }
 
 
@@ -5848,7 +5121,11 @@ template<class Real> pybind11::object SnapshotParticleData<Real>::getAux3NP(pybi
     std::vector<size_t> dims(2);
     dims[0] = self_cpp->pos.size();
     dims[1] = 3;
-    return pybind11::array(dims, (Real*)&self_cpp->aux3[0], self);
+    if (dims[0] == 0)
+        {
+        return pybind11::array(pybind11::dtype::of<Real>(), dims, nullptr);
+        }
+    return pybind11::array(dims, (Real*)self_cpp->aux3.data(), self);
     }
 
 
@@ -5865,7 +5142,11 @@ template<class Real> pybind11::object SnapshotParticleData<Real>::getAux4NP(pybi
     std::vector<size_t> dims(2);
     dims[0] = self_cpp->pos.size();
     dims[1] = 3;
-    return pybind11::array(dims, (Real*)&self_cpp->aux4[0], self);
+    if (dims[0] == 0)
+        {
+        return pybind11::array(pybind11::dtype::of<Real>(), dims, nullptr);
+        }
+    return pybind11::array(dims, (Real*)self_cpp->aux4.data(), self);
     }
 
 
@@ -5882,7 +5163,11 @@ template<class Real> pybind11::object SnapshotParticleData<Real>::getDpedtNP(pyb
     std::vector<size_t> dims(2);
     dims[0] = self_cpp->pos.size();
     dims[1] = 3;
-    return pybind11::array(dims, (Real*)&self_cpp->dpedt[0], self);
+    if (dims[0] == 0)
+        {
+        return pybind11::array(pybind11::dtype::of<Real>(), dims, nullptr);
+        }
+    return pybind11::array(dims, (Real*)self_cpp->dpedt.data(), self);
     }
 
 
@@ -5895,8 +5180,11 @@ template<class Real> pybind11::object SnapshotParticleData<Real>::getTypeNP(pybi
     auto self_cpp = self.cast<SnapshotParticleData<Real>*>();
     // mark as dirty when accessing internal data
     self_cpp->is_accel_set = false;
-
-    return pybind11::array(self_cpp->type.size(), &self_cpp->type[0], self);
+    if (self_cpp->type.size() == 0)
+        {
+        return pybind11::array(pybind11::dtype::of<unsigned int>(), 0, nullptr);
+        }
+    return pybind11::array(self_cpp->type.size(), self_cpp->type.data(), self);
     }
 
 /*! \returns a numpy array that wraps the mass data element.
@@ -5908,8 +5196,11 @@ template<class Real> pybind11::object SnapshotParticleData<Real>::getMassNP(pybi
     auto self_cpp = self.cast<SnapshotParticleData<Real>*>();
     // mark as dirty when accessing internal data
     self_cpp->is_accel_set = false;
-
-    return pybind11::array(self_cpp->mass.size(), &self_cpp->mass[0], self);
+    if (self_cpp->mass.size() == 0)
+        {
+        return pybind11::array(pybind11::dtype::of<Real>(), 0, nullptr);
+        }
+    return pybind11::array(self_cpp->mass.size(), self_cpp->mass.data(), self);
     }
 
 /*! \returns a numpy array that wraps the charge data element.
@@ -5921,8 +5212,11 @@ template<class Real> pybind11::object SnapshotParticleData<Real>::getSlengthNP(p
     auto self_cpp = self.cast<SnapshotParticleData<Real>*>();
     // mark as dirty when accessing internal data
     self_cpp->is_accel_set = false;
-
-    return pybind11::array(self_cpp->slength.size(), &self_cpp->slength[0], self);
+    if (self_cpp->slength.size() == 0)
+        {
+        return pybind11::array(pybind11::dtype::of<Real>(), 0, nullptr);
+        }
+    return pybind11::array(self_cpp->slength.size(), self_cpp->slength.data(), self);
     }
 
 
@@ -5936,7 +5230,7 @@ template<class Real> pybind11::object SnapshotParticleData<Real>::getSlengthNP(p
 //     // mark as dirty when accessing internal data
 //     self_cpp->is_accel_set = false;
 
-//     return pybind11::array(self_cpp->charge.size(), &self_cpp->charge[0], self);
+//     return pybind11::array(self_cpp->charge.size(), self_cpp->charge[0], self);
 //     }
 
 /*! \returns a numpy array that wraps the diameter data element.
@@ -5950,7 +5244,7 @@ template<class Real> pybind11::object SnapshotParticleData<Real>::getSlengthNP(p
 //     // mark as dirty when accessing internal data
 //     self_cpp->is_accel_set = false;
 
-//     return pybind11::array(self_cpp->diameter.size(), &self_cpp->diameter[0], self);
+//     return pybind11::array(self_cpp->diameter.size(), self_cpp->diameter[0], self);
 //     }
 
 /*! \returns a numpy array that wraps the image data element.
@@ -5966,7 +5260,11 @@ template<class Real> pybind11::object SnapshotParticleData<Real>::getImageNP(pyb
     std::vector<size_t> dims(2);
     dims[0] = self_cpp->pos.size();
     dims[1] = 3;
-    return pybind11::array(dims, (int*)&self_cpp->image[0], self);
+    if (dims[0] == 0)
+        {
+        return pybind11::array(pybind11::dtype::of<int>(), dims, nullptr);
+        }
+    return pybind11::array(dims, (int*)self_cpp->image.data(), self);
     }
 
 /*! \returns a numpy array that wraps the body data element.
@@ -5978,8 +5276,11 @@ template<class Real> pybind11::object SnapshotParticleData<Real>::getBodyNP(pybi
     auto self_cpp = self.cast<SnapshotParticleData<Real>*>();
     // mark as dirty when accessing internal data
     self_cpp->is_accel_set = false;
-
-    return pybind11::array(self_cpp->body.size(), (int*)&self_cpp->body[0], self);
+    if (self_cpp->body.size() == 0)
+        {
+        return pybind11::array(pybind11::dtype::of<Real>(), 0, nullptr);
+        }
+    return pybind11::array(self_cpp->body.size(), (int*)self_cpp->body.data(), self);
     }
 
 /*! \returns a numpy array that wraps the orientation data element.
@@ -5996,7 +5297,7 @@ template<class Real> pybind11::object SnapshotParticleData<Real>::getBodyNP(pybi
 //     std::vector<size_t> dims(2);
 //     dims[0] = self_cpp->pos.size();
 //     dims[1] = 4;
-//     return pybind11::array(dims, (Real*)&self_cpp->orientation[0], self);
+//     return pybind11::array(dims, (Real*)self_cpp->orientation[0], self);
 //     }
 
 /*! \returns a numpy array that wraps the moment of inertia data element.
@@ -6013,7 +5314,7 @@ template<class Real> pybind11::object SnapshotParticleData<Real>::getBodyNP(pybi
 //     std::vector<size_t> dims(2);
 //     dims[0] = self_cpp->inertia.size();
 //     dims[1] = 3;
-//     return pybind11::array(dims, (Real*)&self_cpp->inertia[0], self);
+//     return pybind11::array(dims, (Real*)self_cpp->inertia[0], self);
 //     }
 
 /*! \returns a numpy array that wraps the angular momentum data element.
@@ -6029,7 +5330,7 @@ template<class Real> pybind11::object SnapshotParticleData<Real>::getBodyNP(pybi
 //     std::vector<size_t> dims(2);
 //     dims[0] = self_cpp->angmom.size();
 //     dims[1] = 4;
-//     return pybind11::array(dims, (Real*)&self_cpp->angmom[0], self);
+//     return pybind11::array(dims, (Real*)self_cpp->angmom[0], self);
 //     }
 
 /*! \returns A python list of type names

@@ -1,8 +1,7 @@
-// Copyright (c) 2009-2024 The Regents of the University of Michigan.
+// Copyright (c) 2009-2025 The Regents of the University of Michigan.
 // Part of HOOMD-blue, released under the BSD 3-Clause License.
 
 #include "Compute.h"
-#include "GlobalArray.h"
 #include "HOOMDMath.h"
 #include "Index1D.h"
 #include "ParticleGroup.h"
@@ -134,25 +133,25 @@ class PYBIND11_EXPORT ForceCompute : public Compute
     Scalar getEnergy(unsigned int tag);
 
     //! Get the array of computed forces
-    const GlobalArray<Scalar4>& getForceArray() const
+    const GPUArray<Scalar4>& getForceArray() const
         {
         return m_force;
         }
 
     //! Get the array of computed Ratedpes
-    const GlobalArray<Scalar4>& getRateDPEArray() const
+    const GPUArray<Scalar4>& getRateDPEArray() const
         {
         return m_ratedpe;
         }
 
     // //! Get the array of computed virials
-    // const GlobalArray<Scalar>& getVirialArray() const
+    // const GPUArray<Scalar>& getVirialArray() const
     //     {
     //     return m_virial;
     //     }
 
     // //! Get the array of computed torques
-    // const GlobalArray<Scalar4>& getTorqueArray() const
+    // const GPUArray<Scalar4>& getTorqueArray() const
     //     {
     //     return m_torque;
     //     }
@@ -182,13 +181,6 @@ class PYBIND11_EXPORT ForceCompute : public Compute
         }
 #endif
 
-    //! Returns true if this ForceCompute requires anisotropic integration
-    // virtual bool isAnisotropic()
-    //     {
-    //     // by default, only translational degrees of freedom are integrated
-    //     return false;
-    //     }
-
     virtual bool ComputesDPE()
         {
         // by default, only translational degrees of freedom are integrated
@@ -217,9 +209,6 @@ class PYBIND11_EXPORT ForceCompute : public Compute
     //! Reallocate internal arrays
     void reallocate();
 
-    //! Update GPU memory hints
-    void updateGPUAdvice();
-
     //! Sort local tags
     void sortLocalTags()
         {
@@ -237,11 +226,11 @@ class PYBIND11_EXPORT ForceCompute : public Compute
     Scalar m_deltaT; //!< timestep size (required for some types of non-conservative forces)
 
 
-    GlobalArray<Scalar4> m_force; //!< m_force.x,m_force.y,m_force.z are the x,y,z components of the
+    GPUArray<Scalar4> m_force; //!< m_force.x,m_force.y,m_force.z are the x,y,z components of the
                                   //!< force, m_force.u is the PE
 
 
-    GlobalArray<Scalar4> m_ratedpe;    //!< per-particle ratedpe
+    GPUArray<Scalar4> m_ratedpe;    //!< per-particle ratedpe
     int m_nbytes;                  //!< stores the number of bytes of memory allocate
 
     /*! per-particle virial, a 2D array with width=number
@@ -250,9 +239,9 @@ class PYBIND11_EXPORT ForceCompute : public Compute
         particle \f$k\f$ are stored in the rows and are indexed in the
         order xx, xy, xz, yy, yz, zz
      */
-    // GlobalArray<Scalar> m_virial;
+    // GPUArray<Scalar> m_virial;
     // size_t m_virial_pitch;         //!< The pitch of the 2D virial array
-    // GlobalArray<Scalar4> m_torque; //!< per-particle torque
+    // GPUArray<Scalar4> m_torque; //!< per-particle torque
 
     // Scalar m_external_virial[6]; //!< Stores external contribution to virial
     Scalar m_external_energy;    //!< Stores external contribution to potential energy

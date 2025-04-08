@@ -23,6 +23,7 @@ class _StateEquation(_HOOMDBaseObject):
 
         self.SpeedOfSound = 0;
         self.BackgroundPressure = 0;
+        self.TransportVelocityPressure = 0;
         self.RestDensity = 0;
 
         self.cpp_stateequation = None;
@@ -39,16 +40,17 @@ class _StateEquation(_HOOMDBaseObject):
             # hoomd.context.msg.error('Bug in hoomd_script: cpp_stateequation not set, please report\n');
             raise RuntimeError("Bug in hoomd_script: cpp_stateequation not set, please report\n");
 
-    def set_params(self,rho0,bp):
+    def set_params(self,rho0,bp,tvp = 0):
         self.check_initialization();
         self.RestDensity        = rho0.item() if isinstance(rho0, numpy.generic) else rho0
         self.BackgroundPressure = bp.item()   if isinstance(bp, numpy.generic)   else bp
-        self.cpp_stateequation.setParams(self.RestDensity,0.1,self.BackgroundPressure)
+        self.TransportVelocityPressure = tvp.item()   if isinstance(tvp, numpy.generic)   else tvp
+        self.cpp_stateequation.setParams(self.RestDensity,0.1,self.BackgroundPressure,self.TransportVelocityPressure)
 
     def set_speedofsound(self,c):
         self.check_initialization();
         self.SpeedOfSound       = c.item()    if isinstance(c, numpy.generic)    else c
-        self.cpp_stateequation.setParams(self.RestDensity,self.SpeedOfSound,self.BackgroundPressure)
+        self.cpp_stateequation.setParams(self.RestDensity,self.SpeedOfSound,self.BackgroundPressure,self.TransportVelocityPressure)
 
     def pressure(self,rho):
         self.check_initialization();
@@ -79,3 +81,8 @@ class Linear(_StateEquation):
 
         # create the c++ mirror class
         self.cpp_stateequation = _sph.Linear();
+
+__all__ = [
+    "Tait",
+    "Linear",
+]

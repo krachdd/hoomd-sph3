@@ -1,4 +1,4 @@
-// Copyright (c) 2009-2024 The Regents of the University of Michigan.
+// Copyright (c) 2009-2025 The Regents of the University of Michigan.
 // Part of HOOMD-blue, released under the BSD 3-Clause License.
 
 /*! \file HOOMDMath.cc
@@ -15,7 +15,8 @@ namespace detail
 void export_hoomd_math_functions(pybind11::module& m)
     {
     // The use of shared_ptr's for exporting CUDA vector types is a workaround
-    // see http://stackoverflow.com/questions/13177573/how-to-expose-aligned-class-with-boost-python
+    // see
+    // https://stackoverflow.com/questions/13177573/how-to-expose-aligned-class-with-boost-python
 
     // these clumsy property lambdas are necessary to make pybind11 interoperate with HIP vector
     // types

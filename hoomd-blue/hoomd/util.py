@@ -1,4 +1,4 @@
-# Copyright (c) 2009-2024 The Regents of the University of Michigan.
+# Copyright (c) 2009-2025 The Regents of the University of Michigan.
 # Part of HOOMD-blue, released under the BSD 3-Clause License.
 
 """Utilities."""
@@ -6,7 +6,6 @@
 import hoomd
 import io
 from collections.abc import Iterable, Mapping, MutableMapping
-from hoomd.error import GPUNotAvailableError  # noqa: F401
 
 
 def _to_camel_case(string):
@@ -16,7 +15,7 @@ def _to_camel_case(string):
         This currently capitalizes the first word which is not correct
         camelcase.
     """
-    return string.replace('_', ' ').title().replace(' ', '')
+    return string.replace("_", " ").title().replace(" ", "")
 
 
 def _is_iterable(obj):
@@ -33,7 +32,7 @@ def _dict_map(dict_, func):
     r"""Perform a recursive map on a nested mapping.
 
     Args:
-        dict\_ (dict): The nested mapping to perform the map on.
+        dict_ (dict): The nested mapping to perform the map on.
         func (``callable``): A callable taking in one value use to map over
             dictionary values.
 
@@ -61,14 +60,14 @@ def _dict_fold(dict_, func, init_value, use_keys=False):
 
     .. code-block:: python
 
-        mapping = {'a': 0, 'b': 1, 'c': 2}
+        mapping = {"a": 0, "b": 1, "c": 2}
         accumulated_value = 0
         func = lambda x, y: x + y
         for value in mapping.values():
             accumulated_value = func(accumulated_value, value)
 
     Args:
-        dict\_ (dict): The nested mapping to perform the map on.
+        dict_ (dict): The nested mapping to perform the map on.
         func (``callable``): A callable taking in one value use to fold over
             dictionary values or keys if ``use_keys`` is set.
         init_value: An initial value to use for the fold.
@@ -94,7 +93,7 @@ def _dict_flatten(dict_):
     r"""Flattens a nested mapping into a flat mapping.
 
     Args:
-        dict\_ (dict): The nested mapping to flatten.
+        dict_ (dict): The nested mapping to flatten.
 
     Returns:
         dict: The flattened mapping as a `dict`.
@@ -117,7 +116,7 @@ def _dict_flatten_implementation(value, key):
     else:
         new_dict = dict()
         for k, val in value.items():
-            new_dict.update(_dict_flatten_implementation(val, key + (k,)))
+            new_dict.update(_dict_flatten_implementation(val, (*key, k)))
         return new_dict
 
 
@@ -125,8 +124,8 @@ def _dict_filter(dict_, filter_):
     r"""Perform a recursive filter on a nested mapping.
 
     Args:
-        dict\_ (dict): The nested mapping to perform the filter on.
-        func (``callable``): A callable taking in one value use to filter over
+        dict_ (dict): The nested mapping to perform the filter on.
+        filter_ (``callable``): A callable taking in one value use to filter over
             mapping values.
 
     Returns:
@@ -154,9 +153,9 @@ def _dict_filter(dict_, filter_):
 def _keys_helper(dict_, key=()):
     for k in dict_:
         if isinstance(dict_[k], dict):
-            yield from _keys_helper(dict_[k], key + (k,))
+            yield from _keys_helper(dict_[k], (*key, k))
             continue
-        yield key + (k,)
+        yield (*key, k)
 
 
 class _NamespaceDict(MutableMapping):
@@ -247,13 +246,18 @@ class _SafeNamespaceDict(_NamespaceDict):
 
     def __setitem__(self, namespace, value):
         if namespace in self:
-            raise KeyError("Namespace {} is being used. Remove before "
-                           "replacing.".format(namespace))
+            raise KeyError(
+                "Namespace {} is being used. Remove before " "replacing.".format(
+                    namespace
+                )
+            )
         else:
             super().__setitem__(namespace, value)
 
 
-def make_example_simulation(device=None, dimensions=3, particle_types=['A']):
+def make_example_simulation(
+    device=None, dimensions=3, particle_types=["A"], mpcd_types=None
+):
     """Make an example Simulation object.
 
     The simulation state contains two particles at positions (-1, 0, 0) and
@@ -267,11 +271,14 @@ def make_example_simulation(device=None, dimensions=3, particle_types=['A']):
 
         particle_types (list[str]): Particle type names.
 
+        mpcd_types (list[str]): If not `None`, also create two MPCD particles,
+            and include these type names in the snapshot.
+
     Returns:
         hoomd.Simulation: The simulation object.
 
     Note:
-        `make_example_simulation` is intended for use in the documentation and
+        :py:func:`make_example_simulation` is intended for use in the documentation and
         other minimal working examples. Use `hoomd.Simulation` directly in other
         cases.
 
@@ -280,6 +287,7 @@ def make_example_simulation(device=None, dimensions=3, particle_types=['A']):
     .. code-block:: python
 
         simulation = hoomd.util.make_example_simulation()
+
     """
     if device is None:
         device = hoomd.device.CPU()
@@ -294,6 +302,13 @@ def make_example_simulation(device=None, dimensions=3, particle_types=['A']):
             Lz = 0
         snapshot.configuration.box = [10, 10, Lz, 0, 0, 0]
 
+        if mpcd_types is not None:
+            if not hoomd.version.mpcd_built:
+                raise RuntimeError("MPCD component not built")
+            snapshot.mpcd.N = 2
+            snapshot.mpcd.position[:] = [(-1, 0, 0), (1, 0, 0)]
+            snapshot.mpcd.types = mpcd_types
+
     simulation = hoomd.Simulation(device=device)
     simulation.create_state_from_snapshot(snapshot)
 
@@ -301,3 +316,8 @@ def make_example_simulation(device=None, dimensions=3, particle_types=['A']):
     simulation.run(0)
 
     return simulation
+
+
+__all__ = [
+    "make_example_simulation",
+]

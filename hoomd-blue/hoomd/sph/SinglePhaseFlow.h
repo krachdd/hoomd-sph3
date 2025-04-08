@@ -176,13 +176,20 @@ class PYBIND11_EXPORT SinglePhaseFlow : public SPHBaseClass<KT_, SET_>
             m_shepard_renormalization = false;
             }
 
+        /*! Turn Shepard type density reinitialization on
+         * \param shepardfreq Number of timesteps the renormalization is to be applied
+         */
+        void activateDensityReinitialization(unsigned int densreinitfreq);
+
+        /*! Turn Shepard type density reinitialization off.
+         */
+        void deactivateDensityReinitialization()
+            {
+            m_density_reinitialization = false;
+            }
+
         //! Computes forces
         virtual void computeForces(uint64_t timestep);
-
-    #ifdef ENABLE_MPI
-        /// The system's communicator.
-        std::shared_ptr<Communicator> m_comm;
-    #endif
 
     #ifdef ENABLE_MPI
         //! Get requested ghost communication flags
@@ -212,12 +219,17 @@ class PYBIND11_EXPORT SinglePhaseFlow : public SPHBaseClass<KT_, SET_>
 
     protected:
 
+    #ifdef ENABLE_MPI
+        /// The system's communicator.
+        std::shared_ptr<Communicator> m_comm;
+    #endif
+
         // Shared pointers
         std::shared_ptr<ParticleGroup> m_fluidgroup; //!< Group of fluid particles
         std::shared_ptr<ParticleGroup> m_solidgroup; //!< Group of fluid particles
 
         /// r_cut (not squared) given to the neighbor list
-        std::shared_ptr<GlobalArray<Scalar>> m_r_cut_nlist;
+        std::shared_ptr<GPUArray<Scalar>> m_r_cut_nlist;
 
 
         // Index for rcut pair info -> nlist
@@ -241,6 +253,7 @@ class PYBIND11_EXPORT SinglePhaseFlow : public SPHBaseClass<KT_, SET_>
         Scalar m_avbeta; //!< Shock diffusion coefficient for artificial viscosity operator
         Scalar m_ddiff; //!< Diffusion coefficient for Molteni type density diffusion
         unsigned int m_shepardfreq; //!< Time step frequency for Shepard reinitialization
+        unsigned int m_densityreinitfreq; //!< Time step frequency for density reinitialization
 
         // Auxiliary variables
         std::vector<unsigned int> m_fluidtypes; //!< Fluid type numbers
@@ -255,6 +268,8 @@ class PYBIND11_EXPORT SinglePhaseFlow : public SPHBaseClass<KT_, SET_>
         bool m_shepard_renormalization; //!< Set to true if Shepard type density reinitialization is to be used
         bool m_params_set; //!< True if parameters are set
         bool m_solid_removed; //!< True if solid Particles have been marked to remove 
+        bool m_density_reinitialization; //!< True if density is reinitialized 
+
 
         // Log parameters
         uint64_t m_log_computed_last_timestep; //!< Last time step where log quantities were computed

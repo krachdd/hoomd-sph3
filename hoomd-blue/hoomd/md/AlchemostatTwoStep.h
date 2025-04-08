@@ -1,4 +1,4 @@
-// Copyright (c) 2009-2024 The Regents of the University of Michigan.
+// Copyright (c) 2009-2025 The Regents of the University of Michigan.
 // Part of HOOMD-blue, released under the BSD 3-Clause License.
 
 #pragma once
@@ -24,7 +24,7 @@ class AlchemostatTwoStep : public IntegrationMethodTwoStep
         : IntegrationMethodTwoStep(
               sysdef,
               std::make_shared<ParticleGroup>(sysdef, std::make_shared<ParticleFilterNull>())),
-          m_nTimeFactor(alchemTimeFactor), m_halfDeltaT(0.5 * m_deltaT * alchemTimeFactor) {};
+          m_nTimeFactor(alchemTimeFactor), m_halfDeltaT(0.5 * m_deltaT * alchemTimeFactor) { };
 
     virtual ~AlchemostatTwoStep() { }
 

@@ -1,4 +1,4 @@
-// Copyright (c) 2009-2024 The Regents of the University of Michigan.
+// Copyright (c) 2009-2025 The Regents of the University of Michigan.
 // Part of HOOMD-blue, released under the BSD 3-Clause License.
 
 #include "ConstantForceComputeGPU.h"
@@ -39,48 +39,53 @@ ConstantForceComputeGPU::ConstantForceComputeGPU(std::shared_ptr<SystemDefinitio
  */
 void ConstantForceComputeGPU::setForces()
     {
-    //  array handles
-    ArrayHandle<Scalar3> d_constant_force(m_constant_force,
-                                          access_location::device,
-                                          access_mode::read);
-    ArrayHandle<Scalar4> d_force(m_force, access_location::device, access_mode::overwrite);
 
-    ArrayHandle<Scalar3> d_constant_torque(m_constant_torque,
-                                           access_location::device,
-                                           access_mode::read);
-    ArrayHandle<Scalar4> d_torque(m_torque, access_location::device, access_mode::overwrite);
+    const unsigned int group_size = m_group->getNumMembers();
+    const unsigned int N = m_pdata->getN();
+        { // GPU Array Scope
+        //  array handles
+        ArrayHandle<Scalar3> d_constant_force(m_constant_force,
+                                              access_location::device,
+                                              access_mode::read);
+        ArrayHandle<Scalar4> d_force(m_force, access_location::device, access_mode::overwrite);
 
-    ArrayHandle<Scalar4> d_pos(m_pdata->getPositions(), access_location::device, access_mode::read);
-    ArrayHandle<unsigned int> d_index_array(m_group->getIndexArray(),
-                                            access_location::device,
-                                            access_mode::read);
+        ArrayHandle<Scalar3> d_constant_torque(m_constant_torque,
+                                               access_location::device,
+                                               access_mode::read);
+        ArrayHandle<Scalar4> d_torque(m_torque, access_location::device, access_mode::overwrite);
 
-    // sanity check
-    assert(d_force.data != NULL);
-    assert(d_constant_force.data != NULL);
-    assert(d_constant_torque.data != NULL);
-    assert(d_pos.data != NULL);
-    assert(d_index_array.data != NULL);
-    unsigned int group_size = m_group->getNumMembers();
-    unsigned int N = m_pdata->getN();
+        ArrayHandle<Scalar4> d_pos(m_pdata->getPositions(), access_location::device, access_mode::read);
+        ArrayHandle<unsigned int> d_index_array(m_group->getIndexArray(),
+                                                access_location::device,
+                                                access_mode::read);
 
-    // compute the forces on the GPU
-    m_tuner->begin();
+        // sanity check
+        assert(d_force.data != NULL);
+        assert(d_constant_force.data != NULL);
+        assert(d_constant_torque.data != NULL);
+        assert(d_pos.data != NULL);
+        assert(d_index_array.data != NULL);
 
-    kernel::gpu_compute_constant_force_set_forces(group_size,
-                                                  d_index_array.data,
-                                                  d_force.data,
-                                                  d_torque.data,
-                                                  d_pos.data,
-                                                  d_constant_force.data,
-                                                  d_constant_torque.data,
-                                                  N,
-                                                  m_tuner->getParam()[0]);
+        m_force.zeroFill();
 
-    if (m_exec_conf->isCUDAErrorCheckingEnabled())
-        CHECK_CUDA_ERROR();
+        // compute the forces on the GPU
+        m_tuner->begin();
 
-    m_tuner->end();
+        kernel::gpu_compute_constant_force_set_forces(group_size,
+                                                      d_index_array.data,
+                                                      d_force.data,
+                                                      d_torque.data,
+                                                      d_pos.data,
+                                                      d_constant_force.data,
+                                                      d_constant_torque.data,
+                                                      N,
+                                                      m_tuner->getParam()[0]);
+
+        if (m_exec_conf->isCUDAErrorCheckingEnabled())
+            CHECK_CUDA_ERROR();
+
+        m_tuner->end();
+        } // End GPU Array Scope 
     }
 
 namespace detail

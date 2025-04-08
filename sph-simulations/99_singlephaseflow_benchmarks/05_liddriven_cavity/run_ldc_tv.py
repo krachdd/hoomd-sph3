@@ -118,7 +118,7 @@ model.shepardrenormanlization = False
 # model.shepardfreq = 2
 
 
-maximum_smoothing_length = sph_helper.set_max_sl(sim, device, snapshot, model)
+maximum_smoothing_length = sph_helper.set_max_sl(sim, device, model)
 
 c, c_condition = model.compute_speedofsound(LREF = lref, UREF = refvel, 
                                             DX = dx, DRHO = drho, H = maximum_smoothing_length, 
