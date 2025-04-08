@@ -247,7 +247,7 @@ class PYBIND11_EXPORT TwoPhaseFlow : public SPHBaseClass<KT_, SET1_>
         std::shared_ptr<StateEquation<SET2_>> m_eos2; //!< The equation of state class for fluid phase 2
 
         /// r_cut (not squared) given to the neighbor list
-        std::shared_ptr<GlobalArray<Scalar>> m_r_cut_nlist;
+        std::shared_ptr<GPUArray<Scalar>> m_r_cut_nlist;
 
         // Index for rcut pair info -> nlist
         Index2D m_typpair_idx;        //!< Helper class for indexing per type pair arrays
