@@ -122,6 +122,7 @@ class PYBIND11_EXPORT SPHBaseClass : public ForceCompute
 
         DensityMethod m_densitymethod;
         ViscosityMethod m_viscositymethod;
+        ColorGradientMethod m_colorgradient_method;
 
         Scalar3 m_bodyforce; //!< Volumetric force
         unsigned int m_damptime; //!< Damping time
@@ -147,6 +148,8 @@ void export_SPHBaseClass(pybind11::module& m, std::string name);
 void export_DensityMethod(pybind11::module& m);
 
 void export_ViscosityMethod(pybind11::module& m);
+
+void export_ColorGradientMethod(pybind11::module& m);
 
 } // end namespace detail
 

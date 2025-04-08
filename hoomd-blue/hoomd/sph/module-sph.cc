@@ -17,7 +17,7 @@ maintainer: dkrach, david.krach@mib.uni-stuttgart.de
 // // #include "RigidBodyIntegrator.h"
 #include "SinglePhaseFlow.h"
 #include "SinglePhaseFlowTV.h"
-// // #include "TwoPhaseFlow.h"
+#include "TwoPhaseFlow.h"
 #include "CustomForceCompute.h"
 
 
@@ -148,6 +148,31 @@ PYBIND11_MODULE(_sph, m){
     export_SinglePhaseFlowTV<cubicspline, linear>(m, "SinglePFTV_CS_L");
     export_SinglePhaseFlowTV<cubicspline, tait>(m, "SinglePFTV_CS_T");
 
+    export_TwoPhaseFlow<wendlandc2, linear, linear>(m, "TwoPF_WC2_LL");
+    export_TwoPhaseFlow<wendlandc2, linear, tait>(m, "TwoPF_WC2_LT");
+    export_TwoPhaseFlow<wendlandc2, tait, linear>(m, "TwoPF_WC2_TL");
+    export_TwoPhaseFlow<wendlandc2, tait, tait>(m, "TwoPF_WC2_TT");
+    
+    export_TwoPhaseFlow<wendlandc4, linear, linear>(m, "TwoPF_WC4_LL");
+    export_TwoPhaseFlow<wendlandc4, linear, tait>(m, "TwoPF_WC4_LT");
+    export_TwoPhaseFlow<wendlandc4, tait, linear>(m, "TwoPF_WC4_TL");
+    export_TwoPhaseFlow<wendlandc4, tait, tait>(m, "TwoPF_WC4_TT");
+    
+    export_TwoPhaseFlow<wendlandc6, linear, linear>(m, "TwoPF_WC6_LL");
+    export_TwoPhaseFlow<wendlandc6, linear, tait>(m, "TwoPF_WC6_LT");
+    export_TwoPhaseFlow<wendlandc6, tait, linear>(m, "TwoPF_WC6_TL");
+    export_TwoPhaseFlow<wendlandc6, tait, tait>(m, "TwoPF_WC6_TT");
+    
+    export_TwoPhaseFlow<quintic, linear, linear>(m, "TwoPF_Q_LL");
+    export_TwoPhaseFlow<quintic, linear, tait>(m, "TwoPF_Q_LT");
+    export_TwoPhaseFlow<quintic, tait, linear>(m, "TwoPF_Q_TL");
+    export_TwoPhaseFlow<quintic, tait, tait>(m, "TwoPF_Q_TT");
+    
+    export_TwoPhaseFlow<cubicspline, linear, linear>(m, "TwoPF_CS_LL");
+    export_TwoPhaseFlow<cubicspline, linear, tait>(m, "TwoPF_CS_LT");
+    export_TwoPhaseFlow<cubicspline, tait, linear>(m, "TwoPF_CS_TL");
+    export_TwoPhaseFlow<cubicspline, tait, tait>(m, "TwoPF_CS_TT");
+
     export_CustomForceCompute(m);
 
     export_ComputeSPFMechanicalProperties(m);
@@ -155,6 +180,7 @@ PYBIND11_MODULE(_sph, m){
 
     export_DensityMethod(m);
     export_ViscosityMethod(m);
+    export_ColorGradientMethod(m);
 
     // export_LocalNeighborListDataHost(m);
     export_HalfStepHook(m);
