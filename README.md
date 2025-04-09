@@ -8,7 +8,7 @@ PGSD Version 3.2.0 (as of 12.11.2024)
 ## Libaries to install check HOOMD Webpage
 additional: cereal - A C++11 library for serialization
 ```bash
-sudo apt install libcereal-dev
+sudo apt install libcereal-dev python3-dev libbz2-dev
 ```
 
 ## Main Modifications
