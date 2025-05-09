@@ -78,9 +78,11 @@ struct comm_flag
         net_force,         //! Communicate net force
         reverse_net_force, //! Communicate net force on ghost particles. Added by Vyas
         net_ratedpe,       //! Communicate net_ratedpe
-        slength,       //! Communicate slength
+        slength       //! Communicate slength
         // net_torque,        //! Communicate net torque
-        // net_virial         //! Communicate net virial
+        // net_virial,         //! Communicate net virial
+        // angmom,            //! Bit id in CommFlags for particle angular momentum
+        // inertia            //! Bit id in CommFlags for particle moment of inertia
         };
     };
 
@@ -513,6 +515,8 @@ class PYBIND11_EXPORT Communicator
     GPUVector<Scalar3> m_aux3_copybuf;        //!< Buffer for particle auxiliary data 3
     GPUVector<Scalar3> m_aux4_copybuf;        //!< Buffer for particle auxiliary data 4
     // GPUVector<Scalar4> m_orientation_copybuf; //!< Buffer for particle orientation to be copied
+    // GPUVector<Scalar4> m_angmom_copybuf;      //!< Buffer for particle angular momenta to be copied
+    // GPUVector<Scalar3> m_inertia_copybuf;   //!< Buffer for particle moment of inertias to be copied
     GPUVector<unsigned int> m_plan_copybuf;   //!< Buffer for particle plans
     GPUVector<unsigned int> m_tag_copybuf;    //!< Buffer for particle tags
     GPUVector<Scalar4> m_netforce_copybuf;    //!< Buffer for net force
