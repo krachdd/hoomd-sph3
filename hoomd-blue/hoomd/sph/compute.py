@@ -14,6 +14,7 @@ from hoomd.operation import Compute
 from hoomd.data.parameterdicts import ParameterDict
 from hoomd.logging import log
 import hoomd
+import inspect
 
 class SinglePhaseFlowBasicProperties(Compute):
     """Compute mechanical properties of a subset of the system.
