@@ -36,7 +36,7 @@ for snapshot in t:
       os.makedirs(pname)
         
    # Define VTU export filename
-   filename = pname+'/'+pname+'_'+str(snapshot.configuration.step)
+   filename = pname+'/'+pname+'_'+str(f'{snapshot.configuration.step:09d}')
    
    vtk(filename, np.array(snapshot.particles.position.T[0]),
                  np.array(snapshot.particles.position.T[1]),
