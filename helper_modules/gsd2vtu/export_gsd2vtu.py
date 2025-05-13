@@ -48,7 +48,7 @@ def export_basic(GSDfilename):
             os.makedirs(pname)
             
         # Define VTU export filename
-        filename = pname+'/'+pname+'_'+str(snapshot.configuration.step)
+        filename = pname+'/'+pname+'_'+str(f'{snapshot.configuration.step:09d}')
         
         vtk(filename, np.array(snapshot.particles.position.T[0]),
                     np.array(snapshot.particles.position.T[1]),
@@ -99,7 +99,7 @@ def export_spf(GSDfilename):
             os.makedirs(pname)
             
         # Define VTU export filename
-        filename = pname+'/'+pname+'_'+str(snapshot.configuration.step)
+        filename = pname+'/'+pname+'_'+str(f'{snapshot.configuration.step:09d}')
         
         vtk(filename, np.array(snapshot.particles.position.T[0]),
                       np.array(snapshot.particles.position.T[1]),
@@ -150,7 +150,7 @@ def export_tvspf(GSDfilename):
             os.makedirs(pname)
             
         # Define VTU export filename
-        filename = pname+'/'+pname+'_'+str(snapshot.configuration.step)
+        filename = pname+'/'+pname+'_'+str(f'{snapshot.configuration.step:09d}')
         
         vtk(filename, np.array(snapshot.particles.position.T[0]),
                       np.array(snapshot.particles.position.T[1]),
@@ -201,7 +201,7 @@ def export_tpf(GSDfilename):
             os.makedirs(pname)
             
         # Define VTU export filename
-        filename = pname+'/'+pname+'_'+str(snapshot.configuration.step)
+        filename = pname+'/'+pname+'_'+str(f'{snapshot.configuration.step:09d}')
         
         vtk(filename, np.array(snapshot.particles.position.T[0]),
                       np.array(snapshot.particles.position.T[1]),
@@ -251,7 +251,7 @@ def export_all(GSDfilename):
             os.makedirs(pname)
             
         # Define VTU export filename
-        filename = pname+'/'+pname+'_'+str(snapshot.configuration.step)
+        filename = pname+'/'+pname+'_'+str(f'{snapshot.configuration.step:09d}')
         
         vtk(filename, np.array(snapshot.particles.position.T[0]),
                     np.array(snapshot.particles.position.T[1]),
