@@ -1,0 +1,1 @@
+rm -rf dd_* log*.log

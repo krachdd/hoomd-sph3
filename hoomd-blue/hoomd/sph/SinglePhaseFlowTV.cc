@@ -457,13 +457,13 @@ void SinglePhaseFlowTV<KT_, SET_>::computeForces(uint64_t timestep)
 
     // m_solid_removed flag is set to False initially, so this 
     // only executes at timestep 0
-    if (!this->m_solid_removed)
-        {
-        this->m_nlist->forceUpdate();
-        this->m_nlist->compute(timestep);
-        this->mark_solid_particles_toremove(timestep);
-        this->m_solid_removed = true;
-        }
+    // if (!this->m_solid_removed)
+    //     {
+    //     this->m_nlist->forceUpdate();
+    //     this->m_nlist->compute(timestep);
+    //     this->mark_solid_particles_toremove(timestep);
+    //     this->m_solid_removed = true;
+    //     }
 
     // Apply density renormalization if requested
     if ( this->m_shepard_renormalization && timestep % this->m_shepardfreq == 0 )
