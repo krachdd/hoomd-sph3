@@ -1,6 +1,6 @@
-[submodule "dependencies/pgsd-sph"]
-	path = dependencies/pgsd-sph
-	url = git@github.com:krachdd/pgsd-sph.git
-[submodule "dependencies/gsd-sph"]
-	path = dependencies/gsd-sph
-	url = git@github.com:krachdd/gsd-sph.git
+#[submodule "dependencies/pgsd-sph"]
+#	path = dependencies/pgsd-sph
+#	url = git@github.com:krachdd/pgsd-sph.git
+#[submodule "dependencies/gsd-sph"]
+#	path = dependencies/gsd-sph
+#	url = git@github.com:krachdd/gsd-sph.git
