@@ -125,5 +125,4 @@ The code to check is in ```hoomd-sph3/helper_modules/delete_solid_sphparticles/ 
 
 
 ## Developer
-
-- [David Krach](https://www.mib.uni-stuttgart.de/institute/team/Krach/)
+- [David Krach](https://www.mib.uni-stuttgart.de/institute/team/Krach/) E-mail: [david.krach@mib.uni-stuttgart.de](mailto:david.krach@mib.uni-stuttgart.de)
