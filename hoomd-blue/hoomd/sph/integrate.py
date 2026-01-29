@@ -114,30 +114,6 @@ class _DynamicIntegrator(BaseIntegrator):
         #     return
         super()._setattr_param(attr, value)
 
-    # def _set_rigid(self, new_rigid):
-    #     """Handles the adding and detaching of potential Rigid objects."""
-    #     # this generally only happens when attaching and we can ignore it since
-    #     # we attach the rigid body in _attach.
-    #     if new_rigid is self.rigid:
-    #         return
-
-    #     old_rigid = self.rigid
-
-    #     if new_rigid is not None and new_rigid._attached:
-    #         raise ValueError("Cannot add Rigid object to multiple integrators.")
-
-    #     if old_rigid is not None:
-    #         if self._attached:
-    #             old_rigid._detach()
-
-    #     if new_rigid is None:
-    #         self._param_dict["rigid"] = None
-    #         return
-
-    #     if self._attached:
-    #         new_rigid._attach(self._simulation)
-    #     self._param_dict["rigid"] = new_rigid
-
 
 @hoomd.logging.modify_namespace(("sph", "Integrator"))
 class Integrator(_DynamicIntegrator):
