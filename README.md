@@ -11,7 +11,6 @@ hoomd-sph3 is an open-source implementation of Smoothed Particle Hydrodynamics (
 
 - Multiple time integration methods (Velocity Verlet, Leap Frog, etc.)
 - Modular logger and physical model system using filters
-- Support for rigid bodies via HOOMD-Blue's implementation
 - Density computation and summation routines
 - Parallel I/O routines for snapshot reading and writing
 - Extensible kernel and equation-of-state (EOS) 
