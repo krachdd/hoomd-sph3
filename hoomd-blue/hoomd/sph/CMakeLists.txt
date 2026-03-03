@@ -12,7 +12,7 @@ set(_${COMPONENT_NAME}_sources
     VelocityVerletBasic.cc
     KickDriftKickTV.cc
 #     SuspendedObjectIntegrator.cc
-#     RigidBodyIntegrator.cc
+    RigidBodyIntegrator.cc
 #     StateEquationsExport.cc
     StateEquations.cc
     SPHBaseClass.cc
@@ -52,7 +52,7 @@ set(_${COMPONENT_NAME}_headers
 #     SolidFluidTypeBit.h   
 #     SuspendedObjectIntegratorGPU.cuh  
 #     VelocityVerletGPU.cuh
-#     RigidBodyIntegrator.h          
+    RigidBodyIntegrator.h
 #     SPHBaseClass.cuh      
 #     SuspendedObjectIntegratorGPU.h    
 #     VelocityVerletGPU.h

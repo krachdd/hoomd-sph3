@@ -42,7 +42,7 @@ maintainer: dkrach, david.krach@mib.uni-stuttgart.de
 #include "VelocityVerletBasic.h"
 #include "KickDriftKickTV.h"
 // // #include "SuspendedObjectIntegrator.h"
-// // #include "RigidBodyIntegrator.h"
+#include "RigidBodyIntegrator.h"
 #include "SinglePhaseFlow.h"
 #include "SinglePhaseFlowTV.h"
 #include "SinglePhaseFlowGDGD.h"
@@ -84,7 +84,7 @@ namespace detail
     void export_SPHIntegrationMethodTwoStep(pybind11::module& m);
     // void export_VelocityVerlet(pybind11::module& m);
     // void export_SuspendedObjectIntegrator(pybind11::module& m);
-    // void export_RigidBodyIntegrator(pybind11::module& m);
+    void export_RigidBodyIntegrator(pybind11::module& m);
     // void export_SinglePhaseFlow(pybind11::module& m);
     // void export_StateEquations(pybind11::module& m);
     // void export_TwoPhaseFlow(pybind11::module& m);
@@ -133,7 +133,7 @@ PYBIND11_MODULE(_sph, m){
     export_VelocityVerletBasic(m);
     export_KickDriftKickTV(m);
     // export_SuspendedObjectIntegrator(m);
-    // export_RigidBodyIntegrator(m);
+    export_RigidBodyIntegrator(m);
     export_WendlandC2(m);
     export_WendlandC4(m);
     export_WendlandC6(m);

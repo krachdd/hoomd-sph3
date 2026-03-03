@@ -39,11 +39,13 @@ Constraints can be added.
 
 """
 
-from .methods import (Method, VelocityVerlet, VelocityVerletBasic, KickDriftKickTV) 
+from .methods import (Method, VelocityVerlet, VelocityVerletBasic, KickDriftKickTV,
+                      RigidBodyIntegrator)
 
-__all__ = [   
+__all__ = [
     "Method",
     "VelocityVerlet",
     "VelocityVerletBasic",
-    "KickDriftKickTV"
+    "KickDriftKickTV",
+    "RigidBodyIntegrator",
 ]

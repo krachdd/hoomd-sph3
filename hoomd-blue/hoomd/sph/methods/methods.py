@@ -335,3 +335,61 @@ class KickDriftKickTV(Method):
             raise ValueError("xlimit_val must be positive.")
 
 
+class RigidBodyIntegrator(Method):
+    """Prescribes rigid-body motion to a group of particles.
+
+    Integrates particles that form a rigid boundary (wall, piston, stirrer)
+    by setting velocity = translational + rotational component and advancing
+    positions with a two-half-step scheme (same algorithm as VelocityVerlet).
+
+    Args:
+        filter: Particle group forming the rigid body (e.g. hoomd.filter.Type(['P'])).
+        transvel_x, transvel_y, transvel_z: hoomd.variant.Variant for translational velocity [m/s].
+        rotatvel: hoomd.variant.Variant for angular speed [rad/s] around rotaxis.
+        pivotpnt_x/y/z: Pivot point for rotation [m].
+        rotaxis_x/y/z: Rotation axis direction (auto-normalised).
+    """
+
+    def __init__(self, filter,
+                 transvel_x, transvel_y, transvel_z, rotatvel,
+                 pivotpnt_x=0.0, pivotpnt_y=0.0, pivotpnt_z=0.0,
+                 rotaxis_x=0.0, rotaxis_y=0.0, rotaxis_z=1.0):
+        param_dict = ParameterDict(filter=ParticleFilter)
+        param_dict.update(dict(filter=filter))
+        self._param_dict.update(param_dict)
+
+        # Store Variant objects and scalar parameters as plain attributes
+        self._transvel_x  = transvel_x
+        self._transvel_y  = transvel_y
+        self._transvel_z  = transvel_z
+        self._rotatvel    = rotatvel
+        self._pivotpnt_x  = float(pivotpnt_x)
+        self._pivotpnt_y  = float(pivotpnt_y)
+        self._pivotpnt_z  = float(pivotpnt_z)
+        self._rotaxis_x   = float(rotaxis_x)
+        self._rotaxis_y   = float(rotaxis_y)
+        self._rotaxis_z   = float(rotaxis_z)
+
+    def _attach_hook(self):
+        sim = self._simulation
+        self._cpp_obj = _sph.RigidBodyIntegrator(
+            sim.state._cpp_sys_def,
+            sim.state._get_group(self.filter),
+            self._transvel_x, self._transvel_y, self._transvel_z,
+            self._rotatvel,
+            self._pivotpnt_x, self._pivotpnt_y, self._pivotpnt_z,
+            self._rotaxis_x,  self._rotaxis_y,  self._rotaxis_z)
+        super()._attach_hook()
+
+    def setRotationSpeed(self, rotatvel):
+        self._cpp_obj.setRotationSpeed(rotatvel)
+
+    def setPivotPoint(self, x, y, z):
+        self._cpp_obj.setPivotPoint(x, y, z)
+
+    def setRotationAxis(self, x, y, z):
+        self._cpp_obj.setRotationAxis(x, y, z)
+
+    def setTranslationalVelocity(self, vx, vy, vz):
+        self._cpp_obj.setTranslationalVelocity(vx, vy, vz)
+
