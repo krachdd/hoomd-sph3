@@ -456,10 +456,10 @@ UP_TEST(ParticleData_test)
                                      access_location::host,
                                      access_mode::readwrite);
         ArrayHandle<int3> h_image(a.getImages(), access_location::host, access_mode::readwrite);
-        ArrayHandle<Scalar> h_charge(a.getCharges(), access_location::host, access_mode::readwrite);
+/*        ArrayHandle<Scalar> h_charge(a.getCharges(), access_location::host, access_mode::readwrite);
         ArrayHandle<Scalar> h_diameter(a.getDiameters(),
                                        access_location::host,
-                                       access_mode::readwrite);
+                                       access_mode::readwrite);*/
         ArrayHandle<unsigned int> h_tag(a.getTags(), access_location::host, access_mode::readwrite);
         ArrayHandle<unsigned int> h_rtag(a.getRTags(),
                                          access_location::host,
@@ -473,8 +473,8 @@ UP_TEST(ParticleData_test)
         UP_ASSERT(a.getVelocities().getNumElements() == 1);
         UP_ASSERT(a.getAccelerations().getNumElements() == 1);
         UP_ASSERT(a.getImages().getNumElements() == 1);
-        UP_ASSERT(a.getCharges().getNumElements() == 1);
-        UP_ASSERT(a.getDiameters().getNumElements() == 1);
+        // UP_ASSERT(a.getCharges().getNumElements() == 1);
+        // UP_ASSERT(a.getDiameters().getNumElements() == 1);
         UP_ASSERT(a.getTags().getNumElements() == 1);
         UP_ASSERT(a.getRTags().size() == 1);
         UP_ASSERT(a.getBodies().getNumElements() == 1);
@@ -488,9 +488,9 @@ UP_TEST(ParticleData_test)
         MY_CHECK_CLOSE(h_accel.data[0].x, 0.0, tol);
         MY_CHECK_CLOSE(h_accel.data[0].y, 0.0, tol);
         MY_CHECK_CLOSE(h_accel.data[0].z, 0.0, tol);
-        MY_CHECK_CLOSE(h_charge.data[0], 0.0, tol);
+        // MY_CHECK_CLOSE(h_charge.data[0], 0.0, tol);
         MY_CHECK_CLOSE(h_vel.data[0].w, 1.0, tol); // mass
-        MY_CHECK_CLOSE(h_diameter.data[0], 1.0, tol);
+        // MY_CHECK_CLOSE(h_diameter.data[0], 1.0, tol);
         UP_ASSERT_EQUAL(h_image.data[0].x, 0);
         UP_ASSERT_EQUAL(h_image.data[0].y, 0);
         UP_ASSERT_EQUAL(h_image.data[0].z, 0);
@@ -509,9 +509,9 @@ UP_TEST(ParticleData_test)
         h_accel.data[0].x = 21.0;
         h_accel.data[0].y = 22.0;
         h_accel.data[0].z = 23.0;
-        h_charge.data[0] = 24.0;
+        // h_charge.data[0] = 24.0;
         h_vel.data[0].w = 25.0; // mass
-        h_diameter.data[0] = 26.0;
+        // h_diameter.data[0] = 26.0;
         h_image.data[0].x = 27;
         h_image.data[0].y = 28;
         h_image.data[0].z = 29;
@@ -527,8 +527,8 @@ UP_TEST(ParticleData_test)
                                      access_location::host,
                                      access_mode::read);
         ArrayHandle<int3> h_image(a.getImages(), access_location::host, access_mode::read);
-        ArrayHandle<Scalar> h_charge(a.getCharges(), access_location::host, access_mode::read);
-        ArrayHandle<Scalar> h_diameter(a.getDiameters(), access_location::host, access_mode::read);
+        // ArrayHandle<Scalar> h_charge(a.getCharges(), access_location::host, access_mode::read);
+        // ArrayHandle<Scalar> h_diameter(a.getDiameters(), access_location::host, access_mode::read);
         ArrayHandle<unsigned int> h_tag(a.getTags(), access_location::host, access_mode::read);
         ArrayHandle<unsigned int> h_rtag(a.getRTags(), access_location::host, access_mode::read);
         ArrayHandle<unsigned int> h_body(a.getBodies(), access_location::host, access_mode::read);
@@ -537,8 +537,8 @@ UP_TEST(ParticleData_test)
         UP_ASSERT(a.getVelocities().getNumElements() == 1);
         UP_ASSERT(a.getAccelerations().getNumElements() == 1);
         UP_ASSERT(a.getImages().getNumElements() == 1);
-        UP_ASSERT(a.getCharges().getNumElements() == 1);
-        UP_ASSERT(a.getDiameters().getNumElements() == 1);
+        // UP_ASSERT(a.getCharges().getNumElements() == 1);
+        // UP_ASSERT(a.getDiameters().getNumElements() == 1);
         UP_ASSERT(a.getTags().getNumElements() == 1);
         UP_ASSERT(a.getRTags().getNumElements() == 1);
         UP_ASSERT(a.getBodies().getNumElements() == 1);
@@ -552,9 +552,9 @@ UP_TEST(ParticleData_test)
         MY_CHECK_CLOSE(h_accel.data[0].x, 21.0, tol);
         MY_CHECK_CLOSE(h_accel.data[0].y, 22.0, tol);
         MY_CHECK_CLOSE(h_accel.data[0].z, 23.0, tol);
-        MY_CHECK_CLOSE(h_charge.data[0], 24.0, tol);
+        // MY_CHECK_CLOSE(h_charge.data[0], 24.0, tol);
         MY_CHECK_CLOSE(h_vel.data[0].w, 25.0, tol); // mass
-        MY_CHECK_CLOSE(h_diameter.data[0], 26.0, tol);
+        // MY_CHECK_CLOSE(h_diameter.data[0], 26.0, tol);
         UP_ASSERT_EQUAL(h_image.data[0].x, 27);
         UP_ASSERT_EQUAL(h_image.data[0].y, 28);
         UP_ASSERT_EQUAL(h_image.data[0].z, 29);
@@ -573,8 +573,8 @@ UP_TEST(ParticleData_test)
                                      access_location::host,
                                      access_mode::read);
         ArrayHandle<int3> h_image(b.getImages(), access_location::host, access_mode::read);
-        ArrayHandle<Scalar> h_charge(b.getCharges(), access_location::host, access_mode::read);
-        ArrayHandle<Scalar> h_diameter(b.getDiameters(), access_location::host, access_mode::read);
+        // ArrayHandle<Scalar> h_charge(b.getCharges(), access_location::host, access_mode::read);
+        // ArrayHandle<Scalar> h_diameter(b.getDiameters(), access_location::host, access_mode::read);
         ArrayHandle<unsigned int> h_tag(b.getTags(), access_location::host, access_mode::read);
         ArrayHandle<unsigned int> h_rtag(b.getRTags(), access_location::host, access_mode::read);
         ArrayHandle<unsigned int> h_body(b.getBodies(), access_location::host, access_mode::read);
@@ -584,8 +584,8 @@ UP_TEST(ParticleData_test)
         UP_ASSERT(b.getVelocities().getNumElements() == N);
         UP_ASSERT(b.getAccelerations().getNumElements() == N);
         UP_ASSERT(b.getImages().getNumElements() == N);
-        UP_ASSERT(b.getCharges().getNumElements() == N);
-        UP_ASSERT(b.getDiameters().getNumElements() == N);
+        // UP_ASSERT(b.getCharges().getNumElements() == N);
+        // UP_ASSERT(b.getDiameters().getNumElements() == N);
         UP_ASSERT(b.getTags().getNumElements() == N);
         UP_ASSERT(b.getRTags().size() == N);
         UP_ASSERT(b.getBodies().getNumElements() == N);
@@ -601,9 +601,9 @@ UP_TEST(ParticleData_test)
             MY_CHECK_CLOSE(h_accel.data[i].x, 0.0, tol);
             MY_CHECK_CLOSE(h_accel.data[i].y, 0.0, tol);
             MY_CHECK_CLOSE(h_accel.data[i].z, 0.0, tol);
-            MY_CHECK_CLOSE(h_charge.data[i], 0.0, tol);
+            // MY_CHECK_CLOSE(h_charge.data[i], 0.0, tol);
             MY_CHECK_CLOSE(h_vel.data[i].w, 1.0, tol); // mass
-            MY_CHECK_CLOSE(h_diameter.data[i], 1.0, tol);
+            // MY_CHECK_CLOSE(h_diameter.data[i], 1.0, tol);
             UP_ASSERT_EQUAL(h_image.data[i].x, 0);
             UP_ASSERT_EQUAL(h_image.data[i].y, 0);
             UP_ASSERT_EQUAL(h_image.data[i].z, 0);

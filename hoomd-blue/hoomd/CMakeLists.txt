@@ -366,10 +366,10 @@ add_subdirectory(tune)
 add_subdirectory(update)
 add_subdirectory(variant)
 
-# if (BUILD_TESTING)
-#     # add_subdirectory(test-py)
-#     add_subdirectory(test)
-# endif()
+if (BUILD_TESTING)
+    # add_subdirectory(test-py)
+    add_subdirectory(test)
+endif()
 
 ##################################################
 ## Build components

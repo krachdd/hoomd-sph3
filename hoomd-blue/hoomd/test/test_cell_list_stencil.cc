@@ -29,9 +29,14 @@ HOOMD_UP_MAIN();
 template<class CL>
 void celllist_stencil_basic_test(std::shared_ptr<ExecutionConfiguration> exec_conf)
     {
+    // // start with a simple simulation box size 3
+    // std::shared_ptr<SystemDefinition> sysdef_3(
+    //     new SystemDefinition(1, BoxDim(3.0), 2, 0, 0, 0, 0, exec_conf));
+    // std::shared_ptr<ParticleData> pdata = sysdef_3->getParticleData();
+
     // start with a simple simulation box size 3
     std::shared_ptr<SystemDefinition> sysdef_3(
-        new SystemDefinition(1, BoxDim(3.0), 2, 0, 0, 0, 0, exec_conf));
+        new SystemDefinition(1, BoxDim(3.0), 2 ,0, exec_conf, nullptr, false));
     std::shared_ptr<ParticleData> pdata = sysdef_3->getParticleData();
 
     // initialize a cell list and stencil
