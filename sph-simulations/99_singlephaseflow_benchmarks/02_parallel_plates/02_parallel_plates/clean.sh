@@ -1,1 +1,0 @@
-rm -rf parallel_plates_*

@@ -88,6 +88,29 @@ TwoPhaseFlow<KT_, SET1_, SET2_>::TwoPhaseFlow(std::shared_ptr<SystemDefinition> 
         m_ddiff = Scalar(0.0);
         m_shepardfreq = 1;
 
+        m_omega_adv = Scalar(180);
+        m_omega_rec = Scalar(0);
+        m_hysteresis = false;
+        m_nn_model1  = NEWTONIAN;
+        m_nn_K1      = Scalar(0.0);
+        m_nn_n1      = Scalar(1.0);
+        m_nn_mu0_1   = Scalar(0.0);
+        m_nn_muinf_1 = Scalar(0.0);
+        m_nn_lambda1 = Scalar(0.0);
+        m_nn_tauy1   = Scalar(0.0);
+        m_nn_m1      = Scalar(0.0);
+        m_nn_mu_min1 = Scalar(0.0);
+
+        m_nn_model2  = NEWTONIAN;
+        m_nn_K2      = Scalar(0.0);
+        m_nn_n2      = Scalar(1.0);
+        m_nn_mu0_2   = Scalar(0.0);
+        m_nn_muinf_2 = Scalar(0.0);
+        m_nn_lambda2 = Scalar(0.0);
+        m_nn_tauy2   = Scalar(0.0);
+        m_nn_m2      = Scalar(0.0);
+        m_nn_mu_min2 = Scalar(0.0);
+
         m_solid_removed = false;
 
         // Sanity checks
@@ -230,6 +253,18 @@ void TwoPhaseFlow<KT_, SET1_, SET2_>::setParams(Scalar mu1, Scalar mu2, Scalar s
         }
 
     this->m_params_set = true;
+    }
+
+template<SmoothingKernelType KT_, StateEquationType SET1_, StateEquationType SET2_>
+void TwoPhaseFlow<KT_, SET1_, SET2_>::setHysteresis(Scalar omega_rec, Scalar omega_adv)
+    {
+    if (omega_rec < 0 || omega_rec > 180 || omega_adv < 0 || omega_adv > 180)
+        throw std::runtime_error("Hysteresis angles must be in [0,180] deg.");
+    if (omega_rec >= omega_adv)
+        throw std::runtime_error("omega_rec must be < omega_adv.");
+    m_omega_rec  = omega_rec;
+    m_omega_adv  = omega_adv;
+    m_hysteresis = true;
     }
 
 
@@ -1565,10 +1600,24 @@ void TwoPhaseFlow<KT_, SET1_, SET2_>::compute_surfaceforce(uint64_t timestep)
             temp1 = 1./3. * normsni * normsni;
         }
 
-        // Fluid phase 1 - Solid interface
-        if ( i_isfluid1 && this->m_sigma01 > 0.0 && normsni > 0.0 )
+        // --- hysteresis block for particle i ---
+        Scalar sigma01_i = this->m_sigma01;
+        Scalar sigma02_i = this->m_sigma02;
+        if (m_hysteresis && normsni > 0.0 && normfni > 0.0)
         {
-            temp0 = this->m_sigma01/normsni;
+            Scalar cos_local = dot(fni, sni) / (normfni * normsni);
+            cos_local = fmax(Scalar(-1), fmin(Scalar(1), cos_local));
+            Scalar theta_local = acos(cos_local) * (Scalar(180) / M_PI);
+            Scalar omega_eff = fmax(m_omega_rec, fmin(m_omega_adv, theta_local));
+            if      (omega_eff == Scalar(90)) { sigma01_i = 0; sigma02_i = 0; }
+            else if (omega_eff <  Scalar(90)) { sigma01_i = this->m_sigma12 * cos(omega_eff*(M_PI/180)); sigma02_i = 0; }
+            else                              { sigma01_i = 0; sigma02_i = this->m_sigma12 * cos((180-omega_eff)*(M_PI/180)); }
+        }
+
+        // Fluid phase 1 - Solid interface
+        if ( i_isfluid1 && sigma01_i > 0.0 && normsni > 0.0 )
+        {
+            temp0 = sigma01_i/normsni;
             istress[0] += temp0 * ( temp1 - sni.x * sni.x); // xx
             istress[1] += temp0 * ( temp1 - sni.y * sni.y); // yy
             istress[2] += temp0 * ( temp1 - sni.z * sni.z); // zz
@@ -1578,9 +1627,9 @@ void TwoPhaseFlow<KT_, SET1_, SET2_>::compute_surfaceforce(uint64_t timestep)
         }
 
         // Fluid phase 2 - Solid interface
-        if ( i_isfluid2 && this->m_sigma02 > 0.0 && normsni > 0.0 )
+        if ( i_isfluid2 && sigma02_i > 0.0 && normsni > 0.0 )
         {
-            temp0 = this->m_sigma02/normsni;
+            temp0 = sigma02_i/normsni;
             istress[0] += temp0 * ( temp1 - sni.x * sni.x); // xx
             istress[1] += temp0 * ( temp1 - sni.y * sni.y); // yy
             istress[2] += temp0 * ( temp1 - sni.z * sni.z); // zz
@@ -1687,10 +1736,24 @@ void TwoPhaseFlow<KT_, SET1_, SET2_>::compute_surfaceforce(uint64_t timestep)
                 temp1 = 1./3. * normsnj * normsnj;
             }
 
-            // Fluid phase 1 - Solid interface
-            if ( j_isfluid1 && this->m_sigma01 > 0.0 && normsnj > 0.0 )
+            // --- hysteresis block for particle j ---
+            Scalar sigma01_j = this->m_sigma01;
+            Scalar sigma02_j = this->m_sigma02;
+            if (m_hysteresis && normsnj > 0.0 && normfnj > 0.0)
             {
-                temp0 = this->m_sigma01/normsnj;
+                Scalar cos_local_j = dot(fnj, snj) / (normfnj * normsnj);
+                cos_local_j = fmax(Scalar(-1), fmin(Scalar(1), cos_local_j));
+                Scalar theta_local_j = acos(cos_local_j) * (Scalar(180) / M_PI);
+                Scalar omega_eff_j = fmax(m_omega_rec, fmin(m_omega_adv, theta_local_j));
+                if      (omega_eff_j == Scalar(90)) { sigma01_j = 0; sigma02_j = 0; }
+                else if (omega_eff_j <  Scalar(90)) { sigma01_j = this->m_sigma12 * cos(omega_eff_j*(M_PI/180)); sigma02_j = 0; }
+                else                                { sigma01_j = 0; sigma02_j = this->m_sigma12 * cos((180-omega_eff_j)*(M_PI/180)); }
+            }
+
+            // Fluid phase 1 - Solid interface
+            if ( j_isfluid1 && sigma01_j > 0.0 && normsnj > 0.0 )
+            {
+                temp0 = sigma01_j/normsnj;
                 jstress[0] += temp0 * ( temp1 - snj.x * snj.x); // xx
                 jstress[1] += temp0 * ( temp1 - snj.y * snj.y); // yy
                 jstress[2] += temp0 * ( temp1 - snj.z * snj.z); // zz
@@ -1700,9 +1763,9 @@ void TwoPhaseFlow<KT_, SET1_, SET2_>::compute_surfaceforce(uint64_t timestep)
             }
 
             // Fluid phase 2 - Solid interface
-            if ( j_isfluid2 && this->m_sigma02 > 0.0 && normsnj > 0.0 )
+            if ( j_isfluid2 && sigma02_j > 0.0 && normsnj > 0.0 )
             {
-                temp0 = this->m_sigma02/normsnj;
+                temp0 = sigma02_j/normsnj;
                 jstress[0] += temp0 * ( temp1 - snj.x * snj.x); // xx
                 jstress[1] += temp0 * ( temp1 - snj.y * snj.y); // yy
                 jstress[2] += temp0 * ( temp1 - snj.z * snj.z); // zz
@@ -2003,7 +2066,38 @@ void TwoPhaseFlow<KT_, SET1_, SET2_>::forcecomputation(uint64_t timestep)
             h_force.data[i].z -= prefactor * ( temp0 + avc )* dwdr_r * dx.z;
 
             // Evaluate viscous interaction forces
-            temp0 = ((Scalar(2)*(mui*muj))/(mui+muj)) * (Vi*Vi+Vj*Vj) * dwdr_r;
+            {
+            Scalar dvnorm    = sqrt(dot(dv, dv));
+            Scalar gamma_dot = dvnorm / (r + eps);
+            NonNewtonianModel nn_model_i = i_isfluid1 ? m_nn_model1 : m_nn_model2;
+            Scalar mu_eff_i = computeNNViscosity(mui, gamma_dot, nn_model_i,
+                i_isfluid1 ? m_nn_K1 : m_nn_K2,
+                i_isfluid1 ? m_nn_n1 : m_nn_n2,
+                i_isfluid1 ? m_nn_mu0_1 : m_nn_mu0_2,
+                i_isfluid1 ? m_nn_muinf_1 : m_nn_muinf_2,
+                i_isfluid1 ? m_nn_lambda1 : m_nn_lambda2,
+                i_isfluid1 ? m_nn_tauy1 : m_nn_tauy2,
+                i_isfluid1 ? m_nn_m1 : m_nn_m2,
+                i_isfluid1 ? m_nn_mu_min1 : m_nn_mu_min2);
+            Scalar mu_eff_j;
+            if (j_issolid)
+                mu_eff_j = mu_eff_i;
+            else
+                {
+                NonNewtonianModel nn_model_j = j_isfluid1 ? m_nn_model1 : m_nn_model2;
+                mu_eff_j = computeNNViscosity(muj, gamma_dot, nn_model_j,
+                    j_isfluid1 ? m_nn_K1 : m_nn_K2,
+                    j_isfluid1 ? m_nn_n1 : m_nn_n2,
+                    j_isfluid1 ? m_nn_mu0_1 : m_nn_mu0_2,
+                    j_isfluid1 ? m_nn_muinf_1 : m_nn_muinf_2,
+                    j_isfluid1 ? m_nn_lambda1 : m_nn_lambda2,
+                    j_isfluid1 ? m_nn_tauy1 : m_nn_tauy2,
+                    j_isfluid1 ? m_nn_m1 : m_nn_m2,
+                    j_isfluid1 ? m_nn_mu_min1 : m_nn_mu_min2);
+                }
+            Scalar mu_harm = Scalar(2) * mu_eff_i * mu_eff_j / (mu_eff_i + mu_eff_j);
+            temp0 = mu_harm * (Vi*Vi+Vj*Vj) * dwdr_r;
+            }
             h_force.data[i].x  += temp0 * dv.x;
             h_force.data[i].y  += temp0 * dv.y;
             h_force.data[i].z  += temp0 * dv.z;
@@ -2553,9 +2647,23 @@ void TwoPhaseFlow<KT_, SET1_, SET2_>::compute_solid_forces(uint64_t timestep)
                 h_force.data[i].y -= (mj/mi) * temp0 * dwdr_r * dx.y;
                 h_force.data[i].z -= (mj/mi) * temp0 * dwdr_r * dx.z;
 
-                // Use viscosity of the fluid neighbor
-                Scalar muj = j_isfluid1 ? this->m_mu1 : this->m_mu2;
-                temp0 = muj * (Vi*Vi+Vj*Vj) * dwdr_r;
+                // Use viscosity of the fluid neighbor (with NN rheology)
+                Scalar muj_base = j_isfluid1 ? this->m_mu1 : this->m_mu2;
+                {
+                Scalar dvnorm    = sqrt(dot(dv, dv));
+                Scalar gamma_dot = dvnorm / (r + sqrt(epssqr));
+                NonNewtonianModel nn_model_j = j_isfluid1 ? m_nn_model1 : m_nn_model2;
+                Scalar mu_eff_j = computeNNViscosity(muj_base, gamma_dot, nn_model_j,
+                    j_isfluid1 ? m_nn_K1 : m_nn_K2,
+                    j_isfluid1 ? m_nn_n1 : m_nn_n2,
+                    j_isfluid1 ? m_nn_mu0_1 : m_nn_mu0_2,
+                    j_isfluid1 ? m_nn_muinf_1 : m_nn_muinf_2,
+                    j_isfluid1 ? m_nn_lambda1 : m_nn_lambda2,
+                    j_isfluid1 ? m_nn_tauy1 : m_nn_tauy2,
+                    j_isfluid1 ? m_nn_m1 : m_nn_m2,
+                    j_isfluid1 ? m_nn_mu_min1 : m_nn_mu_min2);
+                temp0 = mu_eff_j * (Vi*Vi+Vj*Vj) * dwdr_r;
+                }
                 h_force.data[i].x -= (mj/mi) * temp0 * dv.x;
                 h_force.data[i].y -= (mj/mi) * temp0 * dv.y;
                 h_force.data[i].z -= (mj/mi) * temp0 * dv.z;
@@ -2586,6 +2694,7 @@ void export_TwoPhaseFlow(pybind11::module& m, std::string name)
                              ViscosityMethod,
                              ColorGradientMethod >())
         .def("setParams", &TwoPhaseFlow<KT_, SET1_, SET2_>::setParams)
+        .def("setHysteresis", &TwoPhaseFlow<KT_, SET1_, SET2_>::setHysteresis)
         .def("getDensityMethod", &TwoPhaseFlow<KT_, SET1_, SET2_>::getDensityMethod)
         .def("setDensityMethod", &TwoPhaseFlow<KT_, SET1_, SET2_>::setDensityMethod)
         .def("getViscosityMethod", &TwoPhaseFlow<KT_, SET1_, SET2_>::getViscosityMethod)
@@ -2616,6 +2725,26 @@ void export_TwoPhaseFlow(pybind11::module& m, std::string name)
              pybind11::arg("interface_condition") = true)
         .def("deactivateParticleShifting", &TwoPhaseFlow<KT_, SET1_, SET2_>::deactivateParticleShifting)
         .def("getProvidedTimestepQuantities", &TwoPhaseFlow<KT_, SET1_, SET2_>::getProvidedTimestepQuantities)
+        .def("activatePowerLaw1", &TwoPhaseFlow<KT_, SET1_, SET2_>::activatePowerLaw1,
+             pybind11::arg("K"), pybind11::arg("n"), pybind11::arg("mu_min") = Scalar(0))
+        .def("activateCarreau1", &TwoPhaseFlow<KT_, SET1_, SET2_>::activateCarreau1)
+        .def("activateBingham1", &TwoPhaseFlow<KT_, SET1_, SET2_>::activateBingham1,
+             pybind11::arg("mu_p"), pybind11::arg("tauy"), pybind11::arg("m_reg"),
+             pybind11::arg("mu_min") = Scalar(0))
+        .def("activateHerschelBulkley1", &TwoPhaseFlow<KT_, SET1_, SET2_>::activateHerschelBulkley1,
+             pybind11::arg("K"), pybind11::arg("n"), pybind11::arg("tauy"), pybind11::arg("m_reg"),
+             pybind11::arg("mu_min") = Scalar(0))
+        .def("deactivateNonNewtonian1", &TwoPhaseFlow<KT_, SET1_, SET2_>::deactivateNonNewtonian1)
+        .def("activatePowerLaw2", &TwoPhaseFlow<KT_, SET1_, SET2_>::activatePowerLaw2,
+             pybind11::arg("K"), pybind11::arg("n"), pybind11::arg("mu_min") = Scalar(0))
+        .def("activateCarreau2", &TwoPhaseFlow<KT_, SET1_, SET2_>::activateCarreau2)
+        .def("activateBingham2", &TwoPhaseFlow<KT_, SET1_, SET2_>::activateBingham2,
+             pybind11::arg("mu_p"), pybind11::arg("tauy"), pybind11::arg("m_reg"),
+             pybind11::arg("mu_min") = Scalar(0))
+        .def("activateHerschelBulkley2", &TwoPhaseFlow<KT_, SET1_, SET2_>::activateHerschelBulkley2,
+             pybind11::arg("K"), pybind11::arg("n"), pybind11::arg("tauy"), pybind11::arg("m_reg"),
+             pybind11::arg("mu_min") = Scalar(0))
+        .def("deactivateNonNewtonian2", &TwoPhaseFlow<KT_, SET1_, SET2_>::deactivateNonNewtonian2)
         .def("setAcceleration", &SPHBaseClass<KT_, SET1_>::setAcceleration)
         .def("setRCut", &TwoPhaseFlow<KT_, SET1_, SET2_>::setRCutPython)
         ;

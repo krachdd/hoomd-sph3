@@ -440,9 +440,18 @@ void SinglePhaseFlowGDGD<KT_, SET_>::forcecomputation(uint64_t timestep)
                 h_force.data[i].z -= (temp0 + avc) * dwdr_r * dx.z;
 
                 // ── Viscous force ─────────────────────────────────────────────
-                // F_visc = μ · (V_i²+V_j²) · dW/dr/r · (v_i − v_j)
+                // F_visc = μ_eff · (V_i²+V_j²) · dW/dr/r · (v_i − v_j)
                 // (same formula for both density methods — uses vijsqr)
-                temp0 = this->m_mu * vijsqr * dwdr_r;
+                {
+                Scalar dvnorm    = sqrt(dot(dv, dv));
+                Scalar gamma_dot = dvnorm / (r + sqrt(epssqr));
+                Scalar mu_eff    = computeNNViscosity(this->m_mu, gamma_dot, this->m_nn_model,
+                                                      this->m_nn_K, this->m_nn_n,
+                                                      this->m_nn_mu0, this->m_nn_muinf,
+                                                      this->m_nn_lambda, this->m_nn_tauy,
+                                                      this->m_nn_m, this->m_nn_mu_min);
+                temp0 = mu_eff * vijsqr * dwdr_r;
+                }
                 h_force.data[i].x += temp0 * dv.x;
                 h_force.data[i].y += temp0 * dv.y;
                 h_force.data[i].z += temp0 * dv.z;
@@ -566,6 +575,16 @@ void export_SinglePhaseFlowGDGD(pybind11::module& m, std::string name)
         .def("deactivateShepardRenormalization",&SinglePhaseFlowGDGD<KT_, SET_>::deactivateShepardRenormalization)
         .def("activateDensityReinitialization",&SinglePhaseFlowGDGD<KT_, SET_>::activateDensityReinitialization)
         .def("deactivateDensityReinitialization",&SinglePhaseFlowGDGD<KT_, SET_>::deactivateDensityReinitialization)
+        .def("activatePowerLaw",               &SinglePhaseFlowGDGD<KT_, SET_>::activatePowerLaw,
+             pybind11::arg("K"), pybind11::arg("n"), pybind11::arg("mu_min") = Scalar(0))
+        .def("activateCarreau",                &SinglePhaseFlowGDGD<KT_, SET_>::activateCarreau)
+        .def("activateBingham",                &SinglePhaseFlowGDGD<KT_, SET_>::activateBingham,
+             pybind11::arg("mu_p"), pybind11::arg("tauy"), pybind11::arg("m_reg"),
+             pybind11::arg("mu_min") = Scalar(0))
+        .def("activateHerschelBulkley",        &SinglePhaseFlowGDGD<KT_, SET_>::activateHerschelBulkley,
+             pybind11::arg("K"), pybind11::arg("n"), pybind11::arg("tauy"), pybind11::arg("m_reg"),
+             pybind11::arg("mu_min") = Scalar(0))
+        .def("deactivateNonNewtonian",         &SinglePhaseFlowGDGD<KT_, SET_>::deactivateNonNewtonian)
         .def("setAcceleration",  &SPHBaseClass<KT_, SET_>::setAcceleration)
         .def("setRCut",          &SinglePhaseFlowGDGD<KT_, SET_>::setRCutPython)
         ;

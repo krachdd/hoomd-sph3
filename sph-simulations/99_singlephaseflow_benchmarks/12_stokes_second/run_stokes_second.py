@@ -182,14 +182,6 @@ table_file = hoomd.write.Table(output=log_file,
                                 logger=logger, max_header_len=10)
 sim.operations.writers.append(table_file)
 
-# ─── Identify bottom-plate solid particles ───────────────────────────────────
-with sim.state.cpu_local_snapshot as snap:
-    pos_all = np.array(snap.particles.position)
-    tid_all = np.array(snap.particles.typeid)
-
-y_all      = pos_all[:, 1]
-bot_mask   = (tid_all == 1) & (y_all < -0.5 * lref)
-
 # ─── Run: oscillate bottom plate, one period at a time ───────────────────────
 if device.communicator.rank == 0:
     print(f'Starting Stokes 2nd run: {n_periods} periods × {steps_per_period} steps/period'
@@ -203,6 +195,11 @@ for period_i in range(n_periods):
         t = (period_i * steps_per_period + step_i) * dt_actual
         v_wall = U0 * np.cos(omega * t)
         with sim.state.cpu_local_snapshot as snap:
+            # Recompute mask each step: local particle count changes as fluid
+            # particles migrate between MPI ranks after sim.run(1).
+            pos_local = np.array(snap.particles.position)
+            tid_local = np.array(snap.particles.typeid)
+            bot_mask  = (tid_local == 1) & (pos_local[:, 1] < -0.5 * lref)
             snap.particles.velocity[bot_mask, 0] = np.float32(v_wall)
         sim.run(1)
 

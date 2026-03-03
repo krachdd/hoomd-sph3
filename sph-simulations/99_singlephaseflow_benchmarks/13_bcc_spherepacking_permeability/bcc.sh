@@ -2,11 +2,11 @@
 #SBATCH --job-name=bcc_      # Job name
 #SBATCH --mail-type=BEGIN,END,FAIL         # Mail events (NONE, BEGIN, END, FAIL, ALL)
 #SBATCH --mail-user=david.krach@mib.uni-stuttgart.de    # Where to send mail.  Set this to your email address
-#SBATCH --ntasks=8                   # Number of MPI tasks (i.e. processes)
+#SBATCH --ntasks=27                   # Number of MPI tasks (i.e. processes)
 #SBATCH --nodes=1                    # Maximum number of nodes to be allocated
 #SBATCH --distribution=cyclic:cyclic # Distribute tasks cyclically first among nodes and then among sockets within a node
 #SBATCH --mem=100G
-#SBATCH --time=24:00:00              # Wall time limit (days-hrs:min:sec)
+#SBATCH --time=1-24:00:00              # Wall time limit (days-hrs:min:sec)
 #SBATCH --output=bcc_%j.log     # Path to the standard output and error files relative to the working directory
 #SBATCH --partition=cpu             # put the job into the cpu partition
 

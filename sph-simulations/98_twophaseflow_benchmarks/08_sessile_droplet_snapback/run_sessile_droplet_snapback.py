@@ -21,11 +21,11 @@ WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIME
 
 maintainer: dkrach, david.krach@mib.uni-stuttgart.de
 
-Sessile Droplet Under Shear — two-phase WCSPH run script.
+Sessile Droplet Shear + Snap-back — three-phase WCSPH run script.
 
 BENCHMARK DESCRIPTION
 ---------------------
-The simulation runs in two consecutive phases without restart:
+The simulation runs in three consecutive phases without restart:
 
 Phase 1 — Relaxation
   A cubic patch of fluid 'W' (droplet) sits on the stationary bottom solid
@@ -38,8 +38,15 @@ Phase 1 — Relaxation
 Phase 2 — Shear
   After relaxation the top solid wall is set to velocity U_wall in the
   x direction (Couette-like driving).  The resulting shear flow deforms the
-  sessile droplet.  The extent of deformation is characterised by the
-  capillary number Ca = μ U_wall / σ = 0.001.
+  sessile droplet.  Contact-angle hysteresis (θ_rec=75°, θ_adv=105°) pins
+  the contact line, so the droplet tilts but does not slide.  The extent of
+  deformation is characterised by the capillary number Ca = μ U_wall / σ = 0.001.
+
+Phase 3 — Snap-back
+  The top wall velocity is reset to zero.  With hysteresis pinning active the
+  droplet elastically recovers toward its relaxed position.  The residual
+  x-displacement after snap-back (relative to the shear-induced drift) is used
+  as a recovery metric.
 
 Domain:
   x : 4·lref    periodic
@@ -56,15 +63,17 @@ Step budget (dt ≈ 1.25 µs):
   Relaxation default (20001 steps) ≈ 250 τ_cap  → well-converged sessile shape
   Shear strain    1/γ̇ = H/U_wall  ≈ 160 000 steps
   Shear default  (50001 steps)     ≈ 0.3 shear strains → observable deformation
+  Snap-back default (50001 steps)  ≈ same duration as shear phase
 
 Usage:
-    python3 run_sessile_droplet_shear.py <num_length> <init_gsd_file> \\
-            [steps_relax] [steps_shear] [gsd_period]
+    python3 run_sessile_droplet_snapback.py <num_length> <init_gsd_file> \\
+            [steps_relax] [steps_shear] [steps_snapback] [gsd_period]
 
     num_length    : resolution used to create the init file (e.g. 20)
     init_gsd_file : path to the *_init.gsd produced by create_input_geometry.py
     steps_relax   : relaxation steps        (default 20001)
     steps_shear   : shear steps             (default 50001)
+    steps_snapback: snap-back steps         (default 50001)
     gsd_period    : GSD write interval      (default 200)
 """
 
@@ -90,11 +99,12 @@ except ImportError:
 device = hoomd.device.CPU(notice_level=2)
 sim    = hoomd.Simulation(device=device)
 
-num_length   = int(sys.argv[1])
-filename     = str(sys.argv[2])
-steps_relax  = int(sys.argv[3]) if len(sys.argv) > 3 else 20001
-steps_shear  = int(sys.argv[4]) if len(sys.argv) > 4 else 50001
-gsd_period   = int(sys.argv[5]) if len(sys.argv) > 5 else 200
+num_length    = int(sys.argv[1])
+filename      = str(sys.argv[2])
+steps_relax   = int(sys.argv[3]) if len(sys.argv) > 3 else 20001
+steps_shear   = int(sys.argv[4]) if len(sys.argv) > 4 else 50001
+steps_snapback = int(sys.argv[5]) if len(sys.argv) > 5 else 50001
+gsd_period    = int(sys.argv[6]) if len(sys.argv) > 6 else 200
 
 dt_string = datetime.now().strftime("%Y-%m-%d-%H-%M-%S")
 logname   = filename.replace('_init.gsd', '_run.log')
@@ -110,13 +120,13 @@ rho02      = 1000.0       # rest density phase N (ambient)                [kg/m�
 viscosity1 = 0.001        # dynamic viscosity phase W                     [Pa·s]
 viscosity2 = 0.001        # dynamic viscosity phase N                     [Pa·s]
 sigma      = 0.01         # surface tension                               [N/m]
-theta_eq   = 60           # equilibrium contact angle with solid wall     [°]
+theta_eq   = 90           # equilibrium contact angle with solid wall     [°]
 theta_adv  = 105.0        # advancing contact angle for hysteresis        [°]
 theta_rec  =  75.0        # receding  contact angle for hysteresis        [°]
 gy         = -9.81        # gravitational acceleration (−y direction)     [m/s²]
 backpress  = 0.01         # background pressure coefficient               [–]
 drho       = 0.01         # allowed density variation                     [–]
-U_wall     = 0.1          # top wall velocity in shear phase              [m/s]
+U_wall     = 0.01         # top wall velocity in shear phase              [m/s]
 
 H_flu          = 2 * lref                                   # fluid channel height  [m]
 R_drop_target  = H_flu / 2                                  # = lref               [m]
@@ -253,6 +263,7 @@ sim.run(steps_relax, write_at_start=True)
 gsd_writer.flush()
 
 # ─── Measure droplet shape after relaxation ───────────────────────────────────
+cx_r = cy_r = cz_r = 0.0
 if device.communicator.rank == 0:
     with gsd.hoomd.open(dumpname, 'r') as traj:
         snap_r = traj[-1]
@@ -302,6 +313,7 @@ sim.run(steps_shear)
 gsd_writer.flush()
 
 # ─── Post-processing: droplet shape after shear ───────────────────────────────
+cx_s = cy_s = cz_s = 0.0
 if device.communicator.rank == 0:
     with gsd.hoomd.open(dumpname, 'r') as traj:
         snap_s = traj[-1]
@@ -323,14 +335,76 @@ if device.communicator.rank == 0:
         L = max(dx_s, dy_s)
         B = min(dx_s, dy_s)
         D_param = (L - B) / (L + B) if (L + B) > 0 else 0.0
+        delta_x_shear = cx_s - cx_r
         print(f'\n── Shear complete at step {snap_s.configuration.step} ──')
         print(f'   Droplet centroid   : ({cx_s*1e3:.4f}, {cy_s*1e3:.4f}, {cz_s*1e3:.4f}) mm')
         print(f'   Droplet height (y) : {dy_s*1e3:.4f} mm')
         print(f'   Droplet extent  x  : {dx_s*1e3:.4f} mm')
         print(f'   Droplet extent  z  : {dz_s*1e3:.4f} mm')
         print(f'   Deformation D      : {D_param:.4f}  (0 = undeformed, 1 = fully elongated)')
+        print(f'   Centroid x-drift   : Δx = {delta_x_shear*1e3:.4f} mm')
     else:
         print('   Warning: no droplet (W) particles found in final shear frame.')
+
+# ─── Phase transition: deactivate top wall (snap-back) ───────────────────────
+if device.communicator.rank == 0:
+    print(f'\n── Phase transition: resetting top wall velocity to 0 m/s ──')
+
+with sim.state.cpu_local_snapshot as snap:
+    pos_l = np.asarray(snap.particles.position)
+    tid_l = np.asarray(snap.particles.typeid)
+    vel_l = np.asarray(snap.particles.velocity)
+    top_mask = (tid_l == 2) & (pos_l[:, 1] >= H_flu / 2)
+    vel_l[top_mask, 0] = 0.0
+
+if device.communicator.rank == 0:
+    print(f'   Top wall velocity reset to zero.')
+
+# ─── Phase 3: Snap-back (top wall stationary again) ──────────────────────────
+if device.communicator.rank == 0:
+    print(f'\n── Phase 3: Snap-back  ({steps_snapback} steps) ────────────────────')
+    print(f'   Top wall stopped.  Hysteresis pinning allows elastic recovery.')
+
+sim.run(steps_snapback)
+gsd_writer.flush()
+
+# ─── Post-processing: droplet shape after snap-back ───────────────────────────
+if device.communicator.rank == 0:
+    with gsd.hoomd.open(dumpname, 'r') as traj:
+        snap_b = traj[-1]
+
+    pos_b = snap_b.particles.position
+    tid_b = snap_b.particles.typeid
+    drop_b = (tid_b == 0)   # 'W' — droplet
+
+    if drop_b.any():
+        p = pos_b[drop_b]
+        cx_b = float(np.mean(p[:, 0]))
+        cy_b = float(np.mean(p[:, 1]))
+        cz_b = float(np.mean(p[:, 2]))
+        dy_b = float(p[:, 1].max() - p[:, 1].min())
+        dx_b = float(p[:, 0].max() - p[:, 0].min())
+        dz_b = float(p[:, 2].max() - p[:, 2].min())
+        L = max(dx_b, dy_b)
+        B = min(dx_b, dy_b)
+        D_param_b = (L - B) / (L + B) if (L + B) > 0 else 0.0
+        delta_x_shear    = cx_s - cx_r     # drift during shear
+        delta_x_recovery = cx_b - cx_r     # residual after snap-back
+        print(f'\n── Snap-back complete at step {snap_b.configuration.step} ──')
+        print(f'   Droplet centroid   : ({cx_b*1e3:.4f}, {cy_b*1e3:.4f}, {cz_b*1e3:.4f}) mm')
+        print(f'   Droplet height (y) : {dy_b*1e3:.4f} mm')
+        print(f'   Droplet extent  x  : {dx_b*1e3:.4f} mm')
+        print(f'   Droplet extent  z  : {dz_b*1e3:.4f} mm')
+        print(f'   Deformation D      : {D_param_b:.4f}  (0 = undeformed, 1 = fully elongated)')
+        print(f'   Centroid x-drift (shear)    : Δx_shear    = {delta_x_shear*1e3:.4f} mm')
+        print(f'   Centroid x-drift (residual) : Δx_recovery = {delta_x_recovery*1e3:.4f} mm')
+        if abs(delta_x_shear) > 0 and abs(delta_x_recovery) < abs(delta_x_shear) * 0.2:
+            verdict = "Droplet fully recovered (hysteresis pinning effective)"
+        else:
+            verdict = "Partial recovery"
+        print(f'   Verdict            : {verdict}')
+    else:
+        print('   Warning: no droplet (W) particles found in final snap-back frame.')
 
     print(f'\nOutput GSD : {dumpname}')
     print(f'Output log : {logname}')

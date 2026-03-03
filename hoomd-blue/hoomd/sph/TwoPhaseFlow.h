@@ -119,6 +119,8 @@ class PYBIND11_EXPORT TwoPhaseFlow : public SPHBaseClass<KT_, SET1_>
          */
         virtual void setParams(Scalar mu1, Scalar mu2, Scalar sigma12, Scalar omega);
 
+        virtual void setHysteresis(Scalar omega_rec, Scalar omega_adv);
+
                 //! Getter and Setter methods for density method
         DensityMethod getDensityMethod()
             {
@@ -201,6 +203,82 @@ class PYBIND11_EXPORT TwoPhaseFlow : public SPHBaseClass<KT_, SET1_>
         void deactivateArtificialViscosity()
             {
             m_artificial_viscosity = false;
+            }
+
+        // ── Non-Newtonian rheology for fluid 1 ────────────────────────────────
+        void activatePowerLaw1(Scalar K, Scalar n, Scalar mu_min = Scalar(0))
+            {
+            m_nn_model1  = POWERLAW;
+            m_nn_K1      = K;
+            m_nn_n1      = n;
+            m_nn_mu_min1 = mu_min;
+            }
+        void activateCarreau1(Scalar mu0, Scalar muinf, Scalar lambda_NN, Scalar n)
+            {
+            m_nn_model1   = CARREAU;
+            m_nn_mu0_1    = mu0;
+            m_nn_muinf_1  = muinf;
+            m_nn_lambda1  = lambda_NN;
+            m_nn_n1       = n;
+            }
+        void activateBingham1(Scalar mu_p, Scalar tauy, Scalar m_reg, Scalar mu_min = Scalar(0))
+            {
+            m_nn_model1  = BINGHAM;
+            m_nn_K1      = mu_p;
+            m_nn_tauy1   = tauy;
+            m_nn_m1      = m_reg;
+            m_nn_mu_min1 = mu_min;
+            }
+        void activateHerschelBulkley1(Scalar K, Scalar n, Scalar tauy, Scalar m_reg, Scalar mu_min = Scalar(0))
+            {
+            m_nn_model1  = HERSCHELBULKLEY;
+            m_nn_K1      = K;
+            m_nn_n1      = n;
+            m_nn_tauy1   = tauy;
+            m_nn_m1      = m_reg;
+            m_nn_mu_min1 = mu_min;
+            }
+        void deactivateNonNewtonian1()
+            {
+            m_nn_model1 = NEWTONIAN;
+            }
+
+        // ── Non-Newtonian rheology for fluid 2 ────────────────────────────────
+        void activatePowerLaw2(Scalar K, Scalar n, Scalar mu_min = Scalar(0))
+            {
+            m_nn_model2  = POWERLAW;
+            m_nn_K2      = K;
+            m_nn_n2      = n;
+            m_nn_mu_min2 = mu_min;
+            }
+        void activateCarreau2(Scalar mu0, Scalar muinf, Scalar lambda_NN, Scalar n)
+            {
+            m_nn_model2   = CARREAU;
+            m_nn_mu0_2    = mu0;
+            m_nn_muinf_2  = muinf;
+            m_nn_lambda2  = lambda_NN;
+            m_nn_n2       = n;
+            }
+        void activateBingham2(Scalar mu_p, Scalar tauy, Scalar m_reg, Scalar mu_min = Scalar(0))
+            {
+            m_nn_model2  = BINGHAM;
+            m_nn_K2      = mu_p;
+            m_nn_tauy2   = tauy;
+            m_nn_m2      = m_reg;
+            m_nn_mu_min2 = mu_min;
+            }
+        void activateHerschelBulkley2(Scalar K, Scalar n, Scalar tauy, Scalar m_reg, Scalar mu_min = Scalar(0))
+            {
+            m_nn_model2  = HERSCHELBULKLEY;
+            m_nn_K2      = K;
+            m_nn_n2      = n;
+            m_nn_tauy2   = tauy;
+            m_nn_m2      = m_reg;
+            m_nn_mu_min2 = mu_min;
+            }
+        void deactivateNonNewtonian2()
+            {
+            m_nn_model2 = NEWTONIAN;
             }
 
         /*! Turn consistent interface pressure (CIP) on.
@@ -448,13 +526,28 @@ class PYBIND11_EXPORT TwoPhaseFlow : public SPHBaseClass<KT_, SET1_>
         Scalar m_sigma12; //!< Interfacial tension between fluid phases ( Must be set by user )
         Scalar m_sigma01; //!< Interfacial tension between solid phase and fluid phase1 ( Computed from input )
         Scalar m_sigma02; //!< Interfacial tension between solid phase and fluid phase2 ( Computed from input )
-        Scalar m_omega; //!< Contact angle ( Must be set by user )
+        Scalar m_omega;     //!< Contact angle ( Must be set by user )
+        Scalar m_omega_adv; //!< Advancing contact angle for hysteresis [deg]
+        Scalar m_omega_rec; //!< Receding  contact angle for hysteresis [deg]
+        bool   m_hysteresis; //!< True if contact-angle hysteresis is active
 
         Scalar m_avalpha; //!< Monaghan AV: linear (volumetric) diffusion coefficient α
         Scalar m_avbeta;  //!< Monaghan AV: quadratic (shock) diffusion coefficient β
         Scalar m_riemann_beta; //!< Riemann dissipation: scaling coefficient β_R (Zhang et al. 2017)
         Scalar m_ddiff; //!< Diffusion coefficient for Molteni type density diffusion
         unsigned int m_shepardfreq; //!< Time step frequency for Shepard reinitialization
+
+        // Non-Newtonian rheology for fluid 1
+        NonNewtonianModel m_nn_model1;
+        Scalar m_nn_K1, m_nn_n1;
+        Scalar m_nn_mu0_1, m_nn_muinf_1, m_nn_lambda1;
+        Scalar m_nn_tauy1, m_nn_m1, m_nn_mu_min1;
+
+        // Non-Newtonian rheology for fluid 2
+        NonNewtonianModel m_nn_model2;
+        Scalar m_nn_K2, m_nn_n2;
+        Scalar m_nn_mu0_2, m_nn_muinf_2, m_nn_lambda2;
+        Scalar m_nn_tauy2, m_nn_m2, m_nn_mu_min2;
 
         // Auxiliary variables
         std::vector<unsigned int> m_fluidtypes1; //!< Fluid 1 type numbers

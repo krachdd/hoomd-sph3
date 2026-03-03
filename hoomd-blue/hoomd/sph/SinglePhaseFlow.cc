@@ -76,6 +76,16 @@ SinglePhaseFlow<KT_, SET_>::SinglePhaseFlow(std::shared_ptr<SystemDefinition> sy
         m_shepardfreq = 1;
         m_densityreinitfreq = 1;
 
+        m_nn_model  = NEWTONIAN;
+        m_nn_K      = Scalar(0.0);
+        m_nn_n      = Scalar(1.0);
+        m_nn_mu0    = Scalar(0.0);
+        m_nn_muinf  = Scalar(0.0);
+        m_nn_lambda = Scalar(0.0);
+        m_nn_tauy   = Scalar(0.0);
+        m_nn_m      = Scalar(0.0);
+        m_nn_mu_min = Scalar(0.0);
+
         m_solid_removed = false;
         m_pressure_initialized = false;
 
@@ -1156,7 +1166,14 @@ void SinglePhaseFlow<KT_, SET_>::forcecomputation(uint64_t timestep)
                 h_force.data[i].z -= ( temp0 + avc ) * dwdr_r * dx.z;
 
                 // Evaluate viscous interaction forces
-                temp0 = m_mu * (Vi*Vi+Vj*Vj) * dwdr_r;
+                {
+                Scalar dvnorm    = sqrt(dot(dv, dv));
+                Scalar gamma_dot = dvnorm / (r + sqrt(epssqr));
+                Scalar mu_eff    = computeNNViscosity(m_mu, gamma_dot, m_nn_model,
+                                                      m_nn_K, m_nn_n, m_nn_mu0, m_nn_muinf,
+                                                      m_nn_lambda, m_nn_tauy, m_nn_m, m_nn_mu_min);
+                temp0 = mu_eff * (Vi*Vi+Vj*Vj) * dwdr_r;
+                }
                 h_force.data[i].x  += temp0*dv.x;
                 h_force.data[i].y  += temp0*dv.y;
                 h_force.data[i].z  += temp0*dv.z;
@@ -1372,7 +1389,14 @@ void SinglePhaseFlow<KT_, SET_>::compute_solid_forces(uint64_t timestep)
                 h_force.data[i].z -= ( mj/mi ) * temp0*dwdr_r*dx.z;
 
                 // Evaluate viscous interaction forces
-                temp0 = m_mu * (Vi*Vi+Vj*Vj) * dwdr_r;
+                {
+                Scalar dvnorm    = sqrt(dot(dv, dv));
+                Scalar gamma_dot = dvnorm / (r + sqrt(epssqr));
+                Scalar mu_eff    = computeNNViscosity(m_mu, gamma_dot, m_nn_model,
+                                                      m_nn_K, m_nn_n, m_nn_mu0, m_nn_muinf,
+                                                      m_nn_lambda, m_nn_tauy, m_nn_m, m_nn_mu_min);
+                temp0 = mu_eff * (Vi*Vi+Vj*Vj) * dwdr_r;
+                }
                 h_force.data[i].x  -= ( mj/mi ) * temp0*dv.x;
                 h_force.data[i].y  -= ( mj/mi ) * temp0*dv.y;
                 h_force.data[i].z  -= ( mj/mi ) * temp0*dv.z;
@@ -1509,6 +1533,16 @@ void export_SinglePhaseFlow(pybind11::module& m, std::string name)
         .def("deactivateShepardRenormalization", &SinglePhaseFlow<KT_, SET_>::deactivateShepardRenormalization)
         .def("activateDensityReinitialization", &SinglePhaseFlow<KT_, SET_>::activateDensityReinitialization)
         .def("deactivateDensityReinitialization", &SinglePhaseFlow<KT_, SET_>::deactivateDensityReinitialization)
+        .def("activatePowerLaw", &SinglePhaseFlow<KT_, SET_>::activatePowerLaw,
+             pybind11::arg("K"), pybind11::arg("n"), pybind11::arg("mu_min") = Scalar(0))
+        .def("activateCarreau", &SinglePhaseFlow<KT_, SET_>::activateCarreau)
+        .def("activateBingham", &SinglePhaseFlow<KT_, SET_>::activateBingham,
+             pybind11::arg("mu_p"), pybind11::arg("tauy"), pybind11::arg("m_reg"),
+             pybind11::arg("mu_min") = Scalar(0))
+        .def("activateHerschelBulkley", &SinglePhaseFlow<KT_, SET_>::activateHerschelBulkley,
+             pybind11::arg("K"), pybind11::arg("n"), pybind11::arg("tauy"), pybind11::arg("m_reg"),
+             pybind11::arg("mu_min") = Scalar(0))
+        .def("deactivateNonNewtonian", &SinglePhaseFlow<KT_, SET_>::deactivateNonNewtonian)
         .def("setAcceleration", &SPHBaseClass<KT_, SET_>::setAcceleration)
         .def("setRCut", &SinglePhaseFlow<KT_, SET_>::setRCutPython)
         ;

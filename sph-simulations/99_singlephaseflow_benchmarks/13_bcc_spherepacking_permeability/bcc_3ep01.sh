@@ -2,11 +2,11 @@
 #SBATCH --job-name=bcc_3ep01             # Job name
 #SBATCH --mail-type=BEGIN,END,FAIL            # Mail events (NONE, BEGIN, END, FAIL, ALL)
 #SBATCH --mail-user=david.krach@mib.uni-stuttgart.de    # Where to send mail.  Set this to your email address
-#SBATCH --ntasks=8                            # Number of MPI tasks (i.e. processes)
+#SBATCH --ntasks=27                            # Number of MPI tasks (i.e. processes)
 #SBATCH --nodes=1                             # Maximum number of nodes to be allocated
 #SBATCH --distribution=cyclic:cyclic          # Distribute tasks cyclically first among nodes and then among sockets within a node
-#SBATCH --mem=25G
-#SBATCH --time=24:00:00                       # Wall time limit (days-hrs:min:sec)
+#SBATCH --mem=50G
+#SBATCH --time=1-24:00:00                       # Wall time limit (days-hrs:min:sec)
 #SBATCH --output=bcc_3ep01_%j.log         # Path to the standard output and error files relative to the working directory
 #SBATCH --error=bcc_3ep01_%j.err          # Path to the standard error file
 #SBATCH --partition=cpu                       # put the job into the cpu partition
@@ -26,7 +26,7 @@ echo "Number of Tasks Allocated      = $SLURM_NTASKS"
 echo "Number of Cores/Task Allocated = $SLURM_CPUS_PER_TASK"
 echo "JobID = $SLURM_JOB_ID"
 
-STEPS=${1:-50001}
+STEPS=${1:-100001}
 DAMP=${2:-5000}
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 INIT="bcc100_init.gsd"

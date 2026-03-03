@@ -1,0 +1,54 @@
+# ==============================================================================
+# capillary_rise_params.txt — fluid parameter sets for capillary rise benchmark
+#
+# Physical setup (fixed geometry, see create_capillary_geometry.py):
+#   R_cap  = 1.0 mm  (inner tube radius)
+#   h_res  = 3.0 mm  (initial flat liquid level above bottom wall)
+#   g      = 9.81 m/s²  (gravity in −y direction)
+#
+# Jurin's law:
+#
+#            2 sigma cos(theta)
+#   h_J  =  -------------------
+#             rho_1  g  R_cap
+#
+#            2 * 0.01 * cos(theta)
+#        =  -----------------------   =  2.039e-3 cos(theta)  m
+#            1000 * 9.81 * 0.001
+#
+#   LaTeX:
+#     h_\mathrm{J} = \frac{2\,\sigma\cos\theta}{\rho_1\,g\,R_\mathrm{cap}}
+#                  = \frac{2 \times 0.01\,\cos\theta}{1000 \times 9.81 \times 0.001}
+#                  = 2.039\times10^{-3}\cos\theta \;\mathrm{m}
+#
+# The quantity measured in the simulation is:
+#
+#   h_meas  =  y_meniscus,inside  -  y_reservoir,outside
+#
+#   LaTeX:
+#     h_\mathrm{meas} = y_\mathrm{meniscus,in} - y_\mathrm{res,out}
+#
+# This should equal h_J when the meniscus is well-resolved.
+#
+# NOTE on near-neutral cases (theta ~ 90 deg):  h_J ~ 0; the rise is very small
+#   and slower to converge.  Use more steps for case 3 if needed.
+#
+# Fluid parameters chosen for numerical efficiency:
+#   mu_1 = 0.1 Pa s   (moderately viscous -> larger dt, faster equilibration)
+#   sigma = 0.01 N/m  (moderate surface tension -> tractable capillary velocity)
+#
+#   LaTeX:
+#     \mu_1 = 0.1\;\mathrm{Pa\,s}, \quad \sigma = 0.01\;\mathrm{N\,m^{-1}}
+#
+# Columns:
+#   case_id  theta_deg  sigma[N/m]  rho1[kg/m3]  rho2[kg/m3]  mu1[Pa.s]  mu2[Pa.s]
+# ==============================================================================
+
+#  id  theta    sigma    rho1    rho2    mu1      mu2    h_Jurin[mm]   regime
+    0    30     0.010   1000.0  100.0   0.100   0.001  #+1.77  wetting strong
+    1    45     0.010   1000.0  100.0   0.100   0.001  #+1.44  wetting moderate
+    2    60     0.010   1000.0  100.0   0.100   0.001  #+1.02  wetting weak
+    3    90     0.010   1000.0  100.0   0.100   0.001  #  0.00  neutral
+    4   120     0.010   1000.0  100.0   0.100   0.001  #-1.02  non-wetting weak
+    5   135     0.010   1000.0  100.0   0.100   0.001  #-1.44  non-wetting moderate
+    6   150     0.010   1000.0  100.0   0.100   0.001  #-1.77  non-wetting strong

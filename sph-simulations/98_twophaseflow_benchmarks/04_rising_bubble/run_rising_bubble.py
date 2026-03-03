@@ -31,6 +31,7 @@ bubble coherent.  Solid walls bound y; x and z are periodic.
 
 Key parameters:
   Eötvös   $Eo = (\rho_1 - \rho_2) \, g \, D^2 / \sigma \approx 28.2$
+  Morton   $Mo = g \, \mu_1^4 \, (\rho_1 - \rho_2) / (\rho_1^2 \, \sigma^3) \approx 706$
   Density ratio  $\rho_1 / \rho_2 = 10$
   Viscosity ratio  $\mu_1 / \mu_2 = 10$
 
@@ -81,10 +82,19 @@ rho01      = 1000.0       # rest density liquid 'W'           [kg/m³]
 rho02      = 100.0        # rest density gas    'N'           [kg/m³]
 viscosity1 = 0.01         # dynamic viscosity liquid          [Pa·s]
 viscosity2 = 0.001        # dynamic viscosity gas             [Pa·s]
-sigma      = 0.05         # surface tension                   [N/m]
+sigma      = 5e-5         # surface tension                   [N/m]
+                          # σ = 5e-5 N/m gives Eo = 28.2 with D = 0.4 mm, g = 9.81 m/s²
+                          # (the previous value of 0.05 N/m gave Eo = 0.028, so buoyancy
+                          #  was overwhelmed by CSF parasitic currents and the bubble did
+                          #  not rise)
 gy         = -9.81        # gravitational acceleration        [m/s²]
 backpress  = 0.01         # background pressure coeff         [–]
 drho       = 0.01         # allowed density variation         [–]
+# Steps to reach terminal velocity:
+#   τ_relax = ρ₂ 2R² / (9 μ₁) ≈ 89 µs → 5τ ≈ 444 µs ≈ 700 steps (high-res).
+#   For a clean U_T measurement the last third of the run must be at steady rise;
+#   50 001 steps → ~31.6 ms physical time (high-res, dx=25 µm) → bubble rises
+#   ≈ 0.18 mm ≈ 0.45 D, which gives a well-resolved terminal-velocity window.
 steps      = int(sys.argv[3]) if len(sys.argv) > 3 else 20001  # simulation steps
 
 # Estimate reference velocity from buoyancy (Hadamard-Rybczynski upper bound):

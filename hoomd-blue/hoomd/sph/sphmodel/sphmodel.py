@@ -396,6 +396,20 @@ class SinglePhaseFlow(SPHModel):
     def deactivateDensityReinitialization(self):
         self._cpp_obj.deactivateDensityReinitialization()
 
+    def activatePowerLaw(self, K, n, mu_min=0.0):
+        self._cpp_obj.activatePowerLaw(float(K), float(n), float(mu_min))
+
+    def activateCarreau(self, mu0, mu_inf, lam, n):
+        self._cpp_obj.activateCarreau(float(mu0), float(mu_inf), float(lam), float(n))
+
+    def activateBingham(self, mu_p, tau_y, m_reg, mu_min=0.0):
+        self._cpp_obj.activateBingham(float(mu_p), float(tau_y), float(m_reg), float(mu_min))
+
+    def activateHerschelBulkley(self, K, n, tau_y, m_reg, mu_min=0.0):
+        self._cpp_obj.activateHerschelBulkley(float(K), float(n), float(tau_y), float(m_reg), float(mu_min))
+
+    def deactivateNonNewtonian(self):
+        self._cpp_obj.deactivateNonNewtonian()
 
     def computeSolidForces(self):
         self._cpp_obj.computeSolidForces()
@@ -811,6 +825,21 @@ class SinglePhaseFlowGDGD(SPHModel):
     def deactivateDensityReinitialization(self):
         self._cpp_obj.deactivateDensityReinitialization()
 
+    def activatePowerLaw(self, K, n, mu_min=0.0):
+        self._cpp_obj.activatePowerLaw(float(K), float(n), float(mu_min))
+
+    def activateCarreau(self, mu0, mu_inf, lam, n):
+        self._cpp_obj.activateCarreau(float(mu0), float(mu_inf), float(lam), float(n))
+
+    def activateBingham(self, mu_p, tau_y, m_reg, mu_min=0.0):
+        self._cpp_obj.activateBingham(float(mu_p), float(tau_y), float(m_reg), float(mu_min))
+
+    def activateHerschelBulkley(self, K, n, tau_y, m_reg, mu_min=0.0):
+        self._cpp_obj.activateHerschelBulkley(float(K), float(n), float(tau_y), float(m_reg), float(mu_min))
+
+    def deactivateNonNewtonian(self):
+        self._cpp_obj.deactivateNonNewtonian()
+
     def computeSolidForces(self):
         self._cpp_obj.computeSolidForces()
 
@@ -1121,6 +1150,21 @@ class SinglePhaseFlowTV(SPHModel):
 
     def deactivateDensityReinitialization(self):
         self._cpp_obj.deactivateDensityReinitialization()
+
+    def activatePowerLaw(self, K, n, mu_min=0.0):
+        self._cpp_obj.activatePowerLaw(float(K), float(n), float(mu_min))
+
+    def activateCarreau(self, mu0, mu_inf, lam, n):
+        self._cpp_obj.activateCarreau(float(mu0), float(mu_inf), float(lam), float(n))
+
+    def activateBingham(self, mu_p, tau_y, m_reg, mu_min=0.0):
+        self._cpp_obj.activateBingham(float(mu_p), float(tau_y), float(m_reg), float(mu_min))
+
+    def activateHerschelBulkley(self, K, n, tau_y, m_reg, mu_min=0.0):
+        self._cpp_obj.activateHerschelBulkley(float(K), float(n), float(tau_y), float(m_reg), float(mu_min))
+
+    def deactivateNonNewtonian(self):
+        self._cpp_obj.deactivateNonNewtonian()
 
     def computeSolidForces(self):
         self._cpp_obj.computeSolidForces()
@@ -1544,6 +1588,21 @@ class SinglePhaseFlowFS(SPHModel):
     def deactivateDensityReinitialization(self):
         self._cpp_obj.deactivateDensityReinitialization()
 
+    def activatePowerLaw(self, K, n, mu_min=0.0):
+        self._cpp_obj.activatePowerLaw(float(K), float(n), float(mu_min))
+
+    def activateCarreau(self, mu0, mu_inf, lam, n):
+        self._cpp_obj.activateCarreau(float(mu0), float(mu_inf), float(lam), float(n))
+
+    def activateBingham(self, mu_p, tau_y, m_reg, mu_min=0.0):
+        self._cpp_obj.activateBingham(float(mu_p), float(tau_y), float(m_reg), float(mu_min))
+
+    def activateHerschelBulkley(self, K, n, tau_y, m_reg, mu_min=0.0):
+        self._cpp_obj.activateHerschelBulkley(float(K), float(n), float(tau_y), float(m_reg), float(mu_min))
+
+    def deactivateNonNewtonian(self):
+        self._cpp_obj.deactivateNonNewtonian()
+
     def computeSolidForces(self):
         self._cpp_obj.computeSolidForces()
 
@@ -1644,8 +1703,11 @@ class TwoPhaseFlow(SPHModel):
                           mu1 = float(0.0), 
                           mu2 = float(0.0),
                           sigma12 = float(0.0), 
-                          omega = float(0.0), 
-                          artificialviscosity = bool(True), 
+                          omega = float(0.0),
+                          omega_adv = float(180.0),
+                          omega_rec = float(0.0),
+                          hysteresis = bool(False),
+                          artificialviscosity = bool(True),
                           alpha = float(0.2),
                           beta = float(0.0),
                           densitydiffusion = bool(False),
@@ -1802,6 +1864,11 @@ class TwoPhaseFlow(SPHModel):
         self.fickian_shifting = self._param_dict['fickian_shifting']
 
         self.set_params(self.mu1, self.mu2, self.sigma12, self.omega)
+        self.hysteresis = self._param_dict['hysteresis']
+        self.omega_adv  = self._param_dict['omega_adv']
+        self.omega_rec  = self._param_dict['omega_rec']
+        if self.hysteresis:
+            self._cpp_obj.setHysteresis(self.omega_rec, self.omega_adv)
         self.setdensitymethod(self.str_densitymethod)
         self.setviscositymethod(self.str_viscositymethod)
         self.setcolorgradientmethod(self.str_colorgradientmethod)
@@ -1909,6 +1976,36 @@ class TwoPhaseFlow(SPHModel):
 
     def computeSolidForces(self):
         self._cpp_obj.computeSolidForces()
+
+    def activatePowerLaw1(self, K, n, mu_min=0.0):
+        self._cpp_obj.activatePowerLaw1(float(K), float(n), float(mu_min))
+
+    def activateCarreau1(self, mu0, mu_inf, lam, n):
+        self._cpp_obj.activateCarreau1(float(mu0), float(mu_inf), float(lam), float(n))
+
+    def activateBingham1(self, mu_p, tau_y, m_reg, mu_min=0.0):
+        self._cpp_obj.activateBingham1(float(mu_p), float(tau_y), float(m_reg), float(mu_min))
+
+    def activateHerschelBulkley1(self, K, n, tau_y, m_reg, mu_min=0.0):
+        self._cpp_obj.activateHerschelBulkley1(float(K), float(n), float(tau_y), float(m_reg), float(mu_min))
+
+    def deactivateNonNewtonian1(self):
+        self._cpp_obj.deactivateNonNewtonian1()
+
+    def activatePowerLaw2(self, K, n, mu_min=0.0):
+        self._cpp_obj.activatePowerLaw2(float(K), float(n), float(mu_min))
+
+    def activateCarreau2(self, mu0, mu_inf, lam, n):
+        self._cpp_obj.activateCarreau2(float(mu0), float(mu_inf), float(lam), float(n))
+
+    def activateBingham2(self, mu_p, tau_y, m_reg, mu_min=0.0):
+        self._cpp_obj.activateBingham2(float(mu_p), float(tau_y), float(m_reg), float(mu_min))
+
+    def activateHerschelBulkley2(self, K, n, tau_y, m_reg, mu_min=0.0):
+        self._cpp_obj.activateHerschelBulkley2(float(K), float(n), float(tau_y), float(m_reg), float(mu_min))
+
+    def deactivateNonNewtonian2(self):
+        self._cpp_obj.deactivateNonNewtonian2()
 
     def activateFickianShifting(self):
         self._cpp_obj.activateFickianShifting()
