@@ -4,7 +4,7 @@
 
 set -e
 ROOT="$(cd "$(dirname "$0")/../.." && pwd)"
-export PYTHONPATH="$ROOT/hoomd-blue:$PYTHONPATH"
+export PYTHONPATH="$ROOT/hoomd-blue/build:$PYTHONPATH"
 
 NL=${1:-20}   # particles per reference length (resolution)
 echo "════════════════════════════════════════════════════════════"
