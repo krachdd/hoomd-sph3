@@ -6,6 +6,8 @@ helper_modules/__pycache__/
 hoomd-blue/hoomd/extern/pgsd.c
 hoomd-blue/hoomd/extern/pgsd.h
 
+.venv/
+
 # Prerequisites
 *.d
 
