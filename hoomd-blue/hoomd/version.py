@@ -57,7 +57,7 @@ from hoomd.version_config import (
     git_branch,
     git_sha1,
     #hpmc_built,
-    #md_built,
+    md_built,
     #mpcd_built,
 )
 

@@ -2,11 +2,13 @@
 # Part of HOOMD-blue, released under the BSD 3-Clause License.
 
 import hoomd
-from hoomd.mesh import Mesh
+# from hoomd.mesh import Mesh
 import numpy
 import pytest
 from hoomd.error import DataAccessError, MutabilityError
 
+hoomd = pytest.importorskip("hoomd")        # make sure hoomd is imporeted
+mesh = pytest.importorskip("hoomd.mesh")    # skip tests if hoomd.mesh is not existing
 
 @pytest.fixture(scope="session")
 def mesh_snapshot_factory(device):

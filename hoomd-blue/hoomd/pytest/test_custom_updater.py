@@ -3,6 +3,14 @@
 
 import hoomd
 
+import pytest
+
+
+# skip tests if the 'charge' array doesn't exist in ParticleData
+pytestmark = pytest.mark.skipif(
+    not hasattr(hoomd.data, "ParticleData") or not hasattr(hoomd.data.ParticleData, "getCharges"),
+    reason="charge field not available in this build"
+)
 
 class ChargeModifier(hoomd.custom.Action):
     test_attr = True

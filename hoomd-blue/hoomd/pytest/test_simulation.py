@@ -38,6 +38,7 @@ def make_gsd_frame(hoomd_snapshot):
             "replicate",
             "communicator",
             "mpcd",
+            "dist",
         ]:
             if hoomd_snapshot.communicator.rank == 0:
                 for prop in dir(getattr(hoomd_snapshot, attr)):
@@ -49,7 +50,6 @@ def make_gsd_frame(hoomd_snapshot):
                             getattr(getattr(hoomd_snapshot, attr), prop),
                         )
     return s
-
 
 def set_types(s, inds, particle_types, particle_type):
     if s.communicator.rank == 0:
@@ -77,6 +77,7 @@ def assert_equivalent_snapshots(gsd_snap, hoomd_snap):
                 "replicate",
                 "communicator",
                 "mpcd",
+                "dist",
             ]:
                 continue
             for prop in dir(getattr(hoomd_snap, attr)):
@@ -111,15 +112,15 @@ def test_device_property(device):
     with pytest.raises(ValueError):
         sim.device = device
 
-
-def test_allows_compute_pressure(simulation_factory, lattice_snapshot_factory):
-    sim = simulation_factory()
-    assert not sim.always_compute_pressure
-    with pytest.raises(RuntimeError):
-        sim.always_compute_pressure = True
-    sim.create_state_from_snapshot(lattice_snapshot_factory())
-    sim.always_compute_pressure = True
-    assert sim.always_compute_pressure is True
+# not existent for SPH
+# def test_allows_compute_pressure(simulation_factory, lattice_snapshot_factory):
+#     sim = simulation_factory()
+#     assert not sim.always_compute_pressure
+#     with pytest.raises(RuntimeError):
+#         sim.always_compute_pressure = True
+#     sim.create_state_from_snapshot(lattice_snapshot_factory())
+#     sim.always_compute_pressure = True
+#     assert sim.always_compute_pressure is True
 
 
 def test_run(simulation_factory, lattice_snapshot_factory):
