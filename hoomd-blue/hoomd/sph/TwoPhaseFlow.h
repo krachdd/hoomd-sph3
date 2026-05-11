@@ -456,11 +456,6 @@ class PYBIND11_EXPORT TwoPhaseFlow : public SPHBaseClass<KT_, SET1_>
 
         //! Computes forces
         void computeForces(uint64_t timestep);
-    
-    #ifdef ENABLE_MPI
-        /// The system's communicator.
-        std::shared_ptr<Communicator> m_comm;
-    #endif
 
     #ifdef ENABLE_MPI
         //! Get requested ghost communication flags
@@ -492,6 +487,10 @@ class PYBIND11_EXPORT TwoPhaseFlow : public SPHBaseClass<KT_, SET1_>
             }
 
     protected:
+    #ifdef ENABLE_MPI
+        std::shared_ptr<Communicator> m_comm; //!< The system's MPI communicator
+    #endif
+
         // Shared pointers
         std::shared_ptr<ParticleGroup> m_fluidgroup; //!< Group of fluid particles (union of fluid 1 + 2)
         std::shared_ptr<ParticleGroup> m_fluidgroup1; //!< Group of fluid particles
