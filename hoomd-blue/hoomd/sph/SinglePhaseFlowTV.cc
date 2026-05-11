@@ -64,6 +64,9 @@ SinglePhaseFlowTV<KT_, SET_>::SinglePhaseFlowTV(std::shared_ptr<SystemDefinition
         this->m_params_set = false;
         this->m_compute_solid_forces = false;
         this->m_artificial_viscosity = false;
+        this->m_tensil_correction = false;
+        this->m_tensil_eps_pos    = Scalar(0.01);
+        this->m_tensil_eps_neg    = Scalar(0.2);
         this->m_density_diffusion = false;
         this->m_shepard_renormalization = false;
         this->m_density_reinitialization = false;
@@ -118,15 +121,7 @@ SinglePhaseFlowTV<KT_, SET_>::SinglePhaseFlowTV(std::shared_ptr<SystemDefinition
 
         this->m_r_cut_nlist = std::make_shared<GPUArray<Scalar>>(this->m_typpair_idx.getNumElements(), this->m_exec_conf);
         this->m_nlist->addRCutMatrix(this->m_r_cut_nlist);
-
-#ifdef ENABLE_MPI
-    if (this->m_sysdef->isDomainDecomposed())
-        {
-        auto comm_weak = this->m_sysdef->getCommunicator();
-        assert(comm_weak.lock());
-        m_comm = comm_weak.lock();
-        }
-#endif
+        // m_comm is initialized by the SinglePhaseFlow base constructor.
 
       }
 
@@ -230,6 +225,14 @@ void SinglePhaseFlowTV<KT_, SET_>::forcecomputation(uint64_t timestep)
 
         // maximum velocity variable for adaptive timestep
         double max_vel = 0.0;
+
+        // Pre-compute tensile correction reference kernel value (constant h only).
+        Scalar tensil_od_wdeltap = Scalar(0);
+        if (this->m_tensil_correction && this->m_const_slength)
+            {
+            Scalar wdeltap = this->m_skernel->wij(this->m_ch, this->m_ch / Scalar(1.5));
+            tensil_od_wdeltap = (wdeltap > Scalar(0)) ? (Scalar(1) / wdeltap) : Scalar(0);
+            }
 
         // for each fluid particle
         for (unsigned int group_idx = 0; group_idx < group_size; group_idx++)
@@ -400,6 +403,28 @@ void SinglePhaseFlowTV<KT_, SET_>::forcecomputation(uint64_t timestep)
                 h_force.data[i].x -= vijsqr * ( temp0 + avc )* dwdr_r * dx.x;
                 h_force.data[i].y -= vijsqr * ( temp0 + avc )* dwdr_r * dx.y;
                 h_force.data[i].z -= vijsqr * ( temp0 + avc )* dwdr_r * dx.z;
+
+                // Tensile instability correction (Monaghan 1994) — fluid-fluid pairs only.
+                if (this->m_tensil_correction && !issolid)
+                    {
+                    Scalar od_wdeltap;
+                    if (this->m_const_slength)
+                        od_wdeltap = tensil_od_wdeltap;
+                    else
+                        {
+                        Scalar wdeltap = this->m_skernel->wij(meanh, meanh / Scalar(1.5));
+                        od_wdeltap = (wdeltap > Scalar(0)) ? (Scalar(1) / wdeltap) : Scalar(0);
+                        }
+                    Scalar wij_val = this->m_skernel->wij(meanh, r);
+                    Scalar fab = wij_val * od_wdeltap;
+                    fab = fab * fab * fab * fab; // (W_ij / W_deltap)^4
+                    Scalar ti = (Pi / (rhoi * rhoi)) * (Pi > Scalar(0) ?  this->m_tensil_eps_pos : -this->m_tensil_eps_neg);
+                    Scalar tj = (Pj / (rhoj * rhoj)) * (Pj > Scalar(0) ?  this->m_tensil_eps_pos : -this->m_tensil_eps_neg);
+                    Scalar tc = mi * mj * fab * (ti + tj);
+                    h_force.data[i].x -= tc * dwdr_r * dx.x;
+                    h_force.data[i].y -= tc * dwdr_r * dx.y;
+                    h_force.data[i].z -= tc * dwdr_r * dx.z;
+                    }
 
                 // Evaluate viscous interaction forces
                 {
@@ -601,6 +626,10 @@ void export_SinglePhaseFlowTV(pybind11::module& m, std::string name)
         .def("computeSolidForces", &SinglePhaseFlowTV<KT_, SET_>::computeSolidForces)
         .def("activateArtificialViscosity", &SinglePhaseFlowTV<KT_, SET_>::activateArtificialViscosity)
         .def("deactivateArtificialViscosity", &SinglePhaseFlowTV<KT_, SET_>::deactivateArtificialViscosity)
+        .def("activateTensilCorrection", &SinglePhaseFlowTV<KT_, SET_>::activateTensilCorrection,
+             pybind11::arg("eps_pos") = Scalar(0.01),
+             pybind11::arg("eps_neg") = Scalar(0.2))
+        .def("deactivateTensilCorrection", &SinglePhaseFlowTV<KT_, SET_>::deactivateTensilCorrection)
         .def("activateDensityDiffusion", &SinglePhaseFlowTV<KT_, SET_>::activateDensityDiffusion)
         .def("deactivateDensityDiffusion", &SinglePhaseFlowTV<KT_, SET_>::deactivateDensityDiffusion)
         .def("activateShepardRenormalization", &SinglePhaseFlowTV<KT_, SET_>::activateShepardRenormalization)

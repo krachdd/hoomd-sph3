@@ -106,11 +106,6 @@ class PYBIND11_EXPORT SinglePhaseFlowTV : public SinglePhaseFlow<KT_, SET_>
         void computeForces(uint64_t timestep);
 
     #ifdef ENABLE_MPI
-        /// The system's communicator.
-        std::shared_ptr<Communicator> m_comm;
-    #endif
-
-    #ifdef ENABLE_MPI
         //! Get requested ghost communication flags
         virtual CommFlags getRequestedCommFlags(uint64_t timestep)
             {

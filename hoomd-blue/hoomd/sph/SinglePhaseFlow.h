@@ -233,6 +233,42 @@ class PYBIND11_EXPORT SinglePhaseFlow : public SPHBaseClass<KT_, SET_>
             m_artificial_viscosity = false;
             }
 
+        /*! Activate Monaghan (1994) tensile instability correction.
+         *
+         *  Adds a small repulsive pressure term to the momentum equation for each
+         *  fluid–fluid pair, preventing particle clustering in tension
+         *  (negative-pressure regions):
+         *
+         *    \f$F_i^{\rm tensil} \mathrel{+}= -\sum_j m_i m_j
+         *       \left(\frac{W_{ij}}{W_{\Delta p}}\right)^4
+         *       \left(\frac{\epsilon_i p_i}{\rho_i^2} +
+         *             \frac{\epsilon_j p_j}{\rho_j^2}\right) \nabla W_{ij}\f$
+         *
+         *  where \f$W_{\Delta p} = W(r = h/1.5)\f$ is a reference kernel value and
+         *  \f$\epsilon_k = \epsilon_+\f$ if \f$p_k > 0\f$, else \f$-\epsilon_-\f$.
+         *
+         *  Recommended values: eps_pos = 0.01, eps_neg = 0.2 (Monaghan 1994).
+         *  Applied to fluid–fluid pairs only; solid boundary pairs are unaffected.
+         *
+         *  Reference: Monaghan (1994) J. Comput. Phys. 110, 399–406.
+         *
+         * \param eps_pos  Correction factor for positive-pressure pairs (default 0.01)
+         * \param eps_neg  Correction factor for negative-pressure pairs (default 0.2)
+         */
+        void activateTensilCorrection(Scalar eps_pos = Scalar(0.01), Scalar eps_neg = Scalar(0.2))
+            {
+            m_tensil_correction = true;
+            m_tensil_eps_pos    = eps_pos;
+            m_tensil_eps_neg    = eps_neg;
+            }
+
+        /*! Turn tensile instability correction off.
+         */
+        void deactivateTensilCorrection()
+            {
+            m_tensil_correction = false;
+            }
+
         /*! Turn Molteni type density diffusion option on.
          * \param ddiff Diffusion coefficient for artificial density diffusion operator
          */
@@ -358,6 +394,9 @@ class PYBIND11_EXPORT SinglePhaseFlow : public SPHBaseClass<KT_, SET_>
         bool m_const_slength; //!< True if using constant smoothing length
         bool m_compute_solid_forces; //!< Set to true if forces acting on solid particle are to be computed
         bool m_artificial_viscosity; //!< Set to true if Monaghan type artificial viscosity is to be used
+        bool m_tensil_correction; //!< Set to true if Monaghan (1994) tensile instability correction is active
+        Scalar m_tensil_eps_pos;  //!< Tensile correction factor for positive-pressure pairs (default 0.01)
+        Scalar m_tensil_eps_neg;  //!< Tensile correction factor for negative-pressure pairs (default 0.2)
         bool m_density_diffusion; //!< Set to true if Molteni type density diffusion is to be used
         bool m_shepard_renormalization; //!< Set to true if Shepard type density reinitialization is to be used
         bool m_params_set; //!< True if parameters are set

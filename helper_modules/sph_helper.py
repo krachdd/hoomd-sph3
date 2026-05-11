@@ -206,6 +206,85 @@ def update_min_c0(device, model, c, mode='uref', lref=0.0, uref=0.0, bforce=0.0,
             print(f'Increase Speed of Sound: {model.get_speedofsound()}, Ma = {Ma}')
 
 
+def get_dt_cfl(h, c0, umax=0.0, mu=0.0, rho0=1.0, bforce=0.0, CFL=0.25):
+    """Compute the maximum stable time step from CFL, viscous, and body-force conditions.
+
+    Evaluates three independent time-step restrictions and returns the minimum:
+
+    1. **CFL (acoustic)**:
+       :math:`\\Delta t_\\mathrm{CFL} = \\mathrm{CFL} \\cdot h / (c_0 + u_\\mathrm{max})`
+
+    2. **Viscous** (only when ``mu > 0``):
+       :math:`\\Delta t_\\mathrm{visc} = 0.125 \\cdot h^2 / \\nu`,
+       where :math:`\\nu = \\mu / \\rho_0`.
+
+    3. **Body force** (only when ``bforce > 0``):
+       :math:`\\Delta t_\\mathrm{body} = 0.5 \\cdot \\sqrt{h / |g|}`.
+
+    These criteria match the expressions used in DualSPHysics and are standard
+    in weakly-compressible SPH (Monaghan 1992, Morris et al. 1997).
+
+    Parameters
+    ----------
+    h : float
+        Smoothing length [m].
+    c0 : float
+        Speed of sound [m/s].
+    umax : float, optional
+        Maximum flow velocity [m/s].  Default 0.
+    mu : float, optional
+        Dynamic viscosity [Pa·s].  Set to 0 to skip the viscous criterion.
+    rho0 : float, optional
+        Reference density [kg/m³].  Used to compute kinematic viscosity.
+    bforce : float, optional
+        Body-force magnitude [m/s²].  Set to 0 to skip the body-force criterion.
+    CFL : float, optional
+        CFL number, typically 0.1–0.25.  Default 0.25.
+
+    Returns
+    -------
+    dict
+        ``{'dt': float, 'dt_cfl': float, 'dt_visc': float or None,
+           'dt_body': float or None, 'limiting': str}``
+        where ``'limiting'`` identifies which criterion is active.
+
+    Examples
+    --------
+    >>> info = get_dt_cfl(h=0.01, c0=10.0, umax=0.5, mu=1e-3, rho0=1000.0, bforce=9.81)
+    >>> print(f"Use dt = {info['dt']:.4e}  (limited by {info['limiting']})")
+    """
+    if c0 <= 0.0:
+        raise ValueError("c0 must be positive.")
+    if h <= 0.0:
+        raise ValueError("h must be positive.")
+
+    dt_cfl  = CFL * h / (c0 + umax)
+    dt_visc = None
+    dt_body = None
+
+    candidates = {'CFL': dt_cfl}
+
+    if mu > 0.0:
+        nu = mu / rho0
+        dt_visc = 0.125 * h * h / nu
+        candidates['viscous'] = dt_visc
+
+    if bforce > 0.0:
+        dt_body = 0.5 * np.sqrt(h / bforce)
+        candidates['body_force'] = dt_body
+
+    limiting = min(candidates, key=candidates.get)
+    dt = candidates[limiting]
+
+    return {
+        'dt':       dt,
+        'dt_cfl':   dt_cfl,
+        'dt_visc':  dt_visc,
+        'dt_body':  dt_body,
+        'limiting': limiting,
+    }
+
+
 def update_min_c0_tpf(device, model, c1, c2, mode='plain', lref=0.0, uref=0.0, bforce=0.0, cfactor=10.0):
     """Adaptively increase the speed of sound for a two-phase SPH model.
 

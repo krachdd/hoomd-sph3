@@ -64,6 +64,9 @@ SinglePhaseFlow<KT_, SET_>::SinglePhaseFlow(std::shared_ptr<SystemDefinition> sy
         m_params_set = false;
         m_compute_solid_forces = false;
         m_artificial_viscosity = false;
+        m_tensil_correction = false;
+        m_tensil_eps_pos    = Scalar(0.01);
+        m_tensil_eps_neg    = Scalar(0.2);
         m_density_diffusion = false;
         m_shepard_renormalization = false;
         m_density_reinitialization = false;
@@ -1011,6 +1014,15 @@ void SinglePhaseFlow<KT_, SET_>::forcecomputation(uint64_t timestep)
         // maximum velocity variable for adaptive timestep
         double max_vel = 0.0;
 
+        // Pre-compute tensile correction reference kernel value (constant h only).
+        // For variable h the per-pair value is computed inside the inner loop.
+        Scalar tensil_od_wdeltap = Scalar(0);
+        if (m_tensil_correction && m_const_slength)
+            {
+            Scalar wdeltap = m_skernel->wij(m_ch, m_ch / Scalar(1.5));
+            tensil_od_wdeltap = (wdeltap > Scalar(0)) ? (Scalar(1) / wdeltap) : Scalar(0);
+            }
+
         // for each fluid particle
         for (unsigned int group_idx = 0; group_idx < group_size; group_idx++)
             {
@@ -1161,6 +1173,30 @@ void SinglePhaseFlow<KT_, SET_>::forcecomputation(uint64_t timestep)
                 h_force.data[i].x -= ( temp0 + avc ) * dwdr_r * dx.x;
                 h_force.data[i].y -= ( temp0 + avc ) * dwdr_r * dx.y;
                 h_force.data[i].z -= ( temp0 + avc ) * dwdr_r * dx.z;
+
+                // Tensile instability correction (Monaghan 1994) — fluid-fluid pairs only.
+                // Adds a small repulsive pressure for approaching particles in tension,
+                // preventing particle clustering when pressure turns negative.
+                if (m_tensil_correction && !issolid)
+                    {
+                    Scalar od_wdeltap;
+                    if (m_const_slength)
+                        od_wdeltap = tensil_od_wdeltap;
+                    else
+                        {
+                        Scalar wdeltap = m_skernel->wij(meanh, meanh / Scalar(1.5));
+                        od_wdeltap = (wdeltap > Scalar(0)) ? (Scalar(1) / wdeltap) : Scalar(0);
+                        }
+                    Scalar wij_val = m_skernel->wij(meanh, r);
+                    Scalar fab = wij_val * od_wdeltap;
+                    fab = fab * fab * fab * fab; // (W_ij / W_deltap)^4
+                    Scalar ti = (Pi / (rhoi * rhoi)) * (Pi > Scalar(0) ?  m_tensil_eps_pos : -m_tensil_eps_neg);
+                    Scalar tj = (Pj / (rhoj * rhoj)) * (Pj > Scalar(0) ?  m_tensil_eps_pos : -m_tensil_eps_neg);
+                    Scalar tc = mi * mj * fab * (ti + tj);
+                    h_force.data[i].x -= tc * dwdr_r * dx.x;
+                    h_force.data[i].y -= tc * dwdr_r * dx.y;
+                    h_force.data[i].z -= tc * dwdr_r * dx.z;
+                    }
 
                 // Evaluate viscous interaction forces
                 {
@@ -1520,6 +1556,10 @@ void export_SinglePhaseFlow(pybind11::module& m, std::string name)
         .def("computeSolidForces", &SinglePhaseFlow<KT_, SET_>::computeSolidForces)
         .def("activateArtificialViscosity", &SinglePhaseFlow<KT_, SET_>::activateArtificialViscosity)
         .def("deactivateArtificialViscosity", &SinglePhaseFlow<KT_, SET_>::deactivateArtificialViscosity)
+        .def("activateTensilCorrection", &SinglePhaseFlow<KT_, SET_>::activateTensilCorrection,
+             pybind11::arg("eps_pos") = Scalar(0.01),
+             pybind11::arg("eps_neg") = Scalar(0.2))
+        .def("deactivateTensilCorrection", &SinglePhaseFlow<KT_, SET_>::deactivateTensilCorrection)
         .def("activateDensityDiffusion", &SinglePhaseFlow<KT_, SET_>::activateDensityDiffusion)
         .def("deactivateDensityDiffusion", &SinglePhaseFlow<KT_, SET_>::deactivateDensityDiffusion)
         .def("activateShepardRenormalization", &SinglePhaseFlow<KT_, SET_>::activateShepardRenormalization)
