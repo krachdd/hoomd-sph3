@@ -1019,7 +1019,7 @@ void SinglePhaseFlow<KT_, SET_>::forcecomputation(uint64_t timestep)
         Scalar tensil_od_wdeltap = Scalar(0);
         if (m_tensil_correction && m_const_slength)
             {
-            Scalar wdeltap = m_skernel->wij(m_ch, m_ch / Scalar(1.5));
+            Scalar wdeltap = this->m_skernel->wij(m_ch, m_ch / Scalar(1.5));
             tensil_od_wdeltap = (wdeltap > Scalar(0)) ? (Scalar(1) / wdeltap) : Scalar(0);
             }
 
@@ -1184,10 +1184,10 @@ void SinglePhaseFlow<KT_, SET_>::forcecomputation(uint64_t timestep)
                         od_wdeltap = tensil_od_wdeltap;
                     else
                         {
-                        Scalar wdeltap = m_skernel->wij(meanh, meanh / Scalar(1.5));
+                        Scalar wdeltap = this->m_skernel->wij(meanh, meanh / Scalar(1.5));
                         od_wdeltap = (wdeltap > Scalar(0)) ? (Scalar(1) / wdeltap) : Scalar(0);
                         }
-                    Scalar wij_val = m_skernel->wij(meanh, r);
+                    Scalar wij_val = this->m_skernel->wij(meanh, r);
                     Scalar fab = wij_val * od_wdeltap;
                     fab = fab * fab * fab * fab; // (W_ij / W_deltap)^4
                     Scalar ti = (Pi / (rhoi * rhoi)) * (Pi > Scalar(0) ?  m_tensil_eps_pos : -m_tensil_eps_neg);
