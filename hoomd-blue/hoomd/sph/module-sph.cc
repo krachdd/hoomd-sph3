@@ -52,14 +52,15 @@ maintainer: dkrach, david.krach@mib.uni-stuttgart.de
 #include "CustomForceCompute.h"
 
 
-// // include GPU classes
-// #ifdef ENABLE_HIP
-// #include "VelocityVerletGPU.h"
-// //#include "SuspendedObjectIntegratorGPU.h"
-// // #include "RigidBodyIntegratorGPU.h"
-// #include "SinglePhaseFlowGPU.h"
-// // #include "TwoPhaseFlowGPU.h"
-// #endif
+// include GPU classes
+#ifdef ENABLE_HIP
+#include "SinglePhaseFlowGPU.h"
+#include "SinglePhaseFlowTVGPU.h"
+#include "SinglePhaseFlowGDGDGPU.h"
+#include "SinglePhaseFlowFSGPU.h"
+#include "TwoPhaseFlowGPU.h"
+#include "TwoPhaseFlowTVGPU.h"
+#endif
 
 // // ParticleFilter objects
 // #include "hoomd/filter/export_filters.h"
@@ -107,13 +108,25 @@ namespace detail
     void export_HalfStepHook(pybind11::module& m);
 
 
-// #ifdef ENABLE_HIP
-//     void export_VelocityVerletGPU(pybind11::module& m);
-//     //void export_SuspendedObjectIntegratorGPU();
-//     // void export_RigidBodyIntegratorGPU(pybind11::module& m);
-//     void export_SinglePhaseFlowGPU(pybind11::module& m);
-//     // void export_TwoPhaseFlowGPU(pybind11::module& m);
-// #endif
+#ifdef ENABLE_HIP
+    template<SmoothingKernelType KT_, StateEquationType SET_>
+    void export_SinglePhaseFlowGPU(pybind11::module& m, std::string name);
+
+    template<SmoothingKernelType KT_, StateEquationType SET_>
+    void export_SinglePhaseFlowTVGPU(pybind11::module& m, std::string name);
+
+    template<SmoothingKernelType KT_, StateEquationType SET_>
+    void export_SinglePhaseFlowGDGDGPU(pybind11::module& m, std::string name);
+
+    template<SmoothingKernelType KT_, StateEquationType SET_>
+    void export_SinglePhaseFlowFSGPU(pybind11::module& m, std::string name);
+
+    template<SmoothingKernelType KT_, StateEquationType SET1_, StateEquationType SET2_>
+    void export_TwoPhaseFlowGPU(pybind11::module& m, std::string name);
+
+    template<SmoothingKernelType KT_, StateEquationType SET1_, StateEquationType SET2_>
+    void export_TwoPhaseFlowTVGPU(pybind11::module& m, std::string name);
+#endif
 
 
 } // end namespace detail 
@@ -260,13 +273,93 @@ PYBIND11_MODULE(_sph, m){
     // export_LocalNeighborListDataHost(m);
     export_HalfStepHook(m);
 
-// #ifdef ENABLE_HIP
-//     export_VelocityVerletGPU(m);
-//     //export_SuspendedObjectIntegratorGPU();
-//     // export_RigidBodyIntegratorGPU(m);
-//     export_SinglePhaseFlowGPU(m);
-//     // export_TwoPhaseFlowGPU(m);
-// #endif
+#ifdef ENABLE_HIP
+    export_SinglePhaseFlowGPU<wendlandc2, linear>(m, "SinglePFGPU_WC2_L");
+    export_SinglePhaseFlowGPU<wendlandc2, tait>  (m, "SinglePFGPU_WC2_T");
+    export_SinglePhaseFlowGPU<wendlandc4, linear>(m, "SinglePFGPU_WC4_L");
+    export_SinglePhaseFlowGPU<wendlandc4, tait>  (m, "SinglePFGPU_WC4_T");
+    export_SinglePhaseFlowGPU<wendlandc6, linear>(m, "SinglePFGPU_WC6_L");
+    export_SinglePhaseFlowGPU<wendlandc6, tait>  (m, "SinglePFGPU_WC6_T");
+    export_SinglePhaseFlowGPU<quintic,    linear>(m, "SinglePFGPU_Q_L");
+    export_SinglePhaseFlowGPU<quintic,    tait>  (m, "SinglePFGPU_Q_T");
+    export_SinglePhaseFlowGPU<cubicspline,linear>(m, "SinglePFGPU_CS_L");
+    export_SinglePhaseFlowGPU<cubicspline,tait>  (m, "SinglePFGPU_CS_T");
+
+    export_SinglePhaseFlowTVGPU<wendlandc2, linear>(m, "SinglePFTVGPU_WC2_L");
+    export_SinglePhaseFlowTVGPU<wendlandc2, tait>  (m, "SinglePFTVGPU_WC2_T");
+    export_SinglePhaseFlowTVGPU<wendlandc4, linear>(m, "SinglePFTVGPU_WC4_L");
+    export_SinglePhaseFlowTVGPU<wendlandc4, tait>  (m, "SinglePFTVGPU_WC4_T");
+    export_SinglePhaseFlowTVGPU<wendlandc6, linear>(m, "SinglePFTVGPU_WC6_L");
+    export_SinglePhaseFlowTVGPU<wendlandc6, tait>  (m, "SinglePFTVGPU_WC6_T");
+    export_SinglePhaseFlowTVGPU<quintic,    linear>(m, "SinglePFTVGPU_Q_L");
+    export_SinglePhaseFlowTVGPU<quintic,    tait>  (m, "SinglePFTVGPU_Q_T");
+    export_SinglePhaseFlowTVGPU<cubicspline,linear>(m, "SinglePFTVGPU_CS_L");
+    export_SinglePhaseFlowTVGPU<cubicspline,tait>  (m, "SinglePFTVGPU_CS_T");
+
+    export_SinglePhaseFlowGDGDGPU<wendlandc2, linear>(m, "SinglePFGDGDGPU_WC2_L");
+    export_SinglePhaseFlowGDGDGPU<wendlandc2, tait>  (m, "SinglePFGDGDGPU_WC2_T");
+    export_SinglePhaseFlowGDGDGPU<wendlandc4, linear>(m, "SinglePFGDGDGPU_WC4_L");
+    export_SinglePhaseFlowGDGDGPU<wendlandc4, tait>  (m, "SinglePFGDGDGPU_WC4_T");
+    export_SinglePhaseFlowGDGDGPU<wendlandc6, linear>(m, "SinglePFGDGDGPU_WC6_L");
+    export_SinglePhaseFlowGDGDGPU<wendlandc6, tait>  (m, "SinglePFGDGDGPU_WC6_T");
+    export_SinglePhaseFlowGDGDGPU<quintic,    linear>(m, "SinglePFGDGDGPU_Q_L");
+    export_SinglePhaseFlowGDGDGPU<quintic,    tait>  (m, "SinglePFGDGDGPU_Q_T");
+    export_SinglePhaseFlowGDGDGPU<cubicspline,linear>(m, "SinglePFGDGDGPU_CS_L");
+    export_SinglePhaseFlowGDGDGPU<cubicspline,tait>  (m, "SinglePFGDGDGPU_CS_T");
+
+    export_SinglePhaseFlowFSGPU<wendlandc2, linear>(m, "SinglePFFSGPU_WC2_L");
+    export_SinglePhaseFlowFSGPU<wendlandc2, tait>  (m, "SinglePFFSGPU_WC2_T");
+    export_SinglePhaseFlowFSGPU<wendlandc4, linear>(m, "SinglePFFSGPU_WC4_L");
+    export_SinglePhaseFlowFSGPU<wendlandc4, tait>  (m, "SinglePFFSGPU_WC4_T");
+    export_SinglePhaseFlowFSGPU<wendlandc6, linear>(m, "SinglePFFSGPU_WC6_L");
+    export_SinglePhaseFlowFSGPU<wendlandc6, tait>  (m, "SinglePFFSGPU_WC6_T");
+    export_SinglePhaseFlowFSGPU<quintic,    linear>(m, "SinglePFFSGPU_Q_L");
+    export_SinglePhaseFlowFSGPU<quintic,    tait>  (m, "SinglePFFSGPU_Q_T");
+    export_SinglePhaseFlowFSGPU<cubicspline,linear>(m, "SinglePFFSGPU_CS_L");
+    export_SinglePhaseFlowFSGPU<cubicspline,tait>  (m, "SinglePFFSGPU_CS_T");
+
+    export_TwoPhaseFlowGPU<wendlandc2, tait,   tait  >(m, "TwoPFGPU_WC2_TT");
+    export_TwoPhaseFlowGPU<wendlandc2, tait,   linear>(m, "TwoPFGPU_WC2_TL");
+    export_TwoPhaseFlowGPU<wendlandc2, linear, tait  >(m, "TwoPFGPU_WC2_LT");
+    export_TwoPhaseFlowGPU<wendlandc2, linear, linear>(m, "TwoPFGPU_WC2_LL");
+    export_TwoPhaseFlowGPU<wendlandc4, tait,   tait  >(m, "TwoPFGPU_WC4_TT");
+    export_TwoPhaseFlowGPU<wendlandc4, tait,   linear>(m, "TwoPFGPU_WC4_TL");
+    export_TwoPhaseFlowGPU<wendlandc4, linear, tait  >(m, "TwoPFGPU_WC4_LT");
+    export_TwoPhaseFlowGPU<wendlandc4, linear, linear>(m, "TwoPFGPU_WC4_LL");
+    export_TwoPhaseFlowGPU<wendlandc6, tait,   tait  >(m, "TwoPFGPU_WC6_TT");
+    export_TwoPhaseFlowGPU<wendlandc6, tait,   linear>(m, "TwoPFGPU_WC6_TL");
+    export_TwoPhaseFlowGPU<wendlandc6, linear, tait  >(m, "TwoPFGPU_WC6_LT");
+    export_TwoPhaseFlowGPU<wendlandc6, linear, linear>(m, "TwoPFGPU_WC6_LL");
+    export_TwoPhaseFlowGPU<quintic,    tait,   tait  >(m, "TwoPFGPU_Q_TT");
+    export_TwoPhaseFlowGPU<quintic,    tait,   linear>(m, "TwoPFGPU_Q_TL");
+    export_TwoPhaseFlowGPU<quintic,    linear, tait  >(m, "TwoPFGPU_Q_LT");
+    export_TwoPhaseFlowGPU<quintic,    linear, linear>(m, "TwoPFGPU_Q_LL");
+    export_TwoPhaseFlowGPU<cubicspline,tait,   tait  >(m, "TwoPFGPU_CS_TT");
+    export_TwoPhaseFlowGPU<cubicspline,tait,   linear>(m, "TwoPFGPU_CS_TL");
+    export_TwoPhaseFlowGPU<cubicspline,linear, tait  >(m, "TwoPFGPU_CS_LT");
+    export_TwoPhaseFlowGPU<cubicspline,linear, linear>(m, "TwoPFGPU_CS_LL");
+
+    export_TwoPhaseFlowTVGPU<wendlandc2, tait,   tait  >(m, "TwoPFTVGPU_WC2_TT");
+    export_TwoPhaseFlowTVGPU<wendlandc2, tait,   linear>(m, "TwoPFTVGPU_WC2_TL");
+    export_TwoPhaseFlowTVGPU<wendlandc2, linear, tait  >(m, "TwoPFTVGPU_WC2_LT");
+    export_TwoPhaseFlowTVGPU<wendlandc2, linear, linear>(m, "TwoPFTVGPU_WC2_LL");
+    export_TwoPhaseFlowTVGPU<wendlandc4, tait,   tait  >(m, "TwoPFTVGPU_WC4_TT");
+    export_TwoPhaseFlowTVGPU<wendlandc4, tait,   linear>(m, "TwoPFTVGPU_WC4_TL");
+    export_TwoPhaseFlowTVGPU<wendlandc4, linear, tait  >(m, "TwoPFTVGPU_WC4_LT");
+    export_TwoPhaseFlowTVGPU<wendlandc4, linear, linear>(m, "TwoPFTVGPU_WC4_LL");
+    export_TwoPhaseFlowTVGPU<wendlandc6, tait,   tait  >(m, "TwoPFTVGPU_WC6_TT");
+    export_TwoPhaseFlowTVGPU<wendlandc6, tait,   linear>(m, "TwoPFTVGPU_WC6_TL");
+    export_TwoPhaseFlowTVGPU<wendlandc6, linear, tait  >(m, "TwoPFTVGPU_WC6_LT");
+    export_TwoPhaseFlowTVGPU<wendlandc6, linear, linear>(m, "TwoPFTVGPU_WC6_LL");
+    export_TwoPhaseFlowTVGPU<quintic,    tait,   tait  >(m, "TwoPFTVGPU_Q_TT");
+    export_TwoPhaseFlowTVGPU<quintic,    tait,   linear>(m, "TwoPFTVGPU_Q_TL");
+    export_TwoPhaseFlowTVGPU<quintic,    linear, tait  >(m, "TwoPFTVGPU_Q_LT");
+    export_TwoPhaseFlowTVGPU<quintic,    linear, linear>(m, "TwoPFTVGPU_Q_LL");
+    export_TwoPhaseFlowTVGPU<cubicspline,tait,   tait  >(m, "TwoPFTVGPU_CS_TT");
+    export_TwoPhaseFlowTVGPU<cubicspline,tait,   linear>(m, "TwoPFTVGPU_CS_TL");
+    export_TwoPhaseFlowTVGPU<cubicspline,linear, tait  >(m, "TwoPFTVGPU_CS_LT");
+    export_TwoPhaseFlowTVGPU<cubicspline,linear, linear>(m, "TwoPFTVGPU_CS_LL");
+#endif
 
 }
 

@@ -158,15 +158,36 @@ void SFCPackTunerGPU::applySortOrder()
         ArrayHandle<Scalar4> d_vel_alt(m_pdata->getAltVelocities(),
                                        access_location::device,
                                        access_mode::overwrite);
+        ArrayHandle<Scalar> d_density_alt(m_pdata->getAltDensities(),
+                                          access_location::device,
+                                          access_mode::overwrite);
+        ArrayHandle<Scalar> d_pressure_alt(m_pdata->getAltPressures(),
+                                           access_location::device,
+                                           access_mode::overwrite);
+        ArrayHandle<Scalar> d_energy_alt(m_pdata->getAltEnergies(),
+                                         access_location::device,
+                                         access_mode::overwrite);
+        ArrayHandle<Scalar3> d_aux1_alt(m_pdata->getAltAuxiliaries1(),
+                                        access_location::device,
+                                        access_mode::overwrite);
+        ArrayHandle<Scalar3> d_aux2_alt(m_pdata->getAltAuxiliaries2(),
+                                        access_location::device,
+                                        access_mode::overwrite);
+        ArrayHandle<Scalar3> d_aux3_alt(m_pdata->getAltAuxiliaries3(),
+                                        access_location::device,
+                                        access_mode::overwrite);
+        ArrayHandle<Scalar3> d_aux4_alt(m_pdata->getAltAuxiliaries4(),
+                                        access_location::device,
+                                        access_mode::overwrite);
+        ArrayHandle<Scalar> d_slength_alt(m_pdata->getAltSlenghts(),
+                                          access_location::device,
+                                          access_mode::overwrite);
         ArrayHandle<Scalar3> d_accel_alt(m_pdata->getAltAccelerations(),
                                          access_location::device,
                                          access_mode::overwrite);
-        ArrayHandle<Scalar> d_charge_alt(m_pdata->getAltCharges(),
+        ArrayHandle<Scalar3> d_dpedt_alt(m_pdata->getAltDPEdts(),
                                          access_location::device,
                                          access_mode::overwrite);
-        ArrayHandle<Scalar> d_diameter_alt(m_pdata->getAltDiameters(),
-                                           access_location::device,
-                                           access_mode::overwrite);
         ArrayHandle<int3> d_image_alt(m_pdata->getAltImages(),
                                       access_location::device,
                                       access_mode::overwrite);
@@ -176,25 +197,12 @@ void SFCPackTunerGPU::applySortOrder()
         ArrayHandle<unsigned int> d_tag_alt(m_pdata->getAltTags(),
                                             access_location::device,
                                             access_mode::overwrite);
-        ArrayHandle<Scalar4> d_orientation_alt(m_pdata->getAltOrientationArray(),
-                                               access_location::device,
-                                               access_mode::overwrite);
-
-        ArrayHandle<Scalar4> d_angmom_alt(m_pdata->getAltAngularMomentumArray(),
-                                          access_location::device,
-                                          access_mode::overwrite);
-        ArrayHandle<Scalar3> d_inertia_alt(m_pdata->getAltMomentsOfInertiaArray(),
-                                           access_location::device,
-                                           access_mode::overwrite);
-        ArrayHandle<Scalar> d_net_virial_alt(m_pdata->getAltNetVirial(),
-                                             access_location::device,
-                                             access_mode::overwrite);
         ArrayHandle<Scalar4> d_net_force_alt(m_pdata->getAltNetForce(),
                                              access_location::device,
                                              access_mode::overwrite);
-        ArrayHandle<Scalar4> d_net_torque_alt(m_pdata->getAltNetTorqueArray(),
-                                              access_location::device,
-                                              access_mode::overwrite);
+        ArrayHandle<Scalar4> d_net_ratedpe_alt(m_pdata->getAltNetRateDPE(),
+                                               access_location::device,
+                                               access_mode::overwrite);
 
         // access live particle data to read from
         ArrayHandle<Scalar4> d_pos(m_pdata->getPositions(),
@@ -203,41 +211,51 @@ void SFCPackTunerGPU::applySortOrder()
         ArrayHandle<Scalar4> d_vel(m_pdata->getVelocities(),
                                    access_location::device,
                                    access_mode::read);
+        ArrayHandle<Scalar> d_density(m_pdata->getDensities(),
+                                      access_location::device,
+                                      access_mode::read);
+        ArrayHandle<Scalar> d_pressure(m_pdata->getPressures(),
+                                       access_location::device,
+                                       access_mode::read);
+        ArrayHandle<Scalar> d_energy(m_pdata->getEnergies(),
+                                     access_location::device,
+                                     access_mode::read);
+        ArrayHandle<Scalar3> d_aux1(m_pdata->getAuxiliaries1(),
+                                    access_location::device,
+                                    access_mode::read);
+        ArrayHandle<Scalar3> d_aux2(m_pdata->getAuxiliaries2(),
+                                    access_location::device,
+                                    access_mode::read);
+        ArrayHandle<Scalar3> d_aux3(m_pdata->getAuxiliaries3(),
+                                    access_location::device,
+                                    access_mode::read);
+        ArrayHandle<Scalar3> d_aux4(m_pdata->getAuxiliaries4(),
+                                    access_location::device,
+                                    access_mode::read);
+        ArrayHandle<Scalar> d_slength(m_pdata->getSlengths(),
+                                      access_location::device,
+                                      access_mode::read);
         ArrayHandle<Scalar3> d_accel(m_pdata->getAccelerations(),
                                      access_location::device,
                                      access_mode::read);
-        ArrayHandle<Scalar> d_charge(m_pdata->getCharges(),
+        ArrayHandle<Scalar3> d_dpedt(m_pdata->getDPEdts(),
                                      access_location::device,
                                      access_mode::read);
-        ArrayHandle<Scalar> d_diameter(m_pdata->getDiameters(),
-                                       access_location::device,
-                                       access_mode::read);
-        ArrayHandle<int3> d_image(m_pdata->getImages(), access_location::device, access_mode::read);
+        ArrayHandle<int3> d_image(m_pdata->getImages(),
+                                  access_location::device,
+                                  access_mode::read);
         ArrayHandle<unsigned int> d_body(m_pdata->getBodies(),
                                          access_location::device,
                                          access_mode::read);
         ArrayHandle<unsigned int> d_tag(m_pdata->getTags(),
                                         access_location::device,
                                         access_mode::read);
-        ArrayHandle<Scalar4> d_orientation(m_pdata->getOrientationArray(),
-                                           access_location::device,
-                                           access_mode::read);
-        ArrayHandle<Scalar4> d_angmom(m_pdata->getAngularMomentumArray(),
-                                      access_location::device,
-                                      access_mode::read);
-        ArrayHandle<Scalar3> d_inertia(m_pdata->getMomentsOfInertiaArray(),
-                                       access_location::device,
-                                       access_mode::read);
-
-        ArrayHandle<Scalar> d_net_virial(m_pdata->getNetVirial(),
-                                         access_location::device,
-                                         access_mode::read);
         ArrayHandle<Scalar4> d_net_force(m_pdata->getNetForce(),
                                          access_location::device,
                                          access_mode::read);
-        ArrayHandle<Scalar4> d_net_torque(m_pdata->getNetTorqueArray(),
-                                          access_location::device,
-                                          access_mode::read);
+        ArrayHandle<Scalar4> d_net_ratedpe(m_pdata->getNetRateDPE(),
+                                           access_location::device,
+                                           access_mode::read);
 
         // access rtags
         ArrayHandle<unsigned int> d_rtag(m_pdata->getRTags(),
@@ -257,31 +275,36 @@ void SFCPackTunerGPU::applySortOrder()
                                        d_pos_alt.data,
                                        d_vel.data,
                                        d_vel_alt.data,
+                                       d_density.data,
+                                       d_density_alt.data,
+                                       d_pressure.data,
+                                       d_pressure_alt.data,
+                                       d_energy.data,
+                                       d_energy_alt.data,
+                                       d_aux1.data,
+                                       d_aux1_alt.data,
+                                       d_aux2.data,
+                                       d_aux2_alt.data,
+                                       d_aux3.data,
+                                       d_aux3_alt.data,
+                                       d_aux4.data,
+                                       d_aux4_alt.data,
+                                       d_slength.data,
+                                       d_slength_alt.data,
                                        d_accel.data,
                                        d_accel_alt.data,
-                                       d_charge.data,
-                                       d_charge_alt.data,
-                                       d_diameter.data,
-                                       d_diameter_alt.data,
+                                       d_dpedt.data,
+                                       d_dpedt_alt.data,
                                        d_image.data,
                                        d_image_alt.data,
                                        d_body.data,
                                        d_body_alt.data,
                                        d_tag.data,
                                        d_tag_alt.data,
-                                       d_orientation.data,
-                                       d_orientation_alt.data,
-                                       d_angmom.data,
-                                       d_angmom_alt.data,
-                                       d_inertia.data,
-                                       d_inertia_alt.data,
-                                       d_net_virial.data,
-                                       d_net_virial_alt.data,
-                                       m_pdata->getNetVirial().getPitch(),
                                        d_net_force.data,
                                        d_net_force_alt.data,
-                                       d_net_torque.data,
-                                       d_net_torque_alt.data,
+                                       d_net_ratedpe.data,
+                                       d_net_ratedpe_alt.data,
                                        d_rtag.data);
 
         if (m_exec_conf->isCUDAErrorCheckingEnabled())
@@ -291,18 +314,21 @@ void SFCPackTunerGPU::applySortOrder()
     // make alternate arrays current
     m_pdata->swapPositions();
     m_pdata->swapVelocities();
+    m_pdata->swapDensities();
+    m_pdata->swapPressures();
+    m_pdata->swapEnergies();
+    m_pdata->swapAuxiliaries1();
+    m_pdata->swapAuxiliaries2();
+    m_pdata->swapAuxiliaries3();
+    m_pdata->swapAuxiliaries4();
+    m_pdata->swapSlengths();
     m_pdata->swapAccelerations();
-    m_pdata->swapCharges();
-    m_pdata->swapDiameters();
+    m_pdata->swapDPEdts();
     m_pdata->swapImages();
     m_pdata->swapBodies();
     m_pdata->swapTags();
-    m_pdata->swapOrientations();
-    m_pdata->swapAngularMomenta();
-    m_pdata->swapMomentsOfInertia();
-    m_pdata->swapNetVirial();
     m_pdata->swapNetForce();
-    m_pdata->swapNetTorque();
+    m_pdata->swapNetRateDPE();
     }
 
 namespace detail

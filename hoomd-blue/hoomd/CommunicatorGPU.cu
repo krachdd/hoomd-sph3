@@ -880,32 +880,41 @@ void gpu_exchange_ghosts_pack(unsigned int n_out,
                               const Scalar4* d_pos,
                               const int3* d_img,
                               const Scalar4* d_vel,
-                              const Scalar* d_charge,
-                              const Scalar* d_diameter,
+                              const Scalar* d_density,
+                              const Scalar* d_pressure,
+                              const Scalar* d_energy,
+                              const Scalar3* d_aux1,
+                              const Scalar3* d_aux2,
+                              const Scalar3* d_aux3,
+                              const Scalar3* d_aux4,
                               const unsigned int* d_body,
-                              const Scalar4* d_orientation,
-                              const Scalar4* d_angmom,
-                              const Scalar3* d_inertia,
+                              const Scalar* d_slength,
                               unsigned int* d_tag_sendbuf,
                               Scalar4* d_pos_sendbuf,
                               Scalar4* d_vel_sendbuf,
-                              Scalar* d_charge_sendbuf,
-                              Scalar* d_diameter_sendbuf,
+                              Scalar* d_density_sendbuf,
+                              Scalar* d_pressure_sendbuf,
+                              Scalar* d_energy_sendbuf,
+                              Scalar3* d_aux1_sendbuf,
+                              Scalar3* d_aux2_sendbuf,
+                              Scalar3* d_aux3_sendbuf,
+                              Scalar3* d_aux4_sendbuf,
                               unsigned int* d_body_sendbuf,
                               int3* d_img_sendbuf,
-                              Scalar4* d_orientation_sendbuf,
-                              Scalar4* d_angmom_sendbuf,
-                              Scalar3* d_inertia_sendbuf,
+                              Scalar* d_slength_sendbuf,
                               bool send_tag,
                               bool send_pos,
                               bool send_vel,
-                              bool send_charge,
-                              bool send_diameter,
+                              bool send_density,
+                              bool send_pressure,
+                              bool send_energy,
+                              bool send_aux1,
+                              bool send_aux2,
+                              bool send_aux3,
+                              bool send_aux4,
                               bool send_body,
                               bool send_image,
-                              bool send_orientation,
-                              bool send_angmom,
-                              bool send_inertia,
+                              bool send_slength,
                               const Index3D& di,
                               uint3 my_pos,
                               const BoxDim& box)
@@ -965,10 +974,10 @@ void gpu_exchange_ghosts_pack(unsigned int n_out,
                            d_vel,
                            d_vel_sendbuf);
         }
-    if (send_charge)
+    if (send_density)
         {
-        assert(d_charge);
-        assert(d_charge_sendbuf);
+        assert(d_density);
+        assert(d_density_sendbuf);
         hipLaunchKernelGGL(gpu_pack_kernel,
                            dim3(n_blocks),
                            dim3(block_size),
@@ -976,13 +985,13 @@ void gpu_exchange_ghosts_pack(unsigned int n_out,
                            0,
                            n_out,
                            d_ghost_idx_adj,
-                           d_charge,
-                           d_charge_sendbuf);
+                           d_density,
+                           d_density_sendbuf);
         }
-    if (send_diameter)
+    if (send_pressure)
         {
-        assert(d_diameter);
-        assert(d_diameter_sendbuf);
+        assert(d_pressure);
+        assert(d_pressure_sendbuf);
         hipLaunchKernelGGL(gpu_pack_kernel,
                            dim3(n_blocks),
                            dim3(block_size),
@@ -990,8 +999,78 @@ void gpu_exchange_ghosts_pack(unsigned int n_out,
                            0,
                            n_out,
                            d_ghost_idx_adj,
-                           d_diameter,
-                           d_diameter_sendbuf);
+                           d_pressure,
+                           d_pressure_sendbuf);
+        }
+    if (send_energy)
+        {
+        assert(d_energy);
+        assert(d_energy_sendbuf);
+        hipLaunchKernelGGL(gpu_pack_kernel,
+                           dim3(n_blocks),
+                           dim3(block_size),
+                           0,
+                           0,
+                           n_out,
+                           d_ghost_idx_adj,
+                           d_energy,
+                           d_energy_sendbuf);
+        }
+    if (send_aux1)
+        {
+        assert(d_aux1);
+        assert(d_aux1_sendbuf);
+        hipLaunchKernelGGL(gpu_pack_kernel,
+                           dim3(n_blocks),
+                           dim3(block_size),
+                           0,
+                           0,
+                           n_out,
+                           d_ghost_idx_adj,
+                           d_aux1,
+                           d_aux1_sendbuf);
+        }
+    if (send_aux2)
+        {
+        assert(d_aux2);
+        assert(d_aux2_sendbuf);
+        hipLaunchKernelGGL(gpu_pack_kernel,
+                           dim3(n_blocks),
+                           dim3(block_size),
+                           0,
+                           0,
+                           n_out,
+                           d_ghost_idx_adj,
+                           d_aux2,
+                           d_aux2_sendbuf);
+        }
+    if (send_aux3)
+        {
+        assert(d_aux3);
+        assert(d_aux3_sendbuf);
+        hipLaunchKernelGGL(gpu_pack_kernel,
+                           dim3(n_blocks),
+                           dim3(block_size),
+                           0,
+                           0,
+                           n_out,
+                           d_ghost_idx_adj,
+                           d_aux3,
+                           d_aux3_sendbuf);
+        }
+    if (send_aux4)
+        {
+        assert(d_aux4);
+        assert(d_aux4_sendbuf);
+        hipLaunchKernelGGL(gpu_pack_kernel,
+                           dim3(n_blocks),
+                           dim3(block_size),
+                           0,
+                           0,
+                           n_out,
+                           d_ghost_idx_adj,
+                           d_aux4,
+                           d_aux4_sendbuf);
         }
     if (send_body)
         {
@@ -1007,10 +1086,10 @@ void gpu_exchange_ghosts_pack(unsigned int n_out,
                            d_body,
                            d_body_sendbuf);
         }
-    if (send_orientation)
+    if (send_slength)
         {
-        assert(d_orientation);
-        assert(d_orientation_sendbuf);
+        assert(d_slength);
+        assert(d_slength_sendbuf);
         hipLaunchKernelGGL(gpu_pack_kernel,
                            dim3(n_blocks),
                            dim3(block_size),
@@ -1018,36 +1097,8 @@ void gpu_exchange_ghosts_pack(unsigned int n_out,
                            0,
                            n_out,
                            d_ghost_idx_adj,
-                           d_orientation,
-                           d_orientation_sendbuf);
-        }
-    if (send_angmom)
-        {
-        assert(d_angmom);
-        assert(d_angmom_sendbuf);
-        hipLaunchKernelGGL(gpu_pack_kernel,
-                           dim3(n_blocks),
-                           dim3(block_size),
-                           0,
-                           0,
-                           n_out,
-                           d_ghost_idx_adj,
-                           d_angmom,
-                           d_angmom_sendbuf);
-        }
-    if (send_inertia)
-        {
-        assert(d_inertia);
-        assert(d_inertia_sendbuf);
-        hipLaunchKernelGGL(gpu_pack_kernel,
-                           dim3(n_blocks),
-                           dim3(block_size),
-                           0,
-                           0,
-                           n_out,
-                           d_ghost_idx_adj,
-                           d_inertia,
-                           d_inertia_sendbuf);
+                           d_slength,
+                           d_slength_sendbuf);
         }
     }
 
@@ -1184,33 +1235,42 @@ void gpu_exchange_ghosts_copy_buf(unsigned int n_recv,
                                   const unsigned int* d_tag_recvbuf,
                                   const Scalar4* d_pos_recvbuf,
                                   const Scalar4* d_vel_recvbuf,
-                                  const Scalar* d_charge_recvbuf,
-                                  const Scalar* d_diameter_recvbuf,
+                                  const Scalar* d_density_recvbuf,
+                                  const Scalar* d_pressure_recvbuf,
+                                  const Scalar* d_energy_recvbuf,
+                                  const Scalar3* d_aux1_recvbuf,
+                                  const Scalar3* d_aux2_recvbuf,
+                                  const Scalar3* d_aux3_recvbuf,
+                                  const Scalar3* d_aux4_recvbuf,
                                   const unsigned int* d_body_recvbuf,
                                   const int3* d_image_recvbuf,
-                                  const Scalar4* d_orientation_recvbuf,
-                                  const Scalar4* d_angmom_recvbuf,
-                                  const Scalar3* d_inertia_recvbuf,
+                                  const Scalar* d_slength_recvbuf,
                                   unsigned int* d_tag,
                                   Scalar4* d_pos,
                                   Scalar4* d_vel,
-                                  Scalar* d_charge,
-                                  Scalar* d_diameter,
+                                  Scalar* d_density,
+                                  Scalar* d_pressure,
+                                  Scalar* d_energy,
+                                  Scalar3* d_aux1,
+                                  Scalar3* d_aux2,
+                                  Scalar3* d_aux3,
+                                  Scalar3* d_aux4,
                                   unsigned int* d_body,
                                   int3* d_image,
-                                  Scalar4* d_orientation,
-                                  Scalar4* d_angmom,
-                                  Scalar3* d_inertia,
+                                  Scalar* d_slength,
                                   bool send_tag,
                                   bool send_pos,
                                   bool send_vel,
-                                  bool send_charge,
-                                  bool send_diameter,
+                                  bool send_density,
+                                  bool send_pressure,
+                                  bool send_energy,
+                                  bool send_aux1,
+                                  bool send_aux2,
+                                  bool send_aux3,
+                                  bool send_aux4,
                                   bool send_body,
                                   bool send_image,
-                                  bool send_orientation,
-                                  bool send_angmom,
-                                  bool send_inertia)
+                                  bool send_slength)
     {
     unsigned int block_size = 256;
     unsigned int n_blocks = n_recv / block_size + 1;
@@ -1247,7 +1307,7 @@ void gpu_exchange_ghosts_copy_buf(unsigned int n_recv,
                            d_vel_recvbuf,
                            d_vel);
         }
-    if (send_charge)
+    if (send_density)
         {
         hipLaunchKernelGGL(HIP_KERNEL_NAME(gpu_unpack_kernel<Scalar>),
                            dim3(n_blocks),
@@ -1255,10 +1315,10 @@ void gpu_exchange_ghosts_copy_buf(unsigned int n_recv,
                            0,
                            0,
                            n_recv,
-                           d_charge_recvbuf,
-                           d_charge);
+                           d_density_recvbuf,
+                           d_density);
         }
-    if (send_diameter)
+    if (send_pressure)
         {
         hipLaunchKernelGGL(HIP_KERNEL_NAME(gpu_unpack_kernel<Scalar>),
                            dim3(n_blocks),
@@ -1266,8 +1326,63 @@ void gpu_exchange_ghosts_copy_buf(unsigned int n_recv,
                            0,
                            0,
                            n_recv,
-                           d_diameter_recvbuf,
-                           d_diameter);
+                           d_pressure_recvbuf,
+                           d_pressure);
+        }
+    if (send_energy)
+        {
+        hipLaunchKernelGGL(HIP_KERNEL_NAME(gpu_unpack_kernel<Scalar>),
+                           dim3(n_blocks),
+                           dim3(block_size),
+                           0,
+                           0,
+                           n_recv,
+                           d_energy_recvbuf,
+                           d_energy);
+        }
+    if (send_aux1)
+        {
+        hipLaunchKernelGGL(HIP_KERNEL_NAME(gpu_unpack_kernel<Scalar3>),
+                           dim3(n_blocks),
+                           dim3(block_size),
+                           0,
+                           0,
+                           n_recv,
+                           d_aux1_recvbuf,
+                           d_aux1);
+        }
+    if (send_aux2)
+        {
+        hipLaunchKernelGGL(HIP_KERNEL_NAME(gpu_unpack_kernel<Scalar3>),
+                           dim3(n_blocks),
+                           dim3(block_size),
+                           0,
+                           0,
+                           n_recv,
+                           d_aux2_recvbuf,
+                           d_aux2);
+        }
+    if (send_aux3)
+        {
+        hipLaunchKernelGGL(HIP_KERNEL_NAME(gpu_unpack_kernel<Scalar3>),
+                           dim3(n_blocks),
+                           dim3(block_size),
+                           0,
+                           0,
+                           n_recv,
+                           d_aux3_recvbuf,
+                           d_aux3);
+        }
+    if (send_aux4)
+        {
+        hipLaunchKernelGGL(HIP_KERNEL_NAME(gpu_unpack_kernel<Scalar3>),
+                           dim3(n_blocks),
+                           dim3(block_size),
+                           0,
+                           0,
+                           n_recv,
+                           d_aux4_recvbuf,
+                           d_aux4);
         }
     if (send_body)
         {
@@ -1291,38 +1406,16 @@ void gpu_exchange_ghosts_copy_buf(unsigned int n_recv,
                            d_image_recvbuf,
                            d_image);
         }
-    if (send_orientation)
+    if (send_slength)
         {
-        hipLaunchKernelGGL(HIP_KERNEL_NAME(gpu_unpack_kernel<Scalar4>),
+        hipLaunchKernelGGL(HIP_KERNEL_NAME(gpu_unpack_kernel<Scalar>),
                            dim3(n_blocks),
                            dim3(block_size),
                            0,
                            0,
                            n_recv,
-                           d_orientation_recvbuf,
-                           d_orientation);
-        }
-    if (send_angmom)
-        {
-        hipLaunchKernelGGL(HIP_KERNEL_NAME(gpu_unpack_kernel<Scalar4>),
-                           dim3(n_blocks),
-                           dim3(block_size),
-                           0,
-                           0,
-                           n_recv,
-                           d_angmom_recvbuf,
-                           d_angmom);
-        }
-    if (send_inertia)
-        {
-        hipLaunchKernelGGL(HIP_KERNEL_NAME(gpu_unpack_kernel<Scalar3>),
-                           dim3(n_blocks),
-                           dim3(block_size),
-                           0,
-                           0,
-                           n_recv,
-                           d_inertia_recvbuf,
-                           d_inertia);
+                           d_slength_recvbuf,
+                           d_slength);
         }
     }
 

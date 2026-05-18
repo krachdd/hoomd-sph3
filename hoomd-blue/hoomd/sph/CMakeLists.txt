@@ -32,33 +32,17 @@ set(_${COMPONENT_NAME}_sources
     )
 
 set(_${COMPONENT_NAME}_headers
-#     GeneralGPUDeviceFunctions.cuh  
-#     SinglePhaseFlowGPU.h  
-    SPHIntegrationMethodTwoStep.h     
-#     TwoPhaseFlowGPU.cuh
-#     GeneralGPUFunctions.cuh
-    SinglePhaseFlow.h     
+    SPHIntegrationMethodTwoStep.h
+    SinglePhaseFlow.h
     SinglePhaseFlowTV.h
     SinglePhaseFlowGDGD.h
     SinglePhaseFlowFS.h
-    SPHIntegratorTwoStep.h            
-#     TwoPhaseFlowGPU.h
-#     RigidBodyIntegratorGPU.cuh     
-    SmoothingKernel.h     
-    StateEquations.h                  
+    SPHIntegratorTwoStep.h
+    SmoothingKernel.h
+    StateEquations.h
     TwoPhaseFlow.h
     TwoPhaseFlowTV.h
-#     RigidBodyIntegratorGPU.h       
-#     SolidFluidTypeBit.h   
-#     SuspendedObjectIntegratorGPU.cuh  
-#     VelocityVerletGPU.cuh
-#     RigidBodyIntegrator.h          
-#     SPHBaseClass.cuh      
-#     SuspendedObjectIntegratorGPU.h    
-#     VelocityVerletGPU.h
-#     SinglePhaseFlowGPU.cuh         
-    SPHBaseClass.h        
-#     SuspendedObjectIntegrator.h       
+    SPHBaseClass.h
     VelocityVerlet.h
     VelocityVerletBasic.h
     KickDriftKickTV.h
@@ -68,34 +52,44 @@ set(_${COMPONENT_NAME}_headers
     ComputeMechanicalProp.h
     EvaluationMethodDefinition.h
     ConstantForceCompute.h
+    SPHDeviceFunctions.cuh
+    SinglePhaseFlowGPU.h
+    SinglePhaseFlowGPU.cuh
+    SinglePhaseFlowTVGPU.h
+    SinglePhaseFlowTVGPU.cuh
+    SinglePhaseFlowGDGDGPU.h
+    SinglePhaseFlowGDGDGPU.cuh
+    SinglePhaseFlowFSGPU.h
+    SinglePhaseFlowFSGPU.cuh
+    TwoPhaseFlowGPU.h
+    TwoPhaseFlowGPU.cuh
+    TwoPhaseFlowTVGPU.h
+    TwoPhaseFlowTVGPU.cuh
     )
 
 set(_${COMPONENT_NAME}_cu_sources
-#     VelocityVerletGPU.cu
-#     SuspendedObjectIntegratorGPU.cu
-#     RigidBodyIntegratorGPU.cu
-#     SPHBaseClass.cu
-#     SinglePhaseFlowGPU.cu
-#     SmoothingKernel.cu
-#     StateEquations.cu
-#     TwoPhaseFlowGPU.cu
-#     GeneralGPUFunctions.cu
-#     GeneralGPUDeviceFunctions.cu
+    SinglePhaseFlowGPU.cu
+    SinglePhaseFlowTVGPU.cu
+    SinglePhaseFlowGDGDGPU.cu
+    SinglePhaseFlowFSGPU.cu
+    TwoPhaseFlowGPU.cu
+    TwoPhaseFlowTVGPU.cu
     )
 
 if (ENABLE_HIP)
 list (APPEND _${COMPONENT_NAME}_sources
-#     VelocityVerletGPU.cc
-#     SuspendedObjectIntegratorGPU.cc
-#     RigidBodyIntegratorGPU.cc
-#     SinglePhaseFlowGPU.cc
-#     TwoPhaseFlowGPU.cc
+    SinglePhaseFlowGPU.cc
+    SinglePhaseFlowTVGPU.cc
+    SinglePhaseFlowGDGDGPU.cc
+    SinglePhaseFlowFSGPU.cc
+    TwoPhaseFlowGPU.cc
+    TwoPhaseFlowTVGPU.cc
     )
 endif (ENABLE_HIP)
 
 if (ENABLE_HIP)
-set(_cuda_sources ${_md_cu_sources} ${DFFT_CU_SOURCES})
-set_source_files_properties(${_md_cu_sources} PROPERTIES LANGUAGE ${HOOMD_DEVICE_LANGUAGE})
+set(_cuda_sources ${_${COMPONENT_NAME}_cu_sources} ${DFFT_CU_SOURCES})
+set_source_files_properties(${_${COMPONENT_NAME}_cu_sources} PROPERTIES LANGUAGE ${HOOMD_DEVICE_LANGUAGE})
 endif (ENABLE_HIP)
 
 pybind11_add_module(_${COMPONENT_NAME} SHARED ${_${COMPONENT_NAME}_sources} ${_cuda_sources} NO_EXTRAS)

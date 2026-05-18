@@ -121,7 +121,7 @@ class VelocityVerlet(Method):
     def _attach_hook(self):
         sim = self._simulation
         # initialize the reflected c++ class
-        if isinstance(sim.device, hoomd.device.CPU):
+        if isinstance(sim.device, hoomd.device.CPU) or not hasattr(_sph, 'VelocityVerletGPU'):
             self._cpp_obj = _sph.VelocityVerlet(sim.state._cpp_sys_def,
                                            sim.state._get_group(self.filter))
         else:
@@ -201,7 +201,7 @@ class VelocityVerletBasic(Method):
     def _attach_hook(self):
         sim = self._simulation
         # initialize the reflected c++ class
-        if isinstance(sim.device, hoomd.device.CPU):
+        if isinstance(sim.device, hoomd.device.CPU) or not hasattr(_sph, 'VelocityVerletBasicGPU'):
             self._cpp_obj = _sph.VelocityVerletBasic(sim.state._cpp_sys_def,
                                            sim.state._get_group(self.filter))
         else:

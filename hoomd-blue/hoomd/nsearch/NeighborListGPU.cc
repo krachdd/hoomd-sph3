@@ -189,6 +189,8 @@ void NeighborListGPU::buildHeadList()
                                              access_location::device,
                                              access_mode::readwrite);
 
+        m_exec_conf->setDevice();
+
         // Hard code block size of 128. This kerenel is rarely called and performance varies little
         // with block size.
         kernel::gpu_nlist_build_head_list(d_head_list.data,
@@ -197,7 +199,8 @@ void NeighborListGPU::buildHeadList()
                                           d_pos.data,
                                           m_pdata->getN(),
                                           m_pdata->getNTypes(),
-                                          128);
+                                          128,
+                                          m_exec_conf->getCachedAllocator());
         if (m_exec_conf->isCUDAErrorCheckingEnabled())
             CHECK_CUDA_ERROR();
         }

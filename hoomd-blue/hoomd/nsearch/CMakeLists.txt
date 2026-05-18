@@ -221,8 +221,8 @@ list(APPEND _nsearch_sources
 #                            MolecularForceCompute.cu
                            NeighborListGPU.cc
                            NeighborListGPUBinned.cc
-                           NeighborListGPUStencil.cc
-                           NeighborListGPUTree.cc
+#                          NeighborListGPUStencil.cc
+#                           NeighborListGPUTree.cc
 #                            OPLSDihedralForceComputeGPU.cc
 #                            PPPMForceComputeGPU.cc
 #                            TableAngleForceComputeGPU.cc
@@ -257,8 +257,8 @@ set(_nsearch_cu_sources
 #                       MolecularForceCompute.cu
                       NeighborListGPUBinned.cu
                       NeighborListGPU.cu
-                      NeighborListGPUStencil.cu
-                      NeighborListGPUTree.cu
+#                     NeighborListGPUStencil.cu
+#                     NeighborListGPUTree.cu
 #                       OPLSDihedralForceGPU.cu
 #                       PPPMForceComputeGPU.cu
 #                       TableAngleForceGPU.cu
@@ -276,8 +276,8 @@ set(_nsearch_cu_sources
                       )
 
 if (ENABLE_HIP)
-set(_cuda_sources ${_md_cu_sources} ${DFFT_CU_SOURCES})
-set_source_files_properties(${_md_cu_sources} PROPERTIES LANGUAGE ${HOOMD_DEVICE_LANGUAGE})
+set(_cuda_sources ${_nsearch_cu_sources} ${DFFT_CU_SOURCES})
+set_source_files_properties(${_nsearch_cu_sources} PROPERTIES LANGUAGE ${HOOMD_DEVICE_LANGUAGE})
 endif (ENABLE_HIP)
 
 # generate pybind11 export cc files

@@ -10,6 +10,7 @@
 
 #include <hip/hip_runtime.h>
 
+#include "hoomd/CachedAllocator.h"
 #include "hoomd/HOOMDMath.h"
 #include "hoomd/Index1D.h"
 #include "hoomd/ParticleData.cuh"
@@ -50,7 +51,8 @@ hipError_t gpu_nlist_build_head_list(size_t* d_head_list,
                                      const Scalar4* d_pos,
                                      const unsigned int N,
                                      const unsigned int n_types,
-                                     const unsigned int block_size);
+                                     const unsigned int block_size,
+                                     CachedAllocator& alloc);
 
 //! GPU function to update the exclusion list on the device
 hipError_t gpu_update_exclusion_list(const unsigned int* d_tag,

@@ -347,7 +347,7 @@ void Integrator::computeNetForceGPU(uint64_t timestep)
             ArrayHandle<Scalar4> d_force0(d_force_array0,
                                           access_location::device,
                                           access_mode::read);
-            const GPUArray<Scalar4>& d_ratedpe_array0 = m_ratedpes[cur_force]->getRateDPEArray();
+            const GPUArray<Scalar4>& d_ratedpe_array0 = m_forces[cur_force]->getRateDPEArray();
             ArrayHandle<Scalar4> d_ratedpe0(d_ratedpe_array0,
                                           access_location::device,
                                           access_mode::read);
@@ -412,7 +412,7 @@ void Integrator::computeNetForceGPU(uint64_t timestep)
                 //                                access_location::device,
                 //                                access_mode::read);
                 force_list.f3 = d_force3.data;
-                force_list.r3 = d_force3.data;
+                force_list.r3 = d_ratedpe3.data;
                 }
             if (cur_force + 4 < m_forces.size())
                 {
@@ -462,12 +462,10 @@ void Integrator::computeNetForceGPU(uint64_t timestep)
             m_exec_conf->setDevice();
 
             gpu_integrator_sum_net_force(d_net_force.data,
-                                         d_ratedpe.data,
+                                         d_net_ratedpe.data,
                                          force_list,
                                          nparticles,
-                                         clear
-                                         // flags[pdata_flag::pressure_tensor]
-					);
+                                         clear);
 
             if (m_exec_conf->isCUDAErrorCheckingEnabled())
                 CHECK_CUDA_ERROR();
@@ -536,13 +534,9 @@ void Integrator::computeNetForceGPU(uint64_t timestep)
                                           access_mode::read);
             const GPUArray<Scalar4>& d_ratedpe_array0
                 = m_constraint_forces[cur_force]->getRateDPEArray();
-            ArrayHandle<Scalar4> d_force0(d_ratedpe_array0,
-                                          access_location::device,
-                                          access_mode::read);
-            //                               access_location::device,
-            //                               access_mode::read);
-            //                                access_location::device,
-            //                                access_mode::read);
+            ArrayHandle<Scalar4> d_ratedpe0(d_ratedpe_array0,
+                                            access_location::device,
+                                            access_mode::read);
             force_list.f0 = d_force0.data;
             force_list.r0 = d_ratedpe0.data;
 
@@ -620,7 +614,7 @@ void Integrator::computeNetForceGPU(uint64_t timestep)
                 //                                access_location::device,
                 //                                access_mode::read);
                 force_list.f4 = d_force4.data;
-                force_list.f4 = d_ratedpe4.data;
+                force_list.r4 = d_ratedpe4.data;
                 }
             if (cur_force + 5 < m_constraint_forces.size())
                 {
@@ -654,9 +648,7 @@ void Integrator::computeNetForceGPU(uint64_t timestep)
                                          d_net_ratedpe.data,
                                          force_list,
                                          nparticles,
-                                         clear
-                                         // flags[pdata_flag::pressure_tensor]
-					);
+                                         clear);
 
             if (m_exec_conf->isCUDAErrorCheckingEnabled())
                 CHECK_CUDA_ERROR();

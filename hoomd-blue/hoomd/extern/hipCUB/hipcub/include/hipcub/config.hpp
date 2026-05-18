@@ -78,14 +78,11 @@
     #include <cub/warp/warp_reduce.cuh>
     #include <cub/warp/warp_scan.cuh>
 
-    // Iterator
+    // Iterator (constant_input, counting_input, transform_input removed in CUDA 13+)
     #include <cub/iterator/arg_index_input_iterator.cuh>
     #include <cub/iterator/cache_modified_input_iterator.cuh>
     #include <cub/iterator/cache_modified_output_iterator.cuh>
-    #include <cub/iterator/constant_input_iterator.cuh>
-    #include <cub/iterator/counting_input_iterator.cuh>
     #include <cub/iterator/tex_obj_input_iterator.cuh>
-    #include <cub/iterator/transform_input_iterator.cuh>
 
     // Util
     #include <cub/util_arch.cuh>

@@ -47,14 +47,10 @@ __global__ void gpu_compute_cell_list_kernel(unsigned int* d_cell_size,
                                              unsigned int* d_cell_idx,
                                              uint3* d_conditions,
                                              const Scalar4* d_pos,
-                                             const Scalar4* d_orientation,
-                                             const Scalar* d_charge,
-                                             const Scalar* d_diameter,
                                              const unsigned int* d_body,
                                              const unsigned int N,
                                              const unsigned int n_ghost,
                                              const unsigned int Nmax,
-                                             const bool flag_charge,
                                              const bool flag_type,
                                              const BoxDim box,
                                              const Index3D ci,
@@ -78,14 +74,8 @@ __global__ void gpu_compute_cell_list_kernel(unsigned int* d_cell_size,
         {
         body = d_body[idx];
         }
-    if (d_cell_orientation != NULL)
-        {
-        orientation = d_orientation[idx];
-        }
 
-    if (flag_charge)
-        flag = d_charge[idx];
-    else if (flag_type)
+    if (flag_type)
         flag = type;
     else
         flag = __int_as_scalar(idx);
@@ -175,14 +165,10 @@ void gpu_compute_cell_list(unsigned int* d_cell_size,
                            unsigned int* d_cell_idx,
                            uint3* d_conditions,
                            const Scalar4* d_pos,
-                           const Scalar4* d_orientation,
-                           const Scalar* d_charge,
-                           const Scalar* d_diameter,
                            const unsigned int* d_body,
                            const unsigned int N,
                            const unsigned int n_ghost,
                            const unsigned int Nmax,
-                           const bool flag_charge,
                            const bool flag_type,
                            const BoxDim& box,
                            const Index3D& ci,
@@ -212,14 +198,10 @@ void gpu_compute_cell_list(unsigned int* d_cell_size,
                        d_cell_idx,
                        d_conditions,
                        d_pos,
-                       d_orientation,
-                       d_charge,
-                       d_diameter,
                        d_body,
                        N,
                        n_ghost,
                        Nmax,
-                       flag_charge,
                        flag_type,
                        box,
                        ci,

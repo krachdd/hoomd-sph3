@@ -19,6 +19,6 @@ cd $GIT_SRC
 cd hoomd-blue/
 rm -rf build
 mkdir build
-cd build 
-cmake ..
+cd build
+cmake -DENABLE_GPU=ON -DCUDA_ARCH_LIST=75 ..
 make -j4 

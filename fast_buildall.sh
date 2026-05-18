@@ -18,6 +18,6 @@ make
 cd $GIT_SRC
 cd hoomd-blue/
 rm -rf build
-cmake -B build -S . -GNinja
+cmake -B build -S . -GNinja -DENABLE_GPU=ON -DCUDA_ARCH_LIST=75
 cd build 
 ninja

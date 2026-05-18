@@ -590,21 +590,21 @@ class PYBIND11_EXPORT TwoPhaseFlow : public SPHBaseClass<KT_, SET1_>
          * \post For fluid particles, compute number density. For solid particles,
                  compute fluid normalization constant.
          */
-        void compute_ndensity(uint64_t timestep);
-        
+        virtual void compute_ndensity(uint64_t timestep);
+
         void compute_particlenumberdensity(uint64_t timestep);
 
         /*! Helper function to compute particle pressures
          *  \post Pressure of fluid particle computed
          */
-        void compute_pressure(uint64_t timestep);
+        virtual void compute_pressure(uint64_t timestep);
 
         /*! Helper function to compute fictitious solid particle properties (pressures and velocities)
         * \pre Ghost particle number densities (i.e. density array) must be up-to-date
         * \pre Solid normalization constant \sum_j w_ij must be computed and stored in density array
         * \post Fictitious particle properties are computed and stored in aux1 array
         */
-        void compute_noslip(uint64_t timestep);
+        virtual void compute_noslip(uint64_t timestep);
 
         /*! Helper function to compute particle concentration gradient for Fickian shifting
          * within the CSF computation
@@ -642,7 +642,7 @@ class PYBIND11_EXPORT TwoPhaseFlow : public SPHBaseClass<KT_, SET1_>
          * \pre Number densities and fictitious solid particle properties must be up-to-date
          * \post h_force stores forces acting on fluid particles and .w component stores rate of change of density
          */
-        void forcecomputation(uint64_t timestep);
+        virtual void forcecomputation(uint64_t timestep);
 
         /*! Helper function that computes the fluid-induced forces on solid particles
          */
