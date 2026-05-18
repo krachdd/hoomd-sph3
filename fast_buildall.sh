@@ -1,5 +1,7 @@
 #!/bin/bash
 export GIT_SRC=$(pwd)
+export CUDACXX=/usr/local/cuda-13.2/bin/nvcc
+export PATH=/usr/local/cuda-13.2/bin:$PATH
 ./link_pgsd_module.sh
 cd dependencies/pgsd-sph/pgsd/
 rm -rf build
