@@ -78,7 +78,8 @@ __global__ void gpu_sph_ndensity_kernel(
 
     unsigned int i = d_index_array[group_idx];
 
-    Scalar3 pi = make_scalar3(d_pos[i].x, d_pos[i].y, d_pos[i].z);
+    Scalar4 posi = d_pos[i];
+    Scalar3 pi = make_scalar3(posi.x, posi.y, posi.z);
     Scalar  mi = d_vel[i].w;
     Scalar  hi = kp.const_slength ? kp.ch : d_h[i];
 
@@ -91,9 +92,10 @@ __global__ void gpu_sph_ndensity_kernel(
         {
         unsigned int k = d_nlist[myHead + j];
 
-        Scalar3 pj = make_scalar3(d_pos[k].x, d_pos[k].y, d_pos[k].z);
-        Scalar3 dx = box.minImage(make_scalar3(pi.x - pj.x, pi.y - pj.y, pi.z - pj.z));
-        Scalar  rsq = dot(dx, dx);
+        Scalar4 posk = d_pos[k];
+        Scalar3 pj   = make_scalar3(posk.x, posk.y, posk.z);
+        Scalar3 dx   = box.minImage(make_scalar3(pi.x - pj.x, pi.y - pj.y, pi.z - pj.z));
+        Scalar  rsq  = dot(dx, dx);
 
         if (kp.const_slength && rsq > kp.rcutsq) continue;
 

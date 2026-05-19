@@ -630,13 +630,13 @@ class PYBIND11_EXPORT TwoPhaseFlow : public SPHBaseClass<KT_, SET1_>
         * \post Solid color gradient vectors are stored in aux2
         * \post Fluid color gradient vectors are stored in aux3
         */
-        void compute_colorgradients(uint64_t timestep);
+        virtual void compute_colorgradients(uint64_t timestep);
 
         /*! Helper function to compute interfacial surface force field
         * \pre Normal vector field have been computed and communicated
         * \post Surface force density vectors are stored in aux4
         */
-        void compute_surfaceforce(uint64_t timestep);
+        virtual void compute_surfaceforce(uint64_t timestep);
 
         /*! Helper function where the actual force computation takes place
          * \pre Number densities and fictitious solid particle properties must be up-to-date

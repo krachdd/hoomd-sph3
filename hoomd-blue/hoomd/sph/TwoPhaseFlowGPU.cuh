@@ -115,6 +115,42 @@ hipError_t gpu_sph_2pf_forcecomputation(
     SPHTwoPhaseParams     fparams,
     unsigned int          block_size);
 
+/*! Two-phase force computation — viscosity-model fast path.
+ *
+ *  Compile-time NMI_ / NMJ_ template parameters replace the runtime
+ *  switch in sph_nn_viscosity, enabling:
+ *   - NEWTONIAN×NEWTONIAN: zero pow() per neighbour (constant mu_harm)
+ *   - POWERLAW×POWERLAW, same exponent: one pow() per neighbour
+ *   - Cross or other models: templated calls with dead code eliminated
+ */
+template<SmoothingKernelType KT_, StateEquationType SET1_, StateEquationType SET2_,
+         NonNewtonianModel NMI_, NonNewtonianModel NMJ_>
+hipError_t gpu_sph_2pf_forcecomputation_fast(
+    unsigned int          group_size,
+    const unsigned int*   d_index_array,
+    const Scalar4*        d_pos,
+    const Scalar4*        d_vel,
+    const Scalar*         d_density,
+    const Scalar*         d_pressure,
+    const Scalar3*        d_vf,
+    const Scalar3*        d_sf,
+    const Scalar*         d_h,
+    Scalar4*              d_force,
+    Scalar4*              d_ratedpe,
+    const unsigned int*   d_n_neigh,
+    const unsigned int*   d_nlist,
+    const size_t*         d_head_list,
+    const unsigned int*   d_type_property_map,
+    uint32_t*             d_max_vel_bits,
+    BoxDim                box,
+    SPHKernelDevParams    kp,
+    SPHEOSDevParams       eos1,
+    SPHEOSDevParams       eos2,
+    SPHNNViscParams       nn1,
+    SPHNNViscParams       nn2,
+    SPHTwoPhaseParams     fparams,
+    unsigned int          block_size);
+
 /*! Two-phase solid particle reaction forces.
  *
  *  Computes pressure and viscous forces on solid particles from

@@ -54,12 +54,14 @@ maintainer: dkrach, david.krach@mib.uni-stuttgart.de
 
 // include GPU classes
 #ifdef ENABLE_HIP
+#include "ComputeSPFBasicPropertiesGPU.h"
 #include "SinglePhaseFlowGPU.h"
 #include "SinglePhaseFlowTVGPU.h"
 #include "SinglePhaseFlowGDGDGPU.h"
 #include "SinglePhaseFlowFSGPU.h"
 #include "TwoPhaseFlowGPU.h"
 #include "TwoPhaseFlowTVGPU.h"
+#include "VelocityVerletGPU.h"
 #endif
 
 // // ParticleFilter objects
@@ -104,6 +106,11 @@ namespace detail
 
     void export_ComputeSPFMechanicalProperties(pybind11::module& m);
     void export_ComputeSolidProperties(pybind11::module& m);
+
+#ifdef ENABLE_HIP
+    void export_ComputeSPFMechanicalPropertiesGPU(pybind11::module& m);
+    void export_VelocityVerletGPU(pybind11::module& m);
+#endif
     // void export_LocalNeighborListDataHost(pybind11::module& m);
     void export_HalfStepHook(pybind11::module& m);
 
@@ -265,6 +272,11 @@ PYBIND11_MODULE(_sph, m){
 
     export_ComputeSPFMechanicalProperties(m);
     export_ComputeSolidProperties(m);
+
+#ifdef ENABLE_HIP
+    export_ComputeSPFMechanicalPropertiesGPU(m);
+    export_VelocityVerletGPU(m);
+#endif
 
     export_DensityMethod(m);
     export_ViscosityMethod(m);

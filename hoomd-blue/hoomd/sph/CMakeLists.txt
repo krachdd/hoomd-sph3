@@ -27,6 +27,7 @@ set(_${COMPONENT_NAME}_sources
     CustomForceCompute.cc
     ComputeSPFBasicProperties.cc
     ComputeSolidProperties.cc
+    ComputeSPFBasicPropertiesGPU.cc
     HalfStepHook.cc
     ConstantForceCompute.cc
     )
@@ -49,6 +50,8 @@ set(_${COMPONENT_NAME}_headers
     CustomForceCompute.h
     ComputeSPFBasicProperties.h
     ComputeSolidProperties.h
+    ComputeSPFBasicPropertiesGPU.h
+    ComputeSPFBasicPropertiesGPU.cuh
     ComputeMechanicalProp.h
     EvaluationMethodDefinition.h
     ConstantForceCompute.h
@@ -65,6 +68,8 @@ set(_${COMPONENT_NAME}_headers
     TwoPhaseFlowGPU.cuh
     TwoPhaseFlowTVGPU.h
     TwoPhaseFlowTVGPU.cuh
+    VelocityVerletGPU.h
+    VelocityVerletGPU.cuh
     )
 
 set(_${COMPONENT_NAME}_cu_sources
@@ -74,6 +79,8 @@ set(_${COMPONENT_NAME}_cu_sources
     SinglePhaseFlowFSGPU.cu
     TwoPhaseFlowGPU.cu
     TwoPhaseFlowTVGPU.cu
+    ComputeSPFBasicPropertiesGPU.cu
+    VelocityVerletGPU.cu
     )
 
 if (ENABLE_HIP)
@@ -84,6 +91,7 @@ list (APPEND _${COMPONENT_NAME}_sources
     SinglePhaseFlowFSGPU.cc
     TwoPhaseFlowGPU.cc
     TwoPhaseFlowTVGPU.cc
+    VelocityVerletGPU.cc
     )
 endif (ENABLE_HIP)
 

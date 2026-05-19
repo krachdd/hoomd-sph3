@@ -466,6 +466,69 @@ __device__ __forceinline__ Scalar sph_nn_viscosity(
     }
 
 // =========================================================================
+// Compile-time (templated) non-Newtonian viscosity
+//
+// sph_nn_viscosity_t<NM_> is a compile-time specialisation of
+// sph_nn_viscosity.  The template parameter is resolved at build time,
+// allowing the compiler to:
+//   • inline the exact formula and dead-strip all other branches
+//   • constant-fold parameters that do not vary per-pair
+//
+// Used by gpu_sph_2pf_forcecomputation_fast and
+//         gpu_sph_1pf_forcecomputation_fast (where the model is known
+//         at kernel-instantiation time).
+// =========================================================================
+
+template<NonNewtonianModel NM_>
+__device__ __forceinline__ Scalar sph_nn_viscosity_t(
+    const SPHNNViscParams& nn, Scalar gamma_dot);
+
+template<>
+__device__ __forceinline__ Scalar sph_nn_viscosity_t<NEWTONIAN>(
+    const SPHNNViscParams& nn, Scalar /*gamma_dot*/)
+    { return nn.mu; }
+
+template<>
+__device__ __forceinline__ Scalar sph_nn_viscosity_t<POWERLAW>(
+    const SPHNNViscParams& nn, Scalar gamma_dot)
+    {
+    Scalar gdot = gamma_dot > Scalar(1e-12) ? gamma_dot : Scalar(1e-12);
+    Scalar mu_eff = nn.K * pow(gdot, nn.n - Scalar(1.0));
+    return mu_eff > nn.mu_min ? mu_eff : nn.mu_min;
+    }
+
+template<>
+__device__ __forceinline__ Scalar sph_nn_viscosity_t<CARREAU>(
+    const SPHNNViscParams& nn, Scalar gamma_dot)
+    {
+    Scalar lg = nn.lambda_NN * gamma_dot;
+    return nn.muinf + (nn.mu0 - nn.muinf)
+           * pow(Scalar(1.0) + lg * lg, Scalar(0.5) * (nn.n - Scalar(1.0)));
+    }
+
+template<>
+__device__ __forceinline__ Scalar sph_nn_viscosity_t<BINGHAM>(
+    const SPHNNViscParams& nn, Scalar gamma_dot)
+    {
+    Scalar mu_eff;
+    if (gamma_dot < Scalar(1e-12))
+        mu_eff = nn.K + nn.tauy * nn.m_reg;
+    else
+        mu_eff = nn.K + nn.tauy * (Scalar(1.0) - exp(-nn.m_reg * gamma_dot)) / gamma_dot;
+    return mu_eff > nn.mu_min ? mu_eff : nn.mu_min;
+    }
+
+template<>
+__device__ __forceinline__ Scalar sph_nn_viscosity_t<HERSCHELBULKLEY>(
+    const SPHNNViscParams& nn, Scalar gamma_dot)
+    {
+    Scalar gdot = gamma_dot > Scalar(1e-12) ? gamma_dot : Scalar(1e-12);
+    Scalar mu_eff = nn.K * pow(gdot, nn.n - Scalar(1.0))
+                    + nn.tauy * (Scalar(1.0) - exp(-nn.m_reg * gdot)) / gdot;
+    return mu_eff > nn.mu_min ? mu_eff : nn.mu_min;
+    }
+
+// =========================================================================
 // Type-check helpers
 // =========================================================================
 

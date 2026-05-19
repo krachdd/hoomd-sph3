@@ -86,12 +86,15 @@ class PYBIND11_EXPORT TwoPhaseFlowGPU : public TwoPhaseFlow<KT_, SET1_, SET2_>
         std::shared_ptr<Autotuner<1>> m_tuner_solidforce;
 
         GPUArray<uint32_t> m_max_vel_bits;
+        uint32_t* m_max_vel_bits_host; // pinned host buffer for async readback
 
-        virtual void compute_ndensity(uint64_t timestep)     override;
-        virtual void compute_pressure(uint64_t timestep)     override;
-        virtual void compute_noslip(uint64_t timestep)       override;
-        virtual void forcecomputation(uint64_t timestep)     override;
-        virtual void compute_solid_forces(uint64_t timestep) override;
+        virtual void compute_ndensity(uint64_t timestep)       override;
+        virtual void compute_pressure(uint64_t timestep)       override;
+        virtual void compute_noslip(uint64_t timestep)         override;
+        virtual void compute_colorgradients(uint64_t timestep) override;
+        virtual void compute_surfaceforce(uint64_t timestep)   override;
+        virtual void forcecomputation(uint64_t timestep)       override;
+        virtual void compute_solid_forces(uint64_t timestep)   override;
 
     private:
         SPHKernelDevParams  make_kparams()    const;

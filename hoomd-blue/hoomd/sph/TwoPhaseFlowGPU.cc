@@ -69,8 +69,11 @@ TwoPhaseFlowGPU<KT_, SET1_, SET2_>::TwoPhaseFlowGPU(
     : TwoPhaseFlow<KT_, SET1_, SET2_>(sysdef, skernel, equationofstate1, equationofstate2,
                                       nlist, fluidgroup1, fluidgroup2, solidgroup,
                                       mdensitymethod, mviscositymethod, mcolorgradientmethod),
-      m_max_vel_bits(1, this->m_exec_conf)
+      m_max_vel_bits(1, this->m_exec_conf),
+      m_max_vel_bits_host(nullptr)
     {
+    hipHostMalloc(&m_max_vel_bits_host, sizeof(uint32_t), hipHostMallocDefault);
+    *m_max_vel_bits_host = 0;
     if (!this->m_exec_conf->isCUDAEnabled())
         {
         this->m_exec_conf->msg->error()
@@ -82,7 +85,10 @@ TwoPhaseFlowGPU<KT_, SET1_, SET2_>::TwoPhaseFlowGPU(
     m_tuner_ndensity  = std::make_shared<Autotuner<1>>(std::vector<std::vector<unsigned int>>{AutotunerBase::makeBlockSizeRange(this->m_exec_conf)}, this->m_exec_conf, "sph_2pf_ndensity");
     m_tuner_pressure  = std::make_shared<Autotuner<1>>(std::vector<std::vector<unsigned int>>{AutotunerBase::makeBlockSizeRange(this->m_exec_conf)}, this->m_exec_conf, "sph_2pf_pressure");
     m_tuner_noslip    = std::make_shared<Autotuner<1>>(std::vector<std::vector<unsigned int>>{AutotunerBase::makeBlockSizeRange(this->m_exec_conf)}, this->m_exec_conf, "sph_2pf_noslip");
-    m_tuner_force     = std::make_shared<Autotuner<1>>(std::vector<std::vector<unsigned int>>{AutotunerBase::makeBlockSizeRange(this->m_exec_conf)}, this->m_exec_conf, "sph_2pf_force");
+    // Force kernel uses tpp=4 threads per particle; block_size is clamped dynamically
+    // inside the wrapper via hipFuncGetAttributes.  The Autotuner scans all warp multiples
+    // up to 512; the wrapper will silently reduce any over-limit value.
+    m_tuner_force     = std::make_shared<Autotuner<1>>(std::vector<std::vector<unsigned int>>{AutotunerBase::makeBlockSizeRange(this->m_exec_conf)}, this->m_exec_conf, "sph_2pf_force", 5, false, [](const std::array<unsigned int, 1>& p) { return p[0] <= 512; });
     m_tuner_solidforce= std::make_shared<Autotuner<1>>(std::vector<std::vector<unsigned int>>{AutotunerBase::makeBlockSizeRange(this->m_exec_conf)}, this->m_exec_conf, "sph_2pf_solidforce");
 
     this->m_autotuners.push_back(m_tuner_ndensity);
@@ -96,6 +102,7 @@ template<SmoothingKernelType KT_, StateEquationType SET1_, StateEquationType SET
 TwoPhaseFlowGPU<KT_, SET1_, SET2_>::~TwoPhaseFlowGPU()
     {
     this->m_exec_conf->msg->notice(5) << "Destroying TwoPhaseFlowGPU" << endl;
+    if (m_max_vel_bits_host) hipHostFree(m_max_vel_bits_host);
     }
 
 // =========================================================================
@@ -350,6 +357,57 @@ void TwoPhaseFlowGPU<KT_, SET1_, SET2_>::compute_noslip(uint64_t timestep)
     }
 
 // =========================================================================
+// compute_colorgradients — zero Aux2/Aux3 on device when sigma=0
+// =========================================================================
+
+template<SmoothingKernelType KT_, StateEquationType SET1_, StateEquationType SET2_>
+void TwoPhaseFlowGPU<KT_, SET1_, SET2_>::compute_colorgradients(uint64_t timestep)
+    {
+    this->m_exec_conf->msg->notice(7) << "TwoPhaseFlowGPU::compute_colorgradients" << endl;
+
+    if (this->m_sigma12 == Scalar(0.0) &&
+        this->m_sigma01  == Scalar(0.0) &&
+        this->m_sigma02  == Scalar(0.0))
+        {
+        // No surface tension: zero Aux2 (surface normal) and Aux3 (curvature normal) on device.
+        ArrayHandle<Scalar3> d_sn(this->m_pdata->getAuxiliaries2(),
+                                   access_location::device, access_mode::overwrite);
+        ArrayHandle<Scalar3> d_fn(this->m_pdata->getAuxiliaries3(),
+                                   access_location::device, access_mode::overwrite);
+        hipMemset(d_sn.data, 0, sizeof(Scalar3) * this->m_pdata->getAuxiliaries2().getNumElements());
+        hipMemset(d_fn.data, 0, sizeof(Scalar3) * this->m_pdata->getAuxiliaries3().getNumElements());
+        }
+    else
+        {
+        TwoPhaseFlow<KT_, SET1_, SET2_>::compute_colorgradients(timestep);
+        }
+    }
+
+// =========================================================================
+// compute_surfaceforce — zero Aux4 on device when sigma=0
+// =========================================================================
+
+template<SmoothingKernelType KT_, StateEquationType SET1_, StateEquationType SET2_>
+void TwoPhaseFlowGPU<KT_, SET1_, SET2_>::compute_surfaceforce(uint64_t timestep)
+    {
+    this->m_exec_conf->msg->notice(7) << "TwoPhaseFlowGPU::compute_surfaceforce" << endl;
+
+    if (this->m_sigma12 == Scalar(0.0) &&
+        this->m_sigma01  == Scalar(0.0) &&
+        this->m_sigma02  == Scalar(0.0))
+        {
+        // No surface tension: zero Aux4 (surface force density) on device.
+        ArrayHandle<Scalar3> d_sf(this->m_pdata->getAuxiliaries4(),
+                                   access_location::device, access_mode::overwrite);
+        hipMemset(d_sf.data, 0, sizeof(Scalar3) * this->m_pdata->getAuxiliaries4().getNumElements());
+        }
+    else
+        {
+        TwoPhaseFlow<KT_, SET1_, SET2_>::compute_surfaceforce(timestep);
+        }
+    }
+
+// =========================================================================
 // forcecomputation — two-phase pressure + viscosity + surface force
 // =========================================================================
 
@@ -405,27 +463,61 @@ void TwoPhaseFlowGPU<KT_, SET1_, SET2_>::forcecomputation(uint64_t timestep)
                                           access_location::device, access_mode::overwrite);
     hipMemset(d_max_vel_bits.data, 0, sizeof(uint32_t));
 
+    // Dispatch to the viscosity-model-templated fast kernel when both models
+    // are NEWTONIAN or POWERLAW; fall back to the runtime-switch kernel for
+    // CARREAU, BINGHAM, and HERSCHELBULKLEY.
+    using NM = NonNewtonianModel;
+    const NM nm1 = static_cast<NM>(nn1.model);
+    const NM nm2 = static_cast<NM>(nn2.model);
+    const bool use_fast = (nm1 == NM::NEWTONIAN || nm1 == NM::POWERLAW) &&
+                          (nm2 == NM::NEWTONIAN || nm2 == NM::POWERLAW);
+
+#define _FAST_CALL(M1, M2) \
+    kernel::gpu_sph_2pf_forcecomputation_fast<KT_, SET1_, SET2_, M1, M2>( \
+        group_size, d_index_array.data, \
+        d_pos.data, d_vel.data, d_density.data, d_pressure.data, \
+        d_vf.data, d_sf.data, d_h.data, \
+        d_force.data, d_ratedpe.data, \
+        d_n_neigh.data, d_nlist.data, d_head_list.data, \
+        d_type_map.data, d_max_vel_bits.data, \
+        box, kp, eos1, eos2, nn1, nn2, fparams, \
+        m_tuner_force->getParam()[0])
+
     m_tuner_force->begin();
-    kernel::gpu_sph_2pf_forcecomputation<KT_, SET1_, SET2_>(
-        group_size, d_index_array.data,
-        d_pos.data, d_vel.data, d_density.data, d_pressure.data,
-        d_vf.data, d_sf.data, d_h.data,
-        d_force.data, d_ratedpe.data,
-        d_n_neigh.data, d_nlist.data, d_head_list.data,
-        d_type_map.data, d_max_vel_bits.data,
-        box, kp, eos1, eos2, nn1, nn2, fparams,
-        m_tuner_force->getParam()[0]);
+    if (use_fast)
+        {
+        if      (nm1 == NM::NEWTONIAN && nm2 == NM::NEWTONIAN) _FAST_CALL(NM::NEWTONIAN, NM::NEWTONIAN);
+        else if (nm1 == NM::POWERLAW  && nm2 == NM::NEWTONIAN) _FAST_CALL(NM::POWERLAW,  NM::NEWTONIAN);
+        else if (nm1 == NM::NEWTONIAN && nm2 == NM::POWERLAW ) _FAST_CALL(NM::NEWTONIAN, NM::POWERLAW );
+        else                                                    _FAST_CALL(NM::POWERLAW,  NM::POWERLAW );
+        }
+    else
+        {
+        kernel::gpu_sph_2pf_forcecomputation<KT_, SET1_, SET2_>(
+            group_size, d_index_array.data,
+            d_pos.data, d_vel.data, d_density.data, d_pressure.data,
+            d_vf.data, d_sf.data, d_h.data,
+            d_force.data, d_ratedpe.data,
+            d_n_neigh.data, d_nlist.data, d_head_list.data,
+            d_type_map.data, d_max_vel_bits.data,
+            box, kp, eos1, eos2, nn1, nn2, fparams,
+            m_tuner_force->getParam()[0]);
+        }
+#undef _FAST_CALL
+
     if (this->m_exec_conf->isCUDAErrorCheckingEnabled()) CHECK_CUDA_ERROR();
     m_tuner_force->end();
+
+    // Async readback: copy 4 bytes to pinned host buffer without stalling the GPU.
+    // We read the value written by the PREVIOUS step (1-step lag is fine for CFL).
+    hipMemcpyAsync(m_max_vel_bits_host, d_max_vel_bits.data,
+                   sizeof(uint32_t), hipMemcpyDeviceToHost, 0);
     } // end device scope
 
-    // Read back max velocity for adaptive timestep
+    // Use value from previous step's async copy (already complete by now).
     {
-    ArrayHandle<uint32_t> h_max_vel_bits(m_max_vel_bits,
-                                          access_location::host, access_mode::read);
-    uint32_t bits = h_max_vel_bits.data[0];
     float vel_float;
-    memcpy(&vel_float, &bits, sizeof(float));
+    memcpy(&vel_float, m_max_vel_bits_host, sizeof(float));
     this->m_timestep_list[5] = static_cast<double>(vel_float);
     }
 
