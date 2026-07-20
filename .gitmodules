@@ -1,6 +1,6 @@
 [submodule "dependencies/gsd-sph"]
 	path = dependencies/gsd-sph
-	url = git@github.com:krachdd/gsd-sph.git
+	url = git@github.com:rostanda/gsd-sph.git
 [submodule "dependencies/pgsd-sph"]
 	path = dependencies/pgsd-sph
-	url = git@github.com:krachdd/pgsd-sph.git
+	url = git@github.com:rostanda/pgsd-sph.git

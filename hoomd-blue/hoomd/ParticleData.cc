@@ -56,7 +56,7 @@ std::string getDefaultTypeName(unsigned int id)
     \param exec_conf ExecutionConfiguration to use when executing code on the GPU
     \param decomposition (optional) Domain decomposition layout
 
-    \post \c pos,\c vel, \c density, \c pressure, \c energy, \c aux1, \c aux2, \c aux3, \c aux4, \c accel are allocated and initialized to 0.0
+    \post \c pos,\c vel, \c density, \c pressure, \c energy, \c aux1, \c aux2, \c aux3, \c aux4, \c aux5, \c accel are allocated and initialized to 0.0
     \post \c slength is allocated and initialized to a value of 0.0
     \post \c dpedt are allocated and initialized to 0.0
     \post \c mass is allocated and initialized to a value of 1.0
@@ -393,6 +393,10 @@ void ParticleData::allocate(unsigned int N)
     GPUArray<Scalar3> aux4(N, m_exec_conf);
     m_aux4.swap(aux4);
 
+    // aux5
+    GPUArray<Scalar3> aux5(N, m_exec_conf);
+    m_aux5.swap(aux5);
+
     // slength
     GPUArray<Scalar> slength(N, m_exec_conf);
     m_slength.swap(slength);
@@ -507,11 +511,15 @@ void ParticleData::allocateAlternateArrays(unsigned int N)
     GPUArray<Scalar3> aux4_alt(N, m_exec_conf);
     m_aux4_alt.swap(aux4_alt);
 
+    // aux5
+    GPUArray<Scalar3> aux5_alt(N, m_exec_conf);
+    m_aux5_alt.swap(aux5_alt);
+
     // slength
     GPUArray<Scalar> slength_alt(N, m_exec_conf);
     m_slength_alt.swap(slength_alt);
 
-    // aux4
+    // dpedt
     GPUArray<Scalar3> dpedt_alt(N, m_exec_conf);
     m_dpedt_alt.swap(dpedt_alt);
 
@@ -642,6 +650,7 @@ void ParticleData::reallocate(unsigned int max_n)
     m_aux2.resize(max_n);
     m_aux3.resize(max_n);
     m_aux4.resize(max_n);
+    m_aux5.resize(max_n);
     m_slength.resize(max_n);
     m_dpedt.resize(max_n);
     m_image.resize(max_n);
@@ -681,6 +690,7 @@ void ParticleData::reallocate(unsigned int max_n)
         m_aux2_alt.resize(max_n);
         m_aux3_alt.resize(max_n);
         m_aux4_alt.resize(max_n);
+        m_aux5_alt.resize(max_n);
         m_slength_alt.resize(max_n);
         m_dpedt_alt.resize(max_n);
         m_image_alt.resize(max_n);
@@ -831,6 +841,7 @@ void ParticleData::initializeFromSnapshot(const SnapshotParticleData<Real>& snap
         std::vector< std::vector<Scalar3> > aux2_proc;             // Auxiliary 2 array of every processor
         std::vector< std::vector<Scalar3> > aux3_proc;             // Auxiliary 3 array of every processor
         std::vector< std::vector<Scalar3> > aux4_proc;             // Auxiliary 4 array of every processor
+        std::vector< std::vector<Scalar3> > aux5_proc;             // Auxiliary 5 array of every processor
         std::vector< std::vector<Scalar> > slength_proc;            // Smoothing length array of every processor
         std::vector< std::vector<Scalar3> > dpedt_proc;            // Density, pressure and energy rate of change array of every processor
         //     diameter_proc;                         // Particle diameters array of every processor
@@ -855,6 +866,7 @@ void ParticleData::initializeFromSnapshot(const SnapshotParticleData<Real>& snap
         aux2_proc.resize(size);
         aux3_proc.resize(size);
         aux4_proc.resize(size);
+        aux5_proc.resize(size);
         slength_proc.resize(size);
         accel_proc.resize(size);
         dpedt_proc.resize(size);
@@ -964,6 +976,7 @@ void ParticleData::initializeFromSnapshot(const SnapshotParticleData<Real>& snap
                 aux2_proc[rank].push_back(vec_to_scalar3(snapshot.aux2[snap_idx]));
                 aux3_proc[rank].push_back(vec_to_scalar3(snapshot.aux3[snap_idx]));
                 aux4_proc[rank].push_back(vec_to_scalar3(snapshot.aux4[snap_idx]));
+                aux5_proc[rank].push_back(vec_to_scalar3(snapshot.aux5[snap_idx]));
                 slength_proc[rank].push_back(snapshot.slength[snap_idx]);
                 accel_proc[rank].push_back(vec_to_scalar3(snapshot.accel[snap_idx]));
                 dpedt_proc[rank].push_back(vec_to_scalar3(snapshot.dpedt[snap_idx]));
@@ -1005,6 +1018,7 @@ void ParticleData::initializeFromSnapshot(const SnapshotParticleData<Real>& snap
         std::vector<Scalar3> aux2;
         std::vector<Scalar3> aux3;
         std::vector<Scalar3> aux4;
+        std::vector<Scalar3> aux5;
         std::vector<Scalar> slength;
         std::vector<Scalar3> accel;
         std::vector<Scalar3> dpedt;
@@ -1024,6 +1038,7 @@ void ParticleData::initializeFromSnapshot(const SnapshotParticleData<Real>& snap
         scatter_v(aux2_proc, aux2, root, mpi_comm);
         scatter_v(aux3_proc, aux3, root, mpi_comm);
         scatter_v(aux4_proc, aux4, root, mpi_comm);
+        scatter_v(aux5_proc, aux5, root, mpi_comm);
         scatter_v(slength_proc, slength, root, mpi_comm);
         scatter_v(accel_proc, accel, root, mpi_comm);
         scatter_v(dpedt_proc, dpedt, root, mpi_comm);
@@ -1071,6 +1086,7 @@ void ParticleData::initializeFromSnapshot(const SnapshotParticleData<Real>& snap
         ArrayHandle< Scalar3 > h_aux2(m_aux2, access_location::host, access_mode::overwrite);
         ArrayHandle< Scalar3 > h_aux3(m_aux3, access_location::host, access_mode::overwrite);
         ArrayHandle< Scalar3 > h_aux4(m_aux4, access_location::host, access_mode::overwrite);
+        ArrayHandle< Scalar3 > h_aux5(m_aux5, access_location::host, access_mode::overwrite);
         ArrayHandle<Scalar> h_slength(m_slength, access_location::host, access_mode::overwrite);
         ArrayHandle<int3> h_image(m_image, access_location::host, access_mode::overwrite);
         ArrayHandle<unsigned int> h_body(m_body, access_location::host, access_mode::overwrite);
@@ -1095,6 +1111,7 @@ void ParticleData::initializeFromSnapshot(const SnapshotParticleData<Real>& snap
             h_aux2.data[idx] = aux2[idx];
             h_aux3.data[idx] = aux3[idx];
             h_aux4.data[idx] = aux4[idx];
+            h_aux5.data[idx] = aux5[idx];
             h_slength.data[idx] = slength[idx];
             h_accel.data[idx] = accel[idx];
             h_dpedt.data[idx] = dpedt[idx];
@@ -1127,6 +1144,7 @@ void ParticleData::initializeFromSnapshot(const SnapshotParticleData<Real>& snap
         ArrayHandle< Scalar3 > h_aux2(m_aux2, access_location::host, access_mode::overwrite);
         ArrayHandle< Scalar3 > h_aux3(m_aux3, access_location::host, access_mode::overwrite);
         ArrayHandle< Scalar3 > h_aux4(m_aux4, access_location::host, access_mode::overwrite);
+        ArrayHandle< Scalar3 > h_aux5(m_aux5, access_location::host, access_mode::overwrite);
         ArrayHandle< Scalar > h_slength(m_slength, access_location::host, access_mode::overwrite);
         ArrayHandle< Scalar3 > h_accel(m_accel, access_location::host, access_mode::overwrite);
         ArrayHandle< Scalar3 > h_dpedt(m_dpedt, access_location::host, access_mode::overwrite);
@@ -1162,6 +1180,7 @@ void ParticleData::initializeFromSnapshot(const SnapshotParticleData<Real>& snap
             h_aux2.data[nglobal] = vec_to_scalar3(snapshot.aux2[snap_idx]);
             h_aux3.data[nglobal] = vec_to_scalar3(snapshot.aux3[snap_idx]);
             h_aux4.data[nglobal] = vec_to_scalar3(snapshot.aux4[snap_idx]);
+            h_aux5.data[nglobal] = vec_to_scalar3(snapshot.aux5[snap_idx]);
             h_slength.data[nglobal] = snapshot.slength[snap_idx];
             h_accel.data[nglobal] = vec_to_scalar3(snapshot.accel[snap_idx]);
             h_dpedt.data[nglobal] = vec_to_scalar3(snapshot.dpedt[snap_idx]);
@@ -1272,6 +1291,7 @@ void ParticleData::initializeFromDistrSnapshot(const SnapshotParticleData<Real>&
     std::vector< std::vector<Scalar3> > aux2_proc;             // Auxiliary 2 array of every processor
     std::vector< std::vector<Scalar3> > aux3_proc;             // Auxiliary 3 array of every processor
     std::vector< std::vector<Scalar3> > aux4_proc;             // Auxiliary 4 array of every processor
+    std::vector< std::vector<Scalar3> > aux5_proc;             // Auxiliary 5 array of every processor
     std::vector< std::vector<Scalar> > slength_proc;            // Smoothing length array of every processor
     std::vector< std::vector<Scalar3> > dpedt_proc;            // Density, pressure and energy rate of change array of every processor
     //     diameter_proc;                         // Particle diameters array of every processor
@@ -1293,6 +1313,7 @@ void ParticleData::initializeFromDistrSnapshot(const SnapshotParticleData<Real>&
     aux2_proc.resize(size);
     aux3_proc.resize(size);
     aux4_proc.resize(size);
+    aux5_proc.resize(size);
     slength_proc.resize(size);
     accel_proc.resize(size);
     dpedt_proc.resize(size);
@@ -1397,6 +1418,7 @@ void ParticleData::initializeFromDistrSnapshot(const SnapshotParticleData<Real>&
         aux2_proc[rank].push_back(vec_to_scalar3(snapshot.aux2[snap_idx]));
         aux3_proc[rank].push_back(vec_to_scalar3(snapshot.aux3[snap_idx]));
         aux4_proc[rank].push_back(vec_to_scalar3(snapshot.aux4[snap_idx]));
+        aux5_proc[rank].push_back(vec_to_scalar3(snapshot.aux5[snap_idx]));
         slength_proc[rank].push_back(snapshot.slength[snap_idx]);
         accel_proc[rank].push_back(vec_to_scalar3(snapshot.accel[snap_idx]));
         dpedt_proc[rank].push_back(vec_to_scalar3(snapshot.dpedt[snap_idx]));
@@ -1439,6 +1461,7 @@ void ParticleData::initializeFromDistrSnapshot(const SnapshotParticleData<Real>&
     std::vector<Scalar3> aux2(m_nparticles);
     std::vector<Scalar3> aux3(m_nparticles);
     std::vector<Scalar3> aux4(m_nparticles);
+    std::vector<Scalar3> aux5(m_nparticles);
     std::vector<Scalar> slength(m_nparticles);
     std::vector<Scalar3> accel(m_nparticles);
     std::vector<Scalar3> dpedt(m_nparticles);
@@ -1448,52 +1471,54 @@ void ParticleData::initializeFromDistrSnapshot(const SnapshotParticleData<Real>&
     std::vector<unsigned int> body(m_nparticles);
     std::vector<unsigned int> tag(m_nparticles);
 
-    MPI_Request send_req[17*size];
-    MPI_Request recv_req[17*size];
+    MPI_Request send_req[18*size];
+    MPI_Request recv_req[18*size];
 
         // // distribute number of particles
 
     for(unsigned int rank_i = 0; rank_i < size; rank_i++)
         {
         int recv_off = std::accumulate(num_part_recv.begin(), num_part_recv.begin()+rank_i, 0);
-        MPI_Irecv(&pos[recv_off],     3*num_part_recv[rank_i],  MPI_HOOMD_SCALAR, rank_i,       rank_i, mpi_comm, &recv_req[rank_i*17]);
-        MPI_Irecv(&vel[recv_off],     3*num_part_recv[rank_i],  MPI_HOOMD_SCALAR, rank_i,  1000+rank_i, mpi_comm, &recv_req[1+rank_i*17]);
-        MPI_Irecv(&type[recv_off],      num_part_recv[rank_i],  MPI_UNSIGNED,      rank_i,  2000+rank_i, mpi_comm, &recv_req[2+rank_i*17]);
-        MPI_Irecv(&mass[recv_off],      num_part_recv[rank_i],  MPI_HOOMD_SCALAR, rank_i,  3000+rank_i, mpi_comm, &recv_req[3+rank_i*17]);
-        MPI_Irecv(&density[recv_off],   num_part_recv[rank_i], MPI_HOOMD_SCALAR, rank_i,  4000+rank_i, mpi_comm, &recv_req[4+rank_i*17]);
-        MPI_Irecv(&pressure[recv_off],  num_part_recv[rank_i], MPI_HOOMD_SCALAR, rank_i,  5000+rank_i, mpi_comm, &recv_req[5+rank_i*17]);
-        MPI_Irecv(&energy[recv_off],    num_part_recv[rank_i], MPI_HOOMD_SCALAR, rank_i,  6000+rank_i, mpi_comm, &recv_req[6+rank_i*17]);
-        MPI_Irecv(&aux1[recv_off],    3*num_part_recv[rank_i], MPI_HOOMD_SCALAR, rank_i,  7000+rank_i, mpi_comm, &recv_req[7+rank_i*17]);
-        MPI_Irecv(&aux2[recv_off],    3*num_part_recv[rank_i], MPI_HOOMD_SCALAR, rank_i,  8000+rank_i, mpi_comm, &recv_req[8+rank_i*17]);
-        MPI_Irecv(&aux3[recv_off],    3*num_part_recv[rank_i], MPI_HOOMD_SCALAR, rank_i,  9000+rank_i, mpi_comm, &recv_req[9+rank_i*17]);
-        MPI_Irecv(&aux4[recv_off],    3*num_part_recv[rank_i], MPI_HOOMD_SCALAR, rank_i,  10000+rank_i, mpi_comm, &recv_req[10+rank_i*17]);
-        MPI_Irecv(&slength[recv_off],   num_part_recv[rank_i], MPI_HOOMD_SCALAR, rank_i,  11000+rank_i, mpi_comm, &recv_req[11+rank_i*17]);
-        MPI_Irecv(&accel[recv_off],   3*num_part_recv[rank_i], MPI_HOOMD_SCALAR, rank_i, 12000+rank_i, mpi_comm, &recv_req[12+rank_i*17]);
-        MPI_Irecv(&dpedt[recv_off],   3*num_part_recv[rank_i], MPI_HOOMD_SCALAR, rank_i, 13000+rank_i, mpi_comm, &recv_req[13+rank_i*17]);
-        MPI_Irecv(&image[recv_off],   3*num_part_recv[rank_i], MPI_INT,           rank_i, 14000+rank_i, mpi_comm, &recv_req[14+rank_i*17]);
-        MPI_Irecv(&body[recv_off],      num_part_recv[rank_i], MPI_UNSIGNED,      rank_i, 15000+rank_i, mpi_comm, &recv_req[15+rank_i*17]);
-        MPI_Irecv(&tag[recv_off],       num_part_recv[rank_i], MPI_UNSIGNED,      rank_i, 16000+rank_i, mpi_comm, &recv_req[16+rank_i*17]);
+        MPI_Irecv(&pos[recv_off],     3*num_part_recv[rank_i],  MPI_HOOMD_SCALAR, rank_i,       rank_i, mpi_comm, &recv_req[rank_i*18]);
+        MPI_Irecv(&vel[recv_off],     3*num_part_recv[rank_i],  MPI_HOOMD_SCALAR, rank_i,  1000+rank_i, mpi_comm, &recv_req[1+rank_i*18]);
+        MPI_Irecv(&type[recv_off],      num_part_recv[rank_i],  MPI_UNSIGNED,      rank_i,  2000+rank_i, mpi_comm, &recv_req[2+rank_i*18]);
+        MPI_Irecv(&mass[recv_off],      num_part_recv[rank_i],  MPI_HOOMD_SCALAR, rank_i,  3000+rank_i, mpi_comm, &recv_req[3+rank_i*1187]);
+        MPI_Irecv(&density[recv_off],   num_part_recv[rank_i], MPI_HOOMD_SCALAR, rank_i,  4000+rank_i, mpi_comm, &recv_req[4+rank_i*18]);
+        MPI_Irecv(&pressure[recv_off],  num_part_recv[rank_i], MPI_HOOMD_SCALAR, rank_i,  5000+rank_i, mpi_comm, &recv_req[5+rank_i*18]);
+        MPI_Irecv(&energy[recv_off],    num_part_recv[rank_i], MPI_HOOMD_SCALAR, rank_i,  6000+rank_i, mpi_comm, &recv_req[6+rank_i*18]);
+        MPI_Irecv(&aux1[recv_off],    3*num_part_recv[rank_i], MPI_HOOMD_SCALAR, rank_i,  7000+rank_i, mpi_comm, &recv_req[7+rank_i*18]);
+        MPI_Irecv(&aux2[recv_off],    3*num_part_recv[rank_i], MPI_HOOMD_SCALAR, rank_i,  8000+rank_i, mpi_comm, &recv_req[8+rank_i*18]);
+        MPI_Irecv(&aux3[recv_off],    3*num_part_recv[rank_i], MPI_HOOMD_SCALAR, rank_i,  9000+rank_i, mpi_comm, &recv_req[9+rank_i*18]);
+        MPI_Irecv(&aux4[recv_off],    3*num_part_recv[rank_i], MPI_HOOMD_SCALAR, rank_i,  10000+rank_i, mpi_comm, &recv_req[10+rank_i*18]);
+        MPI_Irecv(&aux5[recv_off],    3*num_part_recv[rank_i], MPI_HOOMD_SCALAR, rank_i,  11000+rank_i, mpi_comm, &recv_req[11+rank_i*18]);
+        MPI_Irecv(&slength[recv_off],   num_part_recv[rank_i], MPI_HOOMD_SCALAR, rank_i,  12000+rank_i, mpi_comm, &recv_req[12+rank_i*18]);
+        MPI_Irecv(&accel[recv_off],   3*num_part_recv[rank_i], MPI_HOOMD_SCALAR, rank_i, 13000+rank_i, mpi_comm, &recv_req[13+rank_i*18]);
+        MPI_Irecv(&dpedt[recv_off],   3*num_part_recv[rank_i], MPI_HOOMD_SCALAR, rank_i, 14000+rank_i, mpi_comm, &recv_req[14+rank_i*18]);
+        MPI_Irecv(&image[recv_off],   3*num_part_recv[rank_i], MPI_INT,           rank_i, 15000+rank_i, mpi_comm, &recv_req[15+rank_i*18]);
+        MPI_Irecv(&body[recv_off],      num_part_recv[rank_i], MPI_UNSIGNED,      rank_i, 16000+rank_i, mpi_comm, &recv_req[16+rank_i*18]);
+        MPI_Irecv(&tag[recv_off],       num_part_recv[rank_i], MPI_UNSIGNED,      rank_i, 17000+rank_i, mpi_comm, &recv_req[17+rank_i*18]);
 
-        MPI_Isend(&pos_proc[rank_i][0],    3*N_proc[rank_i], MPI_HOOMD_SCALAR, rank_i,       my_rank, mpi_comm, &send_req[rank_i*17]);
-        MPI_Isend(&vel_proc[rank_i][0],    3*N_proc[rank_i], MPI_HOOMD_SCALAR, rank_i,  1000+my_rank, mpi_comm, &send_req[1+rank_i*17]);
-        MPI_Isend(&type_proc[rank_i][0],     N_proc[rank_i], MPI_UNSIGNED,      rank_i,  2000+my_rank, mpi_comm, &send_req[2+rank_i*17]);
-        MPI_Isend(&mass_proc[rank_i][0],     N_proc[rank_i], MPI_HOOMD_SCALAR, rank_i,  3000+my_rank, mpi_comm, &send_req[3+rank_i*17]);
-        MPI_Isend(&density_proc[rank_i][0],  N_proc[rank_i], MPI_HOOMD_SCALAR, rank_i,  4000+my_rank, mpi_comm, &send_req[4+rank_i*17]);
-        MPI_Isend(&pressure_proc[rank_i][0], N_proc[rank_i], MPI_HOOMD_SCALAR, rank_i,  5000+my_rank, mpi_comm, &send_req[5+rank_i*17]);
-        MPI_Isend(&energy_proc[rank_i][0],   N_proc[rank_i], MPI_HOOMD_SCALAR, rank_i,  6000+my_rank, mpi_comm, &send_req[6+rank_i*17]);
-        MPI_Isend(&aux1_proc[rank_i][0],   3*N_proc[rank_i], MPI_HOOMD_SCALAR, rank_i,  7000+my_rank, mpi_comm, &send_req[7+rank_i*17]);
-        MPI_Isend(&aux2_proc[rank_i][0],   3*N_proc[rank_i], MPI_HOOMD_SCALAR, rank_i,  8000+my_rank, mpi_comm, &send_req[8+rank_i*17]);
-        MPI_Isend(&aux3_proc[rank_i][0],   3*N_proc[rank_i], MPI_HOOMD_SCALAR, rank_i,  9000+my_rank, mpi_comm, &send_req[9+rank_i*17]);
-        MPI_Isend(&aux4_proc[rank_i][0],   3*N_proc[rank_i], MPI_HOOMD_SCALAR, rank_i,  10000+my_rank, mpi_comm, &send_req[10+rank_i*17]);
-        MPI_Isend(&slength_proc[rank_i][0],  N_proc[rank_i], MPI_HOOMD_SCALAR, rank_i,  11000+my_rank, mpi_comm, &send_req[11+rank_i*17]);
-        MPI_Isend(&accel_proc[rank_i][0],  3*N_proc[rank_i], MPI_HOOMD_SCALAR, rank_i, 12000+my_rank, mpi_comm, &send_req[12+rank_i*17]);
-        MPI_Isend(&dpedt_proc[rank_i][0],  3*N_proc[rank_i], MPI_HOOMD_SCALAR, rank_i, 13000+my_rank, mpi_comm, &send_req[13+rank_i*17]);
-        MPI_Isend(&image_proc[rank_i][0],  3*N_proc[rank_i], MPI_INT,           rank_i, 14000+my_rank, mpi_comm, &send_req[14+rank_i*17]);
-        MPI_Isend(&body_proc[rank_i][0],     N_proc[rank_i], MPI_UNSIGNED,      rank_i, 15000+my_rank, mpi_comm, &send_req[15+rank_i*17]);
-        MPI_Isend(&tag_proc[rank_i][0],      N_proc[rank_i], MPI_UNSIGNED,      rank_i, 16000+my_rank, mpi_comm, &send_req[16+rank_i*17]);
+        MPI_Isend(&pos_proc[rank_i][0],    3*N_proc[rank_i], MPI_HOOMD_SCALAR, rank_i,       my_rank, mpi_comm, &send_req[rank_i*18]);
+        MPI_Isend(&vel_proc[rank_i][0],    3*N_proc[rank_i], MPI_HOOMD_SCALAR, rank_i,  1000+my_rank, mpi_comm, &send_req[1+rank_i*18]);
+        MPI_Isend(&type_proc[rank_i][0],     N_proc[rank_i], MPI_UNSIGNED,      rank_i,  2000+my_rank, mpi_comm, &send_req[2+rank_i*18]);
+        MPI_Isend(&mass_proc[rank_i][0],     N_proc[rank_i], MPI_HOOMD_SCALAR, rank_i,  3000+my_rank, mpi_comm, &send_req[3+rank_i*18]);
+        MPI_Isend(&density_proc[rank_i][0],  N_proc[rank_i], MPI_HOOMD_SCALAR, rank_i,  4000+my_rank, mpi_comm, &send_req[4+rank_i*18]);
+        MPI_Isend(&pressure_proc[rank_i][0], N_proc[rank_i], MPI_HOOMD_SCALAR, rank_i,  5000+my_rank, mpi_comm, &send_req[5+rank_i*18]);
+        MPI_Isend(&energy_proc[rank_i][0],   N_proc[rank_i], MPI_HOOMD_SCALAR, rank_i,  6000+my_rank, mpi_comm, &send_req[6+rank_i*18]);
+        MPI_Isend(&aux1_proc[rank_i][0],   3*N_proc[rank_i], MPI_HOOMD_SCALAR, rank_i,  7000+my_rank, mpi_comm, &send_req[7+rank_i*18]);
+        MPI_Isend(&aux2_proc[rank_i][0],   3*N_proc[rank_i], MPI_HOOMD_SCALAR, rank_i,  8000+my_rank, mpi_comm, &send_req[8+rank_i*18]);
+        MPI_Isend(&aux3_proc[rank_i][0],   3*N_proc[rank_i], MPI_HOOMD_SCALAR, rank_i,  9000+my_rank, mpi_comm, &send_req[9+rank_i*18]);
+        MPI_Isend(&aux4_proc[rank_i][0],   3*N_proc[rank_i], MPI_HOOMD_SCALAR, rank_i,  10000+my_rank, mpi_comm, &send_req[10+rank_i*18]);
+        MPI_Isend(&aux5_proc[rank_i][0],   3*N_proc[rank_i], MPI_HOOMD_SCALAR, rank_i,  11000+my_rank, mpi_comm, &send_req[11+rank_i*18]);
+        MPI_Isend(&slength_proc[rank_i][0],  N_proc[rank_i], MPI_HOOMD_SCALAR, rank_i,  12000+my_rank, mpi_comm, &send_req[12+rank_i*18]);
+        MPI_Isend(&accel_proc[rank_i][0],  3*N_proc[rank_i], MPI_HOOMD_SCALAR, rank_i, 13000+my_rank, mpi_comm, &send_req[13+rank_i*18]);
+        MPI_Isend(&dpedt_proc[rank_i][0],  3*N_proc[rank_i], MPI_HOOMD_SCALAR, rank_i, 14000+my_rank, mpi_comm, &send_req[14+rank_i*18]);
+        MPI_Isend(&image_proc[rank_i][0],  3*N_proc[rank_i], MPI_INT,           rank_i, 15000+my_rank, mpi_comm, &send_req[15+rank_i*18]);
+        MPI_Isend(&body_proc[rank_i][0],     N_proc[rank_i], MPI_UNSIGNED,      rank_i, 16000+my_rank, mpi_comm, &send_req[16+rank_i*18]);
+        MPI_Isend(&tag_proc[rank_i][0],      N_proc[rank_i], MPI_UNSIGNED,      rank_i, 17000+my_rank, mpi_comm, &send_req[17+rank_i*18]);
         }
 
-    MPI_Waitall(17*size, send_req, MPI_STATUSES_IGNORE);
+    MPI_Waitall(18*size, send_req, MPI_STATUSES_IGNORE);
     
     { // Keep these brackets to avoid redeclaration
         // reset all reverse lookup tags to NOT_LOCAL flag
@@ -1533,6 +1558,7 @@ void ParticleData::initializeFromDistrSnapshot(const SnapshotParticleData<Real>&
     ArrayHandle< Scalar3 > h_aux2(m_aux2, access_location::host, access_mode::overwrite);
     ArrayHandle< Scalar3 > h_aux3(m_aux3, access_location::host, access_mode::overwrite);
     ArrayHandle< Scalar3 > h_aux4(m_aux4, access_location::host, access_mode::overwrite);
+    ArrayHandle< Scalar3 > h_aux5(m_aux5, access_location::host, access_mode::overwrite);
     ArrayHandle< Scalar> h_slength(m_slength, access_location::host, access_mode::overwrite);
     ArrayHandle<int3> h_image(m_image, access_location::host, access_mode::overwrite);
     ArrayHandle<unsigned int> h_body(m_body, access_location::host, access_mode::overwrite);
@@ -1557,6 +1583,7 @@ void ParticleData::initializeFromDistrSnapshot(const SnapshotParticleData<Real>&
         h_aux2.data[idx] = aux2[idx];
         h_aux3.data[idx] = aux3[idx];
         h_aux4.data[idx] = aux4[idx];
+        h_aux5.data[idx] = aux5[idx];
         h_slength.data[idx] = slength[idx];
         h_accel.data[idx] = accel[idx];
         h_dpedt.data[idx] = dpedt[idx];
@@ -1629,6 +1656,7 @@ template<class Real> void ParticleData::takeSnapshot(SnapshotParticleData<Real>&
     ArrayHandle< Scalar3 > h_aux2(m_aux2, access_location::host, access_mode::read);
     ArrayHandle< Scalar3 > h_aux3(m_aux3, access_location::host, access_mode::read);
     ArrayHandle< Scalar3 > h_aux4(m_aux4, access_location::host, access_mode::read);
+    ArrayHandle< Scalar3 > h_aux5(m_aux5, access_location::host, access_mode::read);
     ArrayHandle<Scalar> h_slength(m_slength, access_location::host, access_mode::read);
     ArrayHandle< Scalar3 > h_accel(m_accel, access_location::host, access_mode::read);
     ArrayHandle< Scalar3 > h_dpedt(m_dpedt, access_location::host, access_mode::read);
@@ -1650,6 +1678,7 @@ template<class Real> void ParticleData::takeSnapshot(SnapshotParticleData<Real>&
         std::vector<Scalar3> aux2(m_nparticles);
         std::vector<Scalar3> aux3(m_nparticles);
         std::vector<Scalar3> aux4(m_nparticles);
+        std::vector<Scalar3> aux5(m_nparticles);
         std::vector<Scalar> slength(m_nparticles);
         std::vector<Scalar3> accel(m_nparticles);
         std::vector<Scalar3> dpedt(m_nparticles);
@@ -1671,6 +1700,7 @@ template<class Real> void ParticleData::takeSnapshot(SnapshotParticleData<Real>&
             aux2[idx] = make_scalar3(h_aux2.data[idx].x, h_aux2.data[idx].y, h_aux2.data[idx].z);
             aux3[idx] = make_scalar3(h_aux3.data[idx].x, h_aux3.data[idx].y, h_aux3.data[idx].z);
             aux4[idx] = make_scalar3(h_aux4.data[idx].x, h_aux4.data[idx].y, h_aux4.data[idx].z);
+            aux5[idx] = make_scalar3(h_aux5.data[idx].x, h_aux5.data[idx].y, h_aux5.data[idx].z);
             accel[idx] = make_scalar3(h_accel.data[idx].x, h_accel.data[idx].y, h_accel.data[idx].z);
             dpedt[idx] = make_scalar3(h_dpedt.data[idx].x, h_dpedt.data[idx].y, h_dpedt.data[idx].z);
             slength[idx] = h_slength.data[idx];
@@ -1695,6 +1725,7 @@ template<class Real> void ParticleData::takeSnapshot(SnapshotParticleData<Real>&
         std::vector< std::vector<Scalar3> > aux2_proc;             // Auxiliary 2 array of every processor
         std::vector< std::vector<Scalar3> > aux3_proc;             // Auxiliary 3 array of every processor
         std::vector< std::vector<Scalar3> > aux4_proc;             // Auxiliary 4 array of every processor
+        std::vector< std::vector<Scalar3> > aux5_proc;             // Auxiliary 5 array of every processor
         std::vector< std::vector<Scalar> > slength_proc;           // Smoothing length array of every processor
         std::vector< std::vector<Scalar3> > accel_proc;            // Accelerations array of every processor
         std::vector< std::vector<Scalar3> > dpedt_proc;            // Density, pressure and energy rate of change array of every processor
@@ -1722,6 +1753,7 @@ template<class Real> void ParticleData::takeSnapshot(SnapshotParticleData<Real>&
         aux2_proc.resize(size);
         aux3_proc.resize(size);
         aux4_proc.resize(size);
+        aux5_proc.resize(size);
         slength_proc.resize(size);
         accel_proc.resize(size);
         dpedt_proc.resize(size);
@@ -1748,6 +1780,7 @@ template<class Real> void ParticleData::takeSnapshot(SnapshotParticleData<Real>&
         gather_v(aux2, aux2_proc, root, mpi_comm);
         gather_v(aux3, aux3_proc, root, mpi_comm);
         gather_v(aux4, aux4_proc, root, mpi_comm);
+        gather_v(aux5, aux5_proc, root, mpi_comm);
         gather_v(slength, slength_proc, root, mpi_comm);
         gather_v(accel, accel_proc, root, mpi_comm);
         gather_v(dpedt, dpedt_proc, root, mpi_comm);
@@ -1811,6 +1844,7 @@ template<class Real> void ParticleData::takeSnapshot(SnapshotParticleData<Real>&
                 snapshot.aux2[snap_id] = vec3<Real>(aux2_proc[rank][idx]);
                 snapshot.aux3[snap_id] = vec3<Real>(aux3_proc[rank][idx]);
                 snapshot.aux4[snap_id] = vec3<Real>(aux4_proc[rank][idx]);
+                snapshot.aux5[snap_id] = vec3<Real>(aux5_proc[rank][idx]);
                 snapshot.slength[snap_id] = Real(slength_proc[rank][idx]);
                 snapshot.accel[snap_id] = vec3<Real>(accel_proc[rank][idx]);
                 snapshot.dpedt[snap_id] = vec3<Real>(dpedt_proc[rank][idx]);
@@ -1872,6 +1906,8 @@ template<class Real> void ParticleData::takeSnapshot(SnapshotParticleData<Real>&
                 = vec3<Real>(make_scalar3(h_aux3.data[idx].x, h_aux3.data[idx].y, h_aux3.data[idx].z));
             snapshot.aux4[snap_id]
                 = vec3<Real>(make_scalar3(h_aux4.data[idx].x, h_aux4.data[idx].y, h_aux4.data[idx].z));
+            snapshot.aux5[snap_id]
+                = vec3<Real>(make_scalar3(h_aux5.data[idx].x, h_aux5.data[idx].y, h_aux5.data[idx].z));
             snapshot.accel[snap_id]
                 = vec3<Real>(make_scalar3(h_accel.data[idx].x, h_accel.data[idx].y, h_accel.data[idx].z));
             snapshot.dpedt[snap_id]
@@ -1881,6 +1917,7 @@ template<class Real> void ParticleData::takeSnapshot(SnapshotParticleData<Real>&
             // snapshot.aux2[snap_id] = vec3<Real>(h_aux2.data[idx]);
             // snapshot.aux3[snap_id] = vec3<Real>(h_aux3.data[idx]);
             // snapshot.aux4[snap_id] = vec3<Real>(h_aux4.data[idx]);
+            // snapshot.aux5[snap_id] = vec3<Real>(h_aux5.data[idx]);
             snapshot.slength[snap_id] = Real(h_slength.data[idx]);
             // snapshot.accel[snap_id] = vec3<Real>(h_accel.data[idx]);
             // snapshot.dpedt[snap_id] = vec3<Real>(h_dpedt.data[idx]);
@@ -1930,6 +1967,7 @@ ParticleData::takeSnapshotDistr(SnapshotParticleData<Real>& snapshot)
     ArrayHandle< Scalar3 > h_aux2(m_aux2, access_location::host, access_mode::read);
     ArrayHandle< Scalar3 > h_aux3(m_aux3, access_location::host, access_mode::read);
     ArrayHandle< Scalar3 > h_aux4(m_aux4, access_location::host, access_mode::read);
+    ArrayHandle< Scalar3 > h_aux5(m_aux5, access_location::host, access_mode::read);
     ArrayHandle< Scalar > h_slength(m_slength, access_location::host, access_mode::read);
     ArrayHandle< Scalar3 > h_accel(m_accel, access_location::host, access_mode::read);
     ArrayHandle< Scalar3 > h_dpedt(m_dpedt, access_location::host, access_mode::read);
@@ -1979,6 +2017,7 @@ ParticleData::takeSnapshotDistr(SnapshotParticleData<Real>& snapshot)
         snapshot.aux2[loc_id] = vec3<Real>(make_scalar3(h_aux2.data[idx].x, h_aux2.data[idx].y, h_aux2.data[idx].z));
         snapshot.aux3[loc_id] = vec3<Real>(make_scalar3(h_aux3.data[idx].x, h_aux3.data[idx].y, h_aux3.data[idx].z));
         snapshot.aux4[loc_id] = vec3<Real>(make_scalar3(h_aux4.data[idx].x, h_aux4.data[idx].y, h_aux4.data[idx].z));
+        snapshot.aux5[loc_id] = vec3<Real>(make_scalar3(h_aux5.data[idx].x, h_aux5.data[idx].y, h_aux5.data[idx].z));
         snapshot.accel[loc_id] = vec3<Real>(make_scalar3(h_accel.data[idx].x, h_accel.data[idx].y, h_accel.data[idx].z));
         snapshot.dpedt[loc_id] = vec3<Real>(make_scalar3(h_dpedt.data[idx].x, h_dpedt.data[idx].y, h_dpedt.data[idx].z));
 
@@ -1986,6 +2025,7 @@ ParticleData::takeSnapshotDistr(SnapshotParticleData<Real>& snapshot)
         // snapshot.aux2[loc_id] = vec3<Real>(h_aux2.data[idx]);
         // snapshot.aux3[loc_id] = vec3<Real>(h_aux3.data[idx]);
         // snapshot.aux4[loc_id] = vec3<Real>(h_aux4.data[idx]);
+        // snapshot.aux5[loc_id] = vec3<Real>(h_aux5.data[idx]);
         snapshot.slength[loc_id] = Real(h_slength.data[idx]);
         // snapshot.accel[loc_id] = vec3<Real>(h_accel.data[idx]);
         // snapshot.dpedt[loc_id] = vec3<Real>(h_dpedt.data[idx]);
@@ -2370,6 +2410,32 @@ Scalar3 ParticleData::getAuxiliaryArray4(unsigned int tag) const
     assert(found);
     return result;
     }
+
+//! Get the current aux5 of a particle
+Scalar3 ParticleData::getAuxiliaryArray5(unsigned int tag) const
+    {
+    unsigned int idx = getRTag(tag);
+    bool found = (idx < getN());
+    Scalar3 result = make_scalar3(0.0, 0.0, 0.0);
+    if (found)
+        {
+        ArrayHandle<Scalar3> h_aux5(m_aux5, access_location::host, access_mode::read);
+        result = make_scalar3(h_aux5.data[idx].x, h_aux5.data[idx].y, h_aux5.data[idx].z);
+        }
+#ifdef ENABLE_MPI
+    if (m_decomposition)
+        {
+        unsigned int owner_rank = getOwnerRank(tag);
+        bcast(result.x, owner_rank, m_exec_conf->getMPICommunicator());
+        bcast(result.y, owner_rank, m_exec_conf->getMPICommunicator());
+        bcast(result.z, owner_rank, m_exec_conf->getMPICommunicator());
+        found = true;
+        }
+#endif
+    assert(found);
+    return result;
+    }
+
 
 // ! Get the current image flags of a particle
 int3 ParticleData::getImage(unsigned int tag) const
@@ -2984,6 +3050,26 @@ void ParticleData::setAuxiliaryArray4(unsigned int tag, const Scalar3& aux4)
         }
     }
 
+//! Set the current aux5 of a particle
+void ParticleData::setAuxiliaryArray5(unsigned int tag, const Scalar3& aux5)
+    {
+    unsigned int idx = getRTag(tag);
+    bool found = (idx < getN());
+
+#ifdef ENABLE_MPI
+    // make sure the particle is somewhere
+    if (m_decomposition)
+        getOwnerRank(tag);
+#endif
+    if (found)
+        {
+        ArrayHandle<Scalar3> h_aux5(m_aux5, access_location::host, access_mode::readwrite);
+        h_aux5.data[idx].x = aux5.x;
+        h_aux5.data[idx].y = aux5.y;
+        h_aux5.data[idx].z = aux5.z;
+        }
+    }
+
 //! Set the current slenght of a particle
 void ParticleData::setSlength(unsigned int tag, Scalar slength)
     {
@@ -3098,6 +3184,7 @@ unsigned int ParticleData::addParticle(unsigned int type)
         ArrayHandle<Scalar3> h_aux2(getAuxiliaries2(), access_location::host, access_mode::readwrite);
         ArrayHandle<Scalar3> h_aux3(getAuxiliaries3(), access_location::host, access_mode::readwrite);
         ArrayHandle<Scalar3> h_aux4(getAuxiliaries4(), access_location::host, access_mode::readwrite);
+        ArrayHandle<Scalar3> h_aux5(getAuxiliaries5(), access_location::host, access_mode::readwrite);
         ArrayHandle<Scalar> h_slength(getSlengths(), access_location::host, access_mode::readwrite);
         ArrayHandle<Scalar3> h_accel(getAccelerations(), access_location::host, access_mode::readwrite);
         ArrayHandle<Scalar3> h_dpedt(getDPEdts(), access_location::host, access_mode::readwrite);
@@ -3130,6 +3217,7 @@ unsigned int ParticleData::addParticle(unsigned int type)
         h_aux2.data[idx] = make_scalar3(0,0,0);
         h_aux3.data[idx] = make_scalar3(0,0,0);
         h_aux4.data[idx] = make_scalar3(0,0,0);
+        h_aux5.data[idx] = make_scalar3(0,0,0);
         h_slength.data[idx] = 0.0;
         h_accel.data[idx] = make_scalar3(0,0,0);
         h_dpedt.data[idx] = make_scalar3(0,0,0);
@@ -3220,6 +3308,7 @@ void ParticleData::removeParticle(unsigned int tag)
             ArrayHandle<Scalar3> h_aux2(getAuxiliaries2(), access_location::host, access_mode::readwrite);
             ArrayHandle<Scalar3> h_aux3(getAuxiliaries3(), access_location::host, access_mode::readwrite);
             ArrayHandle<Scalar3> h_aux4(getAuxiliaries4(), access_location::host, access_mode::readwrite);
+            ArrayHandle<Scalar3> h_aux5(getAuxiliaries5(), access_location::host, access_mode::readwrite);
             ArrayHandle<Scalar> h_slength(getSlengths(), access_location::host, access_mode::readwrite);
             ArrayHandle<Scalar3> h_accel(getAccelerations(), access_location::host, access_mode::readwrite);
             ArrayHandle<Scalar3> h_dpedt(getDPEdts(), access_location::host, access_mode::readwrite);
@@ -3252,6 +3341,7 @@ void ParticleData::removeParticle(unsigned int tag)
             h_aux2.data[idx] = h_aux2.data[size-1];
             h_aux3.data[idx] = h_aux3.data[size-1];
             h_aux4.data[idx] = h_aux4.data[size-1];
+            h_aux5.data[idx] = h_aux5.data[size-1];
             h_slength.data[idx] = h_slength.data[size-1];
             h_accel.data[idx] = h_accel.data[size-1];
             h_dpedt.data[idx] = h_dpedt.data[size-1];
@@ -3422,6 +3512,7 @@ void export_ParticleData(pybind11::module& m)
         .def("getAuxiliaryArray2", &ParticleData::getAuxiliaryArray2)
         .def("getAuxiliaryArray3", &ParticleData::getAuxiliaryArray3)
         .def("getAuxiliaryArray4", &ParticleData::getAuxiliaryArray4)
+        .def("getAuxiliaryArray5", &ParticleData::getAuxiliaryArray5)
         .def("getSlength", &ParticleData::getSlength)
         .def("getMaxSmoothingLength", &ParticleData::getMaxSmoothingLength)
         .def("constSmoothingLength", &ParticleData::constSmoothingLength)
@@ -3441,6 +3532,7 @@ void export_ParticleData(pybind11::module& m)
         .def("setAuxiliaryArray2", &ParticleData::setAuxiliaryArray2)
         .def("setAuxiliaryArray3", &ParticleData::setAuxiliaryArray3)
         .def("setAuxiliaryArray4", &ParticleData::setAuxiliaryArray4)
+        .def("setAuxiliaryArray5", &ParticleData::setAuxiliaryArray5)
         .def("setSlength", &ParticleData::setSlength)
         .def("setImage", &ParticleData::setImage)
         .def("setMass", &ParticleData::setMass)
@@ -3478,6 +3570,7 @@ template<class Real> void SnapshotParticleData<Real>::resize(unsigned int N)
     aux2.resize(N,vec3<Real>(0.0,0.0,0.0));
     aux3.resize(N,vec3<Real>(0.0,0.0,0.0));
     aux4.resize(N,vec3<Real>(0.0,0.0,0.0));
+    aux5.resize(N,vec3<Real>(0.0,0.0,0.0));
     slength.resize(N,Scalar(1.0));
     accel.resize(N,vec3<Real>(0.0,0.0,0.0));
     dpedt.resize(N,vec3<Real>(0.0,0.0,0.0));
@@ -3512,6 +3605,7 @@ template<class Real> void SnapshotParticleData<Real>::insert(unsigned int i, uns
     aux2.insert(aux2.begin()+i,n,vec3<Real>(0.0,0.0,0.0));
     aux3.insert(aux3.begin()+i,n,vec3<Real>(0.0,0.0,0.0));
     aux4.insert(aux4.begin()+i,n,vec3<Real>(0.0,0.0,0.0));
+    aux5.insert(aux5.begin()+i,n,vec3<Real>(0.0,0.0,0.0));
     slength.insert(slength.begin()+i,n,Scalar(1.0));
     accel.insert(accel.begin()+i,n,vec3<Real>(0.0,0.0,0.0));
     dpedt.insert(dpedt.begin()+i,n,vec3<Real>(0.0,0.0,0.0));
@@ -3532,7 +3626,7 @@ template<class Real> void SnapshotParticleData<Real>::validate() const
     {
     // Check if all other fields are of equal length==size
     if (pos.size() != size || vel.size() != size || accel.size() != size || type.size() != size
-        || mass.size() != size || aux1.size() != size || aux2.size() != size  || aux3.size() != size || aux4.size() != size || density.size() != size
+        || mass.size() != size || aux1.size() != size || aux2.size() != size  || aux3.size() != size || aux4.size() != size || aux5.size() != size || density.size() != size
         || pressure.size() != size || energy.size() != size
         || image.size() != size || body.size() != size || slength.size() != size
         || dpedt.size() != size )
@@ -3609,6 +3703,7 @@ void ParticleData::removeParticles(std::vector<detail::pdata_element>& out,
         ArrayHandle<Scalar3> h_aux2(getAuxiliaries2(), access_location::host, access_mode::readwrite);
         ArrayHandle<Scalar3> h_aux3(getAuxiliaries3(), access_location::host, access_mode::readwrite);
         ArrayHandle<Scalar3> h_aux4(getAuxiliaries4(), access_location::host, access_mode::readwrite);
+        ArrayHandle<Scalar3> h_aux5(getAuxiliaries5(), access_location::host, access_mode::readwrite);
         ArrayHandle<Scalar> h_slength(getSlengths(), access_location::host, access_mode::readwrite);
         ArrayHandle<Scalar3> h_accel(getAccelerations(), access_location::host, access_mode::readwrite);
         ArrayHandle<Scalar3> h_dpedt(getDPEdts(), access_location::host, access_mode::readwrite);
@@ -3652,6 +3747,7 @@ void ParticleData::removeParticles(std::vector<detail::pdata_element>& out,
         ArrayHandle<Scalar3> h_aux2_alt(m_aux2_alt, access_location::host, access_mode::overwrite);
         ArrayHandle<Scalar3> h_aux3_alt(m_aux3_alt, access_location::host, access_mode::overwrite);
         ArrayHandle<Scalar3> h_aux4_alt(m_aux4_alt, access_location::host, access_mode::overwrite);
+        ArrayHandle<Scalar3> h_aux5_alt(m_aux5_alt, access_location::host, access_mode::overwrite);
         ArrayHandle<Scalar> h_slength_alt(m_slength_alt, access_location::host, access_mode::overwrite);
         ArrayHandle<Scalar3> h_accel_alt(m_accel_alt, access_location::host, access_mode::overwrite);
         ArrayHandle<Scalar3> h_dpedt_alt(m_dpedt_alt, access_location::host, access_mode::overwrite);
@@ -3700,6 +3796,7 @@ void ParticleData::removeParticles(std::vector<detail::pdata_element>& out,
                 h_aux2_alt.data[n] = h_aux2.data[i];
                 h_aux3_alt.data[n] = h_aux3.data[i];
                 h_aux4_alt.data[n] = h_aux4.data[i];
+                h_aux5_alt.data[n] = h_aux5.data[i];
                 h_slength_alt.data[n] = h_slength.data[i];
                 h_accel_alt.data[n] = h_accel.data[i];
                 h_dpedt_alt.data[n] = h_dpedt.data[i];
@@ -3725,6 +3822,7 @@ void ParticleData::removeParticles(std::vector<detail::pdata_element>& out,
                 p.aux2 = h_aux2.data[i];
                 p.aux3 = h_aux3.data[i];
                 p.aux4 = h_aux4.data[i];
+                p.aux5 = h_aux5.data[i];
                 p.slength = h_slength.data[i];
                 p.accel = h_accel.data[i];
                 p.dpedt = h_dpedt.data[i];
@@ -3764,6 +3862,7 @@ void ParticleData::removeParticles(std::vector<detail::pdata_element>& out,
     swapAuxiliaries2();
     swapAuxiliaries3();
     swapAuxiliaries4();
+    swapAuxiliaries5();
     swapSlengths();
     swapAccelerations();
     swapDPEdts();
@@ -3813,6 +3912,7 @@ void ParticleData::addParticles(const std::vector<detail::pdata_element>& in)
         ArrayHandle<Scalar3> h_aux2(getAuxiliaries2(), access_location::host, access_mode::readwrite);
         ArrayHandle<Scalar3> h_aux3(getAuxiliaries3(), access_location::host, access_mode::readwrite);
         ArrayHandle<Scalar3> h_aux4(getAuxiliaries4(), access_location::host, access_mode::readwrite);
+        ArrayHandle<Scalar3> h_aux5(getAuxiliaries5(), access_location::host, access_mode::readwrite);
         ArrayHandle<Scalar> h_slength(getSlengths(), access_location::host, access_mode::readwrite);
         ArrayHandle<Scalar3> h_accel(getAccelerations(), access_location::host, access_mode::readwrite);
         ArrayHandle<Scalar3> h_dpedt(getDPEdts(), access_location::host, access_mode::readwrite);
@@ -3859,6 +3959,7 @@ void ParticleData::addParticles(const std::vector<detail::pdata_element>& in)
             h_aux2.data[n] = p.aux2;
             h_aux3.data[n] = p.aux3;
             h_aux4.data[n] = p.aux4;
+            h_aux5.data[n] = p.aux5;
             h_slength.data[n] = p.slength;
             h_accel.data[n] = p.accel;
             h_dpedt.data[n] = p.dpedt;
@@ -3929,6 +4030,7 @@ void ParticleData::removeParticlesGPU(GPUVector<detail::pdata_element>& out,
         ArrayHandle<Scalar3> d_aux2(getAuxiliaries2(), access_location::device, access_mode::read);
         ArrayHandle<Scalar3> d_aux3(getAuxiliaries3(), access_location::device, access_mode::read);
         ArrayHandle<Scalar3> d_aux4(getAuxiliaries4(), access_location::device, access_mode::read);
+        ArrayHandle<Scalar3> d_aux5(getAuxiliaries5(), access_location::device, access_mode::read);
         ArrayHandle<Scalar>  d_slength(getSlengths(), access_location::device, access_mode::read);
         ArrayHandle<Scalar3> d_accel(getAccelerations(), access_location::device, access_mode::read);
         ArrayHandle<Scalar3> d_dpedt(getDPEdts(), access_location::device, access_mode::read);
@@ -3958,6 +4060,7 @@ void ParticleData::removeParticlesGPU(GPUVector<detail::pdata_element>& out,
         ArrayHandle<Scalar3> d_aux2_alt(m_aux2_alt, access_location::device, access_mode::overwrite);
         ArrayHandle<Scalar3> d_aux3_alt(m_aux3_alt, access_location::device, access_mode::overwrite);
         ArrayHandle<Scalar3> d_aux4_alt(m_aux4_alt, access_location::device, access_mode::overwrite);
+        ArrayHandle<Scalar3> d_aux5_alt(m_aux5_alt, access_location::device, access_mode::overwrite);
         ArrayHandle<Scalar>  d_slength_alt(m_slength_alt, access_location::device, access_mode::overwrite);
         ArrayHandle<Scalar3> d_accel_alt(m_accel_alt, access_location::device, access_mode::overwrite);
         ArrayHandle<Scalar3> d_dpedt_alt(m_dpedt_alt, access_location::device, access_mode::overwrite);
@@ -4023,6 +4126,7 @@ void ParticleData::removeParticlesGPU(GPUVector<detail::pdata_element>& out,
                                              d_aux2.data,
                                              d_aux3.data,
                                              d_aux4.data,
+                                             d_aux5.data,
                                              d_slength.data,
                                              d_accel.data,
                                              d_dpedt.data,
@@ -4051,6 +4155,7 @@ void ParticleData::removeParticlesGPU(GPUVector<detail::pdata_element>& out,
                                              d_aux2_alt.data,
                                              d_aux3_alt.data,
                                              d_aux4_alt.data,
+                                             d_aux5_alt.data,
                                              d_slength_alt.data,
                                              d_accel_alt.data,
                                              d_dpedt_alt.data,
@@ -4104,6 +4209,7 @@ void ParticleData::removeParticlesGPU(GPUVector<detail::pdata_element>& out,
     swapAuxiliaries2();
     swapAuxiliaries3();
     swapAuxiliaries4();
+    swa
     swapSlengths();
     swapAccelerations();
     swapDPEdts();
@@ -4140,6 +4246,7 @@ void ParticleData::addParticlesGPU(const GPUVector<detail::pdata_element>& in)
         ArrayHandle<Scalar3> d_aux2(getAuxiliaries2(), access_location::device, access_mode::readwrite);
         ArrayHandle<Scalar3> d_aux3(getAuxiliaries3(), access_location::device, access_mode::readwrite);
         ArrayHandle<Scalar3> d_aux4(getAuxiliaries4(), access_location::device, access_mode::readwrite);
+        ArrayHandle<Scalar3> d_aux5(getAuxiliaries5(), access_location::device, access_mode::readwrite);
         ArrayHandle<Scalar>  d_slength(getSlengths(), access_location::device, access_mode::readwrite);
         ArrayHandle<Scalar3> d_accel(getAccelerations(), access_location::device, access_mode::readwrite);
         ArrayHandle<Scalar3> d_dpedt(getDPEdts(), access_location::device, access_mode::readwrite);
@@ -4189,6 +4296,7 @@ void ParticleData::addParticlesGPU(const GPUVector<detail::pdata_element>& in)
                                         d_aux2.data,
                                         d_aux3.data,
                                         d_aux4.data,
+                                        d_aux5.data,
                                         d_slength.data,
                                         d_accel.data,
                                         d_dpedt.data,
@@ -4276,6 +4384,7 @@ void SnapshotParticleData<Real>::replicate(unsigned int nx,
                     aux2[k] = aux2[i];
                     aux3[k] = aux3[i];
                     aux4[k] = aux4[i];
+                    aux5[k] = aux5[i];
                     slength[k] = slength[i];
                     accel[k] = accel[i];
                     dpedt[k] = dpedt[i];
@@ -4505,6 +4614,26 @@ template<class Real> pybind11::object SnapshotParticleData<Real>::getAux4NP(pybi
     The raw data is referenced by the numpy array, modifications to the numpy array will modify the
    snapshot
 */
+template<class Real> pybind11::object SnapshotParticleData<Real>::getAux5NP(pybind11::object self)
+    {
+    auto self_cpp = self.cast<SnapshotParticleData<Real>*>();
+    // mark as dirty when accessing internal data
+    self_cpp->is_accel_set = false;
+
+    std::vector<size_t> dims(2);
+    dims[0] = self_cpp->pos.size();
+    dims[1] = 3;
+    if (dims[0] == 0)
+        {
+        return pybind11::array(pybind11::dtype::of<Real>(), dims, nullptr);
+        }
+    return pybind11::array(dims, (Real*)self_cpp->aux5.data(), self);
+    }
+
+/*! \returns a numpy array that wraps the pos data element.
+    The raw data is referenced by the numpy array, modifications to the numpy array will modify the
+   snapshot
+*/
 template<class Real> pybind11::object SnapshotParticleData<Real>::getDpedtNP(pybind11::object self)
     {
     auto self_cpp = self.cast<SnapshotParticleData<Real>*>();
@@ -4686,6 +4815,7 @@ template<class Real> void SnapshotParticleData<Real>::bcast(unsigned int root, M
     hoomd::bcast(aux2, root, mpi_comm);
     hoomd::bcast(aux3, root, mpi_comm);
     hoomd::bcast(aux4, root, mpi_comm);
+    hoomd::bcast(aux5, root, mpi_comm);
     // hoomd::bcast(dpe, root, mpi_comm);
     hoomd::bcast(density, root, mpi_comm);
     hoomd::bcast(pressure, root, mpi_comm);
@@ -4730,6 +4860,7 @@ void export_SnapshotParticleData(pybind11::module& m)
         .def_property_readonly("aux2", &SnapshotParticleData<float>::getAux2NP)
         .def_property_readonly("aux3", &SnapshotParticleData<float>::getAux3NP)
         .def_property_readonly("aux4", &SnapshotParticleData<float>::getAux4NP)
+        .def_property_readonly("aux5", &SnapshotParticleData<float>::getAux5NP)
         .def_property_readonly("slength", &SnapshotParticleData<float>::getSlengthNP)
         .def_property_readonly("acceleration", &SnapshotParticleData<float>::getAccelNP)
         .def_property_readonly("dpedt", &SnapshotParticleData<float>::getDpedtNP)
@@ -4758,6 +4889,7 @@ void export_SnapshotParticleData(pybind11::module& m)
         .def_property_readonly("aux2", &SnapshotParticleData<double>::getAux2NP)
         .def_property_readonly("aux3", &SnapshotParticleData<double>::getAux3NP)
         .def_property_readonly("aux4", &SnapshotParticleData<double>::getAux4NP)
+        .def_property_readonly("aux5", &SnapshotParticleData<double>::getAux5NP)
         .def_property_readonly("slength", &SnapshotParticleData<double>::getSlengthNP)
         .def_property_readonly("acceleration", &SnapshotParticleData<double>::getAccelNP)
         .def_property_readonly("dpedt", &SnapshotParticleData<double>::getDpedtNP)

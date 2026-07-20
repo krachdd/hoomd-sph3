@@ -32,10 +32,16 @@ HOOMD_UP_MAIN();
 //! Test the ability of CellList to initialize dimensions
 template<class CL> void celllist_dimension_test(std::shared_ptr<ExecutionConfiguration> exec_conf)
     {
+    // // start with a simple simulation box size 10
+    // std::shared_ptr<SystemDefinition> sysdef_3(
+    //     new SystemDefinition(3, BoxDim(10.0), 1, 0, 0, 0, 0, exec_conf));
+    // std::shared_ptr<ParticleData> pdata_3 = sysdef_3->getParticleData();
+
     // start with a simple simulation box size 10
     std::shared_ptr<SystemDefinition> sysdef_3(
-        new SystemDefinition(3, BoxDim(10.0), 1, 0, 0, 0, 0, exec_conf));
+        new SystemDefinition(3, BoxDim(10.0), 1 ,0, exec_conf, nullptr, false));
     std::shared_ptr<ParticleData> pdata_3 = sysdef_3->getParticleData();
+
 
         {
         ArrayHandle<Scalar4> h_pos(pdata_3->getPositions(),
@@ -154,9 +160,14 @@ UP_TEST(CellList_dimension)
 //! Test the ability of CellList to initialize the adj array
 template<class CL> void celllist_adj_test(std::shared_ptr<ExecutionConfiguration> exec_conf)
     {
+    // // start with a simple simulation box size 3
+    // std::shared_ptr<SystemDefinition> sysdef_3(
+    //     new SystemDefinition(3, BoxDim(3.0), 1, 0, 0, 0, 0, exec_conf));
+    // std::shared_ptr<ParticleData> pdata_3 = sysdef_3->getParticleData();
+
     // start with a simple simulation box size 3
     std::shared_ptr<SystemDefinition> sysdef_3(
-        new SystemDefinition(3, BoxDim(3.0), 1, 0, 0, 0, 0, exec_conf));
+        new SystemDefinition(3, BoxDim(3.0), 1 ,0, exec_conf, nullptr, false));
     std::shared_ptr<ParticleData> pdata_3 = sysdef_3->getParticleData();
 
         {
@@ -244,57 +255,63 @@ UP_TEST(CellList_adj)
 //! Validate that the cell list itself is computed properly
 template<class CL> void celllist_small_test(std::shared_ptr<ExecutionConfiguration> exec_conf)
     {
+    // // start with a simple simulation a non-cubic box
+    // std::shared_ptr<SystemDefinition> sysdef(
+    //     new SystemDefinition(8, BoxDim(3, 5, 7), 4, 0, 0, 0, 0, exec_conf));
+    // std::shared_ptr<ParticleData> pdata = sysdef->getParticleData();
+
     // start with a simple simulation a non-cubic box
     std::shared_ptr<SystemDefinition> sysdef(
-        new SystemDefinition(8, BoxDim(3, 5, 7), 4, 0, 0, 0, 0, exec_conf));
+        new SystemDefinition(8, BoxDim(3, 5, 7), 4 ,0, exec_conf, nullptr, false));
     std::shared_ptr<ParticleData> pdata = sysdef->getParticleData();
+
 
     pdata->setPosition(0, make_scalar3(0.0, 0.0, 0.0));
     pdata->setType(0, 1);
-    pdata->setCharge(0, 1.0);
-    pdata->setDiameter(0, 0.5f);
+    // pdata->setCharge(0, 1.0);
+    // pdata->setDiameter(0, 0.5f);
     pdata->setBody(0, 2);
 
     pdata->setPosition(1, make_scalar3(1.0, 0.0, 0.0));
     pdata->setType(1, 2);
-    pdata->setCharge(1, 2.0f);
-    pdata->setDiameter(1, 1.0f);
+    // pdata->setCharge(1, 2.0f);
+    // pdata->setDiameter(1, 1.0f);
     pdata->setBody(1, 3);
 
     pdata->setPosition(2, make_scalar3(-1.0, 0.0, 0.0));
     pdata->setType(2, 3);
-    pdata->setCharge(2, 3.0f);
-    pdata->setDiameter(2, 1.5f);
+    // pdata->setCharge(2, 3.0f);
+    // pdata->setDiameter(2, 1.5f);
     pdata->setBody(2, 0);
 
     pdata->setPosition(3, make_scalar3(1.0, 2.0, 0.0));
     pdata->setType(3, 0);
-    pdata->setCharge(3, 4.0f);
-    pdata->setDiameter(3, 2.0f);
+    // pdata->setCharge(3, 4.0f);
+    // pdata->setDiameter(3, 2.0f);
     pdata->setBody(3, 1);
 
     pdata->setPosition(4, make_scalar3(0.25, 0.25, 0.0));
-    pdata->setType(4, 1);
-    pdata->setCharge(4, 5.0f);
-    pdata->setDiameter(4, 2.5f);
+    pdata->setType(4, 5);
+    // pdata->setCharge(4, 5.0f);
+    // pdata->setDiameter(4, 2.5f);
     pdata->setBody(4, 2);
 
     pdata->setPosition(5, make_scalar3(1.25, 2.25, 0.0));
-    pdata->setType(5, 2);
-    pdata->setCharge(5, 6.0f);
-    pdata->setDiameter(5, 3.0f);
+    pdata->setType(5, 6);
+    // pdata->setCharge(5, 6.0f);
+    // pdata->setDiameter(5, 3.0f);
     pdata->setBody(5, 3);
 
     pdata->setPosition(6, make_scalar3(0.25, -2.0, 3.0));
     pdata->setType(6, 3);
-    pdata->setCharge(6, 7.0f);
-    pdata->setDiameter(6, 3.5f);
+    // pdata->setCharge(6, 7.0f);
+    // pdata->setDiameter(6, 3.5f);
     pdata->setBody(6, 0);
 
     pdata->setPosition(7, make_scalar3(-0.25, -2.0, -3.0));
     pdata->setType(7, 0);
-    pdata->setCharge(7, 8.0f);
-    pdata->setDiameter(7, 4.0f);
+    // pdata->setCharge(7, 8.0f);
+    // pdata->setDiameter(7, 4.0f);
     pdata->setBody(7, 1);
 
     // ********* initialize a cell list *********
@@ -394,7 +411,10 @@ template<class CL> void celllist_small_test(std::shared_ptr<ExecutionConfigurati
         }
 
     // enable charge and TypeBody options and test that they work properly
-    cl->setFlagCharge();
+    // cl->setFlagCharge();
+
+    cl->setFlagType();
+
     cl->setComputeTypeBody(true);
     cl->compute(0);
 
@@ -422,7 +442,8 @@ template<class CL> void celllist_small_test(std::shared_ptr<ExecutionConfigurati
         MY_CHECK_CLOSE(val.x, 1.0f, tol);
         MY_CHECK_SMALL(val.y, tol_small);
         MY_CHECK_SMALL(val.z, tol_small);
-        MY_CHECK_CLOSE(val.w, 2.0f, tol);
+        // MY_CHECK_CLOSE(val.w, 2.0f, tol);
+        UP_ASSERT_EQUAL(__scalar_as_int(val.w), 2);
         val_type_body = h_type_body.data[cli(0, ci(2, 2, 3))];
         UP_ASSERT_EQUAL(val_type_body.x, 2);
         UP_ASSERT_EQUAL(val_type_body.y, 3);
@@ -432,7 +453,8 @@ template<class CL> void celllist_small_test(std::shared_ptr<ExecutionConfigurati
         MY_CHECK_CLOSE(val.x, -1.0f, tol);
         MY_CHECK_SMALL(val.y, tol_small);
         MY_CHECK_SMALL(val.z, tol_small);
-        MY_CHECK_CLOSE(val.w, 3.0f, tol);
+        // MY_CHECK_CLOSE(val.w, 3.0f, tol);
+        UP_ASSERT_EQUAL(__scalar_as_int(val.w), 3);
         val_type_body = h_type_body.data[cli(0, ci(0, 2, 3))];
         UP_ASSERT_EQUAL(val_type_body.x, 3);
         UP_ASSERT_EQUAL(val_type_body.y, 0);
@@ -442,7 +464,8 @@ template<class CL> void celllist_small_test(std::shared_ptr<ExecutionConfigurati
         MY_CHECK_CLOSE(val.x, 0.25f, tol);
         MY_CHECK_CLOSE(val.y, -2.0f, tol_small);
         MY_CHECK_CLOSE(val.z, 3.0f, tol_small);
-        MY_CHECK_CLOSE(val.w, 7.0f, tol);
+        // MY_CHECK_CLOSE(val.w, 7.0f, tol);
+        UP_ASSERT_EQUAL(__scalar_as_int(val.w), 3);
         val_type_body = h_type_body.data[cli(0, ci(1, 0, 6))];
         UP_ASSERT_EQUAL(val_type_body.x, 3);
         UP_ASSERT_EQUAL(val_type_body.y, 0);
@@ -452,7 +475,8 @@ template<class CL> void celllist_small_test(std::shared_ptr<ExecutionConfigurati
         MY_CHECK_CLOSE(val.x, -0.25f, tol);
         MY_CHECK_CLOSE(val.y, -2.0f, tol_small);
         MY_CHECK_CLOSE(val.z, -3.0f, tol_small);
-        MY_CHECK_CLOSE(val.w, 8.0f, tol);
+        // MY_CHECK_CLOSE(val.w, 8.0f, tol);
+        UP_ASSERT_EQUAL(__scalar_as_int(val.w), 0);
         val_type_body = h_type_body.data[cli(0, ci(1, 0, 0))];
         UP_ASSERT_EQUAL(val_type_body.x, 0);
         UP_ASSERT_EQUAL(val_type_body.y, 1);
@@ -465,15 +489,25 @@ template<class CL> void celllist_small_test(std::shared_ptr<ExecutionConfigurati
 
             // particles can be in any order in the cell list
             bool ok = false;
-            if (fabs(val.w - 1.0f) < tol)
+            // if (fabs(val.w - 1.0f) < tol)
+            //     {
+            //     ok = (fabs(val.x - 0.0f) < tol && fabs(val.y - 0.0f) < tol
+            //           && fabs(val.z - 0.0f) < tol && val_type_body.x == 1 && val_type_body.y == 2);
+            //     }
+            // else if (fabs(val.w - 5.0f) < tol)
+            //     {
+            //     ok = (fabs(val.x - 0.25f) < tol && fabs(val.y - 0.25f) < tol
+            //           && fabs(val.z - 0.0f) < tol && val_type_body.x == 1 && val_type_body.y == 2);
+            //     }
+            if (fabs(__scalar_as_int(val.w) - 1) == 0)
                 {
                 ok = (fabs(val.x - 0.0f) < tol && fabs(val.y - 0.0f) < tol
                       && fabs(val.z - 0.0f) < tol && val_type_body.x == 1 && val_type_body.y == 2);
                 }
-            else if (fabs(val.w - 5.0f) < tol)
+            else if (fabs(__scalar_as_int(val.w) - 5) == 0)
                 {
                 ok = (fabs(val.x - 0.25f) < tol && fabs(val.y - 0.25f) < tol
-                      && fabs(val.z - 0.0f) < tol && val_type_body.x == 1 && val_type_body.y == 2);
+                      && fabs(val.z - 0.0f) < tol && val_type_body.x == 5 && val_type_body.y == 2);
                 }
             UP_ASSERT(ok);
             }
@@ -486,15 +520,25 @@ template<class CL> void celllist_small_test(std::shared_ptr<ExecutionConfigurati
 
             // particles can be in any order in the cell list
             bool ok = false;
-            if (fabs(val.w - 4.0f) < tol)
+            // if (fabs(val.w - 4.0f) < tol)
+            //     {
+            //     ok = (fabs(val.x - 1.0f) < tol && fabs(val.y - 2.0f) < tol
+            //           && fabs(val.z - 0.0f) < tol && val_type_body.x == 0 && val_type_body.y == 1);
+            //     }
+            // else if (fabs(val.w - 6.0f) < tol)
+            //     {
+            //     ok = (fabs(val.x - 1.25f) < tol && fabs(val.y - 2.25f) < tol
+            //           && fabs(val.z - 0.0f) < tol && val_type_body.x == 2 && val_type_body.y == 3);
+            //     }
+            if (fabs(__scalar_as_int(val.w) == 0))
                 {
                 ok = (fabs(val.x - 1.0f) < tol && fabs(val.y - 2.0f) < tol
                       && fabs(val.z - 0.0f) < tol && val_type_body.x == 0 && val_type_body.y == 1);
                 }
-            else if (fabs(val.w - 6.0f) < tol)
+            else if (fabs(__scalar_as_int(val.w) - 6) == 0)
                 {
                 ok = (fabs(val.x - 1.25f) < tol && fabs(val.y - 2.25f) < tol
-                      && fabs(val.z - 0.0f) < tol && val_type_body.x == 2 && val_type_body.y == 3);
+                      && fabs(val.z - 0.0f) < tol && val_type_body.x == 6 && val_type_body.y == 3);
                 }
             UP_ASSERT(ok);
             }

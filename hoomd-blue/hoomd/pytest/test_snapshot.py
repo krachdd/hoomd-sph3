@@ -28,7 +28,7 @@ def assert_equivalent_snapshots(gsd_snap, hoomd_snap):
     if not hoomd_snap.communicator.rank == 0:
         return True
     for attr in dir(hoomd_snap):
-        if attr[0] == "_" or attr in ["exists", "replicate", "communicator", "mpcd"]:
+        if attr[0] == "_" or attr in ["exists", "replicate", "communicator", "mpcd","dist",]:
             continue
         for prop in dir(getattr(hoomd_snap, attr)):
             if prop[0] == "_":
@@ -81,13 +81,13 @@ def test_empty_snapshot(s):
         assert len(s.particles.acceleration) == 0
         assert len(s.particles.typeid) == 0
         assert len(s.particles.mass) == 0
-        assert len(s.particles.charge) == 0
-        assert len(s.particles.diameter) == 0
+        # assert len(s.particles.charge) == 0
+        # assert len(s.particles.diameter) == 0
         assert len(s.particles.image) == 0
         assert len(s.particles.body) == 0
-        assert len(s.particles.orientation) == 0
-        assert len(s.particles.moment_inertia) == 0
-        assert len(s.particles.angmom) == 0
+        # assert len(s.particles.orientation) == 0
+        # assert len(s.particles.moment_inertia) == 0
+        # assert len(s.particles.angmom) == 0
         assert len(s.particles.types) == 0
 
         assert s.bonds.N == 0
@@ -95,25 +95,25 @@ def test_empty_snapshot(s):
         assert len(s.bonds.typeid) == 0
         assert len(s.bonds.group) == 0
 
-        assert s.angles.N == 0
-        assert len(s.angles.types) == 0
-        assert len(s.angles.typeid) == 0
-        assert len(s.angles.group) == 0
+        # assert s.angles.N == 0
+        # assert len(s.angles.types) == 0
+        # assert len(s.angles.typeid) == 0
+        # assert len(s.angles.group) == 0
 
-        assert s.dihedrals.N == 0
-        assert len(s.dihedrals.types) == 0
-        assert len(s.dihedrals.typeid) == 0
-        assert len(s.dihedrals.group) == 0
+        # assert s.dihedrals.N == 0
+        # assert len(s.dihedrals.types) == 0
+        # assert len(s.dihedrals.typeid) == 0
+        # assert len(s.dihedrals.group) == 0
 
-        assert s.impropers.N == 0
-        assert len(s.impropers.types) == 0
-        assert len(s.impropers.typeid) == 0
-        assert len(s.impropers.group) == 0
+        # assert s.impropers.N == 0
+        # assert len(s.impropers.types) == 0
+        # assert len(s.impropers.typeid) == 0
+        # assert len(s.impropers.group) == 0
 
-        assert s.pairs.N == 0
-        assert len(s.pairs.types) == 0
-        assert len(s.pairs.typeid) == 0
-        assert len(s.pairs.group) == 0
+        # assert s.pairs.N == 0
+        # assert len(s.pairs.types) == 0
+        # assert len(s.pairs.typeid) == 0
+        # assert len(s.pairs.group) == 0
 
         assert s.constraints.N == 0
         assert len(s.constraints.value) == 0
@@ -313,13 +313,13 @@ def test_particles(s):
         assert len(s.particles.acceleration) == 5
         assert len(s.particles.typeid) == 5
         assert len(s.particles.mass) == 5
-        assert len(s.particles.charge) == 5
-        assert len(s.particles.diameter) == 5
+        # assert len(s.particles.charge) == 5
+        # assert len(s.particles.diameter) == 5
         assert len(s.particles.image) == 5
         assert len(s.particles.body) == 5
-        assert len(s.particles.orientation) == 5
-        assert len(s.particles.moment_inertia) == 5
-        assert len(s.particles.angmom) == 5
+        # assert len(s.particles.orientation) == 5
+        # assert len(s.particles.moment_inertia) == 5
+        # assert len(s.particles.angmom) == 5
 
         s.particles.types = ["A", "B"]
         assert s.particles.types == ["A", "B"]
@@ -334,20 +334,20 @@ def test_particles(s):
         assert s.particles.typeid.shape == (5,)
         assert s.particles.mass.dtype == numpy.float64
         assert s.particles.mass.shape == (5,)
-        assert s.particles.charge.dtype == numpy.float64
-        assert s.particles.charge.shape == (5,)
-        assert s.particles.diameter.dtype == numpy.float64
-        assert s.particles.diameter.shape == (5,)
+        # assert s.particles.charge.dtype == numpy.float64
+        # assert s.particles.charge.shape == (5,)
+        # assert s.particles.diameter.dtype == numpy.float64
+        # assert s.particles.diameter.shape == (5,)
         assert s.particles.image.dtype == numpy.int32
         assert s.particles.image.shape == (5, 3)
         assert s.particles.body.dtype == numpy.int32
         assert s.particles.body.shape == (5,)
-        assert s.particles.orientation.dtype == numpy.float64
-        assert s.particles.orientation.shape == (5, 4)
-        assert s.particles.moment_inertia.dtype == numpy.float64
-        assert s.particles.moment_inertia.shape == (5, 3)
-        assert s.particles.angmom.dtype == numpy.float64
-        assert s.particles.angmom.shape == (5, 4)
+        # assert s.particles.orientation.dtype == numpy.float64
+        # assert s.particles.orientation.shape == (5, 4)
+        # assert s.particles.moment_inertia.dtype == numpy.float64
+        # assert s.particles.moment_inertia.shape == (5, 3)
+        # assert s.particles.angmom.dtype == numpy.float64
+        # assert s.particles.angmom.shape == (5, 4)
 
 
 def test_bonds(s):
@@ -366,73 +366,73 @@ def test_bonds(s):
         assert s.bonds.group.shape == (3, 2)
         assert s.bonds.group.dtype == numpy.uint32
 
+# # not existent for SPH
+# def test_angles(s):
+#     if s.communicator.rank == 0:
+#         s.angles.N = 3
 
-def test_angles(s):
-    if s.communicator.rank == 0:
-        s.angles.N = 3
+#         assert s.angles.N == 3
+#         assert len(s.angles.typeid) == 3
+#         assert len(s.angles.group) == 3
 
-        assert s.angles.N == 3
-        assert len(s.angles.typeid) == 3
-        assert len(s.angles.group) == 3
+#         s.angles.types = ["A", "B"]
+#         assert s.angles.types == ["A", "B"]
 
-        s.angles.types = ["A", "B"]
-        assert s.angles.types == ["A", "B"]
+#         assert s.angles.typeid.shape == (3,)
+#         assert s.angles.typeid.dtype == numpy.uint32
+#         assert s.angles.group.shape == (3, 3)
+#         assert s.angles.group.dtype == numpy.uint32
 
-        assert s.angles.typeid.shape == (3,)
-        assert s.angles.typeid.dtype == numpy.uint32
-        assert s.angles.group.shape == (3, 3)
-        assert s.angles.group.dtype == numpy.uint32
+# # not existent for SPH
+# def test_dihedrals(s):
+#     if s.communicator.rank == 0:
+#         s.dihedrals.N = 3
 
+#         assert s.dihedrals.N == 3
+#         assert len(s.dihedrals.typeid) == 3
+#         assert len(s.dihedrals.group) == 3
 
-def test_dihedrals(s):
-    if s.communicator.rank == 0:
-        s.dihedrals.N = 3
+#         s.dihedrals.types = ["A", "B"]
+#         assert s.dihedrals.types == ["A", "B"]
 
-        assert s.dihedrals.N == 3
-        assert len(s.dihedrals.typeid) == 3
-        assert len(s.dihedrals.group) == 3
+#         assert s.dihedrals.typeid.shape == (3,)
+#         assert s.dihedrals.typeid.dtype == numpy.uint32
+#         assert s.dihedrals.group.shape == (3, 4)
+#         assert s.dihedrals.group.dtype == numpy.uint32
 
-        s.dihedrals.types = ["A", "B"]
-        assert s.dihedrals.types == ["A", "B"]
+# # not existent for SPH
+# def test_impropers(s):
+#     if s.communicator.rank == 0:
+#         s.impropers.N = 3
 
-        assert s.dihedrals.typeid.shape == (3,)
-        assert s.dihedrals.typeid.dtype == numpy.uint32
-        assert s.dihedrals.group.shape == (3, 4)
-        assert s.dihedrals.group.dtype == numpy.uint32
+#         assert s.impropers.N == 3
+#         assert len(s.impropers.typeid) == 3
+#         assert len(s.impropers.group) == 3
 
+#         s.impropers.types = ["A", "B"]
+#         assert s.impropers.types == ["A", "B"]
 
-def test_impropers(s):
-    if s.communicator.rank == 0:
-        s.impropers.N = 3
+#         assert s.impropers.typeid.shape == (3,)
+#         assert s.impropers.typeid.dtype == numpy.uint32
+#         assert s.impropers.group.shape == (3, 4)
+#         assert s.impropers.group.dtype == numpy.uint32
 
-        assert s.impropers.N == 3
-        assert len(s.impropers.typeid) == 3
-        assert len(s.impropers.group) == 3
+# # not existent for SPH
+# def test_pairs(s):
+#     if s.communicator.rank == 0:
+#         s.pairs.N = 3
 
-        s.impropers.types = ["A", "B"]
-        assert s.impropers.types == ["A", "B"]
+#         assert s.pairs.N == 3
+#         assert len(s.pairs.typeid) == 3
+#         assert len(s.pairs.group) == 3
 
-        assert s.impropers.typeid.shape == (3,)
-        assert s.impropers.typeid.dtype == numpy.uint32
-        assert s.impropers.group.shape == (3, 4)
-        assert s.impropers.group.dtype == numpy.uint32
+#         s.pairs.types = ["A", "B"]
+#         assert s.pairs.types == ["A", "B"]
 
-
-def test_pairs(s):
-    if s.communicator.rank == 0:
-        s.pairs.N = 3
-
-        assert s.pairs.N == 3
-        assert len(s.pairs.typeid) == 3
-        assert len(s.pairs.group) == 3
-
-        s.pairs.types = ["A", "B"]
-        assert s.pairs.types == ["A", "B"]
-
-        assert s.pairs.typeid.shape == (3,)
-        assert s.pairs.typeid.dtype == numpy.uint32
-        assert s.pairs.group.shape == (3, 2)
-        assert s.pairs.group.dtype == numpy.uint32
+#         assert s.pairs.typeid.shape == (3,)
+#         assert s.pairs.typeid.dtype == numpy.uint32
+#         assert s.pairs.group.shape == (3, 2)
+#         assert s.pairs.group.dtype == numpy.uint32
 
 
 def test_constraints(s):
@@ -456,56 +456,58 @@ def test_from_gsd_frame_empty(s, device):
     assert_equivalent_snapshots(gsd_snap, hoomd_snap)
 
 
-@skip_gsd
-def test_from_gsd_frame_populated(s, device):
-    if s.communicator.rank == 0:
-        s.configuration.box = [10, 12, 7, 0.1, 0.4, 0.2]
-        for section in (
-            "particles",
-            "bonds",
-            "angles",
-            "dihedrals",
-            "impropers",
-            "pairs",
-        ):
-            setattr(getattr(s, section), "N", 5)
-            setattr(getattr(s, section), "types", ["A", "B"])
+# @skip_gsd
+# def test_from_gsd_frame_populated(s, device):
+#     if s.communicator.rank == 0:
+#         s.configuration.box = [10, 12, 7, 0.1, 0.4, 0.2]
+#         for section in (
+#             "particles",
+#             "bonds",
+#             # "angles",
+#             # "dihedrals",
+#             # "impropers",
+#             # "pairs",
+#         ):
+#             setattr(getattr(s, section), "N", 5)
+#             setattr(getattr(s, section), "types", ["A", "B"])
 
-        for prop in (
-            "angmom",
-            "body",
-            "charge",
-            "diameter",
-            "image",
-            "mass",
-            "moment_inertia",
-            "orientation",
-            "position",
-            "typeid",
-            "velocity",
-        ):
-            attr = getattr(s.particles, prop)
-            if attr.dtype == numpy.float64:
-                attr[:] = numpy.random.rand(*attr.shape)
-            else:
-                attr[:] = numpy.random.randint(3, size=attr.shape)
+#         for prop in (
+#             # "angmom",
+#             "body",
+#             # "charge",
+#             # "diameter",
+#             "image",
+#             "mass",
+#             # "moment_inertia",
+#             # "orientation",
+#             "position",
+#             "typeid",
+#             "velocity",
+#         ):
+#             attr = getattr(s.particles, prop)
+#             if attr.dtype == numpy.float64:
+#                 attr[:] = numpy.random.rand(*attr.shape)
+#             else:
+#                 attr[:] = numpy.random.randint(3, size=attr.shape)
 
-        for section in ("bonds", "angles", "dihedrals", "impropers", "pairs"):
-            for prop in ("group", "typeid"):
-                attr = getattr(getattr(s, section), prop)
-                attr[:] = numpy.random.randint(3, size=attr.shape)
+#         # # for section in ("bonds", "angles", "dihedrals", "impropers", "pairs"):
+#         for section in ("bonds",):
+#             for prop in ("group", "typeid"):
+#                 attr = getattr(getattr(s, section), prop)
+#                 attr[:] = numpy.random.randint(3, size=attr.shape)
 
-        s.constraints.N = 3
-        for prop in ("group", "value"):
-            attr = getattr(s.constraints, prop)
-            if attr.dtype == numpy.float64:
-                attr[:] = numpy.random.rand(*attr.shape)
-            else:
-                attr[:] = numpy.random.randint(3, size=attr.shape)
 
-    gsd_snap = make_gsd_frame(s)
-    hoomd_snap = Snapshot.from_gsd_frame(gsd_snap, device.communicator)
-    assert_equivalent_snapshots(gsd_snap, hoomd_snap)
+#         s.constraints.N = 3
+#         for prop in ("group", "value"):
+#             attr = getattr(s.constraints, prop)
+#             if attr.dtype == numpy.float64:
+#                 attr[:] = numpy.random.rand(*attr.shape)
+#             else:
+#                 attr[:] = numpy.random.randint(3, size=attr.shape)
+
+#     gsd_snap = make_gsd_frame(s)
+#     hoomd_snap = Snapshot.from_gsd_frame(gsd_snap, device.communicator)
+#     assert_equivalent_snapshots(gsd_snap, hoomd_snap)
 
 
 def test_invalid_particle_typeids(simulation_factory, lattice_snapshot_factory):
@@ -539,7 +541,8 @@ def test_no_duplicate_particle_types(simulation_factory, lattice_snapshot_factor
 
 
 @pytest.mark.serial
-@pytest.mark.parametrize("bond", ["bonds", "angles", "dihedrals", "impropers", "pairs"])
+# @pytest.mark.parametrize("bond", ["bonds", "angles", "dihedrals", "impropers", "pairs"])
+@pytest.mark.parametrize("bond", ["bonds"])
 def test_no_duplicate_bond_types(simulation_factory, lattice_snapshot_factory, bond):
     """Test that initialization fails when there are duplicate types."""
     snap = lattice_snapshot_factory(particle_types=["A"])
@@ -563,10 +566,10 @@ def test_zero_particle_system(simulation_factory, lattice_snapshot_factory):
     "group_name,group_size",
     [
         ("bonds", 2),
-        ("angles", 3),
-        ("dihedrals", 4),
-        ("impropers", 4),
-        ("pairs", 2),
+        # ("angles", 3),
+        # ("dihedrals", 4),
+        # ("impropers", 4),
+        # ("pairs", 2),
     ],
 )
 def test_invalid_bond_typeids(

@@ -134,6 +134,7 @@ void SFCPackTuner::applySortOrder()
     ArrayHandle<Scalar3> h_aux2(m_pdata->getAuxiliaries2(), access_location::host, access_mode::readwrite);
     ArrayHandle<Scalar3> h_aux3(m_pdata->getAuxiliaries3(), access_location::host, access_mode::readwrite);
     ArrayHandle<Scalar3> h_aux4(m_pdata->getAuxiliaries4(), access_location::host, access_mode::readwrite);
+    ArrayHandle<Scalar3> h_aux5(m_pdata->getAuxiliaries5(), access_location::host, access_mode::readwrite);
     ArrayHandle<Scalar>  h_slength(m_pdata->getSlengths(), access_location::host, access_mode::readwrite);
     ArrayHandle<Scalar3> h_accel(m_pdata->getAccelerations(), access_location::host, access_mode::readwrite);
     ArrayHandle<Scalar3> h_dpedt(m_pdata->getDPEdts(), access_location::host, access_mode::readwrite);
@@ -194,6 +195,12 @@ void SFCPackTuner::applySortOrder()
         scal3_tmp[i] = h_aux4.data[m_sort_order[i]];
     for (unsigned int i = 0; i < m_pdata->getN(); i++)
         h_aux4.data[i] = scal3_tmp[i];
+
+    // sort auxiliary array 5
+    for (unsigned int i = 0; i < m_pdata->getN(); i++)
+        scal3_tmp[i] = h_aux5.data[m_sort_order[i]];
+    for (unsigned int i = 0; i < m_pdata->getN(); i++)
+        h_aux5.data[i] = scal3_tmp[i];
 
     // sort densities, pressures and energies rate of change
     for (unsigned int i = 0; i < m_pdata->getN(); i++)

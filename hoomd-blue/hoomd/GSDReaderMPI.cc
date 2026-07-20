@@ -322,6 +322,7 @@ void GSDReaderMPI::readParticles()
     readChunk(m_snapshot->particle_data.aux2.data(), m_frame, "particles/auxiliary2", N * 12, N_global, N, 3, offset, true);
     readChunk(m_snapshot->particle_data.aux3.data(), m_frame, "particles/auxiliary3", N * 12, N_global, N, 3, offset, true);
     readChunk(m_snapshot->particle_data.aux4.data(), m_frame, "particles/auxiliary4", N * 12, N_global, N, 3, offset, true);
+    readChunk(m_snapshot->particle_data.aux5.data(), m_frame, "particles/auxiliary5", N * 12, N_global, N, 3, offset, true);
     readChunk(m_snapshot->particle_data.image.data(), m_frame, "particles/image", N * 12, N_global, N, 3, offset, true);
     }
 

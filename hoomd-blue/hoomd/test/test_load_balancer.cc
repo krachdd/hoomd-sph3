@@ -37,16 +37,26 @@ void test_load_balancer_basic(std::shared_ptr<ExecutionConfiguration> exec_conf,
     MPI_Comm_size(exec_conf->getHOOMDWorldMPICommunicator(), &size);
     UP_ASSERT_EQUAL(size, 8);
 
+    // // create a system with eight particles
+    // BoxDim ref_box = BoxDim(2.0);
+    // std::shared_ptr<SystemDefinition> sysdef(new SystemDefinition(8,        // number of particles
+    //                                                               dest_box, // box dimensions
+    //                                                               1, // number of particle types
+    //                                                               0, // number of bond types
+    //                                                               0, // number of angle types
+    //                                                               0, // number of dihedral types
+    //                                                               0, // number of dihedral types
+    //                                                               exec_conf));
+
     // create a system with eight particles
     BoxDim ref_box = BoxDim(2.0);
-    std::shared_ptr<SystemDefinition> sysdef(new SystemDefinition(8,        // number of particles
-                                                                  dest_box, // box dimensions
-                                                                  1, // number of particle types
-                                                                  0, // number of bond types
-                                                                  0, // number of angle types
-                                                                  0, // number of dihedral types
-                                                                  0, // number of dihedral types
-                                                                  exec_conf));
+    std::shared_ptr<SystemDefinition> sysdef(new SystemDefinition(8,         // number of particles
+                                                                 dest_box,  // box dimensions
+                                                                 1,         // number of particle types
+                                                                 0,         // number of bond types
+                                                                 exec_conf, // execution configuration
+                                                                 nullptr,   // domain decomposition
+                                                                 false));   // preserve ghosts
 
     std::shared_ptr<ParticleData> pdata(sysdef->getParticleData());
 
@@ -144,16 +154,26 @@ void test_load_balancer_multi(std::shared_ptr<ExecutionConfiguration> exec_conf,
     MPI_Comm_size(exec_conf->getHOOMDWorldMPICommunicator(), &size);
     UP_ASSERT_EQUAL(size, 8);
 
+    // // create a system with eight particles
+    // BoxDim ref_box = BoxDim(2.0);
+    // std::shared_ptr<SystemDefinition> sysdef(new SystemDefinition(8,        // number of particles
+    //                                                               dest_box, // box dimensions
+    //                                                               1, // number of particle types
+    //                                                               0, // number of bond types
+    //                                                               0, // number of angle types
+    //                                                               0, // number of dihedral types
+    //                                                               0, // number of dihedral types
+    //                                                               exec_conf));
+
     // create a system with eight particles
     BoxDim ref_box = BoxDim(2.0);
-    std::shared_ptr<SystemDefinition> sysdef(new SystemDefinition(8,        // number of particles
-                                                                  dest_box, // box dimensions
-                                                                  1, // number of particle types
-                                                                  0, // number of bond types
-                                                                  0, // number of angle types
-                                                                  0, // number of dihedral types
-                                                                  0, // number of dihedral types
-                                                                  exec_conf));
+    std::shared_ptr<SystemDefinition> sysdef(new SystemDefinition(8,         // number of particles
+                                                                 dest_box,  // box dimensions
+                                                                 1,         // number of particle types
+                                                                 0,         // number of bond types
+                                                                 exec_conf, // execution configuration
+                                                                 nullptr,   // domain decomposition
+                                                                 false));   // preserve ghosts
 
     std::shared_ptr<ParticleData> pdata(sysdef->getParticleData());
 
@@ -282,16 +302,27 @@ void test_load_balancer_ghost(std::shared_ptr<ExecutionConfiguration> exec_conf,
     MPI_Comm_size(exec_conf->getHOOMDWorldMPICommunicator(), &size);
     UP_ASSERT_EQUAL(size, 8);
 
+    // // create a system with eight particles
+    // BoxDim ref_box = BoxDim(2.0);
+    // std::shared_ptr<SystemDefinition> sysdef(new SystemDefinition(8,        // number of particles
+    //                                                               dest_box, // box dimensions
+    //                                                               1, // number of particle types
+    //                                                               0, // number of bond types
+    //                                                               0, // number of angle types
+    //                                                               0, // number of dihedral types
+    //                                                               0, // number of dihedral types
+    //                                                               exec_conf));
+
+
     // create a system with eight particles
     BoxDim ref_box = BoxDim(2.0);
-    std::shared_ptr<SystemDefinition> sysdef(new SystemDefinition(8,        // number of particles
-                                                                  dest_box, // box dimensions
-                                                                  1, // number of particle types
-                                                                  0, // number of bond types
-                                                                  0, // number of angle types
-                                                                  0, // number of dihedral types
-                                                                  0, // number of dihedral types
-                                                                  exec_conf));
+    std::shared_ptr<SystemDefinition> sysdef(new SystemDefinition(8,         // number of particles
+                                                                 dest_box,  // box dimensions
+                                                                 1,         // number of particle types
+                                                                 0,         // number of bond types
+                                                                 exec_conf, // execution configuration
+                                                                 nullptr,   // domain decomposition
+                                                                 false));   // preserve ghosts
 
     std::shared_ptr<ParticleData> pdata(sysdef->getParticleData());
 

@@ -41,3 +41,6 @@ hoomd-blue/hoomd/extern/pgsd.h
 
 # VENV folder 
 .venv
+
+# VSCode folder
+.vscode

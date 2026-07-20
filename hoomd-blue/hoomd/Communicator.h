@@ -67,6 +67,7 @@ struct comm_flag
         auxiliary2,        //! Bit id in CommFlags for particle auxiliary 2
         auxiliary3,        //! Bit id in CommFlags for particle auxiliary 3
         auxiliary4,        //! Bit id in CommFlags for particle auxiliary 4
+        auxiliary5,        //! Bit id in CommFlags for particle auxiliary 5
         body,              //! Bit id in CommFlags for particle body id
         image,             //! Bit id in CommFlags for particle image
         net_force,         //! Communicate net force
@@ -497,6 +498,7 @@ class PYBIND11_EXPORT Communicator
     GPUVector<Scalar3> m_aux2_copybuf;        //!< Buffer for particle auxiliary data 2
     GPUVector<Scalar3> m_aux3_copybuf;        //!< Buffer for particle auxiliary data 3
     GPUVector<Scalar3> m_aux4_copybuf;        //!< Buffer for particle auxiliary data 4
+    GPUVector<Scalar3> m_aux5_copybuf;        //!< Buffer for particle auxiliary data 4
     GPUVector<unsigned int> m_plan_copybuf;   //!< Buffer for particle plans
     GPUVector<unsigned int> m_tag_copybuf;    //!< Buffer for particle tags
     GPUVector<Scalar4> m_netforce_copybuf;    //!< Buffer for net force

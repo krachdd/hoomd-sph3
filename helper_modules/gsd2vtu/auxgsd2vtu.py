@@ -91,6 +91,9 @@ for snapshot in t:
            'Aux4x'      :np.array(snapshot.particles.auxiliary4.T[0]),
            'Aux4y'      :np.array(snapshot.particles.auxiliary4.T[1]),
            'Aux4z'      :np.array(snapshot.particles.auxiliary4.T[2]),
+           'Aux5x'      :np.array(snapshot.particles.auxiliary5.T[0]),
+           'Aux5y'      :np.array(snapshot.particles.auxiliary5.T[1]),
+           'Aux5z'      :np.array(snapshot.particles.auxiliary5.T[2]),
            },
        )
     

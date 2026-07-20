@@ -172,7 +172,7 @@ execute_process(COMMAND "date" "+%Y-%m-%d" OUTPUT_VARIABLE COMPILE_DATE OUTPUT_S
 ################################
 # set up unit tests
 enable_testing()
-option(BUILD_TESTING "Build unit tests" OFF)
+option(BUILD_TESTING "Build unit tests" ON)
 
 if (BUILD_TESTING)
      # add test_all to the ALL target

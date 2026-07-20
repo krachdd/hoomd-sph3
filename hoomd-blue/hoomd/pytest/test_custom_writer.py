@@ -41,29 +41,30 @@ class TestCustomWriter:
         assert not writer.action._attached
         assert not writer._attached
 
-    @pytest.mark.skipif(not hoomd.version.md_built, reason="BUILD_MD=on required")
-    def test_flags(self, simulation_factory, two_particle_snapshot_factory):
-        sim = simulation_factory(two_particle_snapshot_factory())
-        action = WriteTimestep()
-        action.flags = [hoomd.custom.Action.Flags.PRESSURE_TENSOR]
-        sim.operations += hoomd.write.CustomWriter(2, action)
-        gauss = hoomd.md.pair.Gaussian(hoomd.md.nlist.Cell(0.5))
-        gauss.params[("A", "A")] = {"sigma": 1.0, "epsilon": 1.0}
-        gauss.r_cut[("A", "A")] = 2.0
-        sim.operations += hoomd.md.Integrator(
-            0.005,
-            methods=[hoomd.md.methods.Langevin(hoomd.filter.All(), kT=1.0)],
-            forces=[gauss],
-        )
-        # WriteTimestep is not run so pressure is not available
-        sim.run(1)
-        virials = gauss.virials
-        assert virials is None
-        # WriteTimestep is run so pressure is available
-        sim.run(1)
-        virials = gauss.virials
-        if sim.device.communicator.rank == 0:
-            assert any(virials.ravel() != 0)
+    # # not existent for SPH module
+    # @pytest.mark.skipif(not hoomd.version.md_built, reason="BUILD_MD=on required")
+    # def test_flags(self, simulation_factory, two_particle_snapshot_factory):
+    #     sim = simulation_factory(two_particle_snapshot_factory())
+    #     action = WriteTimestep()
+    #     action.flags = [hoomd.custom.Action.Flags.PRESSURE_TENSOR]
+    #     sim.operations += hoomd.write.CustomWriter(2, action)
+    #     gauss = hoomd.md.pair.Gaussian(hoomd.md.nlist.Cell(0.5))
+    #     gauss.params[("A", "A")] = {"sigma": 1.0, "epsilon": 1.0}
+    #     gauss.r_cut[("A", "A")] = 2.0
+    #     sim.operations += hoomd.md.Integrator(
+    #         0.005,
+    #         methods=[hoomd.md.methods.Langevin(hoomd.filter.All(), kT=1.0)],
+    #         forces=[gauss],
+    #     )
+    #     # WriteTimestep is not run so pressure is not available
+    #     sim.run(1)
+    #     virials = gauss.virials
+    #     assert virials is None
+    #     # WriteTimestep is run so pressure is available
+    #     sim.run(1)
+    #     virials = gauss.virials
+    #     if sim.device.communicator.rank == 0:
+    #         assert any(virials.ravel() != 0)
 
     def test_logging(self):
         expected_namespace = ("pytest", "test_custom_writer")

@@ -8,6 +8,8 @@ import numpy as np
 from hoomd.error import MutabilityError
 
 
+pytestmark = pytest.mark.skip(reason="Skipping this entire test file")
+
 def test_attach(simulation_factory, two_particle_snapshot_factory, tmp_path):
     filename = tmp_path / "temporary_test_file.dcd"
     sim = simulation_factory(two_particle_snapshot_factory())

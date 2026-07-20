@@ -58,18 +58,18 @@ _particle_data = dict(
         new_value=np.linspace(4, 8, Np * 3).reshape((Np, 3)),
         shape=(Np, 3),
     ),
-    angmom=dict(
-        np_type=np.floating,
-        value=np.linspace(-3, 6, Np * 4).reshape((Np, 4)),
-        new_value=np.linspace(1, 3, Np * 4).reshape((Np, 4)),
-        shape=(Np, 4),
-    ),
-    moment_inertia=dict(
-        np_type=np.floating,
-        value=np.linspace(3, 12, Np * 3).reshape((Np, 3)),
-        new_value=np.linspace(0, 20, Np * 3).reshape((Np, 3)),
-        shape=(Np, 3),
-    ),
+    # angmom=dict(
+    #     np_type=np.floating,
+    #     value=np.linspace(-3, 6, Np * 4).reshape((Np, 4)),
+    #     new_value=np.linspace(1, 3, Np * 4).reshape((Np, 4)),
+    #     shape=(Np, 4),
+    # ),
+    # moment_inertia=dict(
+    #     np_type=np.floating,
+    #     value=np.linspace(3, 12, Np * 3).reshape((Np, 3)),
+    #     new_value=np.linspace(0, 20, Np * 3).reshape((Np, 3)),
+    #     shape=(Np, 3),
+    # ),
     # We don't care about a valid body specification here just that we can
     # retrieve and set it correctly.
     body=dict(
@@ -88,18 +88,30 @@ _particle_data = dict(
         new_value=[1, 2, 3, 4, 5],
         shape=(Np,),
     ),
-    charge=dict(
+    density=dict(
         np_type=np.floating,
-        value=[1, 2, 3, 2, 1],
-        new_value=[-1, -1, -3, -2, -1],
+        value=[5, 4, 3, 2, 1],
+        new_value=[1, 2, 3, 4, 5],
         shape=(Np,),
     ),
-    diameter=dict(
+    pressure=dict(
         np_type=np.floating,
-        value=[5, 2, 3, 2, 5],
-        new_value=[2, 1, 0.5, 1, 2],
+        value=[5, 4, 3, 2, 1],
+        new_value=[1, 2, 3, 4, 5],
         shape=(Np,),
     ),
+    # charge=dict(
+    #     np_type=np.floating,
+    #     value=[1, 2, 3, 2, 1],
+    #     new_value=[-1, -1, -3, -2, -1],
+    #     shape=(Np,),
+    # ),
+    # diameter=dict(
+    #     np_type=np.floating,
+    #     value=[5, 2, 3, 2, 5],
+    #     new_value=[2, 1, 0.5, 1, 2],
+    #     shape=(Np,),
+    # ),
     image=dict(
         np_type=np.int32,
         value=np.linspace(-10, 20, Np * 3, dtype=np.int32).reshape(Np, 3),
@@ -117,18 +129,18 @@ _particle_local_data = dict(
         new_value=np.linspace(6, 12, Np * 3).reshape((Np, 3)),
         shape=(Np, 3),
     ),
-    net_torque=dict(
-        np_type=np.floating,
-        value=np.linspace(-0.5, 2.5, Np * 3).reshape((Np, 3)),
-        new_value=np.linspace(12.75, 25, Np * 3).reshape((Np, 3)),
-        shape=(Np, 3),
-    ),
-    net_virial=dict(
-        np_type=np.floating,
-        value=np.linspace(-1.5, 6.5, Np * 6).reshape((Np, 6)),
-        new_value=np.linspace(9.75, 13.12, Np * 6).reshape((Np, 6)),
-        shape=(Np, 6),
-    ),
+    # net_torque=dict(
+    #     np_type=np.floating,
+    #     value=np.linspace(-0.5, 2.5, Np * 3).reshape((Np, 3)),
+    #     new_value=np.linspace(12.75, 25, Np * 3).reshape((Np, 3)),
+    #     shape=(Np, 3),
+    # ),
+    # net_virial=dict(
+    #     np_type=np.floating,
+    #     value=np.linspace(-1.5, 6.5, Np * 6).reshape((Np, 6)),
+    #     new_value=np.linspace(9.75, 13.12, Np * 6).reshape((Np, 6)),
+    #     shape=(Np, 6),
+    # ),
     net_energy=dict(
         np_type=np.floating,
         value=np.linspace(0.5, 3.5, Np),
@@ -153,51 +165,51 @@ _bond_data = dict(
     _types=["b1", "b2"],
 )
 
-Na = 2
-_angle_data = dict(
-    _N=Na,
-    typeid=dict(
-        np_type=np.unsignedinteger, value=[1, 0], new_value=[0, 1], shape=(Na,)
-    ),
-    group=dict(
-        np_type=np.unsignedinteger,
-        value=[[0, 1, 2], [2, 3, 4]],
-        new_value=[[1, 3, 4], [0, 2, 4]],
-        shape=(Na, 3),
-    ),
-    tag=dict(np_type=np.unsignedinteger, value=None, shape=(Na,)),
-    _types=["a1", "a2"],
-)
+# Na = 2
+# _angle_data = dict(
+#     _N=Na,
+#     typeid=dict(
+#         np_type=np.unsignedinteger, value=[1, 0], new_value=[0, 1], shape=(Na,)
+#     ),
+#     group=dict(
+#         np_type=np.unsignedinteger,
+#         value=[[0, 1, 2], [2, 3, 4]],
+#         new_value=[[1, 3, 4], [0, 2, 4]],
+#         shape=(Na, 3),
+#     ),
+#     tag=dict(np_type=np.unsignedinteger, value=None, shape=(Na,)),
+#     _types=["a1", "a2"],
+# )
 
-Nd = 2
-_dihedral_data = dict(
-    _N=Nd,
-    typeid=dict(
-        np_type=np.unsignedinteger, value=[1, 0], new_value=[0, 1], shape=(Nd,)
-    ),
-    group=dict(
-        np_type=np.unsignedinteger,
-        value=[[0, 1, 2, 3], [1, 2, 3, 4]],
-        new_value=[[4, 3, 2, 1], [2, 4, 0, 1]],
-        shape=(Nd, 4),
-    ),
-    tag=dict(np_type=np.unsignedinteger, value=None, shape=(Nd,)),
-    _types=["d1", "d2"],
-)
+# Nd = 2
+# _dihedral_data = dict(
+#     _N=Nd,
+#     typeid=dict(
+#         np_type=np.unsignedinteger, value=[1, 0], new_value=[0, 1], shape=(Nd,)
+#     ),
+#     group=dict(
+#         np_type=np.unsignedinteger,
+#         value=[[0, 1, 2, 3], [1, 2, 3, 4]],
+#         new_value=[[4, 3, 2, 1], [2, 4, 0, 1]],
+#         shape=(Nd, 4),
+#     ),
+#     tag=dict(np_type=np.unsignedinteger, value=None, shape=(Nd,)),
+#     _types=["d1", "d2"],
+# )
 
-Ni = 2
-_improper_data = dict(
-    _N=Ni,
-    typeid=dict(np_type=np.unsignedinteger, value=[0, 0], shape=(Ni,)),
-    group=dict(
-        np_type=np.unsignedinteger,
-        value=[[3, 2, 1, 0], [1, 2, 3, 4]],
-        new_value=[[1, 2, 3, 0], [4, 2, 3, 1]],
-        shape=(Ni, 4),
-    ),
-    tag=dict(np_type=np.unsignedinteger, value=None, shape=(Ni,)),
-    _types=["i1"],
-)
+# Ni = 2
+# _improper_data = dict(
+#     _N=Ni,
+#     typeid=dict(np_type=np.unsignedinteger, value=[0, 0], shape=(Ni,)),
+#     group=dict(
+#         np_type=np.unsignedinteger,
+#         value=[[3, 2, 1, 0], [1, 2, 3, 4]],
+#         new_value=[[1, 2, 3, 0], [4, 2, 3, 1]],
+#         shape=(Ni, 4),
+#     ),
+#     tag=dict(np_type=np.unsignedinteger, value=None, shape=(Ni,)),
+#     _types=["i1"],
+# )
 
 Nc = 3
 _constraint_data = dict(
@@ -217,31 +229,31 @@ _constraint_data = dict(
     tag=dict(np_type=np.unsignedinteger, value=None, shape=(Nc,)),
 )
 
-Npa = 2
-_pair_data = dict(
-    _N=Npa,
-    typeid=dict(
-        np_type=np.unsignedinteger, value=[0, 1], new_value=[1, 0], shape=(Npa,)
-    ),
-    group=dict(
-        np_type=np.unsignedinteger,
-        value=[[0, 1], [2, 3]],
-        new_value=[[4, 1], [0, 3]],
-        shape=(Npa, 2),
-    ),
-    tag=dict(np_type=np.unsignedinteger, value=None, shape=(Npa,)),
-    _types=["p1", "p2"],
-)
+# Npa = 2
+# _pair_data = dict(
+#     _N=Npa,
+#     typeid=dict(
+#         np_type=np.unsignedinteger, value=[0, 1], new_value=[1, 0], shape=(Npa,)
+#     ),
+#     group=dict(
+#         np_type=np.unsignedinteger,
+#         value=[[0, 1], [2, 3]],
+#         new_value=[[4, 1], [0, 3]],
+#         shape=(Npa, 2),
+#     ),
+#     tag=dict(np_type=np.unsignedinteger, value=None, shape=(Npa,)),
+#     _types=["p1", "p2"],
+# )
 
 _global_dict = dict(
     rtag=dict(
         particles=dict(np_type=np.unsignedinteger, value=None, shape=(Np,)),
         bonds=dict(np_type=np.unsignedinteger, value=None, shape=(Nb,)),
-        angles=dict(np_type=np.unsignedinteger, value=None, shape=(Na,)),
-        dihedrals=dict(np_type=np.unsignedinteger, value=None, shape=(Nd,)),
-        impropers=dict(np_type=np.unsignedinteger, value=None, shape=(Ni,)),
+        # angles=dict(np_type=np.unsignedinteger, value=None, shape=(Na,)),
+        # dihedrals=dict(np_type=np.unsignedinteger, value=None, shape=(Nd,)),
+        # impropers=dict(np_type=np.unsignedinteger, value=None, shape=(Ni,)),
         constraints=dict(np_type=np.unsignedinteger, value=None, shape=(Nc,)),
-        pairs=dict(np_type=np.unsignedinteger, value=None, shape=(Npa,)),
+        # pairs=dict(np_type=np.unsignedinteger, value=None, shape=(Npa,)),
     )
 )
 
@@ -270,12 +282,12 @@ def base_snapshot(device):
     if snapshot.communicator.rank == 0:
         snapshot.configuration.box = [2.1, 2.1, 2.1, 0, 0, 0]
         set_snapshot(snapshot, _particle_data, "particles")
-        set_snapshot(snapshot, _bond_data, "bonds")
-        set_snapshot(snapshot, _angle_data, "angles")
-        set_snapshot(snapshot, _dihedral_data, "dihedrals")
-        set_snapshot(snapshot, _improper_data, "impropers")
+        # set_snapshot(snapshot, _bond_data, "bonds")
+        # set_snapshot(snapshot, _angle_data, "angles")
+        # set_snapshot(snapshot, _dihedral_data, "dihedrals")
+        # set_snapshot(snapshot, _improper_data, "impropers")
         set_snapshot(snapshot, _constraint_data, "constraints")
-        set_snapshot(snapshot, _pair_data, "pairs")
+        # set_snapshot(snapshot, _pair_data, "pairs")
     return snapshot
 
 
@@ -283,11 +295,11 @@ def base_snapshot(device):
     params=[
         "particles",
         "bonds",
-        "angles",
-        "dihedrals",
-        "impropers",
+        # "angles",
+        # "dihedrals",
+        # "impropers",
         "constraints",
-        "pairs",
+        # "pairs",
     ]
 )
 def snapshot_section(request):
@@ -314,11 +326,11 @@ def global_property(request):
         for name, section_dict in [
             ("particles", {**_particle_data, **_particle_local_data}),
             ("bonds", _bond_data),
-            ("angles", _angle_data),
-            ("dihedrals", _dihedral_data),
-            ("impropers", _improper_data),
+            # ("angles", _angle_data),
+            # ("dihedrals", _dihedral_data),
+            # ("impropers", _improper_data),
             ("constraints", _constraint_data),
-            ("pairs", _pair_data),
+            # ("pairs", _pair_data),
         ]
         for prop_name, prop_dict in section_dict.items()
         if not prop_name.startswith("_")
