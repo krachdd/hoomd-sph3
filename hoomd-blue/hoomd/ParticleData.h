@@ -194,16 +194,14 @@ template<class Real> struct PYBIND11_EXPORT SnapshotParticleData
     static pybind11::object getVelNP(pybind11::object self);
     //! Get accel as a Python object
     static pybind11::object getAccelNP(pybind11::object self);
-    //! Get aux1 as a Python object
+    //! Get accel as a Python object
     static pybind11::object getAux1NP(pybind11::object self);
-    //! Get aux2 as a Python object
+    //! Get accel as a Python object
     static pybind11::object getAux2NP(pybind11::object self);
-    //! Get aux3 as a Python object
+    //! Get accel as a Python object
     static pybind11::object getAux3NP(pybind11::object self);
-    //! Get aux4 as a Python object
+    //! Get accel as a Python object
     static pybind11::object getAux4NP(pybind11::object self);
-    //! Get aux5 as a Python object
-    static pybind11::object getAux5NP(pybind11::object self);
     // //! Get accel as a Python object
     // static pybind11::object getDpeNP(pybind11::object self);
     //! Get accel as a Python object
@@ -246,7 +244,6 @@ template<class Real> struct PYBIND11_EXPORT SnapshotParticleData
     std::vector< vec3<Real> > aux2;             //!< auxiliary field 2
     std::vector< vec3<Real> > aux3;             //!< auxiliary field 3
     std::vector< vec3<Real> > aux4;             //!< auxiliary field 4
-    std::vector< vec3<Real> > aux5;             //!< auxiliary field 5
     std::vector<Real> slength;                  //!< smoothing length
     std::vector< vec3<Real> > accel;            //!< accelerations
     std::vector< vec3<Real> > dpedt;            //!< density, pressure, energies time rate
@@ -278,7 +275,6 @@ struct pdata_element
     Scalar3 aux2;              //!< Auxiliary vector field 2
     Scalar3 aux3;              //!< Auxiliary vector field 3
     Scalar3 aux4;              //!< Auxiliary vector field 4
-    Scalar3 aux5;              //!< Auxiliary vector field 5
     Scalar slength;            //!< Smoothing length
     Scalar3 accel;             //!< Acceleration
     Scalar3 dpedt;             //!< Density, pressure and energy rate of change
@@ -685,9 +681,6 @@ class PYBIND11_EXPORT ParticleData
     //! Return auxiliary vector 4
     const GPUArray< Scalar3 >& getAuxiliaries4() const { return m_aux4; }
 
-    //! Return auxiliary vector 5
-    const GPUArray< Scalar3 >& getAuxiliaries5() const { return m_aux5; }
-
     //! Return smoothing length
     const GPUArray< Scalar >& getSlengths() const { return m_slength; }
 
@@ -805,15 +798,10 @@ class PYBIND11_EXPORT ParticleData
     //! Swap in auxiliary vector 3
     inline void swapAuxiliaries3() { m_aux3.swap(m_aux3_alt); }
 
-    //! Return auxiliary vector 4 (alternate array)
+    //! Return auxiliary vector 1 (alternate array)
     const GPUArray< Scalar3 >& getAltAuxiliaries4() const { return m_aux4_alt; }
-    //! Swap in auxiliary vector 4
+    //! Swap in auxiliary vector 1
     inline void swapAuxiliaries4() { m_aux4.swap(m_aux4_alt); }
-
-    //! Return auxiliary vector 5 (alternate array)
-    const GPUArray< Scalar3 >& getAltAuxiliaries5() const { return m_aux5_alt; }
-    //! Swap in auxiliary vector 5
-    inline void swapAuxiliaries5() { m_aux5.swap(m_aux5_alt); }
 
     //! Return smoothing length (alternate array)
     const GPUArray< Scalar >& getAltSlenghts() const { return m_slength_alt; }
@@ -1049,9 +1037,6 @@ class PYBIND11_EXPORT ParticleData
     //! Get auxiliary array 4 of a particle
     Scalar3 getAuxiliaryArray4(unsigned int tag) const;
 
-    //! Get auxiliary array 5 of a particle
-    Scalar3 getAuxiliaryArray5(unsigned int tag) const;
-
     //! Get the smoothing length of a particle
     Scalar getSlength(unsigned int tag) const;
 
@@ -1164,9 +1149,6 @@ class PYBIND11_EXPORT ParticleData
 
     //! Set auxiliary array 4 of a particle
     void setAuxiliaryArray4(unsigned int tag, const Scalar3& aux4);
-
-    //! Set auxiliary array 5 of a particle
-    void setAuxiliaryArray5(unsigned int tag, const Scalar3& aux5);
 
     //! Set the current smoothing length of a particle
     void setSlength(unsigned int tag, Scalar slength);
@@ -1398,7 +1380,6 @@ class PYBIND11_EXPORT ParticleData
     GPUArray<Scalar3> m_aux2;              //!< Auxiliary vector field 2
     GPUArray<Scalar3> m_aux3;              //!< Auxiliary vector field 3
     GPUArray<Scalar3> m_aux4;              //!< Auxiliary vector field 4
-    GPUArray<Scalar3> m_aux5;              //!< Auxiliary vector field 5
     GPUArray<Scalar> m_slength;             //!< Smoothing length
     GPUArray<Scalar3> m_accel;             //!< Acceleration
     GPUArray<Scalar3> m_dpedt;             //!< Density, pressure and energy rate of change
@@ -1432,7 +1413,6 @@ class PYBIND11_EXPORT ParticleData
     GPUArray<Scalar3> m_aux2_alt;              //!< Auxiliary vector field 2 (swap-in)
     GPUArray<Scalar3> m_aux3_alt;              //!< Auxiliary vector field 3 (swap-in)
     GPUArray<Scalar3> m_aux4_alt;              //!< Auxiliary vector field 4 (swap-in)
-    GPUArray<Scalar3> m_aux5_alt;              //!< Auxiliary vector field 5 (swap-in)
     GPUArray<Scalar> m_slength_alt;             //!< Smoothing length (swap-in)
     GPUArray<Scalar3> m_accel_alt;             //!< Acceleration (swap-in)
     GPUArray<Scalar3> m_dpedt_alt;             //!< Density, pressure and energy rate of change (swap-in)
@@ -1498,7 +1478,7 @@ class PYBIND11_EXPORT LocalParticleData : public GhostLocalDataAccess<Output, Pa
           m_position_handle(), m_velocities_handle(), m_acceleration_handle(), 
           m_density_handle(), m_pressure_handle(), m_energy_handle(), 
           m_aux1_handle(), m_aux2_handle(), m_aux3_handle(), m_aux4_handle(), 
-          m_aux5_handle(), m_slength_handle(), m_dpedt_handle(), m_image_handle(), m_tag_handle(), 
+          m_slength_handle(), m_dpedt_handle(), m_image_handle(), m_tag_handle(), 
           m_rtag_handle(), m_rigid_body_ids_handle(), m_net_force_handle(), m_net_ratedpe_handle()
         {
         }
@@ -1602,14 +1582,6 @@ class PYBIND11_EXPORT LocalParticleData : public GhostLocalDataAccess<Output, Pa
         {
         return this->template getLocalBuffer<Scalar3, Scalar>(m_aux4_handle,
                                                          &ParticleData::getAuxiliaries4,
-                                                         flag,
-                                                         true,
-                                                         3);
-        }
-    Output getAuxiliaries5(GhostDataFlag flag)
-        {
-        return this->template getLocalBuffer<Scalar3, Scalar>(m_aux5_handle,
-                                                         &ParticleData::getAuxiliaries5,
                                                          flag,
                                                          true,
                                                          3);
@@ -1748,7 +1720,6 @@ class PYBIND11_EXPORT LocalParticleData : public GhostLocalDataAccess<Output, Pa
         m_aux2_handle.reset(nullptr);
         m_aux3_handle.reset(nullptr);
         m_aux4_handle.reset(nullptr);
-        m_aux5_handle.reset(nullptr);
         m_slength_handle.reset(nullptr);
         m_dpedt_handle.reset(nullptr);
         m_image_handle.reset(nullptr);
@@ -1774,7 +1745,6 @@ class PYBIND11_EXPORT LocalParticleData : public GhostLocalDataAccess<Output, Pa
     std::unique_ptr<ArrayHandle<Scalar3>> m_aux2_handle;
     std::unique_ptr<ArrayHandle<Scalar3>> m_aux3_handle;
     std::unique_ptr<ArrayHandle<Scalar3>> m_aux4_handle;
-    std::unique_ptr<ArrayHandle<Scalar3>> m_aux5_handle;
     std::unique_ptr<ArrayHandle<Scalar>> m_slength_handle;
     std::unique_ptr<ArrayHandle<Scalar3>> m_dpedt_handle;
     std::unique_ptr<ArrayHandle<int3>> m_image_handle;
@@ -1807,7 +1777,6 @@ template<class Output> void export_LocalParticleData(pybind11::module& m, std::s
         .def("getAuxiliaries2", &LocalParticleData<Output>::getAuxiliaries2)
         .def("getAuxiliaries3", &LocalParticleData<Output>::getAuxiliaries3)
         .def("getAuxiliaries4", &LocalParticleData<Output>::getAuxiliaries4)
-        .def("getAuxiliaries5", &LocalParticleData<Output>::getAuxiliaries5)
         .def("getDensities", &LocalParticleData<Output>::getDensities)
         .def("getPressures", &LocalParticleData<Output>::getPressures)
         .def("getEnergies", &LocalParticleData<Output>::getEnergies)

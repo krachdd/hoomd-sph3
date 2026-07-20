@@ -35,7 +35,6 @@ std::list<std::string> GSDDumpWriter::particle_chunks {"particles/position",
                                                        "particles/auxiliary2",
                                                        "particles/auxiliary3",
                                                        "particles/auxiliary4",
-                                                       "particles/auxiliary5",
                                                        "particles/image"};
 
 /*! Constructs the GSDDumpWriter. After construction, settings are set. No file operations are
@@ -155,10 +154,6 @@ pybind11::tuple GSDDumpWriter::getDynamic()
         {
         result.append("particles/aux4");
         }
-    if (m_dynamic[gsd_flag::particles_aux5])
-        {
-        result.append("particles/aux5");
-        }
 
     return pybind11::tuple(result);
     }
@@ -235,10 +230,6 @@ void GSDDumpWriter::setDynamic(pybind11::object dynamic)
         if (s == "particles/aux4" || s == "momentum")
             {
             m_dynamic[gsd_flag::particles_aux4] = true;
-            }
-        if (s == "particles/aux5" || s == "momentum")
-            {
-            m_dynamic[gsd_flag::particles_aux5] = true;
             }
         }
     }
@@ -795,23 +786,6 @@ void GSDDumpWriter::writeMomenta(const GSDDumpWriter::GSDFrame& frame)
         GSDUtils::checkError(retval, m_fname);
         if (m_nframes == 0)
             m_nondefault["particles/auxiliary4"] = true;
-        }
-
-    if (frame.particle_data.aux5.size() != 0)
-        {
-        assert(frame.particle_data.aux5.size() == N);
-
-        m_exec_conf->msg->notice(10) << "GSD: writing particles/auxiliary5" << endl;
-        retval = gsd_write_chunk(&m_handle,
-                                 "particles/auxiliary5",
-                                 GSD_TYPE_FLOAT,
-                                 N,
-                                 3,
-                                 0,
-                                 (void*)frame.particle_data.aux5.data());
-        GSDUtils::checkError(retval, m_fname);
-        if (m_nframes == 0)
-            m_nondefault["particles/auxiliary5"] = true;
         }
 
 
@@ -1432,26 +1406,6 @@ void GSDDumpWriter::populateLocalFrame(GSDDumpWriter::GSDFrame& frame, uint64_t 
             }
         }
 
-    if (N > 0 && (m_dynamic[gsd_flag::particles_aux5] || m_nframes == 0))
-        {
-        ArrayHandle<Scalar3> h_aux5(m_pdata->getAuxiliaries5(),
-                                       access_location::host,
-                                       access_mode::read);
-
-        frame.particle_data_present[gsd_flag::particles_aux5] = true;
-        for (unsigned int index : m_index)
-            {
-            vec3<float> aux5 = vec3<float>(h_aux5.data[index]);
-
-            if (aux5 != vec3<float>(0, 0, 0))
-                {
-                all_default[gsd_flag::particles_aux5] = false;
-                }
-
-            frame.particle_data.aux5.push_back(aux5);
-            }
-        }
-
     //                                    access_location::host,
     //                                    access_mode::read);
 
@@ -1630,13 +1584,6 @@ void GSDDumpWriter::populateLocalFrame(GSDDumpWriter::GSDFrame& frame, uint64_t 
         frame.particle_data_present[gsd_flag::particles_aux4] = false;
         }
 
-    if (all_default[gsd_flag::particles_aux5]
-        && !(m_nframes > 0 && m_nondefault["particles/aux5"]))
-        {
-        frame.particle_data.aux5.resize(0);
-        frame.particle_data_present[gsd_flag::particles_aux5] = false;
-        }
-
     //     && !(m_nframes > 0 && m_nondefault["particles/angmom"]))
     //     frame.particle_data.angmom.resize(0);
     //     frame.particle_data_present[gsd_flag::particles_angmom] = false;
@@ -1747,11 +1694,6 @@ void GSDDumpWriter::gatherGlobalFrame(const GSDFrame& local_frame)
         {
         m_gather_tag_order.gatherArray(m_global_frame.particle_data.aux4,
                                        local_frame.particle_data.aux4);
-        }
-    if (local_frame.particle_data_present[gsd_flag::particles_aux5])
-        {
-        m_gather_tag_order.gatherArray(m_global_frame.particle_data.aux5,
-                                       local_frame.particle_data.aux5);
         }
     //                                    local_frame.particle_data.angmom);
     if (local_frame.particle_data_present[gsd_flag::particles_image])
