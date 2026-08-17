@@ -74,6 +74,16 @@ SPHBaseClass<KT_, SET_>::SPHBaseClass(std::shared_ptr<SystemDefinition> sysdef,
         m_bodyforce = make_scalar3(Scalar(0), Scalar(0), Scalar(0));
         m_damptime = 0;
         m_body_acceleration = false;
+        m_max_vel = Scalar(0);
+
+        // The SPH component is 3D only: kernel normalization constants are
+        // alpha/h^3 and the surface tension stress uses d = 3. Reject 2D boxes
+        // instead of silently producing wrongly normalized densities.
+        if (sysdef->getNDimensions() != 3)
+            {
+            throw std::runtime_error("hoomd.sph only supports 3D simulations "
+                                     "(kernel normalization is hard-coded for d=3).");
+            }
       }
 
 /*! Destructor
@@ -259,6 +269,26 @@ void SPHBaseClass<KT_, SET_>::applyBodyForce(uint64_t timestep, std::shared_ptr<
 
     }
 
+/*! \post Return maximum fluid speed of the last force computation, reduced over MPI ranks
+ */
+template<SmoothingKernelType KT_, StateEquationType SET_>
+Scalar SPHBaseClass<KT_, SET_>::getMaxVelocity()
+    {
+    Scalar v = m_max_vel;
+#ifdef ENABLE_MPI
+    if (m_sysdef->isDomainDecomposed())
+        {
+        MPI_Allreduce(MPI_IN_PLACE,
+                      &v,
+                      1,
+                      MPI_HOOMD_SCALAR,
+                      MPI_MAX,
+                      m_exec_conf->getMPICommunicator());
+        }
+#endif
+    return v;
+    }
+
 /*! \post Set acceleration components
  */
 template<SmoothingKernelType KT_, StateEquationType SET_>
@@ -292,6 +322,7 @@ void export_SPHBaseClass(pybind11::module& m, std::string name)
                            std::shared_ptr<nsearch::NeighborList>>())
         .def("constructTypeVectors", &SPHBaseClass<KT_, SET_>::constructTypeVectors)
         .def("getAcceleration", &SPHBaseClass<KT_, SET_>::getAcceleration)
+        .def("getMaxVelocity", &SPHBaseClass<KT_, SET_>::getMaxVelocity)
         .def("applyBodyForce", &SPHBaseClass<KT_, SET_>::applyBodyForce)
         .def("setAcceleration", &SPHBaseClass<KT_, SET_>::setAcceleration);
 }

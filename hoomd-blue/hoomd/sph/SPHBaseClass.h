@@ -109,6 +109,11 @@ class PYBIND11_EXPORT SPHBaseClass : public ForceCompute
         // Get the volumetric acceleration
         Scalar3 getAcceleration(uint64_t timestep);
 
+        /*! Maximum fluid particle speed observed during the last force computation,
+         *  reduced over all MPI ranks. Intended for adaptive time step controllers.
+         */
+        Scalar getMaxVelocity();
+
     protected:
         std::shared_ptr<SmoothingKernel<KT_> > m_skernel; //!< The kernel function class this method is associated with
         std::shared_ptr<StateEquation<SET_> > m_eos; //!< The equation of state class this method is associated with
@@ -123,6 +128,7 @@ class PYBIND11_EXPORT SPHBaseClass : public ForceCompute
         Scalar3 m_bodyforce; //!< Volumetric force
         unsigned int m_damptime; //!< Damping time
         bool m_body_acceleration; //!< True if body acceleration has been set and not null
+        Scalar m_max_vel; //!< Maximum local fluid speed from the last force computation (per rank)
     };
 
 

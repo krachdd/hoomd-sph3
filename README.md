@@ -12,7 +12,7 @@
 
 **hoomd-sph3** is an open-source Smoothed Particle Hydrodynamics (SPH) solver built on top of [HOOMD-Blue 5.2.0](https://hoomd-blue.readthedocs.io/en/latest/). It provides modular, extensible C++ components for particle-based fluid simulation, together with a comprehensive suite of benchmark cases covering single-phase, two-phase, free-surface, non-Newtonian, and density-gradient-driven flows.
 
-The solver targets high-performance CPU and GPU execution via HOOMD-Blue's plugin architecture, and uses two custom I/O libraries — **gsd-sph** (serial) and **pgsd-sph** (MPI-parallel) — for efficient snapshot reading and writing.
+The solver runs on CPUs (MPI domain decomposition supported; GPU kernels are not yet implemented) via HOOMD-Blue's plugin architecture, and uses two custom I/O libraries — **gsd-sph** (serial) and **pgsd-sph** (MPI-parallel) — for efficient snapshot reading and writing.
 
 ---
 
@@ -28,8 +28,11 @@ The solver targets high-performance CPU and GPU execution via HOOMD-Blue's plugi
 - **Two-phase flows** — surface-tension and Transport-Velocity formulations
 - **Density-gradient-driven flows** — Boussinesq buoyancy approximation, thermal Couette, heated cavity, and Rayleigh-Taylor instability
 - **Parallel I/O** — MPI-IO via pgsd-sph eliminates the serial gather-on-root bottleneck
+- **Density diffusion** — Molteni & Colagrossi (2009) diffusion and Antuono/Marrone δ-SPH with L-matrix renormalized density gradients (`model.activateDeltaSPH`)
+- **Adaptive time stepping** — `hoomd.sph.update.AdaptiveTimestep` recomputes Δt from the CFL, viscous, and body-force conditions using the MPI-reduced maximum fluid speed
 - **Helper modules** — GSD-to-VTU conversion, input-geometry readers, and diagnostic utilities
 - **Reproducible benchmarks** — standardized create/run scripts for all benchmark cases
+- **Unit tests** — `hoomd/sph/pytest/` covers kernel normalization/derivatives, EOS consistency, lattice completeness, and small end-to-end solver runs (`python -m pytest hoomd/sph/pytest` in the build tree)
 
 ---
 

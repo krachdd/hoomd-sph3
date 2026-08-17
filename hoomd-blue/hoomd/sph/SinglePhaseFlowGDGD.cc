@@ -218,6 +218,42 @@ void SinglePhaseFlowGDGD<KT_, SET_>::computeForces(uint64_t timestep)
 
 
 // ─────────────────────────────────────────────────────────────────────────────
+// compute_pressure — VRD-aware EOS evaluation
+// ─────────────────────────────────────────────────────────────────────────────
+
+template<SmoothingKernelType KT_, StateEquationType SET_>
+void SinglePhaseFlowGDGD<KT_, SET_>::compute_pressure(uint64_t timestep)
+    {
+    if (m_boussinesq)
+        {
+        // Standard global-rho0 EOS
+        SinglePhaseFlow<KT_, SET_>::compute_pressure(timestep);
+        return;
+        }
+
+    this->m_exec_conf->msg->notice(7)
+        << "Computing SinglePhaseFlowGDGD::Pressure (VRD)" << std::endl;
+
+    unsigned int group_size = this->m_fluidgroup->getNumMembers();
+
+        { // GPU Array Scope
+        ArrayHandle<Scalar> h_density(this->m_pdata->getDensities(), access_location::host, access_mode::read);
+        ArrayHandle<Scalar> h_pressure(this->m_pdata->getPressures(), access_location::host, access_mode::readwrite);
+        ArrayHandle<Scalar3> h_aux4(this->m_pdata->getAuxiliaries4(), access_location::host, access_mode::read);
+
+        for (unsigned int group_idx = 0; group_idx < group_size; group_idx++)
+            {
+            unsigned int i = this->m_fluidgroup->getMemberIndex(group_idx);
+            Scalar Ti = h_aux4.data[i].x;
+            Scalar rho0_i = this->m_rho0
+                            * (Scalar(1.0) - m_beta_s * (Ti - m_scalar_ref));
+            h_pressure.data[i] = this->m_eos->PressureVRD(h_density.data[i], rho0_i);
+            }
+        } // End GPU Array Scope
+    }
+
+
+// ─────────────────────────────────────────────────────────────────────────────
 // forcecomputation — extended pair-force loop with scalar transport
 // ─────────────────────────────────────────────────────────────────────────────
 
@@ -255,6 +291,7 @@ void SinglePhaseFlowGDGD<KT_, SET_>::forcecomputation(uint64_t timestep)
         // aux4.x: scalar field T (temperature / concentration).
         // Ghost values updated by update_ghost_aux4() at the start of computeForces().
         ArrayHandle<Scalar3> h_aux4    (this->m_pdata->getAuxiliaries4(), access_location::host, access_mode::read);
+        ArrayHandle<Scalar>  h_gdot    (this->m_pdata->getEnergies(),     access_location::host, access_mode::read); // per-particle shear rate
         ArrayHandle<Scalar>  h_h       (this->m_pdata->getSlengths(),     access_location::host, access_mode::read);
 
         // ── Neighbour list ────────────────────────────────────────────────────
@@ -292,6 +329,15 @@ void SinglePhaseFlowGDGD<KT_, SET_>::forcecomputation(uint64_t timestep)
             Scalar rhoi = h_density.data[i];
             Scalar Vi   = mi / rhoi;
 
+            // Effective viscosity of particle i from its per-particle shear rate
+            Scalar mu_eff_i = (this->m_nn_model == NEWTONIAN)
+                ? this->m_mu
+                : computeNNViscosity(this->m_mu, h_gdot.data[i], this->m_nn_model,
+                                     this->m_nn_K, this->m_nn_n,
+                                     this->m_nn_mu0, this->m_nn_muinf,
+                                     this->m_nn_lambda, this->m_nn_tauy,
+                                     this->m_nn_m, this->m_nn_mu_min);
+
             // Scalar field value of particle i (temperature or concentration)
             Scalar Ti = h_aux4.data[i].x;
 
@@ -313,8 +359,7 @@ void SinglePhaseFlowGDGD<KT_, SET_>::forcecomputation(uint64_t timestep)
 
             // Adaptive timestep tracking
             Scalar vi_total = sqrt(vi.x*vi.x + vi.y*vi.y + vi.z*vi.z);
-            if (i == 0) { max_vel = vi_total; }
-            else if (vi_total > max_vel) { max_vel = vi_total; }
+            if (vi_total > max_vel) { max_vel = vi_total; }
 
             // ── Neighbour inner loop ──────────────────────────────────────────
             myHead = h_head_list.data[i];
@@ -396,7 +441,7 @@ void SinglePhaseFlowGDGD<KT_, SET_>::forcecomputation(uint64_t timestep)
                                 : Scalar(0.5) * (h_h.data[i] + h_h.data[k]);
                 Scalar epssqr = Scalar(0.01) * meanh * meanh;
                 Scalar dwdr   = this->m_skernel->dwijdr(meanh, r);
-                Scalar dwdr_r = dwdr / (r + epssqr);
+                Scalar dwdr_r = (r > Scalar(1e-8)*meanh) ? dwdr/r : Scalar(0);
 
                 // Symmetric volume factor $(V_i^2 + V_j^2)$ -- used for pressure (SUMMATION),
                 // viscosity, and scalar diffusion.
@@ -426,11 +471,10 @@ void SinglePhaseFlowGDGD<KT_, SET_>::forcecomputation(uint64_t timestep)
                         Scalar meanrho = Scalar(0.5) * (rhoi + rhoj);
                         avc = (-this->m_avalpha * this->m_c * muij
                                + this->m_avbeta * muij * muij) / meanrho;
-                        // Scale avc consistently with the pressure scaling
-                        if (this->m_density_method == DENSITYSUMMATION)
-                            avc *= vijsqr;
-                        else // DENSITYCONTINUITY
-                            avc *= mi * mj;
+                        // Canonical Monaghan scaling F -= m_i m_j Pi_ij grad W.
+                        // Pi_ij has units of pressure/rho^2, so m_i*m_j is
+                        // required for BOTH density methods.
+                        avc *= mi * mj;
                         }
                     }
 
@@ -443,13 +487,23 @@ void SinglePhaseFlowGDGD<KT_, SET_>::forcecomputation(uint64_t timestep)
                 // $F_\mathrm{visc} = \mu_\mathrm{eff} \cdot (V_i^2+V_j^2) \cdot \mathrm{d}W/\mathrm{d}r/r \cdot (v_i - v_j)$
                 // (same formula for both density methods — uses vijsqr)
                 {
-                Scalar dvnorm    = sqrt(dot(dv, dv));
-                Scalar gamma_dot = dvnorm / (r + sqrt(epssqr));
-                Scalar mu_eff    = computeNNViscosity(this->m_mu, gamma_dot, this->m_nn_model,
-                                                      this->m_nn_K, this->m_nn_n,
-                                                      this->m_nn_mu0, this->m_nn_muinf,
-                                                      this->m_nn_lambda, this->m_nn_tauy,
-                                                      this->m_nn_m, this->m_nn_mu_min);
+                Scalar mu_eff;
+                if ( this->m_nn_model == NEWTONIAN )
+                    mu_eff = this->m_mu;
+                else
+                    {
+                    // Harmonic mean of per-particle viscosities; solids take
+                    // the fluid particle's value.
+                    Scalar mu_eff_j = issolid
+                        ? mu_eff_i
+                        : computeNNViscosity(this->m_mu, h_gdot.data[k], this->m_nn_model,
+                                             this->m_nn_K, this->m_nn_n,
+                                             this->m_nn_mu0, this->m_nn_muinf,
+                                             this->m_nn_lambda, this->m_nn_tauy,
+                                             this->m_nn_m, this->m_nn_mu_min);
+                    Scalar musum = mu_eff_i + mu_eff_j;
+                    mu_eff = (musum > Scalar(0)) ? Scalar(2)*mu_eff_i*mu_eff_j/musum : Scalar(0);
+                    }
                 temp0 = mu_eff * vijsqr * dwdr_r;
                 }
                 h_force.data[i].x += temp0 * dv.x;
@@ -482,28 +536,22 @@ void SinglePhaseFlowGDGD<KT_, SET_>::forcecomputation(uint64_t timestep)
                     // $\mathrm{d}\rho_i/\mathrm{d}t += \rho_i \cdot V_j \cdot (\mathbf{v}_i - \mathbf{v}_j) \cdot \nabla W_{ij}$
                     h_ratedpe.data[i].x += rhoi * Vj * dot(dv, dwdr_r * dx);
 
-                    // Density diffusion (Molteni & Colagrossi 2009), if enabled
+                    // Density diffusion (Molteni & Colagrossi 2009), corrected
+                    // sign (Laplacian smoothing):
+                    //   drho_i/dt += 2 delta h c V_j (rho_i - rho_j) (dW/dr)/r
                     if (!issolid && this->m_density_diffusion)
-                        h_ratedpe.data[i].x -=
-                            (Scalar(2) * this->m_ddiff * meanh * this->m_c * mj
-                             * (rhoi / rhoj - Scalar(1)) * dot(dx, dwdr_r * dx))
-                            / (rsq + epssqr);
+                        h_ratedpe.data[i].x +=
+                            Scalar(2) * this->m_ddiff * meanh * this->m_c
+                            * (mj / rhoj) * (rhoi - rhoj) * dwdr_r;
                     }
 
                 } // end neighbour loop
 
             // ── Post-pair per-particle updates ────────────────────────────────
 
-            // $\mathrm{d}p/\mathrm{d}t$ chain rule (DENSITYCONTINUITY only).
-            // In VRD mode: $\partial P/\partial\rho$ is evaluated at the per-particle rest density $\rho_{0,i}$.
-            // In Boussinesq mode: global $\rho_0$ is used (standard single-phase EOS).
-            if (this->m_density_method == DENSITYCONTINUITY)
-                {
-                Scalar dpdrho = m_boussinesq
-                                ? this->m_eos->dPressuredDensity(rhoi)
-                                : this->m_eos->dPressureVRDdDensity(rhoi, rho0_i);
-                h_ratedpe.data[i].y = dpdrho * h_ratedpe.data[i].x;
-                }
+            // NOTE: no dp/dt chain rule anymore. For DENSITYCONTINUITY the
+            // (VRD-aware) compute_pressure() override re-evaluates pressure
+            // from the EOS every step in computeForces().
 
             // ── Boussinesq buoyancy correction ────────────────────────────────
             // Standard gravity $F_g = m \cdot g$ is applied uniformly by applyBodyForce().
@@ -523,6 +571,7 @@ void SinglePhaseFlowGDGD<KT_, SET_>::forcecomputation(uint64_t timestep)
             } // end fluid-particle outer loop
 
         this->m_timestep_list[5] = max_vel;
+        this->m_max_vel = Scalar(max_vel);
 
         } // End GPU Array Scope
 

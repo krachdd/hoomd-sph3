@@ -255,11 +255,16 @@ class PYBIND11_EXPORT SinglePhaseFlow : public SPHBaseClass<KT_, SET_>
          * \param eps_pos  Correction factor for positive-pressure pairs (default 0.01)
          * \param eps_neg  Correction factor for negative-pressure pairs (default 0.2)
          */
-        void activateTensilCorrection(Scalar eps_pos = Scalar(0.01), Scalar eps_neg = Scalar(0.2))
+        void activateTensilCorrection(Scalar eps_pos = Scalar(0.01),
+                                      Scalar eps_neg = Scalar(0.2),
+                                      Scalar dp      = Scalar(0))
             {
             m_tensil_correction = true;
             m_tensil_eps_pos    = eps_pos;
             m_tensil_eps_neg    = eps_neg;
+            // Reference distance for W(dp): the actual initial particle spacing.
+            // If not given (dp <= 0), fall back to the legacy h/1.5 estimate.
+            m_tensil_dp         = dp;
             }
 
         /*! Turn tensile instability correction off.
@@ -283,6 +288,38 @@ class PYBIND11_EXPORT SinglePhaseFlow : public SPHBaseClass<KT_, SET_>
         void deactivateDensityDiffusion()
             {
             m_density_diffusion = false;
+            }
+
+        /*! Turn Antuono/Marrone delta-SPH density diffusion on (DENSITYCONTINUITY only).
+         *
+         *  Adds the renormalized diffusive term of Antuono et al. (2010) /
+         *  Marrone et al. (2011) to the continuity equation:
+         *
+         *    \f$ \frac{D\rho_i}{Dt} \mathrel{+}= \delta h c \sum_j \psi_{ij} \cdot \nabla_i W_{ij} V_j \f$
+         *
+         *    \f$ \psi_{ij} = 2(\rho_j-\rho_i)\frac{\mathbf{x}_{ji}}{|\mathbf{x}_{ij}|^2}
+         *                    - \left( \langle\nabla\rho\rangle_i^L + \langle\nabla\rho\rangle_j^L \right) \f$
+         *
+         *  where \f$\langle\nabla\rho\rangle^L\f$ is the first-order-consistent
+         *  (L-matrix renormalized) density gradient. Subtracting the resolved
+         *  gradient prevents the spurious diffusion of hydrostatic/free-surface
+         *  density gradients that the plain Molteni term produces.
+         *
+         *  Mutually exclusive with activateDensityDiffusion(). Applied to
+         *  fluid-fluid pairs only. Typical delta = 0.1.
+         */
+        void activateDeltaSPH(Scalar delta)
+            {
+            m_delta_sph = true;
+            m_delta = delta;
+            m_density_diffusion = false;
+            }
+
+        /*! Turn Antuono type delta-SPH density diffusion off.
+         */
+        void deactivateDeltaSPH()
+            {
+            m_delta_sph = false;
             }
 
         /*! Turn Shepard type density reinitialization on
@@ -321,10 +358,11 @@ class PYBIND11_EXPORT SinglePhaseFlow : public SPHBaseClass<KT_, SET_>
             flags[comm_flag::net_force] = 0;
             flags[comm_flag::position] = 1; // Stores position and type
             flags[comm_flag::velocity] = 1; // Stores velocity and mass
-            flags[comm_flag::density] = 1; // Stores density 
+            flags[comm_flag::density] = 1; // Stores density
             flags[comm_flag::pressure] = 1; // Stores pressure
-            flags[comm_flag::energy] = 0; // Stores density and pressure
+            flags[comm_flag::energy] = (m_nn_model != NEWTONIAN) ? 1 : 0; // Stores per-particle shear rate (non-Newtonian only)
             flags[comm_flag::auxiliary1] = 1; // Stores fictitious velocity
+            flags[comm_flag::auxiliary2] = m_delta_sph ? 1 : 0; // Stores renormalized density gradient (delta-SPH)
             flags[comm_flag::slength] = 1; // Stores smoothing length TODO is this needed
             // Add flags requested by base class
             flags |= ForceCompute::getRequestedCommFlags(timestep);
@@ -382,6 +420,7 @@ class PYBIND11_EXPORT SinglePhaseFlow : public SPHBaseClass<KT_, SET_>
         Scalar m_avalpha; //!< Volumetric diffusion coefficient for artificial viscosity operator
         Scalar m_avbeta; //!< Shock diffusion coefficient for artificial viscosity operator
         Scalar m_ddiff; //!< Diffusion coefficient for Molteni type density diffusion
+        Scalar m_delta; //!< Diffusion coefficient for Antuono type delta-SPH density diffusion
         unsigned int m_shepardfreq; //!< Time step frequency for Shepard reinitialization
         unsigned int m_densityreinitfreq; //!< Time step frequency for density reinitialization
 
@@ -397,7 +436,9 @@ class PYBIND11_EXPORT SinglePhaseFlow : public SPHBaseClass<KT_, SET_>
         bool m_tensil_correction; //!< Set to true if Monaghan (1994) tensile instability correction is active
         Scalar m_tensil_eps_pos;  //!< Tensile correction factor for positive-pressure pairs (default 0.01)
         Scalar m_tensil_eps_neg;  //!< Tensile correction factor for negative-pressure pairs (default 0.2)
+        Scalar m_tensil_dp;       //!< Reference particle spacing for W(dp); <= 0 means use h/1.5
         bool m_density_diffusion; //!< Set to true if Molteni type density diffusion is to be used
+        bool m_delta_sph; //!< Set to true if Antuono type delta-SPH density diffusion is to be used
         bool m_shepard_renormalization; //!< Set to true if Shepard type density reinitialization is to be used
         bool m_params_set; //!< True if parameters are set
         bool m_solid_removed; //!< True if solid Particles have been marked to remove
@@ -423,8 +464,10 @@ class PYBIND11_EXPORT SinglePhaseFlow : public SPHBaseClass<KT_, SET_>
 
         /*! Helper function to compute particle pressures
          *  \post Pressure of fluid particle computed
+         *  Virtual so derived solvers (e.g. GDGD with per-particle rest density)
+         *  can substitute their own EOS evaluation.
          */
-        void compute_pressure(uint64_t timestep);
+        virtual void compute_pressure(uint64_t timestep);
 
         /*! Helper function to compute fictitious solid particle properties (pressures and velocities)
         * \pre Ghost particle number densities (i.e. density array) must be up-to-date
@@ -437,6 +480,37 @@ class PYBIND11_EXPORT SinglePhaseFlow : public SPHBaseClass<KT_, SET_>
         * \post Fluid particle densities are recomputed based on the Shepard renormalization
         */
         void renormalize_density(uint64_t timestep);
+
+        /*! Helper function to compute the L-matrix renormalized density gradient
+         *  used by the Antuono delta-SPH diffusion term (DENSITYCONTINUITY only).
+         * \pre Fluid particle densities (including ghosts) must be up-to-date
+         * \post Renormalized density gradient of fluid particles stored in aux2
+         */
+        void compute_density_gradient(uint64_t timestep);
+
+        /*! Helper function to compute the per-particle scalar shear rate
+         *  gamma_dot = sqrt(2 D:D) from the L-matrix renormalized velocity
+         *  gradient (D = symmetric part). Used by the non-Newtonian rheology
+         *  models instead of a per-pair |dv|/r estimate, which is not
+         *  frame-invariant (it reads rigid rotation as shear).
+         *  Solid neighbors contribute with their fictitious (Adami) velocities
+         *  so wall shear is captured consistently with the momentum equation.
+         * \pre Fictitious solid velocities (aux1, including ghosts) up-to-date
+         * \post gamma_dot of fluid particles stored in the energy array
+         */
+        void compute_strain_rate(uint64_t timestep);
+
+        /*! Helper function to set communication flags and update ghost energies
+        * \param timestep The time step
+        * \post Ghost particle energy array (per-particle shear rate) is up-to-date
+        */
+        void update_ghost_energy(uint64_t timestep);
+
+        /*! Helper function to set communication flags and update ghost auxiliary array 2
+        * \param timestep The time step
+        * \post Ghost particle auxiliary array 2 (renormalized density gradient) is up-to-date
+        */
+        void update_ghost_aux2(uint64_t timestep);
 
         /*! Helper function where the actual force computation takes place
          * \pre Number densities and fictitious solid particle properties must be up-to-date
