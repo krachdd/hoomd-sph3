@@ -205,6 +205,7 @@ void SinglePhaseFlowTV<KT_, SET_>::forcecomputation(uint64_t timestep)
         ArrayHandle<Scalar3> h_vf(this->m_pdata->getAuxiliaries1(), access_location::host,access_mode::read);
         ArrayHandle<Scalar3> h_bpc(this->m_pdata->getAuxiliaries2(), access_location::host,access_mode::readwrite); // background pressure contribution to tv
         ArrayHandle<Scalar3> h_tv(this->m_pdata->getAuxiliaries3(), access_location::host,access_mode::read); // transport velocity of the particle tv
+        ArrayHandle<Scalar>  h_gdot(this->m_pdata->getEnergies(), access_location::host, access_mode::read); // per-particle shear rate
         ArrayHandle<Scalar>  h_h(this->m_pdata->getSlengths(), access_location::host, access_mode::read);
         
         // access the neighbor list
@@ -230,7 +231,8 @@ void SinglePhaseFlowTV<KT_, SET_>::forcecomputation(uint64_t timestep)
         Scalar tensil_od_wdeltap = Scalar(0);
         if (this->m_tensil_correction && this->m_const_slength)
             {
-            Scalar wdeltap = this->m_skernel->wij(this->m_ch, this->m_ch / Scalar(1.5));
+            Scalar dp_ref = (this->m_tensil_dp > Scalar(0)) ? this->m_tensil_dp : this->m_ch / Scalar(1.5);
+            Scalar wdeltap = this->m_skernel->wij(this->m_ch, dp_ref);
             tensil_od_wdeltap = (wdeltap > Scalar(0)) ? (Scalar(1) / wdeltap) : Scalar(0);
             }
 
@@ -269,6 +271,15 @@ void SinglePhaseFlowTV<KT_, SET_>::forcecomputation(uint64_t timestep)
             Scalar rhoi = h_density.data[i];
             Scalar Vi   = mi / rhoi;
 
+            // Effective viscosity of particle i from its per-particle shear rate
+            Scalar mu_eff_i = (this->m_nn_model == NEWTONIAN)
+                ? this->m_mu
+                : computeNNViscosity(this->m_mu, h_gdot.data[i], this->m_nn_model,
+                                     this->m_nn_K, this->m_nn_n,
+                                     this->m_nn_mu0, this->m_nn_muinf,
+                                     this->m_nn_lambda, this->m_nn_tauy,
+                                     this->m_nn_m, this->m_nn_mu_min);
+
             // // Total velocity of particle
             Scalar vi_total = sqrt((vi.x * vi.x) + (vi.y * vi.y) + (vi.z * vi.z));
 
@@ -284,8 +295,7 @@ void SinglePhaseFlowTV<KT_, SET_>::forcecomputation(uint64_t timestep)
             Scalar A33i = rhoi * vi.z * ( tvi.z - vi.z );
 
             // Properties needed for adaptive timestep
-            if (i == 0) { max_vel = vi_total; }
-            else if (vi_total > max_vel) { max_vel = vi_total; }
+            if (vi_total > max_vel) { max_vel = vi_total; }
 
             // Loop over all of the neighbors of this particle
             myHead = h_head_list.data[i];
@@ -376,17 +386,20 @@ void SinglePhaseFlowTV<KT_, SET_>::forcecomputation(uint64_t timestep)
                 Scalar meanh  = this->m_const_slength ? this->m_ch : Scalar(0.5)*(h_h.data[i]+h_h.data[k]);
                 Scalar epssqr = Scalar(0.01) * meanh * meanh;
 
-                // Kernel function derivative evaluation
+                // Kernel function derivative evaluation (unsoftened; dW/dr / r is
+                // finite as r -> 0 for all supported kernels)
                 Scalar dwdr   = this->m_skernel->dwijdr(meanh,r);
-                Scalar dwdr_r = dwdr/(r+epssqr);
+                Scalar dwdr_r = (r > Scalar(1e-8)*meanh) ? dwdr/r : Scalar(0);
 
                 // Evaluate inter-particle pressure force
                 // Transport formulation proposed by Adami 2013
-                temp0 = (rhoj*Pi+rhoi*Pj)/(rhoi+rhoj); 
+                temp0 = (rhoj*Pi+rhoi*Pj)/(rhoi+rhoj);
 
                 Scalar avc = 0.0;
                 // Optionally add artificial viscosity
                 // Monaghan (1983) J. Comput. Phys. 52 (2) 374–389
+                // Canonical scaling: F -= m_i m_j Pi_ij grad W (Pi has units of
+                // pressure/rho^2, so it must NOT be scaled like a pressure).
                 if ( this->m_artificial_viscosity && !issolid )
                     {
                     Scalar dotdvdx = dot(dv,dx);
@@ -399,10 +412,11 @@ void SinglePhaseFlowTV<KT_, SET_>::forcecomputation(uint64_t timestep)
                     }
 
                 // Add contribution to fluid particle; pressure interaction force
+                // plus Monaghan artificial viscosity with its own m_i m_j scaling
                 Scalar vijsqr = Vi*Vi+Vj*Vj;
-                h_force.data[i].x -= vijsqr * ( temp0 + avc )* dwdr_r * dx.x;
-                h_force.data[i].y -= vijsqr * ( temp0 + avc )* dwdr_r * dx.y;
-                h_force.data[i].z -= vijsqr * ( temp0 + avc )* dwdr_r * dx.z;
+                h_force.data[i].x -= ( vijsqr*temp0 + mi*mj*avc ) * dwdr_r * dx.x;
+                h_force.data[i].y -= ( vijsqr*temp0 + mi*mj*avc ) * dwdr_r * dx.y;
+                h_force.data[i].z -= ( vijsqr*temp0 + mi*mj*avc ) * dwdr_r * dx.z;
 
                 // Tensile instability correction (Monaghan 1994) — fluid-fluid pairs only.
                 if (this->m_tensil_correction && !issolid)
@@ -412,7 +426,8 @@ void SinglePhaseFlowTV<KT_, SET_>::forcecomputation(uint64_t timestep)
                         od_wdeltap = tensil_od_wdeltap;
                     else
                         {
-                        Scalar wdeltap = this->m_skernel->wij(meanh, meanh / Scalar(1.5));
+                        Scalar dp_ref = (this->m_tensil_dp > Scalar(0)) ? this->m_tensil_dp : meanh / Scalar(1.5);
+                        Scalar wdeltap = this->m_skernel->wij(meanh, dp_ref);
                         od_wdeltap = (wdeltap > Scalar(0)) ? (Scalar(1) / wdeltap) : Scalar(0);
                         }
                     Scalar wij_val = this->m_skernel->wij(meanh, r);
@@ -426,15 +441,24 @@ void SinglePhaseFlowTV<KT_, SET_>::forcecomputation(uint64_t timestep)
                     h_force.data[i].z -= tc * dwdr_r * dx.z;
                     }
 
-                // Evaluate viscous interaction forces
+                // Evaluate viscous interaction forces (harmonic mean of the
+                // per-particle effective viscosities; solids take the fluid's)
                 {
-                Scalar dvnorm    = sqrt(dot(dv, dv));
-                Scalar gamma_dot = dvnorm / (r + sqrt(epssqr));
-                Scalar mu_eff    = computeNNViscosity(this->m_mu, gamma_dot, this->m_nn_model,
-                                                      this->m_nn_K, this->m_nn_n,
-                                                      this->m_nn_mu0, this->m_nn_muinf,
-                                                      this->m_nn_lambda, this->m_nn_tauy,
-                                                      this->m_nn_m, this->m_nn_mu_min);
+                Scalar mu_eff;
+                if ( this->m_nn_model == NEWTONIAN )
+                    mu_eff = this->m_mu;
+                else
+                    {
+                    Scalar mu_eff_j = issolid
+                        ? mu_eff_i
+                        : computeNNViscosity(this->m_mu, h_gdot.data[k], this->m_nn_model,
+                                             this->m_nn_K, this->m_nn_n,
+                                             this->m_nn_mu0, this->m_nn_muinf,
+                                             this->m_nn_lambda, this->m_nn_tauy,
+                                             this->m_nn_m, this->m_nn_mu_min);
+                    Scalar musum = mu_eff_i + mu_eff_j;
+                    mu_eff = (musum > Scalar(0)) ? Scalar(2)*mu_eff_i*mu_eff_j/musum : Scalar(0);
+                    }
                 temp0 = mu_eff * vijsqr * dwdr_r;
                 }
                 h_force.data[i].x  += temp0 * dv.x;
@@ -481,22 +505,23 @@ void SinglePhaseFlowTV<KT_, SET_>::forcecomputation(uint64_t timestep)
 
                     //h_ratedpe.data[i].x += mj*dot(dv,dwdr_r*dx);
 
-                    // Add density diffusion if requested
-                    // Molteni and Colagrossi, Computer Physics Communications 180 (2009) 861–872
+                    // Add density diffusion if requested (fluid-fluid pairs only).
+                    // Molteni and Colagrossi, Computer Physics Communications 180 (2009) 861–872:
+                    //   drho_i/dt += 2 delta h c V_j (rho_i - rho_j) (dW/dr)/r
+                    // (dW/dr < 0, so density extremes are smoothed out).
                     if ( !issolid && this->m_density_diffusion )
-                        h_ratedpe.data[i].x -= (Scalar(2)*this->m_ddiff*meanh*this->m_c*mj*(rhoi/rhoj-Scalar(1))*dot(dx,dwdr_r*dx))/(rsq+epssqr);
+                        h_ratedpe.data[i].x += Scalar(2)*this->m_ddiff*meanh*this->m_c*(mj/rhoj)*(rhoi-rhoj)*dwdr_r;
                     }
 
                 } // Closing Neighbor Loop
 
-            // Compute $\mathrm{d}p/\mathrm{d}t = (\mathrm{d}p/\mathrm{d}\rho) \cdot \mathrm{d}\rho/\mathrm{d}t$ via the chain rule so the integrator
-            // can time-march pressure consistently with density (DENSITYCONTINUITY only).
-            if ( this->m_density_method == DENSITYCONTINUITY )
-                h_ratedpe.data[i].y = this->m_eos->dPressuredDensity(rhoi) * h_ratedpe.data[i].x;
+            // NOTE: pressure is re-evaluated from the EOS every step in
+            // computeForces() (DENSITYCONTINUITY), so no dp/dt is integrated.
 
             } // Closing Fluid Particle Loop
 
         this->m_timestep_list[5] = max_vel;
+        this->m_max_vel = Scalar(max_vel);
 
         } // End GPU Array Scope
 
@@ -566,14 +591,9 @@ void SinglePhaseFlowTV<KT_, SET_>::computeForces(uint64_t timestep)
     else // DENSITYCONTINUITY
         {
         // Density is time-integrated via the continuity equation ($\mathrm{d}\rho/\mathrm{d}t$ computed in
-        // forcecomputation). Pressure is propagated by $\mathrm{d}p/\mathrm{d}t = (\mathrm{d}p/\mathrm{d}\rho) \cdot (\mathrm{d}\rho/\mathrm{d}t)$, so the
-        // integrator keeps pressure consistent with density without recomputing from EOS
-        // every step. Only the very first call needs an EOS-based initialization.
-        if ( !this->m_pressure_initialized )
-            {
-            this->compute_pressure(timestep);
-            this->m_pressure_initialized = true;
-            }
+        // forcecomputation). Pressure is re-evaluated from the EOS every step so it
+        // stays exactly consistent with the integrated density.
+        this->compute_pressure(timestep);
         }
 
 #ifdef ENABLE_MPI
@@ -590,6 +610,15 @@ void SinglePhaseFlowTV<KT_, SET_>::computeForces(uint64_t timestep)
     // Update ghost particles
     this->update_ghost_aux1(timestep);
 #endif
+
+    // Non-Newtonian rheology: per-particle shear rate + ghost sync
+    if ( this->m_nn_model != NEWTONIAN )
+        {
+        this->compute_strain_rate(timestep);
+#ifdef ENABLE_MPI
+        this->update_ghost_energy(timestep);
+#endif
+        }
 
     // Execute the force computation
     // This includes the computation of the density if 
@@ -628,7 +657,8 @@ void export_SinglePhaseFlowTV(pybind11::module& m, std::string name)
         .def("deactivateArtificialViscosity", &SinglePhaseFlowTV<KT_, SET_>::deactivateArtificialViscosity)
         .def("activateTensilCorrection", &SinglePhaseFlowTV<KT_, SET_>::activateTensilCorrection,
              pybind11::arg("eps_pos") = Scalar(0.01),
-             pybind11::arg("eps_neg") = Scalar(0.2))
+             pybind11::arg("eps_neg") = Scalar(0.2),
+             pybind11::arg("dp") = Scalar(0))
         .def("deactivateTensilCorrection", &SinglePhaseFlowTV<KT_, SET_>::deactivateTensilCorrection)
         .def("activateDensityDiffusion", &SinglePhaseFlowTV<KT_, SET_>::activateDensityDiffusion)
         .def("deactivateDensityDiffusion", &SinglePhaseFlowTV<KT_, SET_>::deactivateDensityDiffusion)

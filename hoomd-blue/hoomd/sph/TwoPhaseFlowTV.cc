@@ -133,6 +133,7 @@ void TwoPhaseFlowTV<KT_, SET1_, SET2_>::forcecomputation(uint64_t timestep)
     ArrayHandle<Scalar3> h_vf(this->m_pdata->getAuxiliaries1(), access_location::host, access_mode::read);
     ArrayHandle<Scalar3> h_bpc(this->m_pdata->getAuxiliaries2(), access_location::host, access_mode::readwrite); // BPC (write)
     ArrayHandle<Scalar3> h_tv(this->m_pdata->getAuxiliaries3(), access_location::host, access_mode::read);       // TV (read)
+    ArrayHandle<Scalar>  h_gdot(this->m_pdata->getEnergies(), access_location::host, access_mode::read); // per-particle shear rate (non-Newtonian)
     ArrayHandle<Scalar>  h_h(this->m_pdata->getSlengths(), access_location::host, access_mode::read);
     ArrayHandle<Scalar3> h_sf(this->m_pdata->getAuxiliaries4(), access_location::host, access_mode::read);
 
@@ -196,8 +197,7 @@ void TwoPhaseFlowTV<KT_, SET1_, SET2_>::forcecomputation(uint64_t timestep)
 
         // Properties needed for adaptive timestep
         Scalar vi_total = sqrt((vi.x * vi.x) + (vi.y * vi.y) + (vi.z * vi.z));
-        if (i == 0) { max_vel = vi_total; }
-        else if (vi_total > max_vel) { max_vel = vi_total; }
+        if (vi_total > max_vel) { max_vel = vi_total; }
 
         // --- Transport velocity terms: particle i ---
         Scalar3 tvi = h_tv.data[i];
@@ -302,7 +302,7 @@ void TwoPhaseFlowTV<KT_, SET1_, SET2_>::forcecomputation(uint64_t timestep)
 
             // Kernel function derivative evaluation
             Scalar dwdr   = this->m_skernel->dwijdr(meanh, r);
-            Scalar dwdr_r = dwdr / (r + eps);
+            Scalar dwdr_r = (r > Scalar(1e-8)*meanh) ? dwdr/r : Scalar(0);
 
             // ── Inter-particle pressure force ────────────────────────────────────
             // Symmetric volume formulation (Adami et al. 2013):
@@ -348,8 +348,12 @@ void TwoPhaseFlowTV<KT_, SET1_, SET2_>::forcecomputation(uint64_t timestep)
             //     $u_{ij}  = (\mathbf{v}_{ij} \cdot \mathbf{r}_{ij}) / (|\mathbf{r}_{ij}| + \eta)$       [signed radial velocity]
             //     $\mathrm{avc} = -\beta_R \cdot Z^*_{ij} \cdot u_{ij}^- / \bar{\rho}_{ij}$        (only if $\mathbf{v}_{ij} \cdot \mathbf{r}_{ij} < 0$)
             //   Activated via activateRiemannDissipation(beta).
-            Scalar avc = 0.0;
-            // [A] Monaghan AV — Monaghan (1992) Annu. Rev. Astron. Astrophys. 30, 543–574
+            // Dissipation term "diss" carries its own scaling so its units match
+            // a force in both density-method branches:
+            //   [A] Monaghan AV:  Pi_ij ~ pressure/rho^2  ->  F -= m_i m_j Pi_ij grad W
+            //   [B] Riemann:      p_d = -beta Z* u        ->  F -= (V_i^2+V_j^2) p_d grad W
+            Scalar diss = 0.0;
+            // [A] Monaghan AV (Monaghan 1992)
             if ( this->m_artificial_viscosity && !j_issolid )
                 {
                 Scalar dotdvdx = dot(dv, dx);
@@ -357,10 +361,11 @@ void TwoPhaseFlowTV<KT_, SET1_, SET2_>::forcecomputation(uint64_t timestep)
                     {
                     Scalar muij    = meanh*dotdvdx / (rsq + epssqr);
                     Scalar meanrho = Scalar(0.5)*(rhoi + rhoj);
-                    avc = (-this->m_avalpha*this->m_cmax*muij + this->m_avbeta*muij*muij) / meanrho;
+                    diss = mi*mj*(-this->m_avalpha*this->m_cmax*muij + this->m_avbeta*muij*muij) / meanrho;
                     }
                 }
-            // [B] Riemann dissipation — Zhang, Hu & Adams (2017) J. Comput. Phys. 340, 439–455
+            // [B] Riemann dissipation (Zhang, Hu & Adams 2017): dissipative pair
+            // pressure p_d = -beta Z* u^- (Z u is already a pressure).
             else if ( this->m_riemann_dissipation && !j_issolid )
                 {
                 Scalar dotdvdx = dot(dv, dx);
@@ -370,22 +375,25 @@ void TwoPhaseFlowTV<KT_, SET1_, SET2_>::forcecomputation(uint64_t timestep)
                     Scalar Zi    = rhoi * ci;
                     Scalar Zj    = rhoj * cj;
                     Scalar Zstar = (Zi * Zj) / (Zi + Zj);
-                    Scalar meanrho = Scalar(0.5) * (rhoi + rhoj);
-                    avc = -this->m_riemann_beta * Zstar * uij / meanrho;
+                    Scalar pd    = -this->m_riemann_beta * Zstar * uij;
+                    diss = (Vi*Vi + Vj*Vj) * pd;
                     }
                 }
 
             // Add pressure + dissipation force contribution to fluid particle
-            h_force.data[i].x -= prefactor * (temp0 + avc) * dwdr_r * dx.x;
-            h_force.data[i].y -= prefactor * (temp0 + avc) * dwdr_r * dx.y;
-            h_force.data[i].z -= prefactor * (temp0 + avc) * dwdr_r * dx.z;
+            h_force.data[i].x -= ( prefactor*temp0 + diss ) * dwdr_r * dx.x;
+            h_force.data[i].y -= ( prefactor*temp0 + diss ) * dwdr_r * dx.y;
+            h_force.data[i].z -= ( prefactor*temp0 + diss ) * dwdr_r * dx.z;
 
-            // Evaluate viscous interaction forces
+            // Evaluate viscous interaction forces. Non-Newtonian phases use
+            // the per-particle frame-invariant shear rate stored in the
+            // energy array by compute_strain_rate().
             {
-            Scalar dvnorm    = sqrt(dot(dv, dv));
-            Scalar gamma_dot = dvnorm / (r + eps);
+            bool nn_active = (this->m_nn_model1 != NEWTONIAN || this->m_nn_model2 != NEWTONIAN);
+            Scalar gdot_i = nn_active ? h_gdot.data[i] : Scalar(0);
+            Scalar gdot_j = (nn_active && !j_issolid) ? h_gdot.data[k] : gdot_i;
             NonNewtonianModel nn_model_i = i_isfluid1 ? this->m_nn_model1 : this->m_nn_model2;
-            Scalar mu_eff_i = computeNNViscosity(mui, gamma_dot, nn_model_i,
+            Scalar mu_eff_i = computeNNViscosity(mui, gdot_i, nn_model_i,
                 i_isfluid1 ? this->m_nn_K1 : this->m_nn_K2,
                 i_isfluid1 ? this->m_nn_n1 : this->m_nn_n2,
                 i_isfluid1 ? this->m_nn_mu0_1 : this->m_nn_mu0_2,
@@ -400,7 +408,7 @@ void TwoPhaseFlowTV<KT_, SET1_, SET2_>::forcecomputation(uint64_t timestep)
             else
                 {
                 NonNewtonianModel nn_model_j = j_isfluid1 ? this->m_nn_model1 : this->m_nn_model2;
-                mu_eff_j = computeNNViscosity(muj, gamma_dot, nn_model_j,
+                mu_eff_j = computeNNViscosity(muj, gdot_j, nn_model_j,
                     j_isfluid1 ? this->m_nn_K1 : this->m_nn_K2,
                     j_isfluid1 ? this->m_nn_n1 : this->m_nn_n2,
                     j_isfluid1 ? this->m_nn_mu0_1 : this->m_nn_mu0_2,
@@ -496,19 +504,16 @@ void TwoPhaseFlowTV<KT_, SET1_, SET2_>::forcecomputation(uint64_t timestep)
                 // $\rho_{01} \neq \rho_{02}$ (different-phase rest densities), generating unphysical
                 // density drift across the interface in stratified-flow setups.
                 // The normalised form equals zero at equilibrium for both phases.
+                // Corrected sign (Laplacian smoothing of the normalized density):
+                //   drho_i/dt += 2 delta h c V_j rho0_i (rho_i/rho0_i - rho_j/rho0_j) (dW/dr)/r
                 if ( !j_issolid && this->m_density_diffusion )
-                    h_ratedpe.data[i].x -= (Scalar(2)*this->m_ddiff*meanh*this->m_cmax*mj*(rhoi/rho0i-rhoj/rho0j)*dot(dx,dwdr_r*dx))/(rsq+epssqr);
+                    h_ratedpe.data[i].x += Scalar(2)*this->m_ddiff*meanh*this->m_cmax*(mj/rhoj)*rho0i*(rhoi/rho0i-rhoj/rho0j)*dwdr_r;
                 }
 
             } // Closing Neighbour Loop
 
-        // $\mathrm{d}p/\mathrm{d}t = (\mathrm{d}p/\mathrm{d}\rho) \cdot \mathrm{d}\rho/\mathrm{d}t$ via chain rule (DENSITYCONTINUITY only)
-        if ( this->m_density_method == DENSITYCONTINUITY )
-            {
-            Scalar dpdrho_i = i_isfluid1 ? this->m_eos1->dPressuredDensity(rhoi)
-                                         : this->m_eos2->dPressuredDensity(rhoi);
-            h_ratedpe.data[i].y = dpdrho_i * h_ratedpe.data[i].x;
-            }
+        // NOTE: pressure is re-evaluated from the per-phase EOS every step in
+        // computeForces() (DENSITYCONTINUITY), so no dp/dt is integrated.
 
         // Add surface force
         h_force.data[i].x += h_sf.data[i].x;
@@ -517,7 +522,7 @@ void TwoPhaseFlowTV<KT_, SET1_, SET2_>::forcecomputation(uint64_t timestep)
 
         } // Closing Fluid Particle Loop
 
-    this->m_timestep_list[5] = max_vel;
+    this->m_max_vel = Scalar(max_vel);
     // Add volumetric force (gravity)
     this->applyBodyForce(timestep, this->m_fluidgroup);
 
@@ -591,11 +596,9 @@ void TwoPhaseFlowTV<KT_, SET1_, SET2_>::computeForces(uint64_t timestep)
         }
     else // DENSITYCONTINUITY
         {
-        if ( !this->m_pressure_initialized )
-            {
-            this->compute_pressure(timestep);
-            this->m_pressure_initialized = true;
-            }
+        // Re-evaluate pressure from the per-phase EOS every step so it stays
+        // exactly consistent with the time-integrated density.
+        this->compute_pressure(timestep);
         }
 
 #ifdef ENABLE_MPI
@@ -654,6 +657,21 @@ void TwoPhaseFlowTV<KT_, SET1_, SET2_>::computeForces(uint64_t timestep)
     memcpy(h_tv_rest.data, m_tv_buf.data(), n_total * sizeof(Scalar3));
     memset(h_bpc_zero.data, 0, n_total * sizeof(Scalar3));
     }
+
+    // Non-Newtonian rheology: per-particle shear rate (energy array; mutually
+    // exclusive with Fickian shifting) + ghost sync.
+    if ( this->m_nn_model1 != NEWTONIAN || this->m_nn_model2 != NEWTONIAN )
+        {
+        if ( this->m_fickian_shifting )
+            throw std::runtime_error(
+                "TwoPhaseFlowTV: non-Newtonian rheology and Fickian shifting are "
+                "mutually exclusive (both store per-particle data in the energy "
+                "array). Disable one of the two.");
+        this->compute_strain_rate(timestep);
+#ifdef ENABLE_MPI
+        this->update_ghost_density_pressure_energy(timestep);
+#endif
+        }
 
     // Force computation: reads aux1 (fict. vel), aux3 (TV), aux4 (surface force);
     // writes aux2 (BPC) for each local fluid particle.

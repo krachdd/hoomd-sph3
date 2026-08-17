@@ -125,8 +125,9 @@ class VelocityVerlet(Method):
             self._cpp_obj = _sph.VelocityVerlet(sim.state._cpp_sys_def,
                                            sim.state._get_group(self.filter))
         else:
-            self._cpp_obj = _sph.VelocityVerletGPU(sim.state._cpp_sys_def,
-                                              sim.state._get_group(self.filter))
+            raise RuntimeError(
+                "The hoomd.sph component is CPU-only: no GPU integrators are "
+                "compiled. Construct the simulation with hoomd.device.CPU().")
 
         # Reload density and viscosity methods from __dict__
         self.str_densitymethod = self._param_dict._dict["densitymethod"]
@@ -205,8 +206,9 @@ class VelocityVerletBasic(Method):
             self._cpp_obj = _sph.VelocityVerletBasic(sim.state._cpp_sys_def,
                                            sim.state._get_group(self.filter))
         else:
-            self._cpp_obj = _sph.VelocityVerletBasicGPU(sim.state._cpp_sys_def,
-                                              sim.state._get_group(self.filter))
+            raise RuntimeError(
+                "The hoomd.sph component is CPU-only: no GPU integrators are "
+                "compiled. Construct the simulation with hoomd.device.CPU().")
 
         # Reload density and viscosity methods from __dict__
         self.str_densitymethod = self._param_dict._dict["densitymethod"]
@@ -306,8 +308,9 @@ class KickDriftKickTV(Method):
             self._cpp_obj = _sph.KickDriftKickTV(sim.state._cpp_sys_def,
                                            sim.state._get_group(self.filter))
         else:
-            self._cpp_obj = _sph.KickDriftKickTVGPU(sim.state._cpp_sys_def,
-                                              sim.state._get_group(self.filter))
+            raise RuntimeError(
+                "The hoomd.sph component is CPU-only: no GPU integrators are "
+                "compiled. Construct the simulation with hoomd.device.CPU().")
 
         # Reload density and viscosity methods from __dict__
         self.str_densitymethod = self._param_dict._dict["densitymethod"]

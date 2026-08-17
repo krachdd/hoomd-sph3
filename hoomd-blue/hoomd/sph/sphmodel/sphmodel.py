@@ -170,6 +170,8 @@ class SinglePhaseFlow(SPHModel):
                           beta = float(0.0),
                           densitydiffusion = bool(False),
                           ddiff = float(0.0),
+                          deltasph = bool(False),
+                          delta = float(0.0),
                           shepardrenormanlization = bool(False),
                           densityreinitialization = bool(False),
                           shepardfreq = int(0),
@@ -206,7 +208,9 @@ class SinglePhaseFlow(SPHModel):
         if isinstance(self._simulation.device, hoomd.device.CPU):
             spf_cls = getattr(_sph, self._cpp_SPFclass_name)
         else:
-            print("GPU not implemented")
+            raise RuntimeError(
+                "The hoomd.sph component is CPU-only: no GPU kernels are "
+                "compiled. Construct the simulation with hoomd.device.CPU().")
 
         # check that some Particles are defined
         if self._simulation.state._cpp_sys_def.getParticleData().getNGlobal() == 0:
@@ -287,6 +291,8 @@ class SinglePhaseFlow(SPHModel):
         self.beta = self._param_dict["beta"]
         self.densitydiffusion = self._param_dict["densitydiffusion"]
         self.ddiff = self._param_dict["ddiff"]
+        self.deltasph_active = self._param_dict["deltasph"]
+        self.deltasph_delta = self._param_dict["delta"]
         self.shepardrenormanlization = self._param_dict["shepardrenormanlization"]
         self.densityreinitialization = self._param_dict["densityreinitialization"]
         self.shepardfreq = self._param_dict["shepardfreq"]
@@ -306,7 +312,10 @@ class SinglePhaseFlow(SPHModel):
             self.activateDensityDiffusion(self.ddiff)
         else:
             self.deactivateDensityDiffusion()
-        
+
+        if (self.deltasph_active == True):
+            self._cpp_obj.activateDeltaSPH(float(self.deltasph_delta))
+
         if (self.shepardrenormanlization == True):
             self.activateShepardRenormalization(self.shepardfreq)
         else:
@@ -381,6 +390,41 @@ class SinglePhaseFlow(SPHModel):
 
     def deactivateDensityDiffusion(self):
         self._cpp_obj.deactivateDensityDiffusion()
+
+
+    def activateDeltaSPH(self, delta=0.1):
+        r"""Activate Antuono/Marrone delta-SPH density diffusion.
+
+        Adds the renormalized diffusive term of Antuono et al. (2010) /
+        Marrone et al. (2011) to the continuity equation
+        (``densitymethod='CONTINUITY'`` only). Unlike the plain Molteni
+        diffusion (``activateDensityDiffusion``), the delta-SPH form subtracts
+        the L-matrix renormalized density gradient, so resolved (e.g.
+        hydrostatic) density gradients are not spuriously diffused.
+        Mutually exclusive with ``activateDensityDiffusion``.
+
+        Args:
+            delta (float): diffusion coefficient, typically 0.1.
+        """
+        self._cpp_obj.activateDeltaSPH(float(delta))
+
+    def deactivateDeltaSPH(self):
+        self._cpp_obj.deactivateDeltaSPH()
+
+    def activateTensilCorrection(self, eps_pos=0.01, eps_neg=0.2, dp=0.0):
+        r"""Activate the Monaghan (1994) tensile instability correction.
+
+        Args:
+            eps_pos (float): correction factor for positive-pressure pairs.
+            eps_neg (float): correction factor for negative-pressure pairs.
+            dp (float): initial particle spacing used as the reference
+                distance in :math:`W(\Delta p)`. Pass the actual lattice
+                spacing dx; if 0, the legacy estimate h/1.5 is used.
+        """
+        self._cpp_obj.activateTensilCorrection(float(eps_pos), float(eps_neg), float(dp))
+
+    def deactivateTensilCorrection(self):
+        self._cpp_obj.deactivateTensilCorrection()
 
     def activateShepardRenormalization(self, shepardfreq=30):
         self.shepardfreq   = shepardfreq.item()   if isinstance(shepardfreq, np.generic)   else shepardfreq
@@ -639,7 +683,9 @@ class SinglePhaseFlowGDGD(SPHModel):
         if isinstance(self._simulation.device, hoomd.device.CPU):
             spf_cls = getattr(_sph, self._cpp_SPFclass_name)
         else:
-            print("GPU not implemented")
+            raise RuntimeError(
+                "The hoomd.sph component is CPU-only: no GPU kernels are "
+                "compiled. Construct the simulation with hoomd.device.CPU().")
 
         if self._simulation.state._cpp_sys_def.getParticleData().getNGlobal() == 0:
             self._simulation.device._cpp_msg.warning("No particles are defined.\n")
@@ -969,7 +1015,9 @@ class SinglePhaseFlowTV(SPHModel):
         if isinstance(self._simulation.device, hoomd.device.CPU):
             spf_cls = getattr(_sph, self._cpp_SPFclass_name)
         else:
-            print("GPU not implemented")
+            raise RuntimeError(
+                "The hoomd.sph component is CPU-only: no GPU kernels are "
+                "compiled. Construct the simulation with hoomd.device.CPU().")
 
         # check that some Particles are defined
         if self._simulation.state._cpp_sys_def.getParticleData().getNGlobal() == 0:
@@ -1420,7 +1468,9 @@ class SinglePhaseFlowFS(SPHModel):
         if isinstance(self._simulation.device, hoomd.device.CPU):
             spf_cls = getattr(_sph, self._cpp_SPFclass_name)
         else:
-            print("GPU not implemented")
+            raise RuntimeError(
+                "The hoomd.sph component is CPU-only: no GPU kernels are "
+                "compiled. Construct the simulation with hoomd.device.CPU().")
 
         if self._simulation.state._cpp_sys_def.getParticleData().getNGlobal() == 0:
             self._simulation.device._cpp_msg.warning("No particles are defined.\n")
@@ -1787,7 +1837,9 @@ class TwoPhaseFlow(SPHModel):
         if isinstance(self._simulation.device, hoomd.device.CPU):
             tpf_cls = getattr(_sph, self._cpp_TPFclass_name)
         else:
-            print("GPU not implemented")
+            raise RuntimeError(
+                "The hoomd.sph component is CPU-only: no GPU kernels are "
+                "compiled. Construct the simulation with hoomd.device.CPU().")
 
         # check that some Particles are defined
         if self._simulation.state._cpp_sys_def.getParticleData().getNGlobal() == 0:

@@ -67,7 +67,10 @@ SinglePhaseFlow<KT_, SET_>::SinglePhaseFlow(std::shared_ptr<SystemDefinition> sy
         m_tensil_correction = false;
         m_tensil_eps_pos    = Scalar(0.01);
         m_tensil_eps_neg    = Scalar(0.2);
+        m_tensil_dp         = Scalar(0.0);
         m_density_diffusion = false;
+        m_delta_sph         = false;
+        m_delta             = Scalar(0.0);
         m_shepard_renormalization = false;
         m_density_reinitialization = false;
         m_ch = Scalar(0.0);
@@ -170,6 +173,8 @@ std::vector<double> SinglePhaseFlow<KT_, SET_>::getProvidedTimestepQuantities(ui
 
     m_timestep_list[4] = m_mu;
 
+    // Maximum fluid speed of the last force computation (MPI-reduced).
+    m_timestep_list[5] = this->getMaxVelocity();
 
     return m_timestep_list;
 }
@@ -957,6 +962,332 @@ void SinglePhaseFlow<KT_, SET_>::renormalize_density(uint64_t timestep)
 
     } // End renormalize density
 
+/*! Compute the first-order-consistent (L-matrix renormalized) density gradient
+    used by the Antuono delta-SPH diffusion term. Stored in aux2.
+
+    For each fluid particle i (fluid neighbors only):
+      A_i        = sum_j V_j grad_i W_ij (x_j - x_i)^T      (renormalization matrix)
+      <grad rho> = A_i^{-1} sum_j V_j (rho_j - rho_i) grad_i W_ij
+    If A_i is ill-conditioned (incomplete kernel support, e.g. near free
+    surfaces), the uncorrected SPH gradient is used as fallback.
+ */
+template<SmoothingKernelType KT_,StateEquationType SET_>
+void SinglePhaseFlow<KT_, SET_>::compute_density_gradient(uint64_t timestep)
+    {
+    this->m_exec_conf->msg->notice(7) << "Computing SinglePhaseFlow::Renormalized density gradient" << std::endl;
+
+    const BoxDim& box = this->m_pdata->getGlobalBox();
+    const unsigned int group_size = this->m_fluidgroup->getNumMembers();
+
+        { // GPU Array Scope
+        ArrayHandle<Scalar3> h_gradrho(this->m_pdata->getAuxiliaries2(), access_location::host, access_mode::readwrite);
+        ArrayHandle<Scalar4> h_pos(this->m_pdata->getPositions(), access_location::host, access_mode::read);
+        ArrayHandle<Scalar4> h_velocity(this->m_pdata->getVelocities(), access_location::host, access_mode::read);
+        ArrayHandle<Scalar>  h_density(this->m_pdata->getDensities(), access_location::host, access_mode::read);
+        ArrayHandle<Scalar>  h_h(this->m_pdata->getSlengths(), access_location::host, access_mode::read);
+
+        ArrayHandle<unsigned int> h_n_neigh(this->m_nlist->getNNeighArray(), access_location::host, access_mode::read);
+        ArrayHandle<unsigned int> h_nlist(this->m_nlist->getNListArray(), access_location::host, access_mode::read);
+        ArrayHandle<size_t> h_head_list(this->m_nlist->getHeadList(), access_location::host, access_mode::read);
+        ArrayHandle<unsigned int> h_type_property_map(this->m_type_property_map, access_location::host, access_mode::read);
+
+        for (unsigned int group_idx = 0; group_idx < group_size; group_idx++)
+            {
+            unsigned int i = this->m_fluidgroup->getMemberIndex(group_idx);
+
+            Scalar3 pi;
+            pi.x = h_pos.data[i].x;
+            pi.y = h_pos.data[i].y;
+            pi.z = h_pos.data[i].z;
+            Scalar rhoi = h_density.data[i];
+
+            // Renormalization matrix A (row-major 3x3) and raw gradient g
+            Scalar A[9] = {0,0,0, 0,0,0, 0,0,0};
+            Scalar3 g = make_scalar3(0,0,0);
+
+            size_t myHead = h_head_list.data[i];
+            unsigned int size = (unsigned int)h_n_neigh.data[i];
+            for (unsigned int j = 0; j < size; j++)
+                {
+                unsigned int k = h_nlist.data[myHead + j];
+
+                // delta-SPH is a fluid-fluid operator
+                if ( checksolid(h_type_property_map.data, h_pos.data[k].w) )
+                    continue;
+
+                Scalar3 pj;
+                pj.x = h_pos.data[k].x;
+                pj.y = h_pos.data[k].y;
+                pj.z = h_pos.data[k].z;
+
+                Scalar3 dx;
+                dx.x = pi.x - pj.x;
+                dx.y = pi.y - pj.y;
+                dx.z = pi.z - pj.z;
+                dx = box.minImage(dx);
+
+                Scalar rsq = dot(dx, dx);
+                if ( m_const_slength && rsq > m_rcutsq )
+                    continue;
+
+                Scalar r = sqrt(rsq);
+                Scalar meanh = m_const_slength ? m_ch : Scalar(0.5)*(h_h.data[i]+h_h.data[k]);
+                Scalar dwdr   = this->m_skernel->dwijdr(meanh, r);
+                Scalar dwdr_r = (r > Scalar(1e-8)*meanh) ? dwdr/r : Scalar(0);
+
+                Scalar Vj = h_velocity.data[k].w / h_density.data[k];
+
+                // grad_i W_ij = dwdr_r * dx ; (x_j - x_i) = -dx
+                // A += V_j gradW (x_j-x_i)^T = -V_j dwdr_r dx dx^T
+                Scalar c = -Vj * dwdr_r;
+                A[0] += c*dx.x*dx.x; A[1] += c*dx.x*dx.y; A[2] += c*dx.x*dx.z;
+                A[3] += c*dx.y*dx.x; A[4] += c*dx.y*dx.y; A[5] += c*dx.y*dx.z;
+                A[6] += c*dx.z*dx.x; A[7] += c*dx.z*dx.y; A[8] += c*dx.z*dx.z;
+
+                Scalar drho = h_density.data[k] - rhoi;
+                g.x += Vj * drho * dwdr_r * dx.x;
+                g.y += Vj * drho * dwdr_r * dx.y;
+                g.z += Vj * drho * dwdr_r * dx.z;
+                }
+
+            // Invert A (A ~ identity for a complete neighborhood).
+            Scalar det = A[0]*(A[4]*A[8]-A[5]*A[7])
+                       - A[1]*(A[3]*A[8]-A[5]*A[6])
+                       + A[2]*(A[3]*A[7]-A[4]*A[6]);
+
+            Scalar3 G;
+            if ( fabs(det) > Scalar(0.01) )
+                {
+                Scalar invdet = Scalar(1.0)/det;
+                // Cofactor inverse applied to g
+                G.x = invdet*( (A[4]*A[8]-A[5]*A[7])*g.x + (A[2]*A[7]-A[1]*A[8])*g.y + (A[1]*A[5]-A[2]*A[4])*g.z );
+                G.y = invdet*( (A[5]*A[6]-A[3]*A[8])*g.x + (A[0]*A[8]-A[2]*A[6])*g.y + (A[2]*A[3]-A[0]*A[5])*g.z );
+                G.z = invdet*( (A[3]*A[7]-A[4]*A[6])*g.x + (A[1]*A[6]-A[0]*A[7])*g.y + (A[0]*A[4]-A[1]*A[3])*g.z );
+                }
+            else
+                {
+                // Ill-conditioned neighborhood: fall back to the raw SPH gradient
+                G = g;
+                }
+
+            h_gradrho.data[i].x = G.x;
+            h_gradrho.data[i].y = G.y;
+            h_gradrho.data[i].z = G.z;
+            } // End fluid particle loop
+        } // End GPU Array Scope
+    } // End compute_density_gradient
+
+/*! Compute the per-particle scalar shear rate gamma_dot = sqrt(2 D:D).
+
+    For each fluid particle i, the velocity gradient M = (grad v)_i is obtained
+    from the first-order-consistent SPH estimate
+
+      b^(alpha) = sum_j V_j (v_j - v_i)_alpha grad_i W_ij       (3 rhs vectors)
+      M_{alpha,beta} = [A_i^{-1} b^(alpha)]_beta
+
+    with the same renormalization matrix A_i (and ill-conditioning fallback) as
+    compute_density_gradient. Solid neighbors enter with their fictitious
+    (Adami) velocities, consistent with the viscous pair force. The strain-rate
+    tensor is D = (M + M^T)/2 and the stored scalar is gamma_dot = sqrt(2 D:D),
+    which is frame-invariant: rigid-body rotation yields gamma_dot = 0.
+
+    Result is stored in the (otherwise unused) per-particle energy array.
+ */
+template<SmoothingKernelType KT_,StateEquationType SET_>
+void SinglePhaseFlow<KT_, SET_>::compute_strain_rate(uint64_t timestep)
+    {
+    this->m_exec_conf->msg->notice(7) << "Computing SinglePhaseFlow::Strain rate" << std::endl;
+
+    const BoxDim& box = this->m_pdata->getGlobalBox();
+    const unsigned int group_size = this->m_fluidgroup->getNumMembers();
+
+        { // GPU Array Scope
+        ArrayHandle<Scalar>  h_energy(this->m_pdata->getEnergies(), access_location::host, access_mode::readwrite);
+        ArrayHandle<Scalar4> h_pos(this->m_pdata->getPositions(), access_location::host, access_mode::read);
+        ArrayHandle<Scalar4> h_velocity(this->m_pdata->getVelocities(), access_location::host, access_mode::read);
+        ArrayHandle<Scalar3> h_vf(this->m_pdata->getAuxiliaries1(), access_location::host, access_mode::read);
+        ArrayHandle<Scalar>  h_density(this->m_pdata->getDensities(), access_location::host, access_mode::read);
+        ArrayHandle<Scalar>  h_h(this->m_pdata->getSlengths(), access_location::host, access_mode::read);
+
+        ArrayHandle<unsigned int> h_n_neigh(this->m_nlist->getNNeighArray(), access_location::host, access_mode::read);
+        ArrayHandle<unsigned int> h_nlist(this->m_nlist->getNListArray(), access_location::host, access_mode::read);
+        ArrayHandle<size_t> h_head_list(this->m_nlist->getHeadList(), access_location::host, access_mode::read);
+        ArrayHandle<unsigned int> h_type_property_map(this->m_type_property_map, access_location::host, access_mode::read);
+
+        for (unsigned int group_idx = 0; group_idx < group_size; group_idx++)
+            {
+            unsigned int i = this->m_fluidgroup->getMemberIndex(group_idx);
+
+            Scalar3 pi;
+            pi.x = h_pos.data[i].x;
+            pi.y = h_pos.data[i].y;
+            pi.z = h_pos.data[i].z;
+            Scalar3 vi;
+            vi.x = h_velocity.data[i].x;
+            vi.y = h_velocity.data[i].y;
+            vi.z = h_velocity.data[i].z;
+
+            // Renormalization matrix A (row-major 3x3) and the three
+            // right-hand-side vectors b^(alpha) = sum_j V_j dv_alpha gradW
+            Scalar A[9] = {0,0,0, 0,0,0, 0,0,0};
+            Scalar bx[3] = {0,0,0};
+            Scalar by[3] = {0,0,0};
+            Scalar bz[3] = {0,0,0};
+
+            size_t myHead = h_head_list.data[i];
+            unsigned int size = (unsigned int)h_n_neigh.data[i];
+            for (unsigned int j = 0; j < size; j++)
+                {
+                unsigned int k = h_nlist.data[myHead + j];
+
+                Scalar mk = h_velocity.data[k].w;
+                // Skip solid particles marked for removal (mass = -999)
+                if (mk < Scalar(0))
+                    continue;
+
+                Scalar3 pj;
+                pj.x = h_pos.data[k].x;
+                pj.y = h_pos.data[k].y;
+                pj.z = h_pos.data[k].z;
+
+                Scalar3 dx;
+                dx.x = pi.x - pj.x;
+                dx.y = pi.y - pj.y;
+                dx.z = pi.z - pj.z;
+                dx = box.minImage(dx);
+
+                Scalar rsq = dot(dx, dx);
+                if ( m_const_slength && rsq > m_rcutsq )
+                    continue;
+
+                // Fictitious velocity for solid neighbors: the wall shear seen
+                // by the rheology must match the viscous force, which uses vf.
+                Scalar3 vj;
+                if ( checksolid(h_type_property_map.data, h_pos.data[k].w) )
+                    {
+                    vj.x = h_vf.data[k].x;
+                    vj.y = h_vf.data[k].y;
+                    vj.z = h_vf.data[k].z;
+                    }
+                else
+                    {
+                    vj.x = h_velocity.data[k].x;
+                    vj.y = h_velocity.data[k].y;
+                    vj.z = h_velocity.data[k].z;
+                    }
+
+                Scalar r = sqrt(rsq);
+                Scalar meanh = m_const_slength ? m_ch : Scalar(0.5)*(h_h.data[i]+h_h.data[k]);
+                Scalar dwdr   = this->m_skernel->dwijdr(meanh, r);
+                Scalar dwdr_r = (r > Scalar(1e-8)*meanh) ? dwdr/r : Scalar(0);
+
+                Scalar Vk = mk / h_density.data[k];
+
+                Scalar3 gradW;
+                gradW.x = dwdr_r * dx.x;
+                gradW.y = dwdr_r * dx.y;
+                gradW.z = dwdr_r * dx.z;
+
+                // A += V_k gradW (x_k - x_i)^T = -V_k gradW dx^T
+                Scalar c = -Vk;
+                A[0] += c*gradW.x*dx.x; A[1] += c*gradW.x*dx.y; A[2] += c*gradW.x*dx.z;
+                A[3] += c*gradW.y*dx.x; A[4] += c*gradW.y*dx.y; A[5] += c*gradW.y*dx.z;
+                A[6] += c*gradW.z*dx.x; A[7] += c*gradW.z*dx.y; A[8] += c*gradW.z*dx.z;
+
+                Scalar3 dv;
+                dv.x = vj.x - vi.x;
+                dv.y = vj.y - vi.y;
+                dv.z = vj.z - vi.z;
+
+                bx[0] += Vk*dv.x*gradW.x; bx[1] += Vk*dv.x*gradW.y; bx[2] += Vk*dv.x*gradW.z;
+                by[0] += Vk*dv.y*gradW.x; by[1] += Vk*dv.y*gradW.y; by[2] += Vk*dv.y*gradW.z;
+                bz[0] += Vk*dv.z*gradW.x; bz[1] += Vk*dv.z*gradW.y; bz[2] += Vk*dv.z*gradW.z;
+                }
+
+            Scalar det = A[0]*(A[4]*A[8]-A[5]*A[7])
+                       - A[1]*(A[3]*A[8]-A[5]*A[6])
+                       + A[2]*(A[3]*A[7]-A[4]*A[6]);
+
+            // Velocity gradient M (row alpha = grad of v_alpha)
+            Scalar M[9];
+            if ( fabs(det) > Scalar(0.01) )
+                {
+                Scalar invdet = Scalar(1.0)/det;
+                Scalar Ainv[9];
+                Ainv[0] = invdet*(A[4]*A[8]-A[5]*A[7]);
+                Ainv[1] = invdet*(A[2]*A[7]-A[1]*A[8]);
+                Ainv[2] = invdet*(A[1]*A[5]-A[2]*A[4]);
+                Ainv[3] = invdet*(A[5]*A[6]-A[3]*A[8]);
+                Ainv[4] = invdet*(A[0]*A[8]-A[2]*A[6]);
+                Ainv[5] = invdet*(A[2]*A[3]-A[0]*A[5]);
+                Ainv[6] = invdet*(A[3]*A[7]-A[4]*A[6]);
+                Ainv[7] = invdet*(A[1]*A[6]-A[0]*A[7]);
+                Ainv[8] = invdet*(A[0]*A[4]-A[1]*A[3]);
+                for (int a = 0; a < 3; a++)
+                    {
+                    const Scalar* b = (a == 0) ? bx : ((a == 1) ? by : bz);
+                    M[3*a+0] = Ainv[0]*b[0] + Ainv[1]*b[1] + Ainv[2]*b[2];
+                    M[3*a+1] = Ainv[3]*b[0] + Ainv[4]*b[1] + Ainv[5]*b[2];
+                    M[3*a+2] = Ainv[6]*b[0] + Ainv[7]*b[1] + Ainv[8]*b[2];
+                    }
+                }
+            else
+                {
+                // Ill-conditioned neighborhood: fall back to the raw estimate
+                M[0]=bx[0]; M[1]=bx[1]; M[2]=bx[2];
+                M[3]=by[0]; M[4]=by[1]; M[5]=by[2];
+                M[6]=bz[0]; M[7]=bz[1]; M[8]=bz[2];
+                }
+
+            // D = (M + M^T)/2 ;  gamma_dot = sqrt(2 D:D)
+            Scalar Dxx = M[0];
+            Scalar Dyy = M[4];
+            Scalar Dzz = M[8];
+            Scalar Dxy = Scalar(0.5)*(M[1]+M[3]);
+            Scalar Dxz = Scalar(0.5)*(M[2]+M[6]);
+            Scalar Dyz = Scalar(0.5)*(M[5]+M[7]);
+            Scalar DD = Dxx*Dxx + Dyy*Dyy + Dzz*Dzz
+                      + Scalar(2)*(Dxy*Dxy + Dxz*Dxz + Dyz*Dyz);
+
+            h_energy.data[i] = sqrt(Scalar(2)*DD);
+            } // End fluid particle loop
+        } // End GPU Array Scope
+    } // End compute_strain_rate
+
+template<SmoothingKernelType KT_,StateEquationType SET_>
+void SinglePhaseFlow<KT_, SET_>::update_ghost_energy(uint64_t timestep)
+    {
+    this->m_exec_conf->msg->notice(7) << "Computing SinglePhaseFlow::Update Ghost energy" << std::endl;
+
+#ifdef ENABLE_MPI
+    if (this->m_comm)
+        {
+        CommFlags flags(0);
+        flags[comm_flag::energy] = 1; // per-particle shear rate
+        this->m_comm->setFlags(flags);
+        this->m_comm->beginUpdateGhosts(timestep);
+        this->m_comm->finishUpdateGhosts(timestep);
+        }
+#endif
+    }
+
+template<SmoothingKernelType KT_,StateEquationType SET_>
+void SinglePhaseFlow<KT_, SET_>::update_ghost_aux2(uint64_t timestep)
+    {
+    this->m_exec_conf->msg->notice(7) << "Computing SinglePhaseFlow::Update Ghost aux2" << std::endl;
+
+#ifdef ENABLE_MPI
+    if (this->m_comm)
+        {
+        CommFlags flags(0);
+        flags[comm_flag::auxiliary2] = 1; // renormalized density gradient
+        this->m_comm->setFlags(flags);
+        this->m_comm->beginUpdateGhosts(timestep);
+        this->m_comm->finishUpdateGhosts(timestep);
+        }
+#endif
+    }
+
 /*! Perform force computation
  */
 
@@ -992,6 +1323,8 @@ void SinglePhaseFlow<KT_, SET_>::forcecomputation(uint64_t timestep)
         ArrayHandle<Scalar>  h_density(this->m_pdata->getDensities(), access_location::host, access_mode::readwrite);
         ArrayHandle<Scalar>  h_pressure(this->m_pdata->getPressures(), access_location::host, access_mode::readwrite);
         ArrayHandle<Scalar3> h_vf(this->m_pdata->getAuxiliaries1(), access_location::host,access_mode::read);
+        ArrayHandle<Scalar3> h_gradrho(this->m_pdata->getAuxiliaries2(), access_location::host,access_mode::read);
+        ArrayHandle<Scalar>  h_gdot(this->m_pdata->getEnergies(), access_location::host, access_mode::read);
         ArrayHandle<Scalar>  h_h(this->m_pdata->getSlengths(), access_location::host, access_mode::read);
 
         // access the neighbor list
@@ -1016,10 +1349,13 @@ void SinglePhaseFlow<KT_, SET_>::forcecomputation(uint64_t timestep)
 
         // Pre-compute tensile correction reference kernel value (constant h only).
         // For variable h the per-pair value is computed inside the inner loop.
+        // The reference distance is the actual particle spacing when set via
+        // activateTensilCorrection(..., dp); h/1.5 is the legacy fallback.
         Scalar tensil_od_wdeltap = Scalar(0);
         if (m_tensil_correction && m_const_slength)
             {
-            Scalar wdeltap = this->m_skernel->wij(m_ch, m_ch / Scalar(1.5));
+            Scalar dp_ref = (m_tensil_dp > Scalar(0)) ? m_tensil_dp : m_ch / Scalar(1.5);
+            Scalar wdeltap = this->m_skernel->wij(m_ch, dp_ref);
             tensil_od_wdeltap = (wdeltap > Scalar(0)) ? (Scalar(1) / wdeltap) : Scalar(0);
             }
 
@@ -1048,12 +1384,20 @@ void SinglePhaseFlow<KT_, SET_>::forcecomputation(uint64_t timestep)
             Scalar rhoi = h_density.data[i];
             Scalar Vi   = mi / rhoi;
 
+            // Effective viscosity of particle i from its per-particle shear
+            // rate (computed in compute_strain_rate, stored in the energy
+            // array). Hoisted out of the pair loop.
+            Scalar mu_eff_i = (m_nn_model == NEWTONIAN)
+                ? m_mu
+                : computeNNViscosity(m_mu, h_gdot.data[i], m_nn_model,
+                                     m_nn_K, m_nn_n, m_nn_mu0, m_nn_muinf,
+                                     m_nn_lambda, m_nn_tauy, m_nn_m, m_nn_mu_min);
+
             // // Total velocity of particle
             Scalar vi_total = sqrt((vi.x * vi.x) + (vi.y * vi.y) + (vi.z * vi.z));
 
             // Properties needed for adaptive timestep
-            if (i == 0) { max_vel = vi_total; }
-            else if (vi_total > max_vel) { max_vel = vi_total; }
+            if (vi_total > max_vel) { max_vel = vi_total; }
 
             // Loop over all of the neighbors of this particle
             myHead = h_head_list.data[i];
@@ -1127,28 +1471,30 @@ void SinglePhaseFlow<KT_, SET_>::forcecomputation(uint64_t timestep)
                 Scalar meanh  = m_const_slength ? m_ch : Scalar(0.5)*(h_h.data[i]+h_h.data[k]);
                 Scalar epssqr = Scalar(0.01) * meanh * meanh;
 
-                // Kernel function derivative evaluation
+                // Kernel function derivative evaluation.
+                // No softening in the gradient denominator: dW/dr -> 0 linearly as
+                // r -> 0 for all supported kernels, so dW/dr / r is finite; softening
+                // only biases |grad W| low. Guard only against exact particle overlap.
                 Scalar dwdr   = this->m_skernel->dwijdr(meanh,r);
-                Scalar dwdr_r = dwdr/(r+epssqr);
+                Scalar dwdr_r = (r > Scalar(1e-8)*meanh) ? dwdr/r : Scalar(0);
 
                 // Evaluate inter-particle pressure forces
-                //temp0 = -((mi*mj)/(rhoj*rhoi))*(Pi+Pj);
-                //temp0 = -Vi*Vj*( Pi + Pj );
-                //temp0 = -mi*mj*(Pi+Pj)/(rhoi*rhoj);
-                //temp0 = -mi*mj*( Pi/(rhoi*rhoj) + Pj/(rhoj*rhoj) );
                 if ( m_density_method == DENSITYSUMMATION )
                 {
                     // Transport formulation proposed by Adami 2013
-                    temp0 = (Vi*Vi+Vj*Vj)*((rhoj*Pi+rhoi*Pj)/(rhoi+rhoj)); 
+                    temp0 = (Vi*Vi+Vj*Vj)*((rhoj*Pi+rhoi*Pj)/(rhoi+rhoj));
                 }
-                else if ( m_density_method == DENSITYCONTINUITY) 
-                { 
+                else if ( m_density_method == DENSITYCONTINUITY)
+                {
                     temp0 = mi*mj*(Pi+Pj)/(rhoi*rhoj);
                 }
 
                 Scalar avc = 0.0;
                 // Optionally add artificial viscosity
                 // Monaghan (1983) J. Comput. Phys. 52 (2) 374–389
+                // Canonical form: F_i -= m_i m_j Pi_ij grad_i W. Pi_ij has units of
+                // pressure/rho^2, so the m_i*m_j scaling is required for BOTH density
+                // methods (a (Vi^2+Vj^2) scaling would be short a factor rho_i*rho_j).
                 if ( this->m_artificial_viscosity && !issolid )
                     {
                     Scalar dotdvdx = dot(dv,dx);
@@ -1157,15 +1503,7 @@ void SinglePhaseFlow<KT_, SET_>::forcecomputation(uint64_t timestep)
                         Scalar muij    = meanh*dotdvdx/(rsq+epssqr);
                         Scalar meanrho = Scalar(0.5)*(rhoi+rhoj);
                         avc = (-this->m_avalpha*this->m_c*muij+this->m_avbeta*muij*muij)/meanrho;
-
-                        if ( m_density_method == DENSITYSUMMATION ) 
-                            {
-                            avc *= (Vi*Vi+Vj*Vj);
-                            }
-                        else if ( m_density_method == DENSITYCONTINUITY ) 
-                            {
-                            avc *= mi*mj;
-                            }
+                        avc *= mi*mj;
                         }
                     }
 
@@ -1184,7 +1522,8 @@ void SinglePhaseFlow<KT_, SET_>::forcecomputation(uint64_t timestep)
                         od_wdeltap = tensil_od_wdeltap;
                     else
                         {
-                        Scalar wdeltap = this->m_skernel->wij(meanh, meanh / Scalar(1.5));
+                        Scalar dp_ref = (m_tensil_dp > Scalar(0)) ? m_tensil_dp : meanh / Scalar(1.5);
+                        Scalar wdeltap = this->m_skernel->wij(meanh, dp_ref);
                         od_wdeltap = (wdeltap > Scalar(0)) ? (Scalar(1) / wdeltap) : Scalar(0);
                         }
                     Scalar wij_val = this->m_skernel->wij(meanh, r);
@@ -1198,13 +1537,25 @@ void SinglePhaseFlow<KT_, SET_>::forcecomputation(uint64_t timestep)
                     h_force.data[i].z -= tc * dwdr_r * dx.z;
                     }
 
-                // Evaluate viscous interaction forces
+                // Evaluate viscous interaction forces. For non-Newtonian
+                // rheology, both particles carry a per-particle effective
+                // viscosity mu(gamma_dot_i) (frame-invariant strain rate, see
+                // compute_strain_rate); the pair value is the harmonic mean.
+                // Solid neighbors take the fluid particle's viscosity.
                 {
-                Scalar dvnorm    = sqrt(dot(dv, dv));
-                Scalar gamma_dot = dvnorm / (r + sqrt(epssqr));
-                Scalar mu_eff    = computeNNViscosity(m_mu, gamma_dot, m_nn_model,
-                                                      m_nn_K, m_nn_n, m_nn_mu0, m_nn_muinf,
-                                                      m_nn_lambda, m_nn_tauy, m_nn_m, m_nn_mu_min);
+                Scalar mu_eff;
+                if ( m_nn_model == NEWTONIAN )
+                    mu_eff = m_mu;
+                else
+                    {
+                    Scalar mu_eff_j = issolid
+                        ? mu_eff_i
+                        : computeNNViscosity(m_mu, h_gdot.data[k], m_nn_model,
+                                             m_nn_K, m_nn_n, m_nn_mu0, m_nn_muinf,
+                                             m_nn_lambda, m_nn_tauy, m_nn_m, m_nn_mu_min);
+                    Scalar musum = mu_eff_i + mu_eff_j;
+                    mu_eff = (musum > Scalar(0)) ? Scalar(2)*mu_eff_i*mu_eff_j/musum : Scalar(0);
+                    }
                 temp0 = mu_eff * (Vi*Vi+Vj*Vj) * dwdr_r;
                 }
                 h_force.data[i].x  += temp0*dv.x;
@@ -1232,22 +1583,41 @@ void SinglePhaseFlow<KT_, SET_>::forcecomputation(uint64_t timestep)
                     // Compute density rate of change
                     h_ratedpe.data[i].x += rhoi*Vj*dot(dv,dwdr_r*dx);
 
-                    // Add density diffusion if requested
-                    // Molteni and Colagrossi, Computer Physics Communications 180 (2009) 861–872
+                    // Add density diffusion if requested (fluid-fluid pairs only).
+                    // Molteni and Colagrossi, Computer Physics Communications 180 (2009) 861–872:
+                    //   drho_i/dt += 2 delta h c V_j (rho_j - rho_i) (x_ji . grad_i W)/r^2
+                    //             =  2 delta h c V_j (rho_i - rho_j) (dW/dr)/r
+                    // (dW/dr < 0, so a local density maximum is smoothed out).
                     if ( !issolid && m_density_diffusion )
-                        h_ratedpe.data[i].x -= (Scalar(2)*m_ddiff*meanh*m_c*mj*(rhoi/rhoj-Scalar(1))*dot(dx,dwdr_r*dx))/(rsq+epssqr);
+                        h_ratedpe.data[i].x += Scalar(2)*m_ddiff*meanh*m_c*(mj/rhoj)*(rhoi-rhoj)*dwdr_r;
+
+                    // Antuono/Marrone delta-SPH (fluid-fluid pairs only):
+                    //   psi_ij . grad_i W = 2(rho_i-rho_j)(dW/dr)/r - (G_i+G_j) . grad_i W
+                    // where G is the L-matrix renormalized density gradient (aux2).
+                    // Subtracting the resolved gradient makes the term vanish exactly
+                    // for linear density fields (hydrostatic columns, stratification).
+                    if ( !issolid && m_delta_sph )
+                        {
+                        Scalar3 Gsum;
+                        Gsum.x = h_gradrho.data[i].x + h_gradrho.data[k].x;
+                        Gsum.y = h_gradrho.data[i].y + h_gradrho.data[k].y;
+                        Gsum.z = h_gradrho.data[i].z + h_gradrho.data[k].z;
+                        Scalar psi_dot_gradw = Scalar(2)*(rhoi-rhoj)*dwdr_r - dot(Gsum, dwdr_r*dx);
+                        h_ratedpe.data[i].x += m_delta*meanh*m_c*(mj/rhoj)*psi_dot_gradw;
+                        }
                     }
 
                 } // Closing Neighbor Loop
 
-            // Compute $\mathrm{d}p/\mathrm{d}t = (\mathrm{d}p/\mathrm{d}\rho) \cdot \mathrm{d}\rho/\mathrm{d}t$ via the chain rule so the integrator
-            // can time-march pressure consistently with density (DENSITYCONTINUITY only).
-            if ( m_density_method == DENSITYCONTINUITY )
-                h_ratedpe.data[i].y = this->m_eos->dPressuredDensity(rhoi) * h_ratedpe.data[i].x;
+            // NOTE: pressure is no longer time-integrated via a dp/dt chain rule.
+            // For DENSITYCONTINUITY, pressure is re-evaluated from the EOS every
+            // step in computeForces(), which keeps p exactly consistent with rho.
+            // h_ratedpe.y therefore stays zero.
 
             } // Closing Fluid Particle Loop
 
         m_timestep_list[5] = max_vel;
+        this->m_max_vel = Scalar(max_vel);
         } // End GPU Array Scope
 
     // Add volumetric force (gravity)
@@ -1280,6 +1650,8 @@ void SinglePhaseFlow<KT_, SET_>::compute_solid_forces(uint64_t timestep)
         ArrayHandle<Scalar4> h_velocity(this->m_pdata->getVelocities(), access_location::host, access_mode::read);
         ArrayHandle<Scalar>  h_density(this->m_pdata->getDensities(), access_location::host, access_mode::read);
         ArrayHandle<Scalar>  h_pressure(this->m_pdata->getPressures(), access_location::host, access_mode::read);
+        ArrayHandle<Scalar3> h_vf(this->m_pdata->getAuxiliaries1(), access_location::host, access_mode::read);
+        ArrayHandle<Scalar>  h_gdot(this->m_pdata->getEnergies(), access_location::host, access_mode::read);
         ArrayHandle<Scalar>  h_h(this->m_pdata->getSlengths(), access_location::host, access_mode::read);
 
         // access the neighbor list
@@ -1299,7 +1671,11 @@ void SinglePhaseFlow<KT_, SET_>::compute_solid_forces(uint64_t timestep)
         // Local variable to store things
         Scalar temp0 = 0;
 
-        // for each fluid particle
+        // For each solid particle, accumulate the exact reaction of the pair
+        // forces applied to its fluid neighbors in forcecomputation(). The pair
+        // expressions below are identical to the fluid loop (they are symmetric
+        // in i<->j while dx and dv flip sign), so Newton's third law holds
+        // without any extra sign flip or mass-ratio scaling.
         for (unsigned int group_idx = 0; group_idx < group_size; group_idx++)
             {
             // Read particle index
@@ -1311,10 +1687,13 @@ void SinglePhaseFlow<KT_, SET_>::compute_solid_forces(uint64_t timestep)
             pi.y = h_pos.data[i].y;
             pi.z = h_pos.data[i].z;
 
+            // Use the fictitious (Adami) velocity of the solid particle: the
+            // fluid loop computed its viscous pair force with dv = v_f - v~_s,
+            // so the reaction must use the same relative velocity.
             Scalar3 vi;
-            vi.x = h_velocity.data[i].x;
-            vi.y = h_velocity.data[i].y;
-            vi.z = h_velocity.data[i].z;
+            vi.x = h_vf.data[i].x;
+            vi.y = h_vf.data[i].y;
+            vi.z = h_vf.data[i].z;
             Scalar mi = h_velocity.data[i].w;
 
             // Read particle i pressure
@@ -1389,46 +1768,47 @@ void SinglePhaseFlow<KT_, SET_>::compute_solid_forces(uint64_t timestep)
                 // Calculate absolute and normalized distance
                 Scalar r = sqrt(rsq);
 
-                // Mean smoothing length and denominator modifier
+                // Mean smoothing length
                 Scalar meanh  = m_const_slength ? m_ch : Scalar(0.5)*(h_h.data[i]+h_h.data[k]);
-                Scalar epssqr = Scalar(0.01) * meanh * meanh;
 
-                // Kernel function derivative evaluation
+                // Kernel function derivative evaluation (unsoftened, see forcecomputation)
                 Scalar dwdr   = this->m_skernel->dwijdr(meanh,r);
-                Scalar dwdr_r = dwdr/(r+epssqr);
+                Scalar dwdr_r = (r > Scalar(1e-8)*meanh) ? dwdr/r : Scalar(0);
 
-                // Evaluate inter-particle pressure forces
-                //temp0 = -((mi*mj)/(rhoj*rhoi))*(Pi+Pj);
-                //temp0 = -Vi*Vj*( Pi + Pj );
-                //temp0 = -mi*mj*(Pi+Pj)/(rhoi*rhoj);
-                //temp0 = -mi*mj*( Pi/(rhoi*rhoj) + Pj/(rhoj*rhoj) );
+                // Evaluate inter-particle pressure forces.
+                // Same expression as the fluid loop: symmetric in i<->j, so this
+                // yields the exact reaction force through the flipped dx.
                 if ( m_density_method == DENSITYSUMMATION )
                 {
                     // Transport formulation proposed by Adami 2013
-                    temp0 = -(Vi*Vi+Vj*Vj)*((rhoj*Pi+rhoi*Pj)/(rhoi+rhoj)); 
+                    temp0 = (Vi*Vi+Vj*Vj)*((rhoj*Pi+rhoi*Pj)/(rhoi+rhoj));
                 }
-                else if ( m_density_method == DENSITYCONTINUITY) 
-                { 
-                    temp0 = -mi*mj*(Pi+Pj)/(rhoi*rhoj);
-                }
-
-                // Add contribution to solid particle
-                h_force.data[i].x -= ( mj/mi ) * temp0*dwdr_r*dx.x;
-                h_force.data[i].y -= ( mj/mi ) * temp0*dwdr_r*dx.y;
-                h_force.data[i].z -= ( mj/mi ) * temp0*dwdr_r*dx.z;
-
-                // Evaluate viscous interaction forces
+                else if ( m_density_method == DENSITYCONTINUITY)
                 {
-                Scalar dvnorm    = sqrt(dot(dv, dv));
-                Scalar gamma_dot = dvnorm / (r + sqrt(epssqr));
-                Scalar mu_eff    = computeNNViscosity(m_mu, gamma_dot, m_nn_model,
-                                                      m_nn_K, m_nn_n, m_nn_mu0, m_nn_muinf,
-                                                      m_nn_lambda, m_nn_tauy, m_nn_m, m_nn_mu_min);
+                    temp0 = mi*mj*(Pi+Pj)/(rhoi*rhoj);
+                }
+
+                // Add pressure reaction to solid particle
+                h_force.data[i].x -= temp0*dwdr_r*dx.x;
+                h_force.data[i].y -= temp0*dwdr_r*dx.y;
+                h_force.data[i].z -= temp0*dwdr_r*dx.z;
+
+                // Evaluate viscous interaction forces. Mirror of the fluid
+                // loop's fluid-solid pair: the pair viscosity is the fluid
+                // particle's per-particle mu(gamma_dot_k) (energy array).
+                {
+                Scalar mu_eff = (m_nn_model == NEWTONIAN)
+                    ? m_mu
+                    : computeNNViscosity(m_mu, h_gdot.data[k], m_nn_model,
+                                         m_nn_K, m_nn_n, m_nn_mu0, m_nn_muinf,
+                                         m_nn_lambda, m_nn_tauy, m_nn_m, m_nn_mu_min);
                 temp0 = mu_eff * (Vi*Vi+Vj*Vj) * dwdr_r;
                 }
-                h_force.data[i].x  -= ( mj/mi ) * temp0*dv.x;
-                h_force.data[i].y  -= ( mj/mi ) * temp0*dv.y;
-                h_force.data[i].z  -= ( mj/mi ) * temp0*dv.z;
+                // Add viscous reaction to solid particle (dv = v~_s - v_f here,
+                // the negative of the fluid loop's dv, so this is -F_fluid).
+                h_force.data[i].x  += temp0*dv.x;
+                h_force.data[i].y  += temp0*dv.y;
+                h_force.data[i].z  += temp0*dv.z;
 
                 } // Closing Neighbor Loop
 
@@ -1496,20 +1876,26 @@ void SinglePhaseFlow<KT_, SET_>::computeForces(uint64_t timestep)
     else // DENSITYCONTINUITY
         {
         // Density is time-integrated via the continuity equation ($\mathrm{d}\rho/\mathrm{d}t$ computed in
-        // forcecomputation). Pressure is propagated by $\mathrm{d}p/\mathrm{d}t = (\mathrm{d}p/\mathrm{d}\rho) \cdot (\mathrm{d}\rho/\mathrm{d}t)$, so the
-        // integrator keeps pressure consistent with density without recomputing from EOS
-        // every step. Only the very first call needs an EOS-based initialization.
-        if ( !m_pressure_initialized )
-            {
-            compute_pressure(timestep);
-            m_pressure_initialized = true;
-            }
+        // forcecomputation). Pressure is re-evaluated from the EOS every step so it
+        // stays exactly consistent with the integrated density (integrating a
+        // separate dp/dt accumulates drift between p and rho).
+        compute_pressure(timestep);
         }
 
 #ifdef ENABLE_MPI
     // Update ghost particle densities and pressures.
     update_ghost_density_pressure(timestep);
 #endif
+
+    // Antuono delta-SPH: compute renormalized density gradients (needs
+    // up-to-date ghost densities) and sync them to ghost particles.
+    if ( m_density_method == DENSITYCONTINUITY && m_delta_sph )
+        {
+        compute_density_gradient(timestep);
+#ifdef ENABLE_MPI
+        update_ghost_aux2(timestep);
+#endif
+        }
 
     // Compute particle pressures
     // Includes the computation of the density of solid particles
@@ -1521,8 +1907,19 @@ void SinglePhaseFlow<KT_, SET_>::computeForces(uint64_t timestep)
     update_ghost_aux1(timestep);
 #endif
 
+    // Non-Newtonian rheology: compute the per-particle shear rate from the
+    // renormalized velocity gradient (needs fictitious wall velocities from
+    // compute_noslip) and sync it to ghost particles.
+    if ( m_nn_model != NEWTONIAN )
+        {
+        compute_strain_rate(timestep);
+#ifdef ENABLE_MPI
+        update_ghost_energy(timestep);
+#endif
+        }
+
     // Execute the force computation
-    // This includes the computation of the density if 
+    // This includes the computation of the density if
     // DENSITYCONTINUITY method is used
     forcecomputation(timestep);
 
@@ -1558,10 +1955,13 @@ void export_SinglePhaseFlow(pybind11::module& m, std::string name)
         .def("deactivateArtificialViscosity", &SinglePhaseFlow<KT_, SET_>::deactivateArtificialViscosity)
         .def("activateTensilCorrection", &SinglePhaseFlow<KT_, SET_>::activateTensilCorrection,
              pybind11::arg("eps_pos") = Scalar(0.01),
-             pybind11::arg("eps_neg") = Scalar(0.2))
+             pybind11::arg("eps_neg") = Scalar(0.2),
+             pybind11::arg("dp") = Scalar(0))
         .def("deactivateTensilCorrection", &SinglePhaseFlow<KT_, SET_>::deactivateTensilCorrection)
         .def("activateDensityDiffusion", &SinglePhaseFlow<KT_, SET_>::activateDensityDiffusion)
         .def("deactivateDensityDiffusion", &SinglePhaseFlow<KT_, SET_>::deactivateDensityDiffusion)
+        .def("activateDeltaSPH", &SinglePhaseFlow<KT_, SET_>::activateDeltaSPH)
+        .def("deactivateDeltaSPH", &SinglePhaseFlow<KT_, SET_>::deactivateDeltaSPH)
         .def("activateShepardRenormalization", &SinglePhaseFlow<KT_, SET_>::activateShepardRenormalization)
         .def("deactivateShepardRenormalization", &SinglePhaseFlow<KT_, SET_>::deactivateShepardRenormalization)
         .def("activateDensityReinitialization", &SinglePhaseFlow<KT_, SET_>::activateDensityReinitialization)

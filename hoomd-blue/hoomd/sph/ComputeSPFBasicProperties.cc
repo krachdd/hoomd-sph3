@@ -122,10 +122,13 @@ void ComputeSPFBasicProperties::computeProperties()
             fluid_vel_x_sum += h_velocity.data[j].x;
             fluid_vel_y_sum += h_velocity.data[j].y;
             fluid_vel_z_sum += h_velocity.data[j].z;
-            abs_velocity  += sqrt(h_velocity.data[j].x * h_velocity.data[j].x + h_velocity.data[j].y * h_velocity.data[j].y + h_velocity.data[j].z * h_velocity.data[j].z);
+            double v2 = h_velocity.data[j].x * h_velocity.data[j].x
+                      + h_velocity.data[j].y * h_velocity.data[j].y
+                      + h_velocity.data[j].z * h_velocity.data[j].z;
+            abs_velocity    += sqrt(v2);
             sum_density     += h_density.data[j];
-            // Sum kinematic energy
-            e_kin_fluid += abs( 0.5 * h_velocity.data[j].w * abs_velocity * abs_velocity );
+            // Sum kinetic energy of this particle: 1/2 m |v_j|^2
+            e_kin_fluid += 0.5 * h_velocity.data[j].w * v2;
             }
 
         ArrayHandle<Scalar> h_properties(m_properties, access_location::host, access_mode::overwrite);

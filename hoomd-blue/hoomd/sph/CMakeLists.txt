@@ -128,6 +128,7 @@ set(files
     constrain.py
     compute.py
     half_step_hook.py
+    update.py
     )
 
 install(FILES ${files}
@@ -144,3 +145,4 @@ add_subdirectory(data)
 
 add_subdirectory(methods)
 add_subdirectory(sphmodel)
+add_subdirectory(pytest)

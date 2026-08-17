@@ -468,7 +468,11 @@ class PYBIND11_EXPORT TwoPhaseFlow : public SPHBaseClass<KT_, SET1_>
             flags[comm_flag::velocity] = 1; // Stores velocity and mass
             flags[comm_flag::density] = 1; // Stores density 
             flags[comm_flag::pressure] = 1; // Stores pressure
-            flags[comm_flag::energy] = 0; // Stores energy/ Partcile Concentration gradient
+            // Energy carries |grad C|^2 (Fickian shifting) or the per-particle
+            // shear rate (non-Newtonian rheology) — mutually exclusive.
+            flags[comm_flag::energy] = (m_fickian_shifting
+                                        || m_nn_model1 != NEWTONIAN
+                                        || m_nn_model2 != NEWTONIAN) ? 1 : 0;
             flags[comm_flag::auxiliary1] = 1; // Stores fictitious velocity
             flags[comm_flag::auxiliary2] = 1; // Stores solid normal vector field
             flags[comm_flag::auxiliary3] = 1; // Stores fluid interfacial normal vector
@@ -581,7 +585,7 @@ class PYBIND11_EXPORT TwoPhaseFlow : public SPHBaseClass<KT_, SET1_>
         uint64_t m_log_computed_last_timestep; //!< Last time step where log quantities were computed
 
         // Timestep parameters
-        std::vector<double> m_timestep_list = std::vector<double>(8);  //!< Cache all generated timestep quantities names
+        std::vector<double> m_timestep_list = std::vector<double>(9);  //!< Cache all generated timestep quantities names
 
 
         void mark_solid_particles_toremove(uint64_t timestep);
@@ -605,6 +609,17 @@ class PYBIND11_EXPORT TwoPhaseFlow : public SPHBaseClass<KT_, SET1_>
         * \post Fictitious particle properties are computed and stored in aux1 array
         */
         void compute_noslip(uint64_t timestep);
+
+        /*! Helper function to compute the per-particle scalar shear rate
+         *  gamma_dot = sqrt(2 D:D) from the L-matrix renormalized velocity
+         *  gradient (frame-invariant; rigid rotation gives zero). Solid
+         *  neighbors contribute with their fictitious (Adami) velocities.
+         *  Stored in the energy array — therefore mutually exclusive with
+         *  Fickian shifting, which stores |grad C|^2 there.
+         * \pre Fictitious solid velocities (aux1, including ghosts) up-to-date
+         * \post gamma_dot of all fluid particles stored in the energy array
+         */
+        void compute_strain_rate(uint64_t timestep);
 
         /*! Helper function to compute particle concentration gradient for Fickian shifting
          * within the CSF computation
