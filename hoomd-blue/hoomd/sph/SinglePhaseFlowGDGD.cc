@@ -241,9 +241,13 @@ void SinglePhaseFlowGDGD<KT_, SET_>::compute_pressure(uint64_t timestep)
         ArrayHandle<Scalar> h_pressure(this->m_pdata->getPressures(), access_location::host, access_mode::readwrite);
         ArrayHandle<Scalar3> h_aux4(this->m_pdata->getAuxiliaries4(), access_location::host, access_mode::read);
 
+        // Acquire the group index array once: getMemberIndex() acquires an
+        // ArrayHandle per call, which is not thread-safe inside the parallel loop
+        ArrayHandle<unsigned int> h_members_omp1(this->m_fluidgroup->getIndexArray(), access_location::host, access_mode::read);
+        #pragma omp parallel for
         for (unsigned int group_idx = 0; group_idx < group_size; group_idx++)
             {
-            unsigned int i = this->m_fluidgroup->getMemberIndex(group_idx);
+            unsigned int i = h_members_omp1.data[group_idx];
             Scalar Ti = h_aux4.data[i].x;
             Scalar rho0_i = this->m_rho0
                             * (Scalar(1.0) - m_beta_s * (Ti - m_scalar_ref));
@@ -307,9 +311,13 @@ void SinglePhaseFlowGDGD<KT_, SET_>::forcecomputation(uint64_t timestep)
         double max_vel = 0.0;
 
         // ── Fluid-particle outer loop ─────────────────────────────────────────
+        // Acquire the group index array once: getMemberIndex() acquires an
+        // ArrayHandle per call, which is not thread-safe inside the parallel loop
+        ArrayHandle<unsigned int> h_members_omp2(this->m_fluidgroup->getIndexArray(), access_location::host, access_mode::read);
+        #pragma omp parallel for private(size, myHead) reduction(max:max_vel)
         for (unsigned int group_idx = 0; group_idx < group_size; group_idx++)
             {
-            unsigned int i = this->m_fluidgroup->getMemberIndex(group_idx);
+            unsigned int i = h_members_omp2.data[group_idx];
 
             // Position of particle i
             Scalar3 pi;
