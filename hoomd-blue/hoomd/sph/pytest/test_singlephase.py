@@ -16,7 +16,7 @@ import pytest
 import hoomd
 import hoomd.sph as sph
 
-from conftest import make_fluid_block_gsd, build_singlephase_sim
+from .conftest import make_fluid_block_gsd, build_singlephase_sim
 
 RHO0 = 1000.0
 DX = 0.05

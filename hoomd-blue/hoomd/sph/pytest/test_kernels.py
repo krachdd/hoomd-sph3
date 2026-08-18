@@ -11,7 +11,7 @@ Checks, for every registered kernel:
 import numpy as np
 import pytest
 
-from conftest import KERNELS
+from .conftest import KERNELS
 
 import hoomd.sph.kernel as skernel
 
