@@ -32,6 +32,8 @@ maintainer: dkrach, david.krach@mib.uni-stuttgart.de
 
 #include "TwoPhaseFlow.h"
 
+#include <cmath>
+
 #include <pybind11/pybind11.h>
 #include <pybind11/stl_bind.h>
 #include <pybind11/numpy.h>
@@ -2474,12 +2476,12 @@ void TwoPhaseFlow<KT_, SET1_, SET2_>::computeForces(uint64_t timestep)
 
     // $\delta^+$-SPH particle shifting (Sun et al. 2017).
     // Interface normals in aux3 must be up-to-date before calling.
-    // Neighbor list is rebuilt at shifted positions before force computation.
+    // No forced neighbor-list rebuild: shifts are far below the nlist buffer
+    // skin, and the standard displacement check picks them up next step. A
+    // forced full rebuild every step costs ~7x in throughput at 1e5 particles.
     if ( m_particle_shifting )
         {
         compute_particle_shift(timestep);
-        this->m_nlist->forceUpdate();
-        this->m_nlist->compute(timestep);
         }
 
     compute_surfaceforce(timestep);
@@ -2614,11 +2616,15 @@ void TwoPhaseFlow<KT_, SET1_, SET2_>::compute_particle_shift(uint64_t timestep)
         for (unsigned int neigh_idx = 0; neigh_idx < n_neigh; neigh_idx++)
             {
             unsigned int k = h_nlist_arr.data[head + neigh_idx];
-            // Only fluid–fluid interactions; skip solid boundary particles
-            if (checksolid(h_type_property_map.data, h_pos.data[k].w)) continue;
 
+            // Solid dummy particles PARTICIPATE in the shift sum: with their
+            // Adami-extrapolated densities they close the kernel support at
+            // walls, so the shift sees no spurious "free surface" that would
+            // otherwise pump wall-adjacent fluid into the solid every step.
+            // Guard against marked-removed solids carrying zero density.
             Scalar mk   = h_velocity.data[k].w;
             Scalar rhok = h_density.data[k];
+            if (rhok < Scalar(1e-12)) continue;
             Scalar hk   = m_const_slength ? m_ch : h_h.data[k];
             Scalar Vk   = mk / rhok;
 
@@ -2648,11 +2654,21 @@ void TwoPhaseFlow<KT_, SET1_, SET2_>::compute_particle_shift(uint64_t timestep)
             grad_sum.z += enhance * Vk * dwdr_r * dx.z;
             }
 
-        // $\delta r_i = -A h_i \sum_j [1 + R(W/W_\mathrm{ref})^n] V_j \nabla W_{ij}$
+        // $\delta r_i = -A\,\mathrm{Ma}_i (2h_i)^2 \sum_j [1 + R(W/W_\mathrm{ref})^n] V_j \nabla W_{ij}$
+        // Sun et al. 2017 delta^+ scaling: the per-particle Mach number
+        // Ma_i = |v_i|/c makes the shift vanish for quiescent fluid, so the
+        // one-sided truncation next to excluded solid neighbors cannot pump
+        // static particles into the walls.
+        Scalar ci = checkfluid1(h_type_property_map.data, h_pos.data[i].w) ? m_c1 : m_c2;
+        Scalar vmagi = sqrt(h_velocity.data[i].x*h_velocity.data[i].x +
+                            h_velocity.data[i].y*h_velocity.data[i].y +
+                            h_velocity.data[i].z*h_velocity.data[i].z);
+        Scalar Mai   = vmagi / ci;
+        Scalar coeff = -m_shift_A * Mai * Scalar(4.0) * hi * hi;
         Scalar3 dr;
-        dr.x = -m_shift_A * hi * grad_sum.x;
-        dr.y = -m_shift_A * hi * grad_sum.y;
-        dr.z = -m_shift_A * hi * grad_sum.z;
+        dr.x = coeff * grad_sum.x;
+        dr.y = coeff * grad_sum.y;
+        dr.z = coeff * grad_sum.z;
 
         // Interface condition: project out normal component at fluid–fluid interface
         // so particles cannot cross between phases (Mokos 2017, Lyu 2021).
@@ -2669,6 +2685,24 @@ void TwoPhaseFlow<KT_, SET1_, SET2_>::compute_particle_shift(uint64_t timestep)
                 dr.y -= dr_n * n_hat.y;
                 dr.z -= dr_n * n_hat.z;
                 }
+            }
+
+        // NaN-safe magnitude cap at 0.1 h_i: degenerate near-pairs make
+        // dW/dr / r blow up, and box.wrap() only unwraps a single periodic
+        // image, so an unbounded shift would strand the particle outside the
+        // box and corrupt the cell binning.
+        Scalar drmag2 = dr.x*dr.x + dr.y*dr.y + dr.z*dr.z;
+        const Scalar drcap = Scalar(0.1) * hi;
+        if (!std::isfinite(drmag2))
+            {
+            dr = make_scalar3(Scalar(0), Scalar(0), Scalar(0));
+            }
+        else if (drmag2 > drcap * drcap)
+            {
+            Scalar rescale = drcap / sqrt(drmag2);
+            dr.x *= rescale;
+            dr.y *= rescale;
+            dr.z *= rescale;
             }
 
         shift_vec[i] = dr;
@@ -2695,10 +2729,12 @@ void TwoPhaseFlow<KT_, SET1_, SET2_>::compute_particle_shift(uint64_t timestep)
             for (unsigned int neigh_idx = 0; neigh_idx < n_neigh; neigh_idx++)
                 {
                 unsigned int k = h_nlist_arr.data[head + neigh_idx];
-                if (checksolid(h_type_property_map.data, h_pos.data[k].w)) continue;
 
+                // Solid neighbors participate with delta r_k = 0 (stationary);
+                // consistent with their inclusion in the PASS 1 support closure.
                 Scalar mk   = h_velocity.data[k].w;
                 Scalar rhok = h_density.data[k];
+                if (rhok < Scalar(1e-12)) continue;
                 Scalar hk   = m_const_slength ? m_ch : h_h.data[k];
                 Scalar Vk   = mk / rhok;
 

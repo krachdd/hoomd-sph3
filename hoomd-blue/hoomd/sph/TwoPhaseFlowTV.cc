@@ -640,8 +640,8 @@ void TwoPhaseFlowTV<KT_, SET1_, SET2_>::computeForces(uint64_t timestep)
     if ( this->m_particle_shifting )
         {
         this->compute_particle_shift(timestep);
-        this->m_nlist->forceUpdate();
-        this->m_nlist->compute(timestep);
+        // No forced rebuild: shifts stay below the nlist buffer skin and the
+        // standard displacement check picks them up next step.
         }
 
     // Compute surface force from normals in aux2/aux3 -> aux4
