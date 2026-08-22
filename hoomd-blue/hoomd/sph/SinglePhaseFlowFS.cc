@@ -239,9 +239,13 @@ void SinglePhaseFlowFS<KT_, SET_>::detect_freesurface(uint64_t timestep)
         // completeness measure: $\lambda = \rho_\mathrm{fluid\,only} / \rho_0$.
         const Scalar rho0_ref = this->m_eos->getRestDensity();
 
+        // Acquire the group index array once: getMemberIndex() acquires an
+        // ArrayHandle per call, which is not thread-safe inside the parallel loop
+        ArrayHandle<unsigned int> h_members_omp1(this->m_fluidgroup->getIndexArray(), access_location::host, access_mode::read);
+        #pragma omp parallel for
         for (unsigned int group_idx = 0; group_idx < group_size; group_idx++)
             {
-            unsigned int i = this->m_fluidgroup->getMemberIndex(group_idx);
+            unsigned int i = h_members_omp1.data[group_idx];
 
             Scalar3 pi;
             pi.x = h_pos.data[i].x;
@@ -435,9 +439,13 @@ void SinglePhaseFlowFS<KT_, SET_>::compute_curvature(uint64_t timestep)
 
         const Scalar eps_sq = Scalar(1e-12);
 
+        // Acquire the group index array once: getMemberIndex() acquires an
+        // ArrayHandle per call, which is not thread-safe inside the parallel loop
+        ArrayHandle<unsigned int> h_members_omp2(this->m_fluidgroup->getIndexArray(), access_location::host, access_mode::read);
+        #pragma omp parallel for
         for (unsigned int group_idx = 0; group_idx < group_size; group_idx++)
             {
-            unsigned int i = this->m_fluidgroup->getMemberIndex(group_idx);
+            unsigned int i = h_members_omp2.data[group_idx];
 
             // Skip bulk particles.
             Scalar lambda_i = h_aux4.data[i].x;
@@ -581,9 +589,13 @@ void SinglePhaseFlowFS<KT_, SET_>::apply_freesurface_pressure(uint64_t timestep)
         ArrayHandle<Scalar>  h_pressure(this->m_pdata->getPressures(), access_location::host, access_mode::readwrite);
         ArrayHandle<Scalar3> h_aux4    (this->m_pdata->getAuxiliaries4(), access_location::host, access_mode::read);
 
+        // Acquire the group index array once: getMemberIndex() acquires an
+        // ArrayHandle per call, which is not thread-safe inside the parallel loop
+        ArrayHandle<unsigned int> h_members_omp3(this->m_fluidgroup->getIndexArray(), access_location::host, access_mode::read);
+        #pragma omp parallel for
         for (unsigned int group_idx = 0; group_idx < group_size; group_idx++)
             {
-            unsigned int i = this->m_fluidgroup->getMemberIndex(group_idx);
+            unsigned int i = h_members_omp3.data[group_idx];
 
             if (h_aux4.data[i].x < m_fs_threshold)
                 {
@@ -652,9 +664,13 @@ void SinglePhaseFlowFS<KT_, SET_>::forcecomputation(uint64_t timestep)
         // Contact-angle cosine for Young's wetting force.
         const Scalar cos_ca = std::cos(m_contact_angle);
 
+        // Acquire the group index array once: getMemberIndex() acquires an
+        // ArrayHandle per call, which is not thread-safe inside the parallel loop
+        ArrayHandle<unsigned int> h_members_omp4(this->m_fluidgroup->getIndexArray(), access_location::host, access_mode::read);
+        #pragma omp parallel for firstprivate(temp0) reduction(max:max_vel)
         for (unsigned int group_idx = 0; group_idx < group_size; group_idx++)
             {
-            unsigned int i = this->m_fluidgroup->getMemberIndex(group_idx);
+            unsigned int i = h_members_omp4.data[group_idx];
 
             // ── Save free-surface normal from aux2 BEFORE zeroing for BPC ────
             // detect_freesurface() stored the outward unit normal in aux2.

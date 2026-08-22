@@ -32,6 +32,8 @@ maintainer: dkrach, david.krach@mib.uni-stuttgart.de
 
 #include "TwoPhaseFlow.h"
 
+#include <cmath>
+
 #include <pybind11/pybind11.h>
 #include <pybind11/stl_bind.h>
 #include <pybind11/numpy.h>
@@ -361,9 +363,13 @@ void TwoPhaseFlow<KT_, SET1_, SET2_>::compute_strain_rate(uint64_t timestep)
         ArrayHandle<size_t> h_head_list(this->m_nlist->getHeadList(), access_location::host, access_mode::read);
         ArrayHandle<unsigned int> h_type_property_map(this->m_type_property_map, access_location::host, access_mode::read);
 
+        // Acquire the group index array once: getMemberIndex() acquires an
+        // ArrayHandle per call, which is not thread-safe inside the parallel loop
+        ArrayHandle<unsigned int> h_members_omp1(this->m_fluidgroup->getIndexArray(), access_location::host, access_mode::read);
+        #pragma omp parallel for
         for (unsigned int group_idx = 0; group_idx < group_size; group_idx++)
             {
-            unsigned int i = this->m_fluidgroup->getMemberIndex(group_idx);
+            unsigned int i = h_members_omp1.data[group_idx];
 
             Scalar3 pi;
             pi.x = h_pos.data[i].x;
@@ -653,10 +659,14 @@ void TwoPhaseFlow<KT_, SET1_, SET2_>::mark_solid_particles_toremove(uint64_t tim
     ArrayHandle<unsigned int> h_type_property_map(this->m_type_property_map, access_location::host, access_mode::read);
 
     // For all solid particles
+    // Acquire the group index array once: getMemberIndex() acquires an
+    // ArrayHandle per call, which is not thread-safe inside the parallel loop
+    ArrayHandle<unsigned int> h_members_omp2(this->m_solidgroup->getIndexArray(), access_location::host, access_mode::read);
+    #pragma omp parallel for private(size, myHead)
     for (unsigned int group_idx = 0; group_idx < group_size; group_idx++)
         {
         // Read particle index
-        unsigned int i = this->m_solidgroup->getMemberIndex(group_idx);
+        unsigned int i = h_members_omp2.data[group_idx];
 
         // check if solid particle has any fluid neighbor
         bool solid_w_fluid_neigh = false;
@@ -724,10 +734,14 @@ void TwoPhaseFlow<KT_, SET1_, SET2_>::compute_particle_concentration_gradient(ui
     // Particle loop to compute the particle concentration
     // For each fluid particle
     unsigned int group_size = this->m_fluidgroup->getNumMembers();
+    // Acquire the group index array once: getMemberIndex() acquires an
+    // ArrayHandle per call, which is not thread-safe inside the parallel loop
+    ArrayHandle<unsigned int> h_members_omp3(this->m_fluidgroup->getIndexArray(), access_location::host, access_mode::read);
+    #pragma omp parallel for private(size, myHead)
     for (unsigned int group_idx = 0; group_idx < group_size; group_idx++)
     {
         // Read particle index
-        unsigned int i = this->m_fluidgroup->getMemberIndex(group_idx);
+        unsigned int i = h_members_omp3.data[group_idx];
         
         // set temp variable to zero 
 
@@ -784,14 +798,15 @@ void TwoPhaseFlow<KT_, SET1_, SET2_>::compute_particle_concentration_gradient(ui
 
     } // End fluid group loop
 
-    Scalar3 gradCi;
-    Scalar  temp0; 
+    Scalar3 gradCi = make_scalar3(0, 0, 0);
+    Scalar  temp0 = Scalar(0);
     // Second loop to compute the actual gradient, stored in h_energy
     group_size = this->m_fluidgroup->getNumMembers();
+    #pragma omp parallel for private(size, myHead, gradCi) firstprivate(temp0)
     for (unsigned int group_idx = 0; group_idx < group_size; group_idx++)
     {
         // Read particle index
-        unsigned int i = this->m_fluidgroup->getMemberIndex(group_idx);
+        unsigned int i = h_members_omp3.data[group_idx];
         
         // set temp variable to zero 
         gradCi.x = 0.0;
@@ -907,10 +922,14 @@ void TwoPhaseFlow<KT_, SET1_, SET2_>::compute_ndensity(uint64_t timestep)
     // Particle loop
     // For each fluid particle
     unsigned int group_size = this->m_fluidgroup->getNumMembers();
+    // Acquire the group index array once: getMemberIndex() acquires an
+    // ArrayHandle per call, which is not thread-safe inside the parallel loop
+    ArrayHandle<unsigned int> h_members_omp5(this->m_fluidgroup->getIndexArray(), access_location::host, access_mode::read);
+    #pragma omp parallel for private(size, myHead, ni)
     for (unsigned int group_idx = 0; group_idx < group_size; group_idx++)
     {
         // Read particle index
-        unsigned int i = this->m_fluidgroup->getMemberIndex(group_idx);
+        unsigned int i = h_members_omp5.data[group_idx];
 
         // Self-density contribution: use per-particle h when smoothing length is variable
         ni = m_const_slength ? w0 : this->m_skernel->w0(h_h.data[i]);
@@ -982,10 +1001,14 @@ void TwoPhaseFlow<KT_, SET1_, SET2_>::compute_pressure(uint64_t timestep)
 
     // For each fluid particle of fluidgroup1 
     unsigned int group_size = this->m_fluidgroup1->getNumMembers();
+    // Acquire the group index array once: getMemberIndex() acquires an
+    // ArrayHandle per call, which is not thread-safe inside the parallel loop
+    ArrayHandle<unsigned int> h_members_omp6(this->m_fluidgroup1->getIndexArray(), access_location::host, access_mode::read);
+    #pragma omp parallel for
     for (unsigned int group_idx = 0; group_idx < group_size; group_idx++)
     {
         // Read particle index
-        unsigned int i = this->m_fluidgroup1->getMemberIndex(group_idx);
+        unsigned int i = h_members_omp6.data[group_idx];
         // Evaluate pressure
         h_pressure.data[i] = this->m_eos1->Pressure(h_density.data[i]);
     
@@ -993,10 +1016,14 @@ void TwoPhaseFlow<KT_, SET1_, SET2_>::compute_pressure(uint64_t timestep)
 
     // For each fluid particle of fluidgroup2 
     group_size = this->m_fluidgroup2->getNumMembers();
+    // Acquire the group index array once: getMemberIndex() acquires an
+    // ArrayHandle per call, which is not thread-safe inside the parallel loop
+    ArrayHandle<unsigned int> h_members_omp7(this->m_fluidgroup2->getIndexArray(), access_location::host, access_mode::read);
+    #pragma omp parallel for
     for (unsigned int group_idx = 0; group_idx < group_size; group_idx++)
     {
         // Read particle index
-        unsigned int i = this->m_fluidgroup2->getMemberIndex(group_idx);
+        unsigned int i = h_members_omp7.data[group_idx];
         // Evaluate pressure
         h_pressure.data[i] = this->m_eos2->Pressure(h_density.data[i]);
     
@@ -1034,10 +1061,14 @@ void TwoPhaseFlow<KT_, SET1_, SET2_>::compute_noslip(uint64_t timestep)
 
     // For all solid particles
     unsigned int group_size = this->m_solidgroup->getNumMembers();
+    // Acquire the group index array once: getMemberIndex() acquires an
+    // ArrayHandle per call, which is not thread-safe inside the parallel loop
+    ArrayHandle<unsigned int> h_members_omp8(this->m_solidgroup->getIndexArray(), access_location::host, access_mode::read);
+    #pragma omp parallel for private(size, myHead)
     for (unsigned int group_idx = 0; group_idx < group_size; group_idx++)
         {
         // Read particle index
-        unsigned int i = this->m_solidgroup->getMemberIndex(group_idx);
+        unsigned int i = h_members_omp8.data[group_idx];
 
         // Access the particle's position, velocity, mass and type
         Scalar3 pi;
@@ -1272,10 +1303,14 @@ void TwoPhaseFlow<KT_, SET1_, SET2_>::renormalize_density(uint64_t timestep)
     // Particle loop
     // For each fluid particle
     unsigned int group_size = this->m_fluidgroup->getNumMembers();
+    // Acquire the group index array once: getMemberIndex() acquires an
+    // ArrayHandle per call, which is not thread-safe inside the parallel loop
+    ArrayHandle<unsigned int> h_members_omp9(this->m_fluidgroup->getIndexArray(), access_location::host, access_mode::read);
+    #pragma omp parallel for private(size, myHead)
     for (unsigned int group_idx = 0; group_idx < group_size; group_idx++)
         {
         // Read particle index
-        unsigned int i = this->m_fluidgroup->getMemberIndex(group_idx);
+        unsigned int i = h_members_omp9.data[group_idx];
 
         // Access the particle's position
         Scalar3 pi;
@@ -1410,6 +1445,7 @@ void TwoPhaseFlow<KT_, SET1_, SET2_>::compute_colorgradients(uint64_t timestep)
     memset((void*)h_fn.data,0,sizeof(Scalar3)*this->m_pdata->getAuxiliaries3().getNumElements());
 
     // Particle loop
+    #pragma omp parallel for
     for (unsigned int i = 0; i < this->m_pdata->getN(); i++)
         {
         // Access the particle's position, mass and type
@@ -1546,9 +1582,13 @@ void TwoPhaseFlow<KT_, SET1_, SET2_>::compute_colorgradients(uint64_t timestep)
     std::vector<Scalar3> fn_smooth(this->m_pdata->getN() + this->m_pdata->getNGhosts(),
                                    make_scalar3(0.0, 0.0, 0.0));
 
+    // Acquire the group index array once: getMemberIndex() acquires an
+    // ArrayHandle per call, which is not thread-safe inside the parallel loop
+    ArrayHandle<unsigned int> h_members_omp10(this->m_fluidgroup->getIndexArray(), access_location::host, access_mode::read);
+    #pragma omp parallel for
     for (unsigned int group_idx = 0; group_idx < fluid_size; group_idx++)
         {
-        unsigned int i = this->m_fluidgroup->getMemberIndex(group_idx);
+        unsigned int i = h_members_omp10.data[group_idx];
 
         Scalar norm_i = sqrt(dot(h_fn.data[i], h_fn.data[i]));
         if ( norm_i < eps_norm )
@@ -1626,9 +1666,10 @@ void TwoPhaseFlow<KT_, SET1_, SET2_>::compute_colorgradients(uint64_t timestep)
         }
 
     // Write back smoothed fluid normals
+    #pragma omp parallel for
     for (unsigned int group_idx = 0; group_idx < fluid_size; group_idx++)
         {
-        unsigned int i = this->m_fluidgroup->getMemberIndex(group_idx);
+        unsigned int i = h_members_omp10.data[group_idx];
         h_fn.data[i] = fn_smooth[i];
         }
 
@@ -1668,10 +1709,14 @@ void TwoPhaseFlow<KT_, SET1_, SET2_>::compute_surfaceforce(uint64_t timestep)
 
     // for each fluid particle
     unsigned int group_size = this->m_fluidgroup->getNumMembers();
+    // Acquire the group index array once: getMemberIndex() acquires an
+    // ArrayHandle per call, which is not thread-safe inside the parallel loop
+    ArrayHandle<unsigned int> h_members_omp12(this->m_fluidgroup->getIndexArray(), access_location::host, access_mode::read);
+    #pragma omp parallel for
     for (unsigned int group_idx = 0; group_idx < group_size; group_idx++)
         {
         // Read particle index
-        unsigned int i = this->m_fluidgroup->getMemberIndex(group_idx);
+        unsigned int i = h_members_omp12.data[group_idx];
 
         // Access the particle's position and type
         Scalar3 pi;
@@ -2022,10 +2067,14 @@ void TwoPhaseFlow<KT_, SET1_, SET2_>::forcecomputation(uint64_t timestep)
 
     // for each fluid particle
     unsigned int group_size = m_fluidgroup->getNumMembers();
+    // Acquire the group index array once: getMemberIndex() acquires an
+    // ArrayHandle per call, which is not thread-safe inside the parallel loop
+    ArrayHandle<unsigned int> h_members_omp13(m_fluidgroup->getIndexArray(), access_location::host, access_mode::read);
+    #pragma omp parallel for private(size, myHead) firstprivate(temp0) reduction(max:max_vel)
     for (unsigned int group_idx = 0; group_idx < group_size; group_idx++)
         {
         // Read particle index
-        unsigned int i = m_fluidgroup->getMemberIndex(group_idx);
+        unsigned int i = h_members_omp13.data[group_idx];
 
         // Access the particle's position, velocity, mass and type
         Scalar3 pi;
@@ -2427,12 +2476,12 @@ void TwoPhaseFlow<KT_, SET1_, SET2_>::computeForces(uint64_t timestep)
 
     // $\delta^+$-SPH particle shifting (Sun et al. 2017).
     // Interface normals in aux3 must be up-to-date before calling.
-    // Neighbor list is rebuilt at shifted positions before force computation.
+    // No forced neighbor-list rebuild: shifts are far below the nlist buffer
+    // skin, and the standard displacement check picks them up next step. A
+    // forced full rebuild every step costs ~7x in throughput at 1e5 particles.
     if ( m_particle_shifting )
         {
         compute_particle_shift(timestep);
-        this->m_nlist->forceUpdate();
-        this->m_nlist->compute(timestep);
         }
 
     compute_surfaceforce(timestep);
@@ -2547,9 +2596,13 @@ void TwoPhaseFlow<KT_, SET1_, SET2_>::compute_particle_shift(uint64_t timestep)
     ArrayHandle<size_t>       h_head_list(this->m_nlist->getHeadList(),           access_location::host, access_mode::read);
 
     // ── PASS 1: shift vectors ──────────────────────────────────────────────────
+    // Acquire the group index array once: getMemberIndex() acquires an
+    // ArrayHandle per call, which is not thread-safe inside the parallel loop
+    ArrayHandle<unsigned int> h_members_omp14(this->m_fluidgroup->getIndexArray(), access_location::host, access_mode::read);
+    #pragma omp parallel for
     for (unsigned int group_idx = 0; group_idx < fluid_size; group_idx++)
         {
-        unsigned int i = this->m_fluidgroup->getMemberIndex(group_idx);
+        unsigned int i = h_members_omp14.data[group_idx];
 
         Scalar hi    = m_const_slength ? m_ch : h_h.data[i];
         // W_ref: kernel at approx. initial inter-particle spacing $\Delta p \approx 0.5 h$
@@ -2563,11 +2616,15 @@ void TwoPhaseFlow<KT_, SET1_, SET2_>::compute_particle_shift(uint64_t timestep)
         for (unsigned int neigh_idx = 0; neigh_idx < n_neigh; neigh_idx++)
             {
             unsigned int k = h_nlist_arr.data[head + neigh_idx];
-            // Only fluid–fluid interactions; skip solid boundary particles
-            if (checksolid(h_type_property_map.data, h_pos.data[k].w)) continue;
 
+            // Solid dummy particles PARTICIPATE in the shift sum: with their
+            // Adami-extrapolated densities they close the kernel support at
+            // walls, so the shift sees no spurious "free surface" that would
+            // otherwise pump wall-adjacent fluid into the solid every step.
+            // Guard against marked-removed solids carrying zero density.
             Scalar mk   = h_velocity.data[k].w;
             Scalar rhok = h_density.data[k];
+            if (rhok < Scalar(1e-12)) continue;
             Scalar hk   = m_const_slength ? m_ch : h_h.data[k];
             Scalar Vk   = mk / rhok;
 
@@ -2597,11 +2654,21 @@ void TwoPhaseFlow<KT_, SET1_, SET2_>::compute_particle_shift(uint64_t timestep)
             grad_sum.z += enhance * Vk * dwdr_r * dx.z;
             }
 
-        // $\delta r_i = -A h_i \sum_j [1 + R(W/W_\mathrm{ref})^n] V_j \nabla W_{ij}$
+        // $\delta r_i = -A\,\mathrm{Ma}_i (2h_i)^2 \sum_j [1 + R(W/W_\mathrm{ref})^n] V_j \nabla W_{ij}$
+        // Sun et al. 2017 delta^+ scaling: the per-particle Mach number
+        // Ma_i = |v_i|/c makes the shift vanish for quiescent fluid, so the
+        // one-sided truncation next to excluded solid neighbors cannot pump
+        // static particles into the walls.
+        Scalar ci = checkfluid1(h_type_property_map.data, h_pos.data[i].w) ? m_c1 : m_c2;
+        Scalar vmagi = sqrt(h_velocity.data[i].x*h_velocity.data[i].x +
+                            h_velocity.data[i].y*h_velocity.data[i].y +
+                            h_velocity.data[i].z*h_velocity.data[i].z);
+        Scalar Mai   = vmagi / ci;
+        Scalar coeff = -m_shift_A * Mai * Scalar(4.0) * hi * hi;
         Scalar3 dr;
-        dr.x = -m_shift_A * hi * grad_sum.x;
-        dr.y = -m_shift_A * hi * grad_sum.y;
-        dr.z = -m_shift_A * hi * grad_sum.z;
+        dr.x = coeff * grad_sum.x;
+        dr.y = coeff * grad_sum.y;
+        dr.z = coeff * grad_sum.z;
 
         // Interface condition: project out normal component at fluid–fluid interface
         // so particles cannot cross between phases (Mokos 2017, Lyu 2021).
@@ -2620,6 +2687,24 @@ void TwoPhaseFlow<KT_, SET1_, SET2_>::compute_particle_shift(uint64_t timestep)
                 }
             }
 
+        // NaN-safe magnitude cap at 0.1 h_i: degenerate near-pairs make
+        // dW/dr / r blow up, and box.wrap() only unwraps a single periodic
+        // image, so an unbounded shift would strand the particle outside the
+        // box and corrupt the cell binning.
+        Scalar drmag2 = dr.x*dr.x + dr.y*dr.y + dr.z*dr.z;
+        const Scalar drcap = Scalar(0.1) * hi;
+        if (!std::isfinite(drmag2))
+            {
+            dr = make_scalar3(Scalar(0), Scalar(0), Scalar(0));
+            }
+        else if (drmag2 > drcap * drcap)
+            {
+            Scalar rescale = drcap / sqrt(drmag2);
+            dr.x *= rescale;
+            dr.y *= rescale;
+            dr.z *= rescale;
+            }
+
         shift_vec[i] = dr;
         } // end PASS 1
 
@@ -2628,6 +2713,9 @@ void TwoPhaseFlow<KT_, SET1_, SET2_>::compute_particle_shift(uint64_t timestep)
     // Ghost neighbor j gets $\delta r_j = 0$ (conservative approximation).
     if (m_density_method == DENSITYCONTINUITY)
         {
+        // NOTE: deliberately NOT OpenMP-parallelized. This loop writes
+        // h_density[i] while also reading neighbor densities h_density[k]
+        // for the volume V_k — a cross-iteration read/write overlap.
         for (unsigned int group_idx = 0; group_idx < fluid_size; group_idx++)
             {
             unsigned int i = this->m_fluidgroup->getMemberIndex(group_idx);
@@ -2641,10 +2729,12 @@ void TwoPhaseFlow<KT_, SET1_, SET2_>::compute_particle_shift(uint64_t timestep)
             for (unsigned int neigh_idx = 0; neigh_idx < n_neigh; neigh_idx++)
                 {
                 unsigned int k = h_nlist_arr.data[head + neigh_idx];
-                if (checksolid(h_type_property_map.data, h_pos.data[k].w)) continue;
 
+                // Solid neighbors participate with delta r_k = 0 (stationary);
+                // consistent with their inclusion in the PASS 1 support closure.
                 Scalar mk   = h_velocity.data[k].w;
                 Scalar rhok = h_density.data[k];
+                if (rhok < Scalar(1e-12)) continue;
                 Scalar hk   = m_const_slength ? m_ch : h_h.data[k];
                 Scalar Vk   = mk / rhok;
 
@@ -2683,9 +2773,13 @@ void TwoPhaseFlow<KT_, SET1_, SET2_>::compute_particle_shift(uint64_t timestep)
     ArrayHandle<Scalar4> h_pos_rw(this->m_pdata->getPositions(), access_location::host, access_mode::readwrite);
     ArrayHandle<int3>    h_image (this->m_pdata->getImages(),    access_location::host, access_mode::readwrite);
 
+    // Acquire the group index array once: getMemberIndex() acquires an
+    // ArrayHandle per call, which is not thread-safe inside the parallel loop
+    ArrayHandle<unsigned int> h_members_omp15(this->m_fluidgroup->getIndexArray(), access_location::host, access_mode::read);
+    #pragma omp parallel for
     for (unsigned int group_idx = 0; group_idx < fluid_size; group_idx++)
         {
-        unsigned int i = this->m_fluidgroup->getMemberIndex(group_idx);
+        unsigned int i = h_members_omp15.data[group_idx];
         h_pos_rw.data[i].x += shift_vec[i].x;
         h_pos_rw.data[i].y += shift_vec[i].y;
         h_pos_rw.data[i].z += shift_vec[i].z;
@@ -2757,9 +2851,13 @@ void TwoPhaseFlow<KT_, SET1_, SET2_>::compute_solid_forces(uint64_t timestep)
         // expressions are identical to the fluid loop (symmetric in i<->j with
         // dx and dv flipping sign), so Newton's third law holds without any
         // extra sign flip or mass-ratio scaling.
+        // Acquire the group index array once: getMemberIndex() acquires an
+        // ArrayHandle per call, which is not thread-safe inside the parallel loop
+        ArrayHandle<unsigned int> h_members_omp16(m_solidgroup->getIndexArray(), access_location::host, access_mode::read);
+        #pragma omp parallel for private(size, myHead) firstprivate(temp0)
         for (unsigned int group_idx = 0; group_idx < group_size; group_idx++)
             {
-            unsigned int i = m_solidgroup->getMemberIndex(group_idx);
+            unsigned int i = h_members_omp16.data[group_idx];
 
             Scalar3 pi;
             pi.x = h_pos.data[i].x;

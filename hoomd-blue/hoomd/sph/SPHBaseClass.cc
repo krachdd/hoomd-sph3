@@ -250,10 +250,14 @@ void SPHBaseClass<KT_, SET_>::applyBodyForce(uint64_t timestep, std::shared_ptr<
             m_exec_conf->msg->notice(7) << "Computing SPHBaseClass::applyBodyForce force getter done!" << std::endl;
         
             // for each particle in given group
+            // Acquire the group index array once: getMemberIndex() acquires an
+            // ArrayHandle per call, which is not thread-safe inside the parallel loop
+            ArrayHandle<unsigned int> h_members_omp1(pgroup->getIndexArray(), access_location::host, access_mode::read);
+            #pragma omp parallel for
             for (unsigned int group_idx = 0; group_idx < group_size; group_idx++)
                 {
                 // Read particle index
-                unsigned int i = pgroup->getMemberIndex(group_idx);
+                unsigned int i = h_members_omp1.data[group_idx];
 
                 // Read particle mass
                 Scalar mi = h_velocity.data[i].w;

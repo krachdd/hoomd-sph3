@@ -27,12 +27,39 @@ The solver runs on CPUs (MPI domain decomposition supported; GPU kernels are not
 - **Non-Newtonian rheology** — power-law and Bingham viscosity models
 - **Two-phase flows** — surface-tension and Transport-Velocity formulations
 - **Density-gradient-driven flows** — Boussinesq buoyancy approximation, thermal Couette, heated cavity, and Rayleigh-Taylor instability
+- **OpenMP threading** — all SPH particle loops (density, no-slip BC, color gradients, surface force, strain rate, force computation, integrators) are `#pragma omp parallel for` parallelized; combine with MPI domain decomposition for hybrid runs
 - **Parallel I/O** — MPI-IO via pgsd-sph eliminates the serial gather-on-root bottleneck
 - **Density diffusion** — Molteni & Colagrossi (2009) diffusion and Antuono/Marrone δ-SPH with L-matrix renormalized density gradients (`model.activateDeltaSPH`)
 - **Adaptive time stepping** — `hoomd.sph.update.AdaptiveTimestep` recomputes Δt from the CFL, viscous, and body-force conditions using the MPI-reduced maximum fluid speed
 - **Helper modules** — GSD-to-VTU conversion, input-geometry readers, and diagnostic utilities
 - **Reproducible benchmarks** — standardized create/run scripts for all benchmark cases
 - **Unit tests** — `hoomd/sph/pytest/` covers kernel normalization/derivatives, EOS consistency, lattice completeness, and small end-to-end solver runs (`python -m pytest hoomd/sph/pytest` in the build tree)
+
+---
+
+## Threaded execution (OpenMP)
+
+The SPH component is threaded with OpenMP (enabled automatically when CMake finds
+OpenMP; the build stays serial otherwise). Thread count is controlled with
+`OMP_NUM_THREADS`; use the number of **physical** cores (SMT/hyper-threads add
+nothing to these bandwidth-bound loops).
+
+```bash
+# pure threading (single process)
+OMP_NUM_THREADS=8 python3 run_case.py ...
+
+# hybrid MPI x OpenMP — IMPORTANT: mpirun binds each rank to a single core by
+# default, which serializes the OpenMP threads. Release the binding:
+OMP_NUM_THREADS=4 mpirun --bind-to none -np 2 python3 run_case.py ...
+```
+
+Measured on an 8-core i7-10700F, 32k-particle two-phase invasion case:
+5.2x speedup at 8 threads over the serial build (23.7 vs 4.6 timesteps/s);
+threads beat MPI ranks for small domains, since ghost layers do not shrink
+with the number of threads. The neighbor-list build (HOOMD core) remains
+serial. Note: results are no longer bitwise-reproducible across different
+thread counts (floating-point sums are reordered); physical results agree
+within floating-point tolerance.
 
 ---
 

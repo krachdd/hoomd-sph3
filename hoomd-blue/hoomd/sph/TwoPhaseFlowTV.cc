@@ -165,10 +165,14 @@ void TwoPhaseFlowTV<KT_, SET1_, SET2_>::forcecomputation(uint64_t timestep)
 
     // For each fluid particle
     unsigned int group_size = this->m_fluidgroup->getNumMembers();
+    // Acquire the group index array once: getMemberIndex() acquires an
+    // ArrayHandle per call, which is not thread-safe inside the parallel loop
+    ArrayHandle<unsigned int> h_members_omp1(this->m_fluidgroup->getIndexArray(), access_location::host, access_mode::read);
+    #pragma omp parallel for private(size, myHead) firstprivate(temp0) reduction(max:max_vel)
     for (unsigned int group_idx = 0; group_idx < group_size; group_idx++)
         {
         // Read particle index
-        unsigned int i = this->m_fluidgroup->getMemberIndex(group_idx);
+        unsigned int i = h_members_omp1.data[group_idx];
 
         // Access position, velocity, mass and type
         Scalar3 pi;
@@ -636,8 +640,8 @@ void TwoPhaseFlowTV<KT_, SET1_, SET2_>::computeForces(uint64_t timestep)
     if ( this->m_particle_shifting )
         {
         this->compute_particle_shift(timestep);
-        this->m_nlist->forceUpdate();
-        this->m_nlist->compute(timestep);
+        // No forced rebuild: shifts stay below the nlist buffer skin and the
+        // standard displacement check picks them up next step.
         }
 
     // Compute surface force from normals in aux2/aux3 -> aux4

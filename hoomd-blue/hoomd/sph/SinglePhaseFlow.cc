@@ -380,10 +380,14 @@ void SinglePhaseFlow<KT_, SET_>::mark_solid_particles_toremove(uint64_t timestep
 
 
         // For all solid particles
+        // Acquire the group index array once: getMemberIndex() acquires an
+        // ArrayHandle per call, which is not thread-safe inside the parallel loop
+        ArrayHandle<unsigned int> h_members_omp1(this->m_solidgroup->getIndexArray(), access_location::host, access_mode::read);
+        #pragma omp parallel for private(size, myHead)
         for (unsigned int group_idx = 0; group_idx < group_size; group_idx++)
             {
             // Read particle index
-            unsigned int i = this->m_solidgroup->getMemberIndex(group_idx);
+            unsigned int i = h_members_omp1.data[group_idx];
 
             // check if solid particle has any fluid neighbor
             bool solid_w_fluid_neigh = false;
@@ -437,10 +441,14 @@ void SinglePhaseFlow<KT_, SET_>::compute_particlenumberdensity(uint64_t timestep
 
         // Particle loop
         // For each fluid particle
+        // Acquire the group index array once: getMemberIndex() acquires an
+        // ArrayHandle per call, which is not thread-safe inside the parallel loop
+        ArrayHandle<unsigned int> h_members_omp2(this->m_fluidgroup->getIndexArray(), access_location::host, access_mode::read);
+        #pragma omp parallel for private(size)
         for (unsigned int group_idx = 0; group_idx < group_size; group_idx++)
             {
             // Read particle index
-            unsigned int i = this->m_fluidgroup->getMemberIndex(group_idx);
+            unsigned int i = h_members_omp2.data[group_idx];
             
             // All of the neighbors of this particle
             size = (unsigned int)h_n_neigh.data[i];
@@ -489,10 +497,14 @@ void SinglePhaseFlow<KT_, SET_>::compute_ndensity(uint64_t timestep)
 
         // Particle loop
         // For each fluid particle
+        // Acquire the group index array once: getMemberIndex() acquires an
+        // ArrayHandle per call, which is not thread-safe inside the parallel loop
+        ArrayHandle<unsigned int> h_members_omp3(this->m_fluidgroup->getIndexArray(), access_location::host, access_mode::read);
+        #pragma omp parallel for private(size, myHead, ni)
         for (unsigned int group_idx = 0; group_idx < group_size; group_idx++)
         {
             // Read particle index
-            unsigned int i = this->m_fluidgroup->getMemberIndex(group_idx);
+            unsigned int i = h_members_omp3.data[group_idx];
 
             // Self-density contribution: use per-particle h when smoothing length is variable
             ni = m_const_slength ? w0 : this->m_skernel->w0(h_h.data[i]);
@@ -567,10 +579,14 @@ void SinglePhaseFlow<KT_, SET_>::compute_pressure(uint64_t timestep)
         ArrayHandle<Scalar> h_pressure(this->m_pdata->getPressures(), access_location::host, access_mode::readwrite);
 
         // For each fluid particle
+        // Acquire the group index array once: getMemberIndex() acquires an
+        // ArrayHandle per call, which is not thread-safe inside the parallel loop
+        ArrayHandle<unsigned int> h_members_omp4(this->m_fluidgroup->getIndexArray(), access_location::host, access_mode::read);
+        #pragma omp parallel for
         for (unsigned int group_idx = 0; group_idx < group_size; group_idx++)
             {
             // Read particle index
-            unsigned int i = this->m_fluidgroup->getMemberIndex(group_idx);
+            unsigned int i = h_members_omp4.data[group_idx];
             // Evaluate pressure
             h_pressure.data[i] = this->m_eos->Pressure(h_density.data[i]);
             
@@ -614,10 +630,14 @@ void SinglePhaseFlow<KT_, SET_>::compute_noslip(uint64_t timestep)
         size_t myHead;
 
         // For all solid particles
+        // Acquire the group index array once: getMemberIndex() acquires an
+        // ArrayHandle per call, which is not thread-safe inside the parallel loop
+        ArrayHandle<unsigned int> h_members_omp5(this->m_solidgroup->getIndexArray(), access_location::host, access_mode::read);
+        #pragma omp parallel for private(size, myHead)
         for (unsigned int group_idx = 0; group_idx < group_size; group_idx++)
             {
             // Read particle index
-            unsigned int i = this->m_solidgroup->getMemberIndex(group_idx);
+            unsigned int i = h_members_omp5.data[group_idx];
 
             // Access the particle's position, velocity, mass and type
             Scalar3 pi;
@@ -854,10 +874,14 @@ void SinglePhaseFlow<KT_, SET_>::renormalize_density(uint64_t timestep)
 
         // Particle loop
         // For each fluid particle
+        // Acquire the group index array once: getMemberIndex() acquires an
+        // ArrayHandle per call, which is not thread-safe inside the parallel loop
+        ArrayHandle<unsigned int> h_members_omp6(this->m_fluidgroup->getIndexArray(), access_location::host, access_mode::read);
+        #pragma omp parallel for private(size, myHead)
         for (unsigned int group_idx = 0; group_idx < group_size; group_idx++)
             {
             // Read particle index
-            unsigned int i = this->m_fluidgroup->getMemberIndex(group_idx);
+            unsigned int i = h_members_omp6.data[group_idx];
 
             // Access the particle's position
             Scalar3 pi;
@@ -991,9 +1015,13 @@ void SinglePhaseFlow<KT_, SET_>::compute_density_gradient(uint64_t timestep)
         ArrayHandle<size_t> h_head_list(this->m_nlist->getHeadList(), access_location::host, access_mode::read);
         ArrayHandle<unsigned int> h_type_property_map(this->m_type_property_map, access_location::host, access_mode::read);
 
+        // Acquire the group index array once: getMemberIndex() acquires an
+        // ArrayHandle per call, which is not thread-safe inside the parallel loop
+        ArrayHandle<unsigned int> h_members_omp7(this->m_fluidgroup->getIndexArray(), access_location::host, access_mode::read);
+        #pragma omp parallel for
         for (unsigned int group_idx = 0; group_idx < group_size; group_idx++)
             {
-            unsigned int i = this->m_fluidgroup->getMemberIndex(group_idx);
+            unsigned int i = h_members_omp7.data[group_idx];
 
             Scalar3 pi;
             pi.x = h_pos.data[i].x;
@@ -1114,9 +1142,13 @@ void SinglePhaseFlow<KT_, SET_>::compute_strain_rate(uint64_t timestep)
         ArrayHandle<size_t> h_head_list(this->m_nlist->getHeadList(), access_location::host, access_mode::read);
         ArrayHandle<unsigned int> h_type_property_map(this->m_type_property_map, access_location::host, access_mode::read);
 
+        // Acquire the group index array once: getMemberIndex() acquires an
+        // ArrayHandle per call, which is not thread-safe inside the parallel loop
+        ArrayHandle<unsigned int> h_members_omp8(this->m_fluidgroup->getIndexArray(), access_location::host, access_mode::read);
+        #pragma omp parallel for
         for (unsigned int group_idx = 0; group_idx < group_size; group_idx++)
             {
-            unsigned int i = this->m_fluidgroup->getMemberIndex(group_idx);
+            unsigned int i = h_members_omp8.data[group_idx];
 
             Scalar3 pi;
             pi.x = h_pos.data[i].x;
@@ -1360,10 +1392,14 @@ void SinglePhaseFlow<KT_, SET_>::forcecomputation(uint64_t timestep)
             }
 
         // for each fluid particle
+        // Acquire the group index array once: getMemberIndex() acquires an
+        // ArrayHandle per call, which is not thread-safe inside the parallel loop
+        ArrayHandle<unsigned int> h_members_omp9(m_fluidgroup->getIndexArray(), access_location::host, access_mode::read);
+        #pragma omp parallel for private(size, myHead) firstprivate(temp0) reduction(max:max_vel)
         for (unsigned int group_idx = 0; group_idx < group_size; group_idx++)
             {
             // Read particle index
-            unsigned int i = m_fluidgroup->getMemberIndex(group_idx);
+            unsigned int i = h_members_omp9.data[group_idx];
 
             // Access the particle's position, velocity, mass and type
             Scalar3 pi;
@@ -1676,10 +1712,14 @@ void SinglePhaseFlow<KT_, SET_>::compute_solid_forces(uint64_t timestep)
         // expressions below are identical to the fluid loop (they are symmetric
         // in i<->j while dx and dv flip sign), so Newton's third law holds
         // without any extra sign flip or mass-ratio scaling.
+        // Acquire the group index array once: getMemberIndex() acquires an
+        // ArrayHandle per call, which is not thread-safe inside the parallel loop
+        ArrayHandle<unsigned int> h_members_omp10(m_solidgroup->getIndexArray(), access_location::host, access_mode::read);
+        #pragma omp parallel for private(size, myHead) firstprivate(temp0)
         for (unsigned int group_idx = 0; group_idx < group_size; group_idx++)
             {
             // Read particle index
-            unsigned int i = m_solidgroup->getMemberIndex(group_idx);
+            unsigned int i = h_members_omp10.data[group_idx];
 
             // Access the particle's position, velocity, mass and type
             Scalar3 pi;

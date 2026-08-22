@@ -157,9 +157,13 @@ void KickDriftKickTV::integrateStepOne(uint64_t timestep)
         // r(t+deltaT) = r(t) + v(t)*deltaT + (1/2)a(t)*deltaT^2
         // v(t+deltaT/2) = v(t) + (1/2)a*deltaT
         Scalar temp0 = 0.0;
+        // Acquire the group index array once: getMemberIndex() acquires an
+        // ArrayHandle per call, which is not thread-safe inside the parallel loop
+        ArrayHandle<unsigned int> h_members_omp1(m_group->getIndexArray(), access_location::host, access_mode::read);
+        #pragma omp parallel for firstprivate(temp0)
         for (unsigned int group_idx = 0; group_idx < group_size; group_idx++)
             {
-            unsigned int j = m_group->getMemberIndex(group_idx);
+            unsigned int j = h_members_omp1.data[group_idx];
 
             // dpe(t+deltaT/2) = dpe(t) + (1/2)*dpedt(t)*deltaT
             temp0 = Scalar(1.0 / 2.0) * m_deltaT;
@@ -211,9 +215,10 @@ void KickDriftKickTV::integrateStepOne(uint64_t timestep)
         // into place
         ArrayHandle<int3> h_image(m_pdata->getImages(), access_location::host, access_mode::readwrite);
 
+        #pragma omp parallel for
         for (unsigned int group_idx = 0; group_idx < group_size; group_idx++)
             {
-            unsigned int j = m_group->getMemberIndex(group_idx);
+            unsigned int j = h_members_omp1.data[group_idx];
             box.wrap(h_pos.data[j], h_image.data[j]);
             }
         } // End GPU Array Scope
@@ -242,13 +247,17 @@ void KickDriftKickTV::integrateStepTwo(uint64_t timestep)
         ArrayHandle<Scalar4> h_net_force(net_force, access_location::host, access_mode::read);
         ArrayHandle<Scalar4> h_net_ratedpe(m_pdata->getNetRateDPEArray(), access_location::host, access_mode::read);
 
-        Scalar minv;
-        Scalar temp0;
+        Scalar minv = Scalar(0);
+        Scalar temp0 = Scalar(0);
 
         // v(t+deltaT) = v(t+deltaT/2) + 1/2 * a(t+deltaT)*deltaT
+        // Acquire the group index array once: getMemberIndex() acquires an
+        // ArrayHandle per call, which is not thread-safe inside the parallel loop
+        ArrayHandle<unsigned int> h_members_omp3(m_group->getIndexArray(), access_location::host, access_mode::read);
+        #pragma omp parallel for firstprivate(minv, temp0)
         for (unsigned int group_idx = 0; group_idx < group_size; group_idx++)
             {
-            unsigned int j = m_group->getMemberIndex(group_idx);
+            unsigned int j = h_members_omp3.data[group_idx];
 
             // first, calculate acceleration from the net force
             minv = Scalar(1.0) / h_vel.data[j].w;

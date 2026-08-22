@@ -237,10 +237,14 @@ void SinglePhaseFlowTV<KT_, SET_>::forcecomputation(uint64_t timestep)
             }
 
         // for each fluid particle
+        // Acquire the group index array once: getMemberIndex() acquires an
+        // ArrayHandle per call, which is not thread-safe inside the parallel loop
+        ArrayHandle<unsigned int> h_members_omp1(this->m_fluidgroup->getIndexArray(), access_location::host, access_mode::read);
+        #pragma omp parallel for private(size, myHead) firstprivate(temp0) reduction(max:max_vel)
         for (unsigned int group_idx = 0; group_idx < group_size; group_idx++)
             {
             // Read particle index
-            unsigned int i = this->m_fluidgroup->getMemberIndex(group_idx);
+            unsigned int i = h_members_omp1.data[group_idx];
 
             // set background pressure contribution for tv to zero 
             h_bpc.data[i].x = 0.0;
