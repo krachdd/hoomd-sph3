@@ -237,7 +237,13 @@ void TwoPhaseFlow<KT_, SET1_, SET2_>::setParams(Scalar mu1, Scalar mu2, Scalar s
          throw std::runtime_error("Error initializing TwoPhaseFlow.");
          }
 
-    // Young's equation: $\sigma_{s1} - \sigma_{s2} = \sigma_{12} \cos\theta$
+    // Young's equation: $\sigma_{s2} - \sigma_{s1} = \sigma_{12} \cos\theta$.
+    // The CSF wall tension is a positive energy penalty on the interface it
+    // is assigned to, so for a WETTING fluid 1 (omega < 90) the penalty
+    // belongs on the fluid-2--solid interface (gas avoids the wall, liquid
+    // spreads), and vice versa. The previous assignment was phase-swapped:
+    // theta=30 produced wall DEWETTING and theta=150 a climbing film
+    // (verified empirically on the coarse capillary-rise case, 2026-08-22).
     if ( this->m_omega == Scalar(90) )
         {
         this->m_sigma01 = 0.0;
@@ -245,13 +251,13 @@ void TwoPhaseFlow<KT_, SET1_, SET2_>::setParams(Scalar mu1, Scalar mu2, Scalar s
         }
     else if ( this->m_omega < Scalar(90) )
         {
-        this->m_sigma01 = this->m_sigma12 * cos( this->m_omega * ( M_PI / Scalar(180) ) );
-        this->m_sigma02 = 0.0;
+        this->m_sigma01 = 0.0;
+        this->m_sigma02 = this->m_sigma12 * cos( this->m_omega * ( M_PI / Scalar(180) ) );
         }
     else if ( this->m_omega > Scalar(90) )
         {
-        this->m_sigma01 = 0.0;
-        this->m_sigma02 = this->m_sigma12 * cos( (Scalar(180)-m_omega) * ( M_PI / Scalar(180) ) );
+        this->m_sigma01 = this->m_sigma12 * cos( (Scalar(180)-m_omega) * ( M_PI / Scalar(180) ) );
+        this->m_sigma02 = 0.0;
         }
 
     this->m_params_set = true;
