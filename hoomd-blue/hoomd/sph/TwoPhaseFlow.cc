@@ -1748,7 +1748,22 @@ void TwoPhaseFlow<KT_, SET1_, SET2_>::compute_surfaceforce(uint64_t timestep)
                     break;
                 }
             }
-        if ( !nearfluidinterface )
+        // Wetting fix (2026-08-21): when a solid-fluid tension is active
+        // (omega != 90), particles in the wall film also carry interfacial
+        // stress (sigma01/sigma02, Huber-style). The original fluid-fluid-only
+        // gate zeroed their stress, so the contact-line divergence saw
+        // inconsistent neighbor stresses and the Young traction along the
+        // wall vanished -- observed as zero capillary rise at any omega.
+        bool nearsolid = false;
+        if ( m_sigma01 > 0.0 || m_sigma02 > 0.0 )
+            {
+            Scalar3 sni_gate;
+            sni_gate.x = h_sn.data[i].x;
+            sni_gate.y = h_sn.data[i].y;
+            sni_gate.z = h_sn.data[i].z;
+            nearsolid = dot(sni_gate, sni_gate) > Scalar(0);
+            }
+        if ( !nearfluidinterface && !nearsolid )
             continue;
 
         // Access the particle's mass
