@@ -49,10 +49,13 @@ The scalar field (brine concentration C in aux4.x) is assigned in the run
 script via cpu_local_snapshot.
 
 Usage:
-    python3 create_input_geometry.py <num_diameter> [--perm]
+    python3 create_input_geometry.py <num_diameter> [--perm] [--cells-x N]
 
     num_diameter : fluid particles across one grain diameter d (e.g. 10)
     --perm       : write the fully periodic permeability unit cell instead
+    --cells-x N  : domain width in grain columns (default 5) -> perturbation
+                   wavelength Lx = N*a; use 3 and 7 for the sigma(k) study
+                   (non-default widths are tagged _wN in the filename)
 """
 
 import sys, math
@@ -64,7 +67,15 @@ from hoomd import sph
 
 # ─── Parameters ──────────────────────────────────────────────────────────────
 num_diameter = int(sys.argv[1])
-perm_mode    = '--perm' in sys.argv[2:]
+flags        = sys.argv[2:]
+perm_mode    = '--perm' in flags
+
+# Domain width in grain columns (fingering mode): Lx = cells_x * a sets the
+# perturbation wavelength — vary it for the sigma(k) dispersion study
+# (e.g. --cells-x 3 and --cells-x 7 around the default 5).
+cells_x = 5
+if '--cells-x' in flags:
+    cells_x = int(flags[flags.index('--cells-x') + 1])
 
 a_grain = 0.8e-3           # grain lattice spacing                    [m]
 R_grain = 0.2e-3           # grain radius                             [m]
@@ -81,8 +92,8 @@ rcut    = hoomd.sph.kernel.Kappa[kernel] * slength
 n_solid    = math.ceil(rcut / dx)   # wall thickness [particle layers]
 part_depth = math.ceil(2.5 * hoomd.sph.kernel.Kappa[kernel] * rcut / dx)
 
-n_cells_x = 2 if perm_mode else 5    # grain columns
-n_cells_y = 2 if perm_mode else 10   # grain rows in the fluid region
+n_cells_x = 2 if perm_mode else cells_x   # grain columns
+n_cells_y = 2 if perm_mode else 10        # grain rows in the fluid region
 
 lx = n_cells_x * a_grain
 ly_fluid = n_cells_y * a_grain
@@ -159,7 +170,9 @@ snapshot.particles.mass     = np.full(n_particles, mass,    dtype=np.float32)
 snapshot.particles.slength  = np.full(n_particles, slength, dtype=np.float32)
 snapshot.particles.density  = np.full(n_particles, rho0,    dtype=np.float32)
 
-tag = 'perm' if perm_mode else 'finger'
+# Non-default widths get a _w{N} tag so sigma(k) variants coexist with the
+# default geometry (job scripts glob on 'porous_finger_<nd>_dx_*').
+tag = 'perm' if perm_mode else ('finger' if cells_x == 5 else f'finger_w{cells_x}')
 init_filename = f'porous_{tag}_{num_diameter}_dx_{dx:.2e}_init.gsd'
 with gsd.hoomd.open(name=init_filename, mode='w') as f:
     f.append(snapshot)

@@ -74,12 +74,17 @@ density contrasts but is not yet validated.
 
 Usage:
     python3 run_fingering_single_mode.py <init_gsd> <K_m2> [steps] [--stable]
+                                         [--d0frac F]
 
-    init_gsd : porous_finger_*_init.gsd from create_input_geometry.py
-    K_m2     : measured permeability [m^2] from run_permeability.py
-               (fallback: Drummond-Tahir estimate, pass 'DT')
-    steps    : simulation steps (default: enough for sigma*t = 4)
-    --stable : swap layers (light brine analog on bottom) -> decay check
+    init_gsd  : porous_finger_*_init.gsd from create_input_geometry.py
+                (incl. _wN width variants for the sigma(k) study -- Lx and
+                the wavelength are read from the file's box)
+    K_m2      : measured permeability [m^2] from run_permeability.py
+                (fallback: Drummond-Tahir estimate, pass 'DT')
+    steps     : simulation steps (default: enough for sigma*t = 4)
+    --stable  : swap layers (light brine analog on bottom) -> decay check
+    --d0frac F: perturbation amplitude delta0 = F*R (default 0.5); vary for
+                the linearity check (output files get a _d0F tag)
 """
 
 import sys, os
@@ -104,12 +109,22 @@ except ImportError:
 device = hoomd.device.CPU(notice_level=2)
 sim    = hoomd.Simulation(device=device)
 
-args     = [a for a in sys.argv[1:] if a != '--stable']
-stable   = '--stable' in sys.argv[1:]
+argv   = sys.argv[1:]
+stable = '--stable' in argv
+# Initial perturbation amplitude as a fraction of the grain radius R
+# (default 0.5 -> delta0 = 100 um at R = 0.2 mm). Vary for the linearity
+# check that sigma is independent of delta0.
+d0frac = 0.5
+if '--d0frac' in argv:
+    i = argv.index('--d0frac')
+    d0frac = float(argv[i + 1])
+    del argv[i:i + 2]
+args     = [a for a in argv if not a.startswith('--')]
 filename = str(args[0])
 
 dt_string = datetime.now().strftime('%Y-%m-%d-%H-%M-%S')
-suffix    = '_stable_run' if stable else '_run'
+suffix    = ('_stable' if stable else '') \
+            + (f'_d0{d0frac:g}' if d0frac != 0.5 else '') + '_run'
 logname   = filename.replace('_init.gsd', f'{suffix}.log')
 dumpname  = filename.replace('_init.gsd', f'{suffix}.gsd')
 
@@ -165,7 +180,7 @@ phi      = device.communicator.bcast_double(phi_val)
 dx       = device.communicator.bcast_double(vsize_val)
 ly_fluid = device.communicator.bcast_double(ly_fluid_val)
 
-delta0 = 0.5 * R_grain      # initial interface perturbation amplitude [m]
+delta0 = d0frac * R_grain   # initial interface perturbation amplitude [m]
 k_wave = 2.0 * np.pi / Lx
 
 # Darcy-scale linear theory (two-fluid, equal viscosities: factor 1/2)

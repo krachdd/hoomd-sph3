@@ -21,6 +21,9 @@ Before first use, adjust in every script if your layout differs:
 | 04 | `04_stageB_perm.sh` | Stage B permeability cells (seed 42), n_d = 10 and 20 | 170 k / 1.36 M particles, 20 k steps | 4×8 | 6 h, `cpu` |
 | 05 | `05_stageB_ra_sweep.sh` | **Array job** 0–2: Ra = 200, Ra = 1000, stable control | 1.05 M particles, 100 k / 60 k steps | 16×8 each | 2 d, `cpu` |
 | 06 | `06_stageB_ra5000_nd20.sh` | Ra = 5000 at n_d = 20 (required by Pe_grid = Ra·φ·dx/H) | ~8.4 M particles, 200 k steps | **3 nodes**, 48×8 | 2 d, `cpu` |
+| 07 | `07_stageA_sigma_k.sh` | **Array 0–1**: σ(k) dispersion study, Lx = 3a / 7a (with job 02's 5a → three wavenumbers) | 212 k / 495 k particles, 120 k / 210 k steps | 16×8 each | 2 d, `cpu` |
+| 08 | `08_stageA_delta0.sh` | linearity check: δ₀ = 0.25 R (vs job 02's 0.5 R) | 354 k particles, 165 k steps | 8×8 | 24 h, `cpu` |
+| 09 | `09_stageB_seeds.sh` | **Array 0–1**: pack-disorder replicas, seeds 43/44 at Ra = 1000 (own perm run + own K per seed; self-contained) | 1.05 M particles, 20 k + 100 k steps | 16×8 each | 2 d, `cpu` |
 
 **Partition limits (wolfgang):** `cpu` caps at 2-00:00:00 (12 nodes);
 `cpu-long` (5 d, wolfgang-cpu[09-12] only) is currently **drained**, so the
@@ -47,9 +50,18 @@ j1=$(sbatch --parsable 01_stageA_perm.sh)
 j4=$(sbatch --parsable 04_stageB_perm.sh)
 sbatch --dependency=afterok:$j1 02_stageA_finger_nd10.sh
 sbatch --dependency=afterok:$j1 03_stageA_finger_nd20.sh
+sbatch --dependency=afterok:$j1 07_stageA_sigma_k.sh
+sbatch --dependency=afterok:$j1 08_stageA_delta0.sh
 sbatch --dependency=afterok:$j4 05_stageB_ra_sweep.sh
 sbatch --dependency=afterok:$j4 06_stageB_ra5000_nd20.sh
+sbatch 09_stageB_seeds.sh          # self-contained (per-seed perm + fingering)
 ```
+
+Paper mapping: 01+02+03 → growth-rate resolution convergence; 07 → σ(k)
+dispersion figure; 08 → linearity of σ in δ₀; 04+05+06 → Ra sweep (onset,
+wavelength, mixing width); 09 → disorder statistics. The remaining paper
+benchmarks (Gaussian-diffusion convergence, free-fluid RT, heated cavity)
+are cheap local runs, not cluster jobs.
 
 ## Notes
 
