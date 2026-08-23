@@ -1,0 +1,14 @@
+# Capillary rise parameter sets, one row per case id.
+# Reconstructed 2026-08-18: this file is read by run_capillary_rise.py but was
+# missing from the repository (referenced by the caprise_c*_t*.sh drivers).
+# Values follow the defaults documented in the run script docstring; only the
+# contact angle varies between cases (matching the c<N>_t<angle> driver names).
+#
+# case_id  theta_deg  sigma[N/m]  rho1[kg/m3]  rho2[kg/m3]  mu1[Pa.s]  mu2[Pa.s]
+0   30    0.01  1000.0  100.0  0.1  0.001
+1   45    0.01  1000.0  100.0  0.1  0.001
+2   60    0.01  1000.0  100.0  0.1  0.001
+3   90    0.01  1000.0  100.0  0.1  0.001
+4  120    0.01  1000.0  100.0  0.1  0.001
+5  135    0.01  1000.0  100.0  0.1  0.001
+6  150    0.01  1000.0  100.0  0.1  0.001
