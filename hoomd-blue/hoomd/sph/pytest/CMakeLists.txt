@@ -9,6 +9,7 @@ set(files __init__.py
           test_lattice.py
           test_singlephase.py
           test_strain_rate.py
+          test_gdgd.py
    )
 
 install(FILES ${files}

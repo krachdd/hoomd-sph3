@@ -35,7 +35,9 @@ class AdaptiveTimestep(hoomd.custom.Action):
 
     i.e. the acoustic CFL condition (with the maximum fluid speed of the last
     force computation, MPI-reduced), the viscous diffusion condition, and the
-    body-force condition (skipped when no body force is set). The result is
+    body-force condition (skipped when no body force is set). For GDGD models
+    with a diffusing scalar (``kappa_s > 0``) the scalar-diffusion condition
+    :math:`h^2/(8\kappa_s)` is included as well. The result is
     clamped to ``[dt_min, dt_max]`` and the growth per update is limited by
     ``max_growth`` to avoid oscillations; shrinking is applied immediately.
 
@@ -100,6 +102,15 @@ class AdaptiveTimestep(hoomd.custom.Action):
         gmag = model.get_GMAG() if hasattr(model, "get_GMAG") else 0.0
         if gmag > 0.0:
             candidates.append(0.25 * math.sqrt(h / gmag))
+
+        # Scalar diffusion condition (GDGD models transporting a scalar
+        # with diffusivity kappa_s): dt <= h^2 / (8 kappa_s).
+        try:
+            kappa_s = float(model._param_dict["kappa_s"])
+        except (AttributeError, KeyError):
+            kappa_s = 0.0
+        if kappa_s > 0.0:
+            candidates.append(h * h / (8.0 * kappa_s))
 
         dt_new = self._courant * min(candidates)
 

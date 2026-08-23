@@ -137,13 +137,22 @@ class PYBIND11_EXPORT SinglePhaseFlowGDGD : public SinglePhaseFlow<KT_, SET_>
          * \param boussinesq If true, use Boussinesq approximation (explicit buoyancy force
          *                   correction, global \f$\rho_0\f$ in EOS).  If false, use Variable
          *                   Reference Density (buoyancy via per-particle EOS).
+         * \param scalar_noflux If true, solid neighbours are excluded from the scalar
+         *                   diffusion sum (zero-flux / adiabatic wall BC).  If false
+         *                   (default), solid particles participate with their prescribed
+         *                   aux4.x value (Dirichlet wall BC).  The skip-solid zero-flux
+         *                   is consistent to leading order only (O(h): kernel support is
+         *                   truncated at the wall); a ghost-mirror extrapolation would be
+         *                   O(h^2) and is a possible future upgrade.
          */
-        void setGDGDParams(Scalar kappa_s, Scalar beta_s, Scalar scalar_ref, bool boussinesq);
+        void setGDGDParams(Scalar kappa_s, Scalar beta_s, Scalar scalar_ref, bool boussinesq,
+                           bool scalar_noflux = false);
 
-        Scalar getKappaS()    { return m_kappa_s; }
-        Scalar getBetaS()     { return m_beta_s; }
-        Scalar getScalarRef() { return m_scalar_ref; }
-        bool   getBoussinesq(){ return m_boussinesq; }
+        Scalar getKappaS()      { return m_kappa_s; }
+        Scalar getBetaS()       { return m_beta_s; }
+        Scalar getScalarRef()   { return m_scalar_ref; }
+        bool   getBoussinesq()  { return m_boussinesq; }
+        bool   getScalarNoflux(){ return m_scalar_noflux; }
 
         /*! Compute forces pipeline.
          *
@@ -195,6 +204,7 @@ class PYBIND11_EXPORT SinglePhaseFlowGDGD : public SinglePhaseFlow<KT_, SET_>
         Scalar m_beta_s;          //!< Expansion coefficient [1/K or 1/concentration unit]
         Scalar m_scalar_ref;      //!< Reference scalar value (T_ref or c_ref)
         bool   m_boussinesq;      //!< True = Boussinesq; false = Variable Reference Density
+        bool   m_scalar_noflux;   //!< True = zero-flux scalar wall BC (skip solid neighbours in diffusion); false = Dirichlet via solid aux4.x
         bool   m_gdgd_params_set; //!< True once setGDGDParams() has been called
 
         /*! Force computation: standard SPH pair forces + scalar diffusion + buoyancy.

@@ -126,6 +126,7 @@ SinglePhaseFlowGDGD<KT_, SET_>::SinglePhaseFlowGDGD(
     m_beta_s          = Scalar(0.0);
     m_scalar_ref      = Scalar(0.0);
     m_boussinesq      = false;
+    m_scalar_noflux   = false;
     m_gdgd_params_set = false;
 
 #ifdef ENABLE_MPI
@@ -158,15 +159,19 @@ SinglePhaseFlowGDGD<KT_, SET_>::~SinglePhaseFlowGDGD()
     \param beta_s    Expansion coefficient [1/K or 1/concentration unit]
     \param scalar_ref Reference scalar value (T_ref or c_ref)
     \param boussinesq If true, Boussinesq approximation; if false, VRD approach
+    \param scalar_noflux If true, zero-flux scalar wall BC (solid neighbours skipped in
+                      the diffusion sum); if false, Dirichlet BC via solid aux4.x
 */
 template<SmoothingKernelType KT_, StateEquationType SET_>
 void SinglePhaseFlowGDGD<KT_, SET_>::setGDGDParams(
-        Scalar kappa_s, Scalar beta_s, Scalar scalar_ref, bool boussinesq)
+        Scalar kappa_s, Scalar beta_s, Scalar scalar_ref, bool boussinesq,
+        bool scalar_noflux)
     {
     m_kappa_s         = kappa_s;
     m_beta_s          = beta_s;
     m_scalar_ref      = scalar_ref;
     m_boussinesq      = boussinesq;
+    m_scalar_noflux   = scalar_noflux;
     m_gdgd_params_set = true;
     }
 
@@ -273,6 +278,10 @@ void SinglePhaseFlowGDGD<KT_, SET_>::forcecomputation(uint64_t timestep)
 
     const BoxDim& box       = this->m_pdata->getGlobalBox();
     const unsigned int group_size = this->m_fluidgroup->getNumMembers();
+
+    // Ramped body force: same damp envelope as applyBodyForce(), so the
+    // Boussinesq buoyancy correction ramps in consistently with gravity.
+    const Scalar3 bforce_damped = this->getAcceleration(timestep);
 
         { // GPU Array Scope
         // ── Output arrays (zeroed before accumulation) ────────────────────────
@@ -522,9 +531,12 @@ void SinglePhaseFlowGDGD<KT_, SET_>::forcecomputation(uint64_t timestep)
                 // Morris-Fox-Zhu (1997) SPH Laplacian operator applied to T:
                 //   $\mathrm{d}T_i/\mathrm{d}t \mathrel{+}= (\kappa_s / V_i) \cdot (V_i^2+V_j^2) \cdot (T_i-T_j) \cdot \mathrm{d}W/\mathrm{d}r / r$
                 // Units: [m$^2$/s]/[m$^3$] $\cdot$ [m$^6$] $\cdot$ [K] $\cdot$ [m$^{-5}$] = [K/s]
-                // Applied for all neighbours including solid particles, enabling
-                // Dirichlet wall temperature BCs via prescribed aux4.x on solid particles.
-                h_ratedpe.data[i].z += m_kappa_s / Vi * vijsqr * (Ti - Tj) * dwdr_r;
+                // Wall BC: with m_scalar_noflux == false, solid neighbours participate
+                // with their prescribed aux4.x (Dirichlet wall value); with
+                // m_scalar_noflux == true, solid neighbours are skipped — a zero-flux
+                // (adiabatic / impermeable-grain) wall BC, consistent to O(h).
+                if (!(m_scalar_noflux && issolid))
+                    h_ratedpe.data[i].z += m_kappa_s / Vi * vijsqr * (Ti - Tj) * dwdr_r;
 
                 // ── Density continuity rate (DENSITYCONTINUITY only) ──────────
                 if (this->m_density_method == DENSITYCONTINUITY)
@@ -571,9 +583,9 @@ void SinglePhaseFlowGDGD<KT_, SET_>::forcecomputation(uint64_t timestep)
             if (m_boussinesq)
                 {
                 Scalar buoy_factor = -m_beta_s * (Ti - m_scalar_ref);
-                h_force.data[i].x += mi * this->m_bodyforce.x * buoy_factor;
-                h_force.data[i].y += mi * this->m_bodyforce.y * buoy_factor;
-                h_force.data[i].z += mi * this->m_bodyforce.z * buoy_factor;
+                h_force.data[i].x += mi * bforce_damped.x * buoy_factor;
+                h_force.data[i].y += mi * bforce_damped.y * buoy_factor;
+                h_force.data[i].z += mi * bforce_damped.z * buoy_factor;
                 }
 
             } // end fluid-particle outer loop
@@ -613,11 +625,15 @@ void export_SinglePhaseFlowGDGD(pybind11::module& m, std::string name)
                             DensityMethod,
                             ViscosityMethod>())
         .def("setParams",          &SinglePhaseFlowGDGD<KT_, SET_>::setParams)
-        .def("setGDGDParams",      &SinglePhaseFlowGDGD<KT_, SET_>::setGDGDParams)
+        .def("setGDGDParams",      &SinglePhaseFlowGDGD<KT_, SET_>::setGDGDParams,
+             pybind11::arg("kappa_s"), pybind11::arg("beta_s"),
+             pybind11::arg("scalar_ref"), pybind11::arg("boussinesq"),
+             pybind11::arg("scalar_noflux") = false)
         .def("getKappaS",          &SinglePhaseFlowGDGD<KT_, SET_>::getKappaS)
         .def("getBetaS",           &SinglePhaseFlowGDGD<KT_, SET_>::getBetaS)
         .def("getScalarRef",       &SinglePhaseFlowGDGD<KT_, SET_>::getScalarRef)
         .def("getBoussinesq",      &SinglePhaseFlowGDGD<KT_, SET_>::getBoussinesq)
+        .def("getScalarNoflux",    &SinglePhaseFlowGDGD<KT_, SET_>::getScalarNoflux)
         .def("getDensityMethod",   &SinglePhaseFlowGDGD<KT_, SET_>::getDensityMethod)
         .def("setDensityMethod",   &SinglePhaseFlowGDGD<KT_, SET_>::setDensityMethod)
         .def("getViscosityMethod", &SinglePhaseFlowGDGD<KT_, SET_>::getViscosityMethod)

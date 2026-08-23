@@ -581,7 +581,9 @@ class SinglePhaseFlowGDGD(SPHModel):
     half-step scheme as density.
 
     Wall boundary temperatures are set by assigning ``aux4.x`` directly to
-    solid particles (e.g. via ``sim.state.cpu_local_snapshot``).
+    solid particles (e.g. via ``sim.state.cpu_local_snapshot``); with
+    ``scalar_wall_bc='noflux'`` solids are instead excluded from the
+    diffusion operator (zero-flux / impermeable walls and grains).
 
     Parameters
     ----------
@@ -612,7 +614,17 @@ class SinglePhaseFlowGDGD(SPHModel):
     boussinesq : bool
         If True, Boussinesq approximation; if False, Variable Reference
         Density (VRD).  Default False.
+    scalar_wall_bc : str
+        ``'dirichlet'`` (default): solid particles participate in the scalar
+        diffusion sum with their prescribed ``aux4.x`` value (wall
+        temperature / concentration BC).  ``'noflux'``: solid neighbours are
+        excluded from the diffusion sum — zero-flux (adiabatic /
+        impermeable-grain) wall BC, consistent to O(h).  Solid ``aux4.x``
+        should still be initialised to ``scalar_ref`` so the VRD /
+        Boussinesq reference stays sane.
     """
+
+    SCALARWALLBCS = ("dirichlet", "noflux")
 
     DENSITYMETHODS = {"SUMMATION": _sph.PhaseFlowDensityMethod.DENSITYSUMMATION,
                       "CONTINUITY": _sph.PhaseFlowDensityMethod.DENSITYCONTINUITY}
@@ -630,7 +642,11 @@ class SinglePhaseFlowGDGD(SPHModel):
                  kappa_s=0.0,
                  beta_s=0.0,
                  scalar_ref=0.0,
-                 boussinesq=False):
+                 boussinesq=False,
+                 scalar_wall_bc="dirichlet"):
+
+        if scalar_wall_bc not in self.SCALARWALLBCS:
+            raise ValueError(f"scalar_wall_bc must be one of {self.SCALARWALLBCS}.")
 
         super().__init__(kernel, eos, nlist)
 
@@ -654,6 +670,7 @@ class SinglePhaseFlowGDGD(SPHModel):
             beta_s=float(beta_s),
             scalar_ref=float(scalar_ref),
             boussinesq=bool(boussinesq),
+            scalar_wall_bc=str(scalar_wall_bc),
         ))
 
         self._cpp_SPFclass_name = ("SinglePFGDGD"
@@ -765,6 +782,7 @@ class SinglePhaseFlowGDGD(SPHModel):
         beta_s_val                = self._param_dict["beta_s"]
         scalar_ref_val            = self._param_dict["scalar_ref"]
         boussinesq_val            = self._param_dict["boussinesq"]
+        scalar_wall_bc_val        = self._param_dict["scalar_wall_bc"]
 
         self.set_params(self.mu)
         self.setdensitymethod(self.str_densitymethod)
@@ -794,7 +812,8 @@ class SinglePhaseFlowGDGD(SPHModel):
             self.computeSolidForces()
 
         # Set GDGD-specific parameters in the C++ object
-        self.setGDGDParams(kappa_s_val, beta_s_val, scalar_ref_val, boussinesq_val)
+        self.setGDGDParams(kappa_s_val, beta_s_val, scalar_ref_val, boussinesq_val,
+                           scalar_wall_bc_val)
 
         self.setrcut(self.rcut, self.get_typelist())
         self.setBodyAcceleration(self.gx, self.gy, self.gz, self.damp)
@@ -809,7 +828,8 @@ class SinglePhaseFlowGDGD(SPHModel):
         self.params_set = True
         self._param_dict.__setattr__("params_set", True)
 
-    def setGDGDParams(self, kappa_s, beta_s, scalar_ref, boussinesq=False):
+    def setGDGDParams(self, kappa_s, beta_s, scalar_ref, boussinesq=False,
+                      scalar_wall_bc="dirichlet"):
         """Set GDGD scalar-transport parameters.
 
         Parameters
@@ -822,14 +842,25 @@ class SinglePhaseFlowGDGD(SPHModel):
             Reference scalar value :math:`T_\mathrm{ref}`.
         boussinesq : bool
             If True, Boussinesq approximation.  If False (default), VRD.
+        scalar_wall_bc : str
+            ``'dirichlet'`` (default): solids join the diffusion sum with
+            their prescribed ``aux4.x`` value.  ``'noflux'``: solids are
+            skipped — zero-flux (adiabatic / impermeable-grain) wall BC.
         """
+        if scalar_wall_bc not in self.SCALARWALLBCS:
+            raise ValueError(f"scalar_wall_bc must be one of {self.SCALARWALLBCS}.")
         self.gdgd_params_set = True
         self._cpp_obj.setGDGDParams(float(kappa_s), float(beta_s),
-                                     float(scalar_ref), bool(boussinesq))
-        self._param_dict.__setattr__("kappa_s",    float(kappa_s))
-        self._param_dict.__setattr__("beta_s",     float(beta_s))
-        self._param_dict.__setattr__("scalar_ref", float(scalar_ref))
-        self._param_dict.__setattr__("boussinesq", bool(boussinesq))
+                                     float(scalar_ref), bool(boussinesq),
+                                     scalar_wall_bc == "noflux")
+        # Update the internal dict directly: these keys have no C++-side
+        # property, so ParameterDict item assignment raises MutabilityError
+        # once attached (and __setattr__ would silently NOT update the dict).
+        self._param_dict._dict["kappa_s"]        = float(kappa_s)
+        self._param_dict._dict["beta_s"]         = float(beta_s)
+        self._param_dict._dict["scalar_ref"]     = float(scalar_ref)
+        self._param_dict._dict["boussinesq"]     = bool(boussinesq)
+        self._param_dict._dict["scalar_wall_bc"] = str(scalar_wall_bc)
 
     # ── Methods inherited from SinglePhaseFlowTV / SinglePhaseFlow ────────────
     # These delegate directly to the C++ object via the same pybind11 bindings.
@@ -918,37 +949,80 @@ class SinglePhaseFlowGDGD(SPHModel):
         return 0.0
 
     def compute_speedofsound(self, LREF, UREF, DX, DRHO, H, MU, RHO0):
-        """Delegate to SinglePhaseFlow compute_speedofsound logic."""
-        # Reuse computation from parent — instantiate a temporary SPF for the
-        # same EOS/kernel, or duplicate the formula directly.
-        # For simplicity, call the equivalent formula (same as SinglePhaseFlow).
+        # Same weakly-compressible conditions as SinglePhaseFlow.
+        # Input sanity
         if LREF == 0.0:
             raise ValueError("Reference length LREF may not be zero.")
         if DRHO == 0.0:
-            DRHO = 0.01
-        c_list = []
-        cond_list = []
-        c_list.append(10.0 * UREF)
-        cond_list.append("10*UREF")
-        if MU > 0.0:
-            c_list.append(np.sqrt(10.0 * DRHO * MU * UREF / (RHO0 * H * H)))
-            cond_list.append("viscous-condition")
-        c_array = np.asarray(c_list)
-        idx = np.argmax(c_array)
-        return c_array[idx], cond_list[idx]
+            raise ValueError("Maximum density variation DRHO may not be zero.")
+        if DX <= 0.0:
+            raise ValueError("DX may not be zero or negative.")
 
-    def compute_dt(self, LREF, UREF, DX, DRHO, H, MU, RHO0, COURANT=0.2):
-        """Estimate maximum stable timestep."""
-        C = self.eos.SpeedOfSound
+        UREF = np.abs(UREF)
+
+        C_a = []
+        # $c_0^2 \geq U_\mathrm{ref}^2 / \delta\rho$  (CFL)
+        C_a.append(UREF*UREF/DRHO)
+        # $c_0^2 \geq g\,l_\mathrm{ref} / \delta\rho$  (gravity-wave)
+        C_a.append(self.get_GMAG()*LREF/DRHO)
+        # $c_0^2 \geq \mu U_\mathrm{ref} / (\rho_0 l_\mathrm{ref} \delta\rho)$  (Fourier)
+        C_a.append((MU*UREF)/(RHO0*LREF*DRHO))
+        # $c_0 = \sqrt{\max(c_0^2)}$
+
+        C_a = np.asarray(C_a)
+        conditions = ["CFL-condition", "Gravity_waves-condition", "Fourier-condition"]
+        condition = [conditions[i] for i in np.where(C_a == C_a.max())[0]]
+        C = np.sqrt(np.max(C_a))
+
+        # Set speed of sound
+        self.eos.set_speedofsound(C)
+
+        return C, condition
+
+    def compute_dt(self, LREF, UREF, DX, DRHO, H, MU, RHO0, COURANT=0.25):
+        # Input sanity
+        if LREF == 0.0:
+            raise ValueError("Reference length LREF may not be zero.")
+        if DRHO == 0.0:
+            raise ValueError("Maximum density variation DRHO may not be zero.")
+        if DX <= 0.0:
+            raise ValueError("DX may not be zero or negative.")
+        if H != self._param_dict["max_sl"]:
+            raise ValueError("Given H not equal to stored H self._param_dict[max_sl]!")
+        if MU != self._param_dict["mu"]:
+            raise ValueError("Given MU not equal to stored MU self._param_dict[mu]!")
+        if RHO0 != self.eos.RestDensity:
+            raise ValueError("Given RHO0 not equal to stored RHO0 self.eos.RestDensity!")
+
+        UREF = np.abs(UREF)
+
+        C = self.get_speedofsound()
+
         DT_a = []
-        DT_a.append(COURANT * H / C)
-        DT_a.append((DX * DX * RHO0) / (8.0 * MU))
+        conditions = []
+        # $\Delta t \leq \Delta x / c_0$  (CFL)
+        DT_a.append(DX/C)
+        conditions.append("CFL-condition")
+        # $\Delta t \leq \rho_0 \Delta x^2 / (8\mu)$  (Fourier/viscous)
+        DT_a.append((DX*DX*RHO0)/(8.0*MU))
+        conditions.append("Fourier-condition")
+
         if self.get_GMAG() > 0.0:
-            DT_a.append(np.sqrt(H / (16.0 * self.get_GMAG())))
-        DT_a     = np.asarray(DT_a)
-        conds    = ["CFL-condition", "Fourier-condition", "Gravity_waves-condition"]
-        cond     = [conds[i] for i in np.where(DT_a == DT_a.min())[0]]
-        return COURANT * np.min(DT_a), cond
+            # $\Delta t \leq \sqrt{h / (16 g)}$  (gravity-wave)
+            DT_a.append(np.sqrt(H/(16.0*self.get_GMAG())))
+            conditions.append("Gravity_waves-condition")
+
+        kappa_s = float(self._param_dict["kappa_s"])
+        if kappa_s > 0.0:
+            # $\Delta t \leq \Delta x^2 / (8 \kappa_s)$  (scalar diffusion)
+            DT_a.append((DX*DX)/(8.0*kappa_s))
+            conditions.append("ScalarDiffusion-condition")
+
+        DT_a = np.asarray(DT_a)
+        condition = [conditions[i] for i in np.where(DT_a == DT_a.min())[0]]
+        DT = COURANT * np.min(DT_a)
+
+        return DT, condition
 
 
 class SinglePhaseFlowTV(SPHModel):
