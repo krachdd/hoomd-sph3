@@ -33,6 +33,7 @@ maintainer: dkrach, david.krach@mib.uni-stuttgart.de
 #include "TwoPhaseFlow.h"
 
 #include <cmath>
+#include <cstdlib>
 
 #include <pybind11/pybind11.h>
 #include <pybind11/stl_bind.h>
@@ -237,21 +238,26 @@ void TwoPhaseFlow<KT_, SET1_, SET2_>::setParams(Scalar mu1, Scalar mu2, Scalar s
          throw std::runtime_error("Error initializing TwoPhaseFlow.");
          }
 
-    // Young's equation: $\sigma_{s1} - \sigma_{s2} = \sigma_{12} \cos\theta$
+    // Young's equation: $\sigma_{s2} - \sigma_{s1} = \sigma_{12} \cos\theta$.
+    // The CSF wall tension is a positive energy penalty on the interface it
+    // is assigned to, so for a WETTING fluid 1 (omega < 90) the penalty
+    // belongs on the fluid-2--solid interface (gas avoids the wall, liquid
+    // spreads), and vice versa. The previous assignment was phase-swapped:
+    // theta=30 produced wall DEWETTING and theta=150 a climbing film
+    // (verified empirically on the coarse capillary-rise case, 2026-08-22).
     if ( this->m_omega == Scalar(90) )
         {
         this->m_sigma01 = 0.0;
         this->m_sigma02 = 0.0;
         }
-    else if ( this->m_omega < Scalar(90) )
+    else
         {
-        this->m_sigma01 = this->m_sigma12 * cos( this->m_omega * ( M_PI / Scalar(180) ) );
-        this->m_sigma02 = 0.0;
-        }
-    else if ( this->m_omega > Scalar(90) )
-        {
+        // Wall tension bands DISABLED (2026-08-22): superseded by the
+        // prescribed-contact-angle normal correction in
+        // compute_colorgradients(); the band model produced only ~15-20%
+        // of the Young response.
         this->m_sigma01 = 0.0;
-        this->m_sigma02 = this->m_sigma12 * cos( (Scalar(180)-m_omega) * ( M_PI / Scalar(180) ) );
+        this->m_sigma02 = 0.0;
         }
 
     this->m_params_set = true;
@@ -1527,6 +1533,14 @@ void TwoPhaseFlow<KT_, SET1_, SET2_>::compute_colorgradients(uint64_t timestep)
             {
                 // Adami type color gradient, also implemented in PySPH
                 temp0 = rhoi/( rhoi + rhoj ) * (Vi*Vi + Vj*Vj)/Vi;
+                // Wetting fix (2026-08-22): for SOLID-FLUID pairs the density
+                // weighting is unphysical -- the wall color function is a
+                // phase indicator, and the rho-ratio split hands the light
+                // fluid only rho_f/(rho_f+rho_s) of its wall band (9% for
+                // gas against a rho=1000 wall), collapsing the sigma02
+                // wetting response. Split solid-fluid bands 50/50.
+                if ( i_issolid || j_issolid )
+                    temp0 = Scalar(0.5) * (Vi*Vi + Vj*Vj)/Vi;
             }
 
             else if ( m_colorgradient_method == NUMBERDENSITY )
@@ -1537,8 +1551,29 @@ void TwoPhaseFlow<KT_, SET1_, SET2_>::compute_colorgradients(uint64_t timestep)
                 throw std::runtime_error("Error: No valid ColorGradientMethod given.");
             }
 
-            // If either on of the particle is a solid, interface must be solid-fluid
-            if ( i_issolid || j_issolid )
+            // Wetting fix (2026-08-22): SOLID particles keep PER-PHASE
+            // solid-fluid gradients -- fluid-1 neighbors accumulate into the
+            // sn slot (aux2), fluid-2 neighbors into the (otherwise unused
+            // for solids) fn slot (aux3). This lets the wall dummy stress
+            // distinguish the sigma01 and sigma02 bands at the contact line,
+            // where the previous lumped gradient mixed both phases.
+            if ( i_issolid )
+            {
+                if ( j_isfluid1 )
+                {
+                    h_sn.data[i].x += temp0*dwdr_r*dx.x;
+                    h_sn.data[i].y += temp0*dwdr_r*dx.y;
+                    h_sn.data[i].z += temp0*dwdr_r*dx.z;
+                }
+                else if ( j_isfluid2 )
+                {
+                    h_fn.data[i].x += temp0*dwdr_r*dx.x;
+                    h_fn.data[i].y += temp0*dwdr_r*dx.y;
+                    h_fn.data[i].z += temp0*dwdr_r*dx.z;
+                }
+            }
+            // Fluid particle with solid neighbor: solid-fluid interface
+            else if ( j_issolid )
             {
                 h_sn.data[i].x += temp0*dwdr_r*dx.x;
                 h_sn.data[i].y += temp0*dwdr_r*dx.y;
@@ -1561,6 +1596,10 @@ void TwoPhaseFlow<KT_, SET1_, SET2_>::compute_colorgradients(uint64_t timestep)
                 h_sn.data[i].x = -h_sn.data[i].x;
                 h_sn.data[i].y = -h_sn.data[i].y;
                 h_sn.data[i].z = -h_sn.data[i].z;
+                // per-phase solid gradient in the fn slot flips too
+                h_fn.data[i].x = -h_fn.data[i].x;
+                h_fn.data[i].y = -h_fn.data[i].y;
+                h_fn.data[i].z = -h_fn.data[i].z;
             }
         if ( i_isfluid1 )
             {
@@ -1673,6 +1712,83 @@ void TwoPhaseFlow<KT_, SET1_, SET2_>::compute_colorgradients(uint64_t timestep)
         h_fn.data[i] = fn_smooth[i];
         }
 
+
+    // ── Blended prescribed-contact-angle normal correction (2026-08-23) ────
+    // Breinlinger-type with the essential SMOOTH WALL-DISTANCE BLEND: the
+    // enforced normal dominates at the wall (w -> 1) and fades over the
+    // kernel range (w -> 0). The earlier binary version (w = 1 everywhere
+    // near the wall) made the corrected normal field uniform -- zero
+    // divergence, no contact-line force, pinned line. The smooth blend
+    // creates the curvature gradient that turns the sigma12 CSF stress into
+    // the Young force and the meniscus suction. Weight from the solid
+    // kernel sum phi = sum_solid V_j W_ij (~0.35 at wall contact):
+    // w = min(1, 3 phi). Conventions as before: fn points globally
+    // fluid2->fluid1, fluid-side sn points INTO the wall, nw = -sn/|sn|;
+    // target n = -cos(omega) nw + sin(omega) t_hat.
+    if ( this->m_omega != Scalar(90) && this->m_sigma12 > Scalar(0) )
+        {
+        const Scalar ct = cos(this->m_omega * (M_PI/Scalar(180)));
+        const Scalar st = sin(this->m_omega * (M_PI/Scalar(180)));
+        for (unsigned int gidx = 0; gidx < fluid_size; gidx++)
+            {
+            unsigned int i = h_members_omp10.data[gidx];
+            Scalar3 sni = h_sn.data[i];
+            Scalar normsn = sqrt(dot(sni,sni));
+            if ( normsn < eps_norm ) continue;
+            Scalar3 fni = h_fn.data[i];
+            Scalar normfn = sqrt(dot(fni,fni));
+            if ( normfn < eps_norm ) continue;
+            // wall proximity weight from the solid kernel sum
+            Scalar phi_s = Scalar(0);
+            Scalar3 pci;
+            pci.x = h_pos.data[i].x; pci.y = h_pos.data[i].y; pci.z = h_pos.data[i].z;
+            size_t hdc = h_head_list.data[i];
+            unsigned int nnc = (unsigned int)h_n_neigh.data[i];
+            for (unsigned int jj = 0; jj < nnc; jj++)
+                {
+                unsigned int k = h_nlist.data[hdc + jj];
+                if ( !checksolid(h_type_property_map.data, h_pos.data[k].w) ) continue;
+                Scalar3 dxc;
+                dxc.x = pci.x - h_pos.data[k].x;
+                dxc.y = pci.y - h_pos.data[k].y;
+                dxc.z = pci.z - h_pos.data[k].z;
+                dxc = box.minImage(dxc);
+                Scalar rsqc = dot(dxc, dxc);
+                if ( this->m_const_slength && rsqc > this->m_rcutsq ) continue;
+                Scalar meanhc = this->m_const_slength ? this->m_ch
+                               : Scalar(0.5)*(h_h.data[i]+h_h.data[k]);
+                phi_s += (h_velocity.data[k].w / h_density.data[k])
+                         * this->m_skernel->wij(meanhc, sqrt(rsqc));
+                }
+            Scalar wblend = Scalar(3) * phi_s;
+            if ( wblend > Scalar(1) ) wblend = Scalar(1);
+            if ( wblend <= Scalar(0) ) continue;
+            Scalar3 nw;
+            nw.x = -sni.x/normsn; nw.y = -sni.y/normsn; nw.z = -sni.z/normsn;
+            Scalar fdotn = dot(fni, nw);
+            Scalar3 t;
+            t.x = fni.x - fdotn*nw.x;
+            t.y = fni.y - fdotn*nw.y;
+            t.z = fni.z - fdotn*nw.z;
+            Scalar normt = sqrt(dot(t,t));
+            if ( normt < Scalar(1e-3)*normfn ) continue;
+            Scalar it = Scalar(1)/normt;
+            Scalar3 ntgt;
+            ntgt.x = -ct*nw.x + st*t.x*it;
+            ntgt.y = -ct*nw.y + st*t.y*it;
+            ntgt.z = -ct*nw.z + st*t.z*it;
+            Scalar3 nblend;
+            nblend.x = wblend*ntgt.x + (Scalar(1)-wblend)*fni.x/normfn;
+            nblend.y = wblend*ntgt.y + (Scalar(1)-wblend)*fni.y/normfn;
+            nblend.z = wblend*ntgt.z + (Scalar(1)-wblend)*fni.z/normfn;
+            Scalar nb = sqrt(dot(nblend,nblend));
+            if ( nb < Scalar(1e-6) ) continue;
+            h_fn.data[i].x = normfn * nblend.x/nb;
+            h_fn.data[i].y = normfn * nblend.y/nb;
+            h_fn.data[i].z = normfn * nblend.z/nb;
+            }
+        }
+
     } // End compute colorgradients
 
 
@@ -1707,312 +1823,150 @@ void TwoPhaseFlow<KT_, SET1_, SET2_>::compute_surfaceforce(uint64_t timestep)
     // Zero data before calculation
     memset((void*)h_sf.data,0,sizeof(Scalar3)*this->m_pdata->getAuxiliaries4().getNumElements());
 
-    // for each fluid particle
-    unsigned int group_size = this->m_fluidgroup->getNumMembers();
-    // Acquire the group index array once: getMemberIndex() acquires an
-    // ArrayHandle per call, which is not thread-safe inside the parallel loop
+    // ═══ Curvature-form CSF surface force (2026-08-23) ═════════════════════
+    // Replaces the stress-tensor CSF: F_i = sigma12 * kappa_i * n_i *
+    // |grad c|_i * V_i with kappa = -div(n_hat) from a Morris-corrected SPH
+    // divergence over reliable-normal neighbors. Motivation: prescribed
+    // contact angles (blended wall correction in compute_colorgradients)
+    // only generate the Young force and meniscus suction in the curvature
+    // form; in the stress form all three wall-coupling routes tested failed
+    // (bands ~15-20% response, normal rotation pinned/reversed the line).
     ArrayHandle<unsigned int> h_members_omp12(this->m_fluidgroup->getIndexArray(), access_location::host, access_mode::read);
+    unsigned int group_size = this->m_fluidgroup->getNumMembers();
+    const unsigned int N_loc_sf = this->m_pdata->getN();
+    const unsigned int N_tot_sf = N_loc_sf + this->m_pdata->getNGhosts();
+    std::vector<Scalar3> nhat_sf(N_tot_sf, make_scalar3(0,0,0));
+    std::vector<unsigned char> rel_sf(N_tot_sf, 0);
+
+    // PASS 1: normalized reliable normals for ALL fluid slots (incl. ghosts;
+    // fn is ghost-synced after compute_colorgradients).
+    #pragma omp parallel for
+    for (unsigned int idx = 0; idx < N_tot_sf; idx++)
+        {
+        if ( checksolid(h_type_property_map.data, h_pos.data[idx].w) ) continue;
+        Scalar3 fni = h_fn.data[idx];
+        Scalar nf = sqrt(dot(fni,fni));
+        Scalar hi = this->m_const_slength ? this->m_ch : h_h.data[idx];
+        if ( nf * hi < Scalar(0.01) ) continue;   // unreliable normal
+        nhat_sf[idx].x = fni.x/nf;
+        nhat_sf[idx].y = fni.y/nf;
+        nhat_sf[idx].z = fni.z/nf;
+        rel_sf[idx] = 1;
+        }
+
+    // PASS 2: kappa and force on local fluid particles with reliable normals
     #pragma omp parallel for
     for (unsigned int group_idx = 0; group_idx < group_size; group_idx++)
         {
-        // Read particle index
         unsigned int i = h_members_omp12.data[group_idx];
-
-        // Access the particle's position and type
+        if ( !rel_sf[i] ) continue;
+        Scalar3 fni = h_fn.data[i];
+        Scalar nfi = sqrt(dot(fni,fni));
         Scalar3 pi;
-        pi.x = h_pos.data[i].x;
-        pi.y = h_pos.data[i].y;
-        pi.z = h_pos.data[i].z;
-        bool i_isfluid1 = checkfluid1(h_type_property_map.data, h_pos.data[i].w);
-        bool i_isfluid2 = checkfluid2(h_type_property_map.data, h_pos.data[i].w);
-
-        // Check if there is any fluid particle near the current particle, if not continue
-        // This makes sure that only particle near a fluid interface experience an interfacial force.
-        // In other words, fluid particles only near solid interfaces are omitted.
-        bool nearfluidinterface = false;
-
-        // Loop over all of the neighbors of this particle
-        size_t myHead = h_head_list.data[i];
-        unsigned int size = (unsigned int)h_n_neigh.data[i];
-        for (unsigned int j = 0; j < size; j++)
+        pi.x = h_pos.data[i].x; pi.y = h_pos.data[i].y; pi.z = h_pos.data[i].z;
+        Scalar Vi = h_velocity.data[i].w / h_density.data[i];
+        Scalar num = Scalar(0);   // sum (n_j - n_i) . gradW_ij V_j
+        Scalar den = Scalar(0);   // sum W_ij V_j (support completeness)
+        size_t head = h_head_list.data[i];
+        unsigned int nn = (unsigned int)h_n_neigh.data[i];
+        for (unsigned int jj = 0; jj < nn; jj++)
             {
-            // Index of neighbor (MEM TRANSFER: 1 scalar)
-            unsigned int k = h_nlist.data[myHead + j];
-            assert(k < this->m_pdata->getN() + this->m_pdata->getNGhosts());
-            bool j_isfluid1 = checkfluid1(h_type_property_map.data, h_pos.data[k].w);
-            bool j_isfluid2 = checkfluid2(h_type_property_map.data, h_pos.data[k].w);
-            // Near fluid interface if i is fluid1 and j is fluid2, or i is fluid2 and j is fluid1
-            if ( (i_isfluid1 && j_isfluid2) || (i_isfluid2 && j_isfluid1) )
-                {
-                    nearfluidinterface = true;
-                    break;
-                }
-            }
-        // Wetting fix (2026-08-21): when a solid-fluid tension is active
-        // (omega != 90), particles in the wall film also carry interfacial
-        // stress (sigma01/sigma02, Huber-style). The original fluid-fluid-only
-        // gate zeroed their stress, so the contact-line divergence saw
-        // inconsistent neighbor stresses and the Young traction along the
-        // wall vanished -- observed as zero capillary rise at any omega.
-        bool nearsolid = false;
-        if ( m_sigma01 > 0.0 || m_sigma02 > 0.0 )
-            {
-            Scalar3 sni_gate;
-            sni_gate.x = h_sn.data[i].x;
-            sni_gate.y = h_sn.data[i].y;
-            sni_gate.z = h_sn.data[i].z;
-            nearsolid = dot(sni_gate, sni_gate) > Scalar(0);
-            }
-        if ( !nearfluidinterface && !nearsolid )
-            continue;
-
-        // Access the particle's mass
-        Scalar mi = h_velocity.data[i].w;
-
-        // Read particle i density and volume
-        Scalar rhoi = h_density.data[i];
-        Scalar Vi   = mi / rhoi;
-
-        // Read particle i color gradients
-        Scalar3 sni;
-        sni.x = h_sn.data[i].x;
-        sni.y = h_sn.data[i].y;
-        sni.z = h_sn.data[i].z;
-        Scalar normsni = sqrt(dot(sni,sni));
-        Scalar3 fni;
-        fni.x = h_fn.data[i].x;
-        fni.y = h_fn.data[i].y;
-        fni.z = h_fn.data[i].z;
-        Scalar normfni = sqrt(dot(fni,fni));
-
-
-        // Evaluate particle i interfacial stress tensor
-        Scalar istress[6] = {0};
-        Scalar temp0 = 0.0;
-        Scalar temp1 = 0.0;
-        // Get particle Concentration gradient (Shifting)
-        // Spactial dimension d = 3
-        if ( m_fickian_shifting )
-            {
-            temp1 = 1./3. * h_energy.data[i];
-            }
-        else 
-            {
-            temp1 = 1./3. * normfni * normfni;
-            }
-
-        // normal vectors point from solid to fluid and from fluid 1
-        // to fluid 2
-        // if Fluid1 or Fluid2 that has neighbors of other fluid phase 
-        if ( this->m_sigma12 > 0.0 && normfni > 0.0 )
-        {
-            temp0 = this->m_sigma12/normfni;
-            istress[0] += temp0 * ( temp1 - fni.x * fni.x); // xx
-            istress[1] += temp0 * ( temp1 - fni.y * fni.y); // yy
-            istress[2] += temp0 * ( temp1 - fni.z * fni.z); // zz
-            istress[3] -= temp0 * ( fni.x * fni.y);         // xy yx
-            istress[4] -= temp0 * ( fni.x * fni.z);         // xz zx
-            istress[5] -= temp0 * ( fni.y * fni.z);         // yz zy
-        }
-
-        if ( !m_fickian_shifting )
-        {
-            temp1 = 1./3. * normsni * normsni;
-        }
-
-        // --- hysteresis block for particle i ---
-        Scalar sigma01_i = this->m_sigma01;
-        Scalar sigma02_i = this->m_sigma02;
-        if (m_hysteresis && normsni > 0.0 && normfni > 0.0)
-        {
-            Scalar cos_local = dot(fni, sni) / (normfni * normsni);
-            cos_local = fmax(Scalar(-1), fmin(Scalar(1), cos_local));
-            Scalar theta_local = acos(cos_local) * (Scalar(180) / M_PI);
-            Scalar omega_eff = fmax(m_omega_rec, fmin(m_omega_adv, theta_local));
-            if      (omega_eff == Scalar(90)) { sigma01_i = 0; sigma02_i = 0; }
-            else if (omega_eff <  Scalar(90)) { sigma01_i = this->m_sigma12 * cos(omega_eff*(M_PI/180)); sigma02_i = 0; }
-            else                              { sigma01_i = 0; sigma02_i = this->m_sigma12 * cos((180-omega_eff)*(M_PI/180)); }
-        }
-
-        // Fluid phase 1 - Solid interface
-        if ( i_isfluid1 && sigma01_i > 0.0 && normsni > 0.0 )
-        {
-            temp0 = sigma01_i/normsni;
-            istress[0] += temp0 * ( temp1 - sni.x * sni.x); // xx
-            istress[1] += temp0 * ( temp1 - sni.y * sni.y); // yy
-            istress[2] += temp0 * ( temp1 - sni.z * sni.z); // zz
-            istress[3] -= temp0 * ( sni.x * sni.y);         // xy yx
-            istress[4] -= temp0 * ( sni.x * sni.z);         // xz zx
-            istress[5] -= temp0 * ( sni.y * sni.z);         // yz zy
-        }
-
-        // Fluid phase 2 - Solid interface
-        if ( i_isfluid2 && sigma02_i > 0.0 && normsni > 0.0 )
-        {
-            temp0 = sigma02_i/normsni;
-            istress[0] += temp0 * ( temp1 - sni.x * sni.x); // xx
-            istress[1] += temp0 * ( temp1 - sni.y * sni.y); // yy
-            istress[2] += temp0 * ( temp1 - sni.z * sni.z); // zz
-            istress[3] -= temp0 * ( sni.x * sni.y);         // xy yx
-            istress[4] -= temp0 * ( sni.x * sni.z);         // xz zx
-            istress[5] -= temp0 * ( sni.y * sni.z);         // yz zy
-        }
-
-        // Loop over all of the neighbors of this particle
-        myHead = h_head_list.data[i];
-        size = (unsigned int)h_n_neigh.data[i];
-        for (unsigned int j = 0; j < size; j++)
-            {
-
-            // Index of neighbor (MEM TRANSFER: 1 scalar)
-            unsigned int k = h_nlist.data[myHead + j];
-
-            // Sanity check
-            assert(k < this->m_pdata->getN() + this->m_pdata->getNGhosts());
-
-            // Access neighbor position
-            Scalar3 pj;
-            pj.x = h_pos.data[k].x;
-            pj.y = h_pos.data[k].y;
-            pj.z = h_pos.data[k].z;
-
-            // Determine neighbor type
-            bool j_issolid  = checksolid(h_type_property_map.data, h_pos.data[k].w);
-            bool j_isfluid1 = checkfluid1(h_type_property_map.data, h_pos.data[k].w);
-            bool j_isfluid2 = checkfluid2(h_type_property_map.data, h_pos.data[k].w);
-
-            // Compute normalized color gradients
-            Scalar3 snj;
-            snj.x = h_sn.data[k].x;
-            snj.y = h_sn.data[k].y;
-            snj.z = h_sn.data[k].z;
-            Scalar normsnj = sqrt(dot(snj,snj));
-            Scalar3 fnj;
-            fnj.x = h_fn.data[k].x;
-            fnj.y = h_fn.data[k].y;
-            fnj.z = h_fn.data[k].z;
-            Scalar normfnj = sqrt(dot(fnj,fnj));
-
-            // Compute distance vector (FLOPS: 3)
-            Scalar3 dx = pi - pj;
-
-            // Apply periodic boundary conditions (FLOPS: 9)
+            unsigned int k = h_nlist.data[head + jj];
+            if ( !rel_sf[k] ) continue;
+            Scalar3 dx;
+            dx.x = pi.x - h_pos.data[k].x;
+            dx.y = pi.y - h_pos.data[k].y;
+            dx.z = pi.z - h_pos.data[k].z;
             dx = box.minImage(dx);
-
-            // Calculate squared distance (FLOPS: 5)
             Scalar rsq = dot(dx, dx);
-
-            // If particle distance is too large, skip this loop
-            if ( this->m_const_slength && rsq > this->m_rcutsq )
-                continue;
-
-            // Calculate absolute and normalized distance
+            if ( this->m_const_slength && rsq > this->m_rcutsq ) continue;
             Scalar r = sqrt(rsq);
+            Scalar meanh = this->m_const_slength ? this->m_ch
+                          : Scalar(0.5)*(h_h.data[i]+h_h.data[k]);
+            if ( r < Scalar(1e-8)*meanh ) continue;
+            Scalar Vk = h_velocity.data[k].w / h_density.data[k];
+            Scalar dwdr = this->m_skernel->dwijdr(meanh, r);
+            Scalar dwdr_r = dwdr / r;
+            // (n_k - n_i) . dx * dW/dr / r
+            num += Vk * dwdr_r * ( (nhat_sf[k].x - nhat_sf[i].x)*dx.x
+                                 + (nhat_sf[k].y - nhat_sf[i].y)*dx.y
+                                 + (nhat_sf[k].z - nhat_sf[i].z)*dx.z );
+            den += Vk * this->m_skernel->wij(meanh, r);
+            }
+        // self-contribution to the support sum
+        den += Vi * this->m_skernel->w0(this->m_const_slength ? this->m_ch : h_h.data[i]);
+        if ( den < Scalar(0.1) ) continue;    // too little reliable support
+        Scalar divn  = num / den;             // corrected div(n_hat)
+        Scalar kappa = -divn;
+        Scalar coef  = this->m_sigma12 * kappa * nfi * Vi;
+        h_sf.data[i].x += coef * nhat_sf[i].x;
+        h_sf.data[i].y += coef * nhat_sf[i].y;
+        h_sf.data[i].z += coef * nhat_sf[i].z;
+        }
 
-            // Access neighbor mass and density
-            Scalar mj   = h_velocity.data[k].w;
-            Scalar rhoj = h_density.data[k];
-            Scalar Vj   = mj / rhoj;
-
-            // Mean smoothing length
-            Scalar meanh  = this->m_const_slength ? this->m_ch : Scalar(0.5)*(h_h.data[i]+h_h.data[k]);
-
-            // Kernel function derivative evaluation
-            Scalar dwdr   = this->m_skernel->dwijdr(meanh,r);
-            Scalar dwdr_r = (r > Scalar(1e-8)*meanh) ? dwdr/r : Scalar(0);
-
-            // temp0 = 0.0;
-            // temp1 = 0.0;
-            // Get particle Concentration gradient (Shifting)
-            // Spactial dimension d = 3
-            if ( m_fickian_shifting )
+    // ── Pairwise wall-adhesion wetting force (2026-08-22) ──────────────────
+    // Tartakovsky-Meakin-type: the contact angle is produced by a smooth
+    // attractive fluid-solid pair force whose strength differs between the
+    // phases, s_k = beta*sigma12/h^2 * (1 +- cos omega)/2 (equal at 90 deg).
+    // Both the stress-band and the normal-correction wall models failed to
+    // move the contact line at bench resolution (sessile harness); this
+    // pairwise form acts directly on near-wall momentum and is calibrated
+    // against the same harness.
+    if ( this->m_omega != Scalar(90) && this->m_sigma12 > Scalar(0) )
+        {
+        // calibration override: SPH_BETA_ADH env var (default 4.0); the
+        // differential form is linear in cos(omega), so ONE beta calibrated
+        // at one angle fixes the whole contact-angle map.
+        static const Scalar beta_adh = getenv("SPH_BETA_ADH")
+            ? Scalar(atof(getenv("SPH_BETA_ADH"))) : Scalar(0.0);  // OFF by default since curvature-form CSF (2026-08-23); calibrated value was 9
+        const Scalar cw = cos(this->m_omega * (M_PI/Scalar(180)));
+        #pragma omp parallel for
+        for (unsigned int group_idx = 0; group_idx < group_size; group_idx++)
+            {
+            unsigned int i = h_members_omp12.data[group_idx];
+            bool i_f1 = checkfluid1(h_type_property_map.data, h_pos.data[i].w);
+            bool i_f2 = checkfluid2(h_type_property_map.data, h_pos.data[i].w);
+            if ( !i_f1 && !i_f2 ) continue;
+            Scalar3 pi_a;
+            pi_a.x = h_pos.data[i].x; pi_a.y = h_pos.data[i].y; pi_a.z = h_pos.data[i].z;
+            Scalar Vi_a = h_velocity.data[i].w / h_density.data[i];
+            Scalar3 fadh = make_scalar3(Scalar(0), Scalar(0), Scalar(0));
+            size_t headA = h_head_list.data[i];
+            unsigned int nA = (unsigned int)h_n_neigh.data[i];
+            for (unsigned int jj = 0; jj < nA; jj++)
                 {
-                temp1 = 1./3. * h_energy.data[k];
+                unsigned int k = h_nlist.data[headA + jj];
+                if ( !checksolid(h_type_property_map.data, h_pos.data[k].w) ) continue;
+                Scalar3 dxa;
+                dxa.x = pi_a.x - h_pos.data[k].x;
+                dxa.y = pi_a.y - h_pos.data[k].y;
+                dxa.z = pi_a.z - h_pos.data[k].z;
+                dxa = box.minImage(dxa);
+                Scalar rsq_a = dot(dxa, dxa);
+                if ( this->m_const_slength && rsq_a > this->m_rcutsq ) continue;
+                Scalar meanh_a = this->m_const_slength ? this->m_ch
+                                : Scalar(0.5)*(h_h.data[i]+h_h.data[k]);
+                Scalar r_a = sqrt(rsq_a);
+                if ( r_a < Scalar(1e-8)*meanh_a ) continue;
+                Scalar wij_a = this->m_skernel->wij(meanh_a, r_a);
+                Scalar Vk_a = h_velocity.data[k].w / h_density.data[k];
+                // Differential form: the favored phase is ATTRACTED, the
+                // other REPELLED (+-cos/2). Pure attraction saturates: the
+                // normal load friction-pins the advancing contact line
+                // (beta 2 -> 10 left theta_set=30 frozen at 84 deg while
+                // the dewetting side kept responding).
+                Scalar s_a = beta_adh * this->m_sigma12/(meanh_a*meanh_a)
+                             * Scalar(0.5) * ( i_f1 ? cw : -cw );
+                Scalar fmag = -s_a * Vi_a * Vk_a * wij_a / r_a;   // attraction toward the wall
+                fadh.x += fmag * dxa.x;
+                fadh.y += fmag * dxa.y;
+                fadh.z += fmag * dxa.z;
                 }
-            else 
-                {
-                temp1 = 1./3. * normfnj * normfnj;
-                }
-
-            // Evaluate particle i interfacial stress tensor
-            Scalar jstress[6] = {0};
-            // normal vectors point from solid to fluid and from fluid 1
-            // to fluid 2
-            // if Fluid1 or Fluid2 that has neighbors of other fluid phase 
-            if ( !(j_issolid) && this->m_sigma12 > 0.0 && normfnj > 0.0 )
-            {
-                temp0 = this->m_sigma12/normfnj;
-                jstress[0] += temp0 * ( temp1 - fnj.x * fnj.x); // xx
-                jstress[1] += temp0 * ( temp1 - fnj.y * fnj.y); // yy
-                jstress[2] += temp0 * ( temp1 - fnj.z * fnj.z); // zz
-                jstress[3] -= temp0 * ( fnj.x * fnj.y);         // xy yx
-                jstress[4] -= temp0 * ( fnj.x * fnj.z);         // xz zx
-                jstress[5] -= temp0 * ( fnj.y * fnj.z);         // yz zy
+            h_sf.data[i].x += fadh.x;
+            h_sf.data[i].y += fadh.y;
+            h_sf.data[i].z += fadh.z;
             }
-
-            if ( !m_fickian_shifting )
-            {
-                temp1 = 1./3. * normsnj * normsnj;
-            }
-
-            // --- hysteresis block for particle j ---
-            Scalar sigma01_j = this->m_sigma01;
-            Scalar sigma02_j = this->m_sigma02;
-            if (m_hysteresis && normsnj > 0.0 && normfnj > 0.0)
-            {
-                Scalar cos_local_j = dot(fnj, snj) / (normfnj * normsnj);
-                cos_local_j = fmax(Scalar(-1), fmin(Scalar(1), cos_local_j));
-                Scalar theta_local_j = acos(cos_local_j) * (Scalar(180) / M_PI);
-                Scalar omega_eff_j = fmax(m_omega_rec, fmin(m_omega_adv, theta_local_j));
-                if      (omega_eff_j == Scalar(90)) { sigma01_j = 0; sigma02_j = 0; }
-                else if (omega_eff_j <  Scalar(90)) { sigma01_j = this->m_sigma12 * cos(omega_eff_j*(M_PI/180)); sigma02_j = 0; }
-                else                                { sigma01_j = 0; sigma02_j = this->m_sigma12 * cos((180-omega_eff_j)*(M_PI/180)); }
-            }
-
-            // Fluid phase 1 - Solid interface
-            if ( j_isfluid1 && sigma01_j > 0.0 && normsnj > 0.0 )
-            {
-                temp0 = sigma01_j/normsnj;
-                jstress[0] += temp0 * ( temp1 - snj.x * snj.x); // xx
-                jstress[1] += temp0 * ( temp1 - snj.y * snj.y); // yy
-                jstress[2] += temp0 * ( temp1 - snj.z * snj.z); // zz
-                jstress[3] -= temp0 * ( snj.x * snj.y);         // xy yx
-                jstress[4] -= temp0 * ( snj.x * snj.z);         // xz zx
-                jstress[5] -= temp0 * ( snj.y * snj.z);         // yz zy
-            }
-
-            // Fluid phase 2 - Solid interface
-            if ( j_isfluid2 && sigma02_j > 0.0 && normsnj > 0.0 )
-            {
-                temp0 = sigma02_j/normsnj;
-                jstress[0] += temp0 * ( temp1 - snj.x * snj.x); // xx
-                jstress[1] += temp0 * ( temp1 - snj.y * snj.y); // yy
-                jstress[2] += temp0 * ( temp1 - snj.z * snj.z); // zz
-                jstress[3] -= temp0 * ( snj.x * snj.y);         // xy yx
-                jstress[4] -= temp0 * ( snj.x * snj.z);         // xz zx
-                jstress[5] -= temp0 * ( snj.y * snj.z);         // yz zy
-            }
-
-            // Add contribution to surface force (volume-squared formulation, anti-symmetric)
-            h_sf.data[i].x += dwdr_r*dx.x*(Vi*Vi*istress[0]+Vj*Vj*jstress[0])+
-                              dwdr_r*dx.y*(Vi*Vi*istress[3]+Vj*Vj*jstress[3])+
-                              dwdr_r*dx.z*(Vi*Vi*istress[4]+Vj*Vj*jstress[4]);
-            h_sf.data[i].y += dwdr_r*dx.x*(Vi*Vi*istress[3]+Vj*Vj*jstress[3])+
-                              dwdr_r*dx.y*(Vi*Vi*istress[1]+Vj*Vj*jstress[1])+
-                              dwdr_r*dx.z*(Vi*Vi*istress[5]+Vj*Vj*jstress[5]);
-            h_sf.data[i].z += dwdr_r*dx.x*(Vi*Vi*istress[4]+Vj*Vj*jstress[4])+
-                              dwdr_r*dx.y*(Vi*Vi*istress[5]+Vj*Vj*jstress[5])+
-                              dwdr_r*dx.z*(Vi*Vi*istress[2]+Vj*Vj*jstress[2]);
-
-
-
-
-            } // End of neighbor loop
-
-        // Set component normal to solid surface at solid interface to zero
-
-        } // Closing Fluid Particle Loop
-
+        }
 
     } // End compute surface force
 
