@@ -148,8 +148,17 @@ slengths  = np.full(N_total, slength, dtype=np.float32)
 # 1. Solid outer walls (top and bottom in y)
 is_outer_wall = (y_p < y_wall_bot_boundary) | (y_p >= y_wall_top_boundary)
 
-# 2. Cylindrical tube wall: R_inner ≤ r_xz < R_outer  (fluid region only)
-is_tube_wall  = (~is_outer_wall) & (r_xz >= R_inner) & (r_xz < R_outer)
+# 2. Cylindrical tube wall: R_inner <= r_xz < R_outer, OPEN at both ends
+# (fixed 2026-08-23): the original tube spanned the full fluid column and
+# was welded to BOTH the floor and the ceiling -- a sealed cylinder whose
+# trapped gas (and disconnected liquid) makes capillary rise impossible
+# regardless of the wetting model. The tube now dips 1.5 R_cap into the
+# reservoir with a free gap to the floor, and ends 1.5 R_cap below the top
+# wall so the displaced gas can escape around the rim.
+y_tube_bot = y_liq_surf - 1.5 * R_cap
+y_tube_top = y_wall_top_boundary - 1.5 * R_cap
+is_tube_wall  = ( (~is_outer_wall) & (r_xz >= R_inner) & (r_xz < R_outer)
+                  & (y_p >= y_tube_bot) & (y_p < y_tube_top) )
 
 # 3. Gas 'N': above the initial liquid surface, not solid
 is_gas = (~is_outer_wall) & (~is_tube_wall) & (y_p >= y_liq_surf)
