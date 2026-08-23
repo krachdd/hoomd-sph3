@@ -8,7 +8,7 @@ launcher fractures the MPI world into singletons — the "GSD: Not a GSD file"
 race).
 
 Before first use, adjust in every script if your layout differs:
-`REPO=/data/work/ac126015/imb_test_conda/hoomd-sph3` and the
+`REPO=/data/work/ac126015/dd_pm/hoomd-sph3` and the
 `MPIRUN`/`PY` paths into the sph3 conda env.
 
 ## Scripts & dependency chain
