@@ -2745,6 +2745,18 @@ void TwoPhaseFlow<KT_, SET1_, SET2_>::compute_particle_shift(uint64_t timestep)
     // Acquire the group index array once: getMemberIndex() acquires an
     // ArrayHandle per call, which is not thread-safe inside the parallel loop
     ArrayHandle<unsigned int> h_members_omp15(this->m_fluidgroup->getIndexArray(), access_location::host, access_mode::read);
+
+    // Wrap with the LOCAL box, not the global one: the local box's periodic
+    // flags are set by DomainDecomposition to be periodic only along
+    // non-decomposed directions, so under MPI this wrap is a no-op along
+    // decomposed axes and the Communicator wraps + migrates the particle at
+    // the next rebuild -- the same convention the integrators use. Wrapping
+    // with the always-periodic global box here teleports a particle that the
+    // shift pushed across the global seam to the opposite domain edge,
+    // outside its owning rank's cell-list coverage ("Particle ... is no
+    // longer in the simulation box" at the next CellList build).
+    const BoxDim local_box = this->m_pdata->getBox();
+
     #pragma omp parallel for
     for (unsigned int group_idx = 0; group_idx < fluid_size; group_idx++)
         {
@@ -2752,7 +2764,7 @@ void TwoPhaseFlow<KT_, SET1_, SET2_>::compute_particle_shift(uint64_t timestep)
         h_pos_rw.data[i].x += shift_vec[i].x;
         h_pos_rw.data[i].y += shift_vec[i].y;
         h_pos_rw.data[i].z += shift_vec[i].z;
-        box.wrap(h_pos_rw.data[i], h_image.data[i]);
+        local_box.wrap(h_pos_rw.data[i], h_image.data[i]);
         }
     }
     } // end compute_particle_shift
