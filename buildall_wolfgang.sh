@@ -25,6 +25,9 @@ module purge
 # pick up an unsupported system compiler.
 module load gcc/12.2.0
 module load cuda/12.3
+# HOOMD sets CUDA_STANDARD 17, which needs CMake >= 3.18 (the login node's
+# /usr/bin/cmake is 3.16).
+module load cmake/3.26.3
 
 export CC=$(which gcc)
 export CXX=$(which g++)
@@ -46,6 +49,7 @@ echo "nvcc:  $(nvcc --version | tail -1)"
 echo "gcc:   $($CXX --version | head -1)"
 echo "mpicc: $(which mpicc)  -> $(mpicc --version | head -1)"
 mpicc --version >/dev/null 2>&1 || { echo "mpicc wrapper is not working (check OMPI_CC / conda env sph3 active)"; exit 1; }
+echo "cmake: $(cmake --version | head -1)"
 echo "CUDA_ARCH_LIST=$CUDA_ARCH_LIST"
 
 # ── Dependency (gsd) ───────────────────────────────────────────────────────
