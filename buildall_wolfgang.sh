@@ -50,7 +50,8 @@ echo "CUDA_ARCH_LIST=$CUDA_ARCH_LIST"
 
 # ── Dependencies (pgsd, gsd) ───────────────────────────────────────────────
 if [[ "${1:-}" != "--hoomd" ]]; then
-    ./link_pgsd_module.sh
+    # the symlink step reports 'File exists' on a re-run; that is harmless
+    ./link_pgsd_module.sh || true
     cd "$GIT_SRC/dependencies/pgsd-sph/pgsd/"
     rm -rf build && mkdir build && cd build
     CC=$(which mpicc) CXX=$(which mpicxx) cmake ..
