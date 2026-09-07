@@ -216,6 +216,17 @@ class PYBIND11_EXPORT SinglePhaseFlowGDGD : public SinglePhaseFlow<KT_, SET_>
          */
         virtual void forcecomputation(uint64_t timestep);
 
+        /*! VRD-aware pressure evaluation.
+         *
+         *  In VRD mode (m_boussinesq == false) the fluid pressure is evaluated
+         *  with the per-particle rest density
+         *  \f$\rho_{0,i} = \rho_0 (1 - \beta (T_i - T_\mathrm{ref}))\f$ so that the
+         *  pressure written to h_pressure (used by the continuity-mode pair
+         *  loop and the Adami wall interpolation) carries the buoyancy signal.
+         *  In Boussinesq mode this falls back to the base class implementation.
+         */
+        virtual void compute_pressure(uint64_t timestep);
+
     #ifdef ENABLE_MPI
         /*! Update ghost particles for the scalar field (aux4).
          *

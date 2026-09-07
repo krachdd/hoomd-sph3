@@ -74,6 +74,16 @@ SPHBaseClass<KT_, SET_>::SPHBaseClass(std::shared_ptr<SystemDefinition> sysdef,
         m_bodyforce = make_scalar3(Scalar(0), Scalar(0), Scalar(0));
         m_damptime = 0;
         m_body_acceleration = false;
+        m_max_vel = Scalar(0);
+
+        // The SPH component is 3D only: kernel normalization constants are
+        // alpha/h^3 and the surface tension stress uses d = 3. Reject 2D boxes
+        // instead of silently producing wrongly normalized densities.
+        if (sysdef->getNDimensions() != 3)
+            {
+            throw std::runtime_error("hoomd.sph only supports 3D simulations "
+                                     "(kernel normalization is hard-coded for d=3).");
+            }
       }
 
 /*! Destructor
@@ -240,10 +250,14 @@ void SPHBaseClass<KT_, SET_>::applyBodyForce(uint64_t timestep, std::shared_ptr<
             m_exec_conf->msg->notice(7) << "Computing SPHBaseClass::applyBodyForce force getter done!" << std::endl;
         
             // for each particle in given group
+            // Acquire the group index array once: getMemberIndex() acquires an
+            // ArrayHandle per call, which is not thread-safe inside the parallel loop
+            ArrayHandle<unsigned int> h_members_omp1(pgroup->getIndexArray(), access_location::host, access_mode::read);
+            #pragma omp parallel for
             for (unsigned int group_idx = 0; group_idx < group_size; group_idx++)
                 {
                 // Read particle index
-                unsigned int i = pgroup->getMemberIndex(group_idx);
+                unsigned int i = h_members_omp1.data[group_idx];
 
                 // Read particle mass
                 Scalar mi = h_velocity.data[i].w;
@@ -257,6 +271,26 @@ void SPHBaseClass<KT_, SET_>::applyBodyForce(uint64_t timestep, std::shared_ptr<
         }
         m_exec_conf->msg->notice(7) << "Computing SPHBaseClass::applyBodyForce done!" << std::endl;
 
+    }
+
+/*! \post Return maximum fluid speed of the last force computation, reduced over MPI ranks
+ */
+template<SmoothingKernelType KT_, StateEquationType SET_>
+Scalar SPHBaseClass<KT_, SET_>::getMaxVelocity()
+    {
+    Scalar v = m_max_vel;
+#ifdef ENABLE_MPI
+    if (m_sysdef->isDomainDecomposed())
+        {
+        MPI_Allreduce(MPI_IN_PLACE,
+                      &v,
+                      1,
+                      MPI_HOOMD_SCALAR,
+                      MPI_MAX,
+                      m_exec_conf->getMPICommunicator());
+        }
+#endif
+    return v;
     }
 
 /*! \post Set acceleration components
@@ -292,6 +326,7 @@ void export_SPHBaseClass(pybind11::module& m, std::string name)
                            std::shared_ptr<nsearch::NeighborList>>())
         .def("constructTypeVectors", &SPHBaseClass<KT_, SET_>::constructTypeVectors)
         .def("getAcceleration", &SPHBaseClass<KT_, SET_>::getAcceleration)
+        .def("getMaxVelocity", &SPHBaseClass<KT_, SET_>::getMaxVelocity)
         .def("applyBodyForce", &SPHBaseClass<KT_, SET_>::applyBodyForce)
         .def("setAcceleration", &SPHBaseClass<KT_, SET_>::setAcceleration);
 }

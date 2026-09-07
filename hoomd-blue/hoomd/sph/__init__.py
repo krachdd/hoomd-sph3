@@ -13,6 +13,7 @@ from hoomd.sph import constrain
 from hoomd.sph import kernel
 from hoomd.sph import methods
 from hoomd.sph import compute
+from hoomd.sph import update
 from hoomd.sph.half_step_hook import HalfStepHook
 
 
@@ -25,5 +26,6 @@ __all__ = [
     "kernel",
     "methods",
     "compute",
+    "update",
     "HalfStepHook",
 ]

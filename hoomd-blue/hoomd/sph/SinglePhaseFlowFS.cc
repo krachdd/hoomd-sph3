@@ -239,9 +239,13 @@ void SinglePhaseFlowFS<KT_, SET_>::detect_freesurface(uint64_t timestep)
         // completeness measure: $\lambda = \rho_\mathrm{fluid\,only} / \rho_0$.
         const Scalar rho0_ref = this->m_eos->getRestDensity();
 
+        // Acquire the group index array once: getMemberIndex() acquires an
+        // ArrayHandle per call, which is not thread-safe inside the parallel loop
+        ArrayHandle<unsigned int> h_members_omp1(this->m_fluidgroup->getIndexArray(), access_location::host, access_mode::read);
+        #pragma omp parallel for
         for (unsigned int group_idx = 0; group_idx < group_size; group_idx++)
             {
-            unsigned int i = this->m_fluidgroup->getMemberIndex(group_idx);
+            unsigned int i = h_members_omp1.data[group_idx];
 
             Scalar3 pi;
             pi.x = h_pos.data[i].x;
@@ -293,10 +297,9 @@ void SinglePhaseFlowFS<KT_, SET_>::detect_freesurface(uint64_t timestep)
                 Scalar r     = sqrt(rsq);
                 Scalar meanh = this->m_const_slength ? this->m_ch
                                                      : Scalar(0.5)*(hi + h_h.data[k]);
-                Scalar epssqr = Scalar(0.01)*meanh*meanh;
 
                 Scalar dwdr   = this->m_skernel->dwijdr(meanh, r);
-                Scalar dwdr_r = dwdr / (r + epssqr);
+                Scalar dwdr_r = (r > Scalar(1e-8)*meanh) ? dwdr/r : Scalar(0);
 
                 if (!issolid)
                     {
@@ -436,9 +439,13 @@ void SinglePhaseFlowFS<KT_, SET_>::compute_curvature(uint64_t timestep)
 
         const Scalar eps_sq = Scalar(1e-12);
 
+        // Acquire the group index array once: getMemberIndex() acquires an
+        // ArrayHandle per call, which is not thread-safe inside the parallel loop
+        ArrayHandle<unsigned int> h_members_omp2(this->m_fluidgroup->getIndexArray(), access_location::host, access_mode::read);
+        #pragma omp parallel for
         for (unsigned int group_idx = 0; group_idx < group_size; group_idx++)
             {
-            unsigned int i = this->m_fluidgroup->getMemberIndex(group_idx);
+            unsigned int i = h_members_omp2.data[group_idx];
 
             // Skip bulk particles.
             Scalar lambda_i = h_aux4.data[i].x;
@@ -519,9 +526,8 @@ void SinglePhaseFlowFS<KT_, SET_>::compute_curvature(uint64_t timestep)
                 Scalar r     = sqrt(rsq);
                 Scalar meanh = this->m_const_slength ? this->m_ch
                                                      : Scalar(0.5)*(hi + h_h.data[k]);
-                Scalar epssqr = Scalar(0.01)*meanh*meanh;
                 Scalar dwdr   = this->m_skernel->dwijdr(meanh, r);
-                Scalar dwdr_r = dwdr / (r + epssqr);
+                Scalar dwdr_r = (r > Scalar(1e-8)*meanh) ? dwdr/r : Scalar(0);
 
                 // $\nabla_i W_{ij} = (\partial W/\partial r)/r \cdot \mathbf{r}_{ij}$ (pointing from $j$ toward $i$)
                 Scalar3 gradW;
@@ -583,9 +589,13 @@ void SinglePhaseFlowFS<KT_, SET_>::apply_freesurface_pressure(uint64_t timestep)
         ArrayHandle<Scalar>  h_pressure(this->m_pdata->getPressures(), access_location::host, access_mode::readwrite);
         ArrayHandle<Scalar3> h_aux4    (this->m_pdata->getAuxiliaries4(), access_location::host, access_mode::read);
 
+        // Acquire the group index array once: getMemberIndex() acquires an
+        // ArrayHandle per call, which is not thread-safe inside the parallel loop
+        ArrayHandle<unsigned int> h_members_omp3(this->m_fluidgroup->getIndexArray(), access_location::host, access_mode::read);
+        #pragma omp parallel for
         for (unsigned int group_idx = 0; group_idx < group_size; group_idx++)
             {
-            unsigned int i = this->m_fluidgroup->getMemberIndex(group_idx);
+            unsigned int i = h_members_omp3.data[group_idx];
 
             if (h_aux4.data[i].x < m_fs_threshold)
                 {
@@ -636,6 +646,7 @@ void SinglePhaseFlowFS<KT_, SET_>::forcecomputation(uint64_t timestep)
         ArrayHandle<Scalar3> h_bpc     (this->m_pdata->getAuxiliaries2(), access_location::host, access_mode::readwrite);
         // aux3: transport velocity
         ArrayHandle<Scalar3> h_tv      (this->m_pdata->getAuxiliaries3(), access_location::host, access_mode::read);
+        ArrayHandle<Scalar>  h_gdot    (this->m_pdata->getEnergies(), access_location::host, access_mode::read); // per-particle shear rate
         // aux4: x=lambda, y=curvature
         ArrayHandle<Scalar3> h_aux4    (this->m_pdata->getAuxiliaries4(), access_location::host, access_mode::read);
         ArrayHandle<Scalar>  h_h       (this->m_pdata->getSlengths(),     access_location::host, access_mode::read);
@@ -653,9 +664,13 @@ void SinglePhaseFlowFS<KT_, SET_>::forcecomputation(uint64_t timestep)
         // Contact-angle cosine for Young's wetting force.
         const Scalar cos_ca = std::cos(m_contact_angle);
 
+        // Acquire the group index array once: getMemberIndex() acquires an
+        // ArrayHandle per call, which is not thread-safe inside the parallel loop
+        ArrayHandle<unsigned int> h_members_omp4(this->m_fluidgroup->getIndexArray(), access_location::host, access_mode::read);
+        #pragma omp parallel for firstprivate(temp0) reduction(max:max_vel)
         for (unsigned int group_idx = 0; group_idx < group_size; group_idx++)
             {
-            unsigned int i = this->m_fluidgroup->getMemberIndex(group_idx);
+            unsigned int i = h_members_omp4.data[group_idx];
 
             // ── Save free-surface normal from aux2 BEFORE zeroing for BPC ────
             // detect_freesurface() stored the outward unit normal in aux2.
@@ -696,9 +711,17 @@ void SinglePhaseFlowFS<KT_, SET_>::forcecomputation(uint64_t timestep)
             Scalar rhoi = h_density.data[i];
             Scalar Vi   = mi / rhoi;
 
+            // Effective viscosity of particle i from its per-particle shear rate
+            Scalar mu_eff_i = (this->m_nn_model == NEWTONIAN)
+                ? this->m_mu
+                : computeNNViscosity(this->m_mu, h_gdot.data[i], this->m_nn_model,
+                                     this->m_nn_K, this->m_nn_n,
+                                     this->m_nn_mu0, this->m_nn_muinf,
+                                     this->m_nn_lambda, this->m_nn_tauy,
+                                     this->m_nn_m, this->m_nn_mu_min);
+
             Scalar vi_total = sqrt(vi.x*vi.x + vi.y*vi.y + vi.z*vi.z);
-            if (i == 0) { max_vel = vi_total; }
-            else if (vi_total > max_vel) { max_vel = vi_total; }
+            if (vi_total > max_vel) { max_vel = vi_total; }
 
             // Artificial stress tensor A_i for transport velocity correction.
             Scalar A11i = rhoi * vi.x * (tvi.x - vi.x);
@@ -794,7 +817,7 @@ void SinglePhaseFlowFS<KT_, SET_>::forcecomputation(uint64_t timestep)
                                                      : Scalar(0.5)*(h_h.data[i] + h_h.data[k]);
                 Scalar epssqr = Scalar(0.01)*meanh*meanh;
                 Scalar dwdr   = this->m_skernel->dwijdr(meanh, r);
-                Scalar dwdr_r = dwdr / (r + epssqr);
+                Scalar dwdr_r = (r > Scalar(1e-8)*meanh) ? dwdr/r : Scalar(0);
 
                 // Accumulate $\nabla\lambda$ (fluid) and wall-normal (solid) for Young's wetting force.
                 if (!issolid)
@@ -844,20 +867,31 @@ void SinglePhaseFlowFS<KT_, SET_>::forcecomputation(uint64_t timestep)
 
                 Scalar vijsqr = Vi*Vi + Vj*Vj;
 
-                // Pressure force.
-                h_force.data[i].x -= vijsqr*(temp0 + avc)*dwdr_r*dx.x;
-                h_force.data[i].y -= vijsqr*(temp0 + avc)*dwdr_r*dx.y;
-                h_force.data[i].z -= vijsqr*(temp0 + avc)*dwdr_r*dx.z;
+                // Pressure force plus Monaghan artificial viscosity. The AV term
+                // Pi_ij has units of pressure/rho^2 and therefore carries its
+                // canonical m_i m_j scaling (Monaghan 1992), not the volume scaling.
+                h_force.data[i].x -= (vijsqr*temp0 + mi*mj*avc)*dwdr_r*dx.x;
+                h_force.data[i].y -= (vijsqr*temp0 + mi*mj*avc)*dwdr_r*dx.y;
+                h_force.data[i].z -= (vijsqr*temp0 + mi*mj*avc)*dwdr_r*dx.z;
 
-                // Viscous force.
+                // Viscous force (harmonic mean of the per-particle effective
+                // viscosities; solids take the fluid's).
                 {
-                Scalar dvnorm    = sqrt(dot(dv, dv));
-                Scalar gamma_dot = dvnorm / (r + sqrt(epssqr));
-                Scalar mu_eff    = computeNNViscosity(this->m_mu, gamma_dot, this->m_nn_model,
-                                                      this->m_nn_K, this->m_nn_n,
-                                                      this->m_nn_mu0, this->m_nn_muinf,
-                                                      this->m_nn_lambda, this->m_nn_tauy,
-                                                      this->m_nn_m, this->m_nn_mu_min);
+                Scalar mu_eff;
+                if ( this->m_nn_model == NEWTONIAN )
+                    mu_eff = this->m_mu;
+                else
+                    {
+                    Scalar mu_eff_j = issolid
+                        ? mu_eff_i
+                        : computeNNViscosity(this->m_mu, h_gdot.data[k], this->m_nn_model,
+                                             this->m_nn_K, this->m_nn_n,
+                                             this->m_nn_mu0, this->m_nn_muinf,
+                                             this->m_nn_lambda, this->m_nn_tauy,
+                                             this->m_nn_m, this->m_nn_mu_min);
+                    Scalar musum = mu_eff_i + mu_eff_j;
+                    mu_eff = (musum > Scalar(0)) ? Scalar(2)*mu_eff_i*mu_eff_j/musum : Scalar(0);
+                    }
                 temp0 = mu_eff * vijsqr * dwdr_r;
                 }
                 h_force.data[i].x += temp0 * dv.x;
@@ -893,19 +927,18 @@ void SinglePhaseFlowFS<KT_, SET_>::forcecomputation(uint64_t timestep)
                         }
                     h_ratedpe.data[i].x += rhoi * Vj * dot(dv, dwdr_r*dx);
 
+                    // Molteni & Colagrossi (2009), corrected sign (Laplacian smoothing):
+                    //   drho_i/dt += 2 delta h c V_j (rho_i - rho_j) (dW/dr)/r
                     if (!issolid && this->m_density_diffusion)
-                        h_ratedpe.data[i].x -=
-                            (Scalar(2)*this->m_ddiff*meanh*this->m_c*mj
-                             * (rhoi/rhoj - Scalar(1)) * dot(dx, dwdr_r*dx))
-                            / (rsq + epssqr);
+                        h_ratedpe.data[i].x +=
+                            Scalar(2)*this->m_ddiff*meanh*this->m_c*(mj/rhoj)
+                            *(rhoi - rhoj)*dwdr_r;
                     }
 
                 } // End neighbour loop
 
-            // dp/dt chain rule (DENSITYCONTINUITY).
-            if (this->m_density_method == DENSITYCONTINUITY)
-                h_ratedpe.data[i].y =
-                    this->m_eos->dPressuredDensity(rhoi) * h_ratedpe.data[i].x;
+            // NOTE: pressure is re-evaluated from the EOS every step in
+            // computeForces() (DENSITYCONTINUITY), so no dp/dt is integrated.
 
             // ── Young's-equation wetting force ───────────────────────────────
             // Applied at contact-line free-surface particles (has_solid && is_surface).
@@ -1007,6 +1040,7 @@ void SinglePhaseFlowFS<KT_, SET_>::forcecomputation(uint64_t timestep)
             } // End fluid-particle outer loop
 
         this->m_timestep_list[5] = max_vel;
+        this->m_max_vel = Scalar(max_vel);
 
         } // End GPU Array Scope
 
@@ -1072,11 +1106,9 @@ void SinglePhaseFlowFS<KT_, SET_>::computeForces(uint64_t timestep)
         }
     else // DENSITYCONTINUITY
         {
-        if (!this->m_pressure_initialized)
-            {
-            this->compute_pressure(timestep);
-            this->m_pressure_initialized = true;
-            }
+        // Re-evaluate pressure from the EOS every step so it stays exactly
+        // consistent with the time-integrated density.
+        this->compute_pressure(timestep);
         }
 
 #ifdef ENABLE_MPI
@@ -1102,6 +1134,15 @@ void SinglePhaseFlowFS<KT_, SET_>::computeForces(uint64_t timestep)
     compute_curvature(timestep);
     apply_freesurface_pressure(timestep);
     // ── End free-surface pipeline ─────────────────────────────────────────────
+
+    // Non-Newtonian rheology: per-particle shear rate + ghost sync
+    if ( this->m_nn_model != NEWTONIAN )
+        {
+        this->compute_strain_rate(timestep);
+#ifdef ENABLE_MPI
+        this->update_ghost_energy(timestep);
+#endif
+        }
 
     // TV force loop with CSF surface tension.
     forcecomputation(timestep);

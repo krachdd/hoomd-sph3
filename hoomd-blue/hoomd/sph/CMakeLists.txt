@@ -114,6 +114,14 @@ endif()
 target_link_libraries(_${COMPONENT_NAME} PUBLIC HOOMD::_hoomd)
 target_link_libraries(_${COMPONENT_NAME} PUBLIC HOOMD::_nsearch)
 
+# OpenMP threading of the SPH particle loops (optional: the pragmas are
+# ignored and the build stays serial if OpenMP is not found)
+find_package(OpenMP COMPONENTS CXX)
+if(OpenMP_CXX_FOUND)
+    target_link_libraries(_${COMPONENT_NAME} PRIVATE OpenMP::OpenMP_CXX)
+    message(STATUS "SPH component: OpenMP threading enabled")
+endif()
+
 # install the library
 install(TARGETS _${COMPONENT_NAME}
         LIBRARY DESTINATION ${PYTHON_SITE_INSTALL_DIR}/${COMPONENT_NAME}
@@ -130,6 +138,7 @@ set(files
     constrain.py
     compute.py
     half_step_hook.py
+    update.py
     )
 
 install(FILES ${files}
@@ -146,3 +155,4 @@ add_subdirectory(data)
 
 add_subdirectory(methods)
 add_subdirectory(sphmodel)
+add_subdirectory(pytest)
