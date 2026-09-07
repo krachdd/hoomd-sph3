@@ -50,6 +50,7 @@ maintainer: dkrach, david.krach@mib.uni-stuttgart.de
 #include "TwoPhaseFlow.h"
 #include "SinglePhaseFlowGPU.cuh"
 #include "TwoPhaseFlowGPU.cuh"
+#include "TwoPhaseFlowCSFGPU.h"
 #include "hoomd/Autotuner.h"
 #include "hoomd/GPUArray.h"
 
@@ -85,8 +86,8 @@ class PYBIND11_EXPORT TwoPhaseFlowGPU : public TwoPhaseFlow<KT_, SET1_, SET2_>
         std::shared_ptr<Autotuner<1>> m_tuner_force;
         std::shared_ptr<Autotuner<1>> m_tuner_solidforce;
 
-        GPUArray<uint32_t> m_max_vel_bits;
-        uint32_t* m_max_vel_bits_host; // pinned host buffer for async readback
+        GPUArray<uint32_t> m_max_vel_bits; //!< float bits of the max fluid speed (atomicMax on device)
+        CSFGPUBuffers m_csf_buf;           //!< scratch buffers of the GPU interface machinery
 
         virtual void compute_ndensity(uint64_t timestep)       override;
         virtual void compute_pressure(uint64_t timestep)       override;

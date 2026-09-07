@@ -121,13 +121,15 @@ class VelocityVerlet(Method):
     def _attach_hook(self):
         sim = self._simulation
         # initialize the reflected c++ class
-        if isinstance(sim.device, hoomd.device.CPU) or not hasattr(_sph, 'VelocityVerletGPU'):
+        # Use the GPU integrator when running on a GPU device and it was
+        # compiled in; otherwise the CPU integrator works on any device
+        # (it accesses particle data through host ArrayHandles).
+        if isinstance(sim.device, hoomd.device.GPU) and hasattr(_sph, 'VelocityVerletGPU'):
+            self._cpp_obj = _sph.VelocityVerletGPU(sim.state._cpp_sys_def,
+                                              sim.state._get_group(self.filter))
+        else:
             self._cpp_obj = _sph.VelocityVerlet(sim.state._cpp_sys_def,
                                            sim.state._get_group(self.filter))
-        else:
-            raise RuntimeError(
-                "The hoomd.sph component is CPU-only: no GPU integrators are "
-                "compiled. Construct the simulation with hoomd.device.CPU().")
 
         # Reload density and viscosity methods from __dict__
         self.str_densitymethod = self._param_dict._dict["densitymethod"]
@@ -202,13 +204,19 @@ class VelocityVerletBasic(Method):
     def _attach_hook(self):
         sim = self._simulation
         # initialize the reflected c++ class
-        if isinstance(sim.device, hoomd.device.CPU) or not hasattr(_sph, 'VelocityVerletBasicGPU'):
+        # No GPU kernel exists for this integrator yet; the CPU implementation
+        # works on a GPU device too (host ArrayHandles), at the cost of a
+        # device<->host transfer per step.
+        if isinstance(sim.device, hoomd.device.GPU) and hasattr(_sph, 'VelocityVerletBasicGPU'):
+            self._cpp_obj = _sph.VelocityVerletBasicGPU(sim.state._cpp_sys_def,
+                                                   sim.state._get_group(self.filter))
+        else:
+            if isinstance(sim.device, hoomd.device.GPU):
+                sim.device._cpp_msg.notice(
+                    2, "sph.methods.VelocityVerletBasic: no GPU kernel, "
+                       "running the CPU integrator on the GPU device.\n")
             self._cpp_obj = _sph.VelocityVerletBasic(sim.state._cpp_sys_def,
                                            sim.state._get_group(self.filter))
-        else:
-            raise RuntimeError(
-                "The hoomd.sph component is CPU-only: no GPU integrators are "
-                "compiled. Construct the simulation with hoomd.device.CPU().")
 
         # Reload density and viscosity methods from __dict__
         self.str_densitymethod = self._param_dict._dict["densitymethod"]
@@ -304,13 +312,15 @@ class KickDriftKickTV(Method):
     def _attach_hook(self):
         sim = self._simulation
         # initialize the reflected c++ class
-        if isinstance(sim.device, hoomd.device.CPU):
-            self._cpp_obj = _sph.KickDriftKickTV(sim.state._cpp_sys_def,
-                                           sim.state._get_group(self.filter))
-        else:
-            raise RuntimeError(
-                "The hoomd.sph component is CPU-only: no GPU integrators are "
-                "compiled. Construct the simulation with hoomd.device.CPU().")
+        # No GPU kernel exists for this integrator yet; the CPU implementation
+        # works on a GPU device too (host ArrayHandles), at the cost of a
+        # device<->host transfer per step.
+        if isinstance(sim.device, hoomd.device.GPU):
+            sim.device._cpp_msg.notice(
+                2, "sph.methods.KickDriftKickTV: no GPU kernel, "
+                   "running the CPU integrator on the GPU device.\n")
+        self._cpp_obj = _sph.KickDriftKickTV(sim.state._cpp_sys_def,
+                                       sim.state._get_group(self.filter))
 
         # Reload density and viscosity methods from __dict__
         self.str_densitymethod = self._param_dict._dict["densitymethod"]

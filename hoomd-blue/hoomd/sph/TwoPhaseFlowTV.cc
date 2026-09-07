@@ -113,6 +113,9 @@ void TwoPhaseFlowTV<KT_, SET1_, SET2_>::forcecomputation(uint64_t timestep)
     else if ( this->m_density_method == DENSITYCONTINUITY )
         this->m_exec_conf->msg->notice(7) << "Computing TwoPhaseFlowTV::Forces using CONTINUITY approach " << this->m_density_method << endl;
 
+    { // Begin array-handle scope: every handle below must be released before
+      // applyBodyForce() re-acquires m_force, or ArrayHandle throws
+      // "Cannot acquire access to array in use".
     // Grab handles for particle data
     ArrayHandle<Scalar4> h_force(this->m_force, access_location::host, access_mode::readwrite);
     ArrayHandle<Scalar4> h_ratedpe(this->m_ratedpe, access_location::host, access_mode::readwrite);
@@ -527,6 +530,8 @@ void TwoPhaseFlowTV<KT_, SET1_, SET2_>::forcecomputation(uint64_t timestep)
         } // Closing Fluid Particle Loop
 
     this->m_max_vel = Scalar(max_vel);
+    } // End array-handle scope
+
     // Add volumetric force (gravity)
     this->applyBodyForce(timestep, this->m_fluidgroup);
 

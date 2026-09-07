@@ -82,6 +82,7 @@ hipError_t gpu_sph_2pf_tv_forcecomputation(
     const Scalar3*        d_tv,
     const Scalar3*        d_sf,
     const Scalar*         d_h,
+    const Scalar*         d_gdot,        //!< energy array: per-particle shear rate (non-Newtonian)
     Scalar4*              d_force,
     Scalar4*              d_ratedpe,
     Scalar3*              d_bpc,

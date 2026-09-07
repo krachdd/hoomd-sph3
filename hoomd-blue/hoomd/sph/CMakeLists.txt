@@ -66,6 +66,9 @@ set(_${COMPONENT_NAME}_headers
     SinglePhaseFlowFSGPU.cuh
     TwoPhaseFlowGPU.h
     TwoPhaseFlowGPU.cuh
+    TwoPhaseFlowGPUPair.cuh
+    TwoPhaseFlowCSFGPU.h
+    TwoPhaseFlowCSFGPU.cuh
     TwoPhaseFlowTVGPU.h
     TwoPhaseFlowTVGPU.cuh
     VelocityVerletGPU.h
@@ -79,6 +82,7 @@ set(_${COMPONENT_NAME}_cu_sources
     SinglePhaseFlowFSGPU.cu
     TwoPhaseFlowGPU.cu
     TwoPhaseFlowTVGPU.cu
+    TwoPhaseFlowCSFGPU.cu
     ComputeSPFBasicPropertiesGPU.cu
     VelocityVerletGPU.cu
     )

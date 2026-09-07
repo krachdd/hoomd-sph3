@@ -70,10 +70,8 @@ TwoPhaseFlowGPU<KT_, SET1_, SET2_>::TwoPhaseFlowGPU(
                                       nlist, fluidgroup1, fluidgroup2, solidgroup,
                                       mdensitymethod, mviscositymethod, mcolorgradientmethod),
       m_max_vel_bits(1, this->m_exec_conf),
-      m_max_vel_bits_host(nullptr)
+      m_csf_buf(this->m_exec_conf)
     {
-    hipHostMalloc(&m_max_vel_bits_host, sizeof(uint32_t), hipHostMallocDefault);
-    *m_max_vel_bits_host = 0;
     if (!this->m_exec_conf->isCUDAEnabled())
         {
         this->m_exec_conf->msg->error()
@@ -102,7 +100,6 @@ template<SmoothingKernelType KT_, StateEquationType SET1_, StateEquationType SET
 TwoPhaseFlowGPU<KT_, SET1_, SET2_>::~TwoPhaseFlowGPU()
     {
     this->m_exec_conf->msg->notice(5) << "Destroying TwoPhaseFlowGPU" << endl;
-    if (m_max_vel_bits_host) hipHostFree(m_max_vel_bits_host);
     }
 
 // =========================================================================
@@ -194,6 +191,7 @@ SPHTwoPhaseParams TwoPhaseFlowGPU<KT_, SET1_, SET2_>::make_2pfparams(uint64_t ti
     fp.riemann_dissipation = this->m_riemann_dissipation  ? 1 : 0;
     fp.cip                 = this->m_consistent_interface_pressure ? 1 : 0;
     fp.density_diffusion   = this->m_density_diffusion ? 1 : 0;
+    fp.nn_active           = (this->m_nn_model1 != NEWTONIAN || this->m_nn_model2 != NEWTONIAN) ? 1 : 0;
     return fp;
     }
 
@@ -357,54 +355,28 @@ void TwoPhaseFlowGPU<KT_, SET1_, SET2_>::compute_noslip(uint64_t timestep)
     }
 
 // =========================================================================
-// compute_colorgradients — zero Aux2/Aux3 on device when sigma=0
+// compute_colorgradients / compute_surfaceforce — GPU interface machinery
+// (TwoPhaseFlowCSFGPU.h mirrors the CPU passes one to one)
 // =========================================================================
 
 template<SmoothingKernelType KT_, StateEquationType SET1_, StateEquationType SET2_>
 void TwoPhaseFlowGPU<KT_, SET1_, SET2_>::compute_colorgradients(uint64_t timestep)
     {
     this->m_exec_conf->msg->notice(7) << "TwoPhaseFlowGPU::compute_colorgradients" << endl;
-
-    if (this->m_sigma12 == Scalar(0.0) &&
-        this->m_sigma01  == Scalar(0.0) &&
-        this->m_sigma02  == Scalar(0.0))
-        {
-        // No surface tension: zero Aux2 (surface normal) and Aux3 (curvature normal) on device.
-        ArrayHandle<Scalar3> d_sn(this->m_pdata->getAuxiliaries2(),
-                                   access_location::device, access_mode::overwrite);
-        ArrayHandle<Scalar3> d_fn(this->m_pdata->getAuxiliaries3(),
-                                   access_location::device, access_mode::overwrite);
-        hipMemset(d_sn.data, 0, sizeof(Scalar3) * this->m_pdata->getAuxiliaries2().getNumElements());
-        hipMemset(d_fn.data, 0, sizeof(Scalar3) * this->m_pdata->getAuxiliaries3().getNumElements());
-        }
-    else
-        {
-        TwoPhaseFlow<KT_, SET1_, SET2_>::compute_colorgradients(timestep);
-        }
+    gpu_csf_compute_colorgradients<KT_>(
+        this->m_pdata, this->m_nlist, this->m_fluidgroup, this->m_type_property_map,
+        make_kparams(), make_csfparams(this->m_colorgradient_method, this->m_omega, this->m_sigma12),
+        m_csf_buf, 256, this->m_exec_conf);
     }
-
-// =========================================================================
-// compute_surfaceforce — zero Aux4 on device when sigma=0
-// =========================================================================
 
 template<SmoothingKernelType KT_, StateEquationType SET1_, StateEquationType SET2_>
 void TwoPhaseFlowGPU<KT_, SET1_, SET2_>::compute_surfaceforce(uint64_t timestep)
     {
     this->m_exec_conf->msg->notice(7) << "TwoPhaseFlowGPU::compute_surfaceforce" << endl;
-
-    if (this->m_sigma12 == Scalar(0.0) &&
-        this->m_sigma01  == Scalar(0.0) &&
-        this->m_sigma02  == Scalar(0.0))
-        {
-        // No surface tension: zero Aux4 (surface force density) on device.
-        ArrayHandle<Scalar3> d_sf(this->m_pdata->getAuxiliaries4(),
-                                   access_location::device, access_mode::overwrite);
-        hipMemset(d_sf.data, 0, sizeof(Scalar3) * this->m_pdata->getAuxiliaries4().getNumElements());
-        }
-    else
-        {
-        TwoPhaseFlow<KT_, SET1_, SET2_>::compute_surfaceforce(timestep);
-        }
+    gpu_csf_compute_surfaceforce<KT_>(
+        this->m_pdata, this->m_nlist, this->m_fluidgroup, this->m_type_property_map,
+        make_kparams(), make_csfparams(this->m_colorgradient_method, this->m_omega, this->m_sigma12),
+        m_csf_buf, 256, this->m_exec_conf);
     }
 
 // =========================================================================
@@ -449,6 +421,9 @@ void TwoPhaseFlowGPU<KT_, SET1_, SET2_>::forcecomputation(uint64_t timestep)
                                     access_location::device, access_mode::read);
     ArrayHandle<Scalar>  d_h      (this->m_pdata->getSlengths(),
                                     access_location::device, access_mode::read);
+    // energy array holds the per-particle shear rate from compute_strain_rate()
+    ArrayHandle<Scalar>  d_gdot   (this->m_pdata->getEnergies(),
+                                    access_location::device, access_mode::read);
     ArrayHandle<unsigned int> d_n_neigh(this->m_nlist->getNNeighArray(),
                                          access_location::device, access_mode::read);
     ArrayHandle<unsigned int> d_nlist  (this->m_nlist->getNListArray(),
@@ -476,7 +451,7 @@ void TwoPhaseFlowGPU<KT_, SET1_, SET2_>::forcecomputation(uint64_t timestep)
     kernel::gpu_sph_2pf_forcecomputation_fast<KT_, SET1_, SET2_, M1, M2>( \
         group_size, d_index_array.data, \
         d_pos.data, d_vel.data, d_density.data, d_pressure.data, \
-        d_vf.data, d_sf.data, d_h.data, \
+        d_vf.data, d_sf.data, d_h.data, d_gdot.data, \
         d_force.data, d_ratedpe.data, \
         d_n_neigh.data, d_nlist.data, d_head_list.data, \
         d_type_map.data, d_max_vel_bits.data, \
@@ -496,7 +471,7 @@ void TwoPhaseFlowGPU<KT_, SET1_, SET2_>::forcecomputation(uint64_t timestep)
         kernel::gpu_sph_2pf_forcecomputation<KT_, SET1_, SET2_>(
             group_size, d_index_array.data,
             d_pos.data, d_vel.data, d_density.data, d_pressure.data,
-            d_vf.data, d_sf.data, d_h.data,
+            d_vf.data, d_sf.data, d_h.data, d_gdot.data,
             d_force.data, d_ratedpe.data,
             d_n_neigh.data, d_nlist.data, d_head_list.data,
             d_type_map.data, d_max_vel_bits.data,
@@ -507,18 +482,18 @@ void TwoPhaseFlowGPU<KT_, SET1_, SET2_>::forcecomputation(uint64_t timestep)
 
     if (this->m_exec_conf->isCUDAErrorCheckingEnabled()) CHECK_CUDA_ERROR();
     m_tuner_force->end();
-
-    // Async readback: copy 4 bytes to pinned host buffer without stalling the GPU.
-    // We read the value written by the PREVIOUS step (1-step lag is fine for CFL).
-    hipMemcpyAsync(m_max_vel_bits_host, d_max_vel_bits.data,
-                   sizeof(uint32_t), hipMemcpyDeviceToHost, 0);
     } // end device scope
 
-    // Use value from previous step's async copy (already complete by now).
+    // Read back the maximum fluid speed for the adaptive timestep.  Stored in
+    // m_max_vel like the CPU path, which is what getMaxVelocity() (and hence
+    // getProvidedTimestepQuantities) reads.
     {
+    ArrayHandle<uint32_t> h_max_vel_bits(m_max_vel_bits,
+                                          access_location::host, access_mode::read);
+    uint32_t bits = h_max_vel_bits.data[0];
     float vel_float;
-    memcpy(&vel_float, m_max_vel_bits_host, sizeof(float));
-    this->m_timestep_list[5] = static_cast<double>(vel_float);
+    memcpy(&vel_float, &bits, sizeof(float));
+    this->m_max_vel = Scalar(vel_float);
     }
 
     this->applyBodyForce(timestep, this->m_fluidgroup);
@@ -552,7 +527,11 @@ void TwoPhaseFlowGPU<KT_, SET1_, SET2_>::compute_solid_forces(uint64_t timestep)
                                     access_location::device, access_mode::read);
     ArrayHandle<Scalar>  d_pressure(this->m_pdata->getPressures(),
                                      access_location::device, access_mode::read);
+    ArrayHandle<Scalar3> d_vf     (this->m_pdata->getAuxiliaries1(),
+                                    access_location::device, access_mode::read);
     ArrayHandle<Scalar>  d_h      (this->m_pdata->getSlengths(),
+                                    access_location::device, access_mode::read);
+    ArrayHandle<Scalar>  d_gdot   (this->m_pdata->getEnergies(),
                                     access_location::device, access_mode::read);
     ArrayHandle<unsigned int> d_n_neigh(this->m_nlist->getNNeighArray(),
                                          access_location::device, access_mode::read);
@@ -565,15 +544,18 @@ void TwoPhaseFlowGPU<KT_, SET1_, SET2_>::compute_solid_forces(uint64_t timestep)
     ArrayHandle<unsigned int> d_type_map(this->m_type_property_map,
                                           access_location::device, access_mode::read);
 
+    const int nn_active = (this->m_nn_model1 != NEWTONIAN || this->m_nn_model2 != NEWTONIAN) ? 1 : 0;
+
     m_tuner_solidforce->begin();
     kernel::gpu_sph_2pf_solid_forces<KT_, SET1_, SET2_>(
         solid_group_size, d_solid_index.data,
-        d_pos.data, d_vel.data, d_density.data, d_pressure.data, d_h.data,
+        d_pos.data, d_vel.data, d_density.data, d_pressure.data,
+        d_vf.data, d_h.data, d_gdot.data,
         d_force.data,
         d_n_neigh.data, d_nlist.data, d_head_list.data,
         d_type_map.data,
         box, kp, nn1, nn2,
-        static_cast<int>(this->m_density_method),
+        static_cast<int>(this->m_density_method), nn_active,
         m_tuner_solidforce->getParam()[0]);
     if (this->m_exec_conf->isCUDAErrorCheckingEnabled()) CHECK_CUDA_ERROR();
     m_tuner_solidforce->end();

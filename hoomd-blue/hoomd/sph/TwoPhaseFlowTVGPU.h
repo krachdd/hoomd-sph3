@@ -54,6 +54,7 @@ maintainer: dkrach, david.krach@mib.uni-stuttgart.de
 #include "SinglePhaseFlowGPU.cuh"
 #include "TwoPhaseFlowGPU.cuh"
 #include "TwoPhaseFlowTVGPU.cuh"
+#include "TwoPhaseFlowCSFGPU.h"
 #include "hoomd/Autotuner.h"
 #include "hoomd/GPUArray.h"
 
@@ -90,10 +91,13 @@ class PYBIND11_EXPORT TwoPhaseFlowTVGPU : public TwoPhaseFlowTV<KT_, SET1_, SET2
         std::shared_ptr<Autotuner<1>> m_tuner_solidforce;
 
         GPUArray<uint32_t> m_max_vel_bits;
+        CSFGPUBuffers m_csf_buf; //!< scratch buffers of the GPU interface machinery
 
         virtual void compute_ndensity(uint64_t timestep)     override;
         virtual void compute_pressure(uint64_t timestep)     override;
         virtual void compute_noslip(uint64_t timestep)       override;
+        virtual void compute_colorgradients(uint64_t timestep) override;
+        virtual void compute_surfaceforce(uint64_t timestep)   override;
         virtual void forcecomputation(uint64_t timestep)     override;
         virtual void compute_solid_forces(uint64_t timestep) override;
 

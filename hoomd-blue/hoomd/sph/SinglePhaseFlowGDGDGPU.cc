@@ -330,6 +330,9 @@ void SinglePhaseFlowGDGDGPU<KT_, SET_>::forcecomputation(uint64_t timestep)
     float vel_float;
     memcpy(&vel_float, &bits, sizeof(float));
     this->m_timestep_list[5] = static_cast<double>(vel_float);
+    // getProvidedTimestepQuantities() overwrites slot 5 with getMaxVelocity(),
+    // which reads m_max_vel -- store it there like the CPU path does.
+    this->m_max_vel = Scalar(vel_float);
     }
 
     this->applyBodyForce(timestep, this->m_fluidgroup);

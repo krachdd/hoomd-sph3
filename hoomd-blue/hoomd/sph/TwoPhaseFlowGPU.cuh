@@ -71,6 +71,7 @@ struct SPHTwoPhaseParams
     int riemann_dissipation;     //!< 1 if Riemann dissipation is active
     int cip;                     //!< 1 if consistent interface pressure is active
     int density_diffusion;       //!< 1 if density diffusion is active
+    int nn_active;               //!< 1 if any phase uses a non-Newtonian model (per-particle shear rate in the energy array)
     };
 
 namespace kernel
@@ -99,6 +100,7 @@ hipError_t gpu_sph_2pf_forcecomputation(
     const Scalar3*        d_vf,          //!< aux1: fictitious solid velocities
     const Scalar3*        d_sf,          //!< aux4: surface force density (pre-computed)
     const Scalar*         d_h,
+    const Scalar*         d_gdot,        //!< energy array: per-particle shear rate (non-Newtonian)
     Scalar4*              d_force,
     Scalar4*              d_ratedpe,
     const unsigned int*   d_n_neigh,
@@ -135,6 +137,7 @@ hipError_t gpu_sph_2pf_forcecomputation_fast(
     const Scalar3*        d_vf,
     const Scalar3*        d_sf,
     const Scalar*         d_h,
+    const Scalar*         d_gdot,
     Scalar4*              d_force,
     Scalar4*              d_ratedpe,
     const unsigned int*   d_n_neigh,
@@ -153,9 +156,10 @@ hipError_t gpu_sph_2pf_forcecomputation_fast(
 
 /*! Two-phase solid particle reaction forces.
  *
- *  Computes pressure and viscous forces on solid particles from
- *  neighbouring fluid particles.  Viscosity is selected per-neighbour
- *  based on whether it is fluid 1 or fluid 2.
+ *  Exact reaction of the fluid-loop pair forces on solid particles
+ *  (mirrors TwoPhaseFlow::compute_solid_forces): uses the fictitious
+ *  solid velocity and the fluid neighbour's viscosity at its own
+ *  per-particle shear rate.
  */
 template<SmoothingKernelType KT_, StateEquationType SET1_, StateEquationType SET2_>
 hipError_t gpu_sph_2pf_solid_forces(
@@ -165,7 +169,9 @@ hipError_t gpu_sph_2pf_solid_forces(
     const Scalar4*        d_vel,
     const Scalar*         d_density,
     const Scalar*         d_pressure,
+    const Scalar3*        d_vf,          //!< aux1: fictitious solid velocities
     const Scalar*         d_h,
+    const Scalar*         d_gdot,        //!< energy array: per-particle shear rate (non-Newtonian)
     Scalar4*              d_force,
     const unsigned int*   d_n_neigh,
     const unsigned int*   d_nlist,
@@ -176,6 +182,7 @@ hipError_t gpu_sph_2pf_solid_forces(
     SPHNNViscParams       nn1,
     SPHNNViscParams       nn2,
     int                   density_method,
+    int                   nn_active,
     unsigned int          block_size);
 
 } // namespace kernel
