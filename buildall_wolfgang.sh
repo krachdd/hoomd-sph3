@@ -10,8 +10,8 @@
 #
 # Usage (login node, from the repo root):
 #     conda activate sph3
-#     ./buildall_wolfgang.sh            # full rebuild (dependencies + hoomd)
-#     ./buildall_wolfgang.sh --hoomd    # hoomd-blue only (deps already built)
+#     ./buildall_wolfgang.sh            # gsd dependency + hoomd-blue
+#     ./buildall_wolfgang.sh --hoomd    # hoomd-blue only (gsd already built)
 #
 # The build is a plain CPU compile job for nvcc; no GPU is needed on the login
 # node (the "No NVidia GPU found" warning from `module load cuda` is harmless).
@@ -48,14 +48,13 @@ echo "mpicc: $(which mpicc)  -> $(mpicc --version | head -1)"
 mpicc --version >/dev/null 2>&1 || { echo "mpicc wrapper is not working (check OMPI_CC / conda env sph3 active)"; exit 1; }
 echo "CUDA_ARCH_LIST=$CUDA_ARCH_LIST"
 
-# ── Dependencies (pgsd, gsd) ───────────────────────────────────────────────
+# ── Dependency (gsd) ───────────────────────────────────────────────────────
+# pgsd is NOT built here: hoomd-blue compiles pgsd.c directly via the symlinks
+# in hoomd/extern (created by link_pgsd_module.sh), so the standalone pgsd
+# build is unnecessary and its cmake step trips over the conda MPI wrappers.
 if [[ "${1:-}" != "--hoomd" ]]; then
     # the symlink step reports 'File exists' on a re-run; that is harmless
     ./link_pgsd_module.sh || true
-    cd "$GIT_SRC/dependencies/pgsd-sph/pgsd/"
-    rm -rf build && mkdir build && cd build
-    CC=$(which mpicc) CXX=$(which mpicxx) cmake ..
-    make -j"$NJOBS"
 
     cd "$GIT_SRC/dependencies/gsd-sph/gsd/"
     rm -rf build && mkdir build && cd build
