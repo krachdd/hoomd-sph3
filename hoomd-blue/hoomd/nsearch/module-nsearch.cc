@@ -22,8 +22,9 @@ void export_NeighborListTree(pybind11::module& m);
 
 void export_NeighborListGPU(pybind11::module& m);
 void export_NeighborListGPUBinned(pybind11::module& m);
-void export_NeighborListGPUStencil(pybind11::module& m);
-void export_NeighborListGPUTree(pybind11::module& m);
+// Stencil and Tree GPU neighbor lists disabled (hipcub/CUB API incompatibility)
+// void export_NeighborListGPUStencil(pybind11::module& m);
+// void export_NeighborListGPUTree(pybind11::module& m);
 
 #endif
     } // namespace detail
@@ -49,8 +50,9 @@ PYBIND11_MODULE(_nsearch, m)
 #ifdef ENABLE_HIP
     export_NeighborListGPU(m);
     export_NeighborListGPUBinned(m);
-    export_NeighborListGPUStencil(m);
-    export_NeighborListGPUTree(m);
+    // Stencil and Tree GPU neighbor lists disabled (hipcub/CUB API incompatibility)
+    // export_NeighborListGPUStencil(m);
+    // export_NeighborListGPUTree(m);
 
 #endif
     }

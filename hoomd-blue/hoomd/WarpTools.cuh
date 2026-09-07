@@ -24,6 +24,7 @@
 #else
 #include <cub/warp/warp_reduce.cuh>
 #include <cub/warp/warp_scan.cuh>
+#include <cuda/std/functional>
 #endif
 
 #ifndef __CUDACC_RTC__
@@ -89,7 +90,7 @@ class WarpReduce
 #ifdef __HIP_PLATFORM_HCC__
         return Reduce(input, hipcub::Sum());
 #else
-        return Reduce(input, cub::Sum());
+        return Reduce(input, ::cuda::std::plus<T>{});
 #endif
         }
 
@@ -108,7 +109,7 @@ class WarpReduce
 #ifdef __HIP_PLATFORM_HCC__
         return Reduce(input, hipcub::Sum(), valid_items);
 #else
-        return Reduce(input, cub::Sum(), valid_items);
+        return Reduce(input, ::cuda::std::plus<T>{}, valid_items);
 #endif
         }
 
@@ -154,7 +155,7 @@ class WarpReduce
     typedef hipcub::WarpReduce<T, LOGICAL_WARP_THREADS, PTX_ARCH>
         MyWarpReduce; //!< CUB shuffle-based reduce
 #else
-    typedef cub::WarpReduce<T, LOGICAL_WARP_THREADS, PTX_ARCH>
+    typedef cub::WarpReduce<T, LOGICAL_WARP_THREADS>
         MyWarpReduce; //!< CUB shuffle-based reduce
 #endif
     typedef typename MyWarpReduce::TempStorage
@@ -221,7 +222,7 @@ class WarpScan
 #ifdef __HIP_PLATFORM_HCC__
         InclusiveScan(input, output, hipcub::Sum());
 #else
-        InclusiveScan(input, output, cub::Sum());
+        InclusiveScan(input, output, ::cuda::std::plus<T>{});
 #endif
         }
 
@@ -239,7 +240,7 @@ class WarpScan
 #ifdef __HIP_PLATFORM_HCC__
         InclusiveScan(input, output, hipcub::Sum(), aggregate);
 #else
-        InclusiveScan(input, output, cub::Sum(), aggregate);
+        InclusiveScan(input, output, ::cuda::std::plus<T>{}, aggregate);
 #endif
         }
 
@@ -295,7 +296,7 @@ class WarpScan
 #ifdef __HIP_PLATFORM_HCC__
         ExclusiveScan(input, output, initial, hipcub::Sum());
 #else
-        ExclusiveScan(input, output, initial, cub::Sum());
+        ExclusiveScan(input, output, initial, ::cuda::std::plus<T>{});
 #endif
         }
 
@@ -314,7 +315,7 @@ class WarpScan
 #ifdef __HIP_PLATFORM_HCC__
         ExclusiveScan(input, output, initial, hipcub::Sum(), aggregate);
 #else
-        ExclusiveScan(input, output, initial, cub::Sum(), aggregate);
+        ExclusiveScan(input, output, initial, ::cuda::std::plus<T>{}, aggregate);
 #endif
         }
 
@@ -424,7 +425,7 @@ class WarpScan
     typedef hipcub::WarpScan<T, LOGICAL_WARP_THREADS, PTX_ARCH>
         MyWarpScan; //!< CUB shuffle-based scan
 #else
-    typedef cub::WarpScan<T, LOGICAL_WARP_THREADS, PTX_ARCH> MyWarpScan; //!< CUB shuffle-based scan
+    typedef cub::WarpScan<T, LOGICAL_WARP_THREADS> MyWarpScan; //!< CUB shuffle-based scan
 #endif
     typedef typename MyWarpScan::TempStorage
         TempStorage; //!< Nominal data type for CUB temporary storage

@@ -778,47 +778,42 @@ hipError_t gpu_compute_nlist_binned(unsigned int* d_nlist,
                                     const unsigned int block_size,
                                     bool filter_body,
                                     const Scalar3& ghost_width,
-                                    const GPUPartition& gpu_partition,
                                     bool use_index,
                                     const hipDeviceProp_t& devprop)
     {
-    unsigned int ngpu = gpu_partition.getNumActiveGPUs();
+    // single-GPU: cover all particles
+    std::pair<unsigned int, unsigned int> range(0, N);
+    unsigned int ngpu = 1;
 
-    // iterate over active GPUs in reverse, to end up on first GPU when returning from this function
-    for (int idev = gpu_partition.getNumActiveGPUs() - 1; idev >= 0; --idev)
-        {
-        auto range = gpu_partition.getRangeAndSetGPU(idev);
-
-        launcher<max_threads_per_particle>(d_nlist,
-                                           d_n_neigh,
-                                           d_last_updated_pos,
-                                           d_conditions,
-                                           d_Nmax,
-                                           d_head_list,
-                                           d_pos,
-                                           d_body,
-                                           N,
-                                           d_cell_size,
-                                           d_cell_xyzf,
-                                           d_cell_idx,
-                                           d_cell_type_body,
-                                           d_cell_adj,
-                                           ci,
-                                           cli,
-                                           cadji,
-                                           box,
-                                           d_r_cut,
-                                           r_buff,
-                                           ntypes,
-                                           ghost_width,
-                                           threads_per_particle,
-                                           filter_body,
-                                           block_size,
-                                           range,
-                                           use_index,
-                                           ngpu,
-                                           devprop);
-        }
+    launcher<max_threads_per_particle>(d_nlist,
+                                       d_n_neigh,
+                                       d_last_updated_pos,
+                                       d_conditions,
+                                       d_Nmax,
+                                       d_head_list,
+                                       d_pos,
+                                       d_body,
+                                       N,
+                                       d_cell_size,
+                                       d_cell_xyzf,
+                                       d_cell_idx,
+                                       d_cell_type_body,
+                                       d_cell_adj,
+                                       ci,
+                                       cli,
+                                       cadji,
+                                       box,
+                                       d_r_cut,
+                                       r_buff,
+                                       ntypes,
+                                       ghost_width,
+                                       threads_per_particle,
+                                       filter_body,
+                                       block_size,
+                                       range,
+                                       use_index,
+                                       ngpu,
+                                       devprop);
     return hipSuccess;
     }
 

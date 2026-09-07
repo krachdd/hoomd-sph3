@@ -78,9 +78,6 @@ class PYBIND11_EXPORT CommunicatorGPU : public Communicator
         forceMigrate();
         }
 
-    //! Helper function to initialize adjacency arrays
-    virtual void updateMeshDefinition();
-
     protected:
     //! Helper class to perform the communication tasks related to bonded groups
     template<class group_data> class GroupCommunicatorGPU
@@ -180,29 +177,9 @@ class PYBIND11_EXPORT CommunicatorGPU : public Communicator
     GroupCommunicatorGPU<BondData> m_bond_comm; //!< Communication helper for bonds
     friend class GroupCommunicatorGPU<BondData>;
 
-    GroupCommunicatorGPU<AngleData> m_angle_comm; //!< Communication helper for angles
-    friend class GroupCommunicatorGPU<AngleData>;
-
-    GroupCommunicatorGPU<DihedralData> m_dihedral_comm; //!< Communication helper for dihedrals
-    friend class GroupCommunicatorGPU<DihedralData>;
-
-    GroupCommunicatorGPU<ImproperData> m_improper_comm; //!< Communication helper for impropers
-    friend class GroupCommunicatorGPU<ImproperData>;
-
     GroupCommunicatorGPU<ConstraintData>
         m_constraint_comm; //!< Communication helper for constraints
     friend class GroupCommunicatorGPU<ConstraintData>;
-
-    GroupCommunicatorGPU<PairData> m_pair_comm; //!< Communication helper for pairs
-    friend class GroupCommunicatorGPU<PairData>;
-
-    /* Communication of meshbonded groups */
-    GroupCommunicatorGPU<MeshBondData> m_meshbond_comm; //!< Communication helper for mesh bonds
-    friend class GroupCommunicatorGPU<MeshBondData>;
-
-    GroupCommunicatorGPU<TriangleData>
-        m_meshtriangle_comm; //!< Communication helper for mesh triangles
-    friend class GroupCommunicatorGPU<TriangleData>;
 
     /* Ghost communication */
     GPUVector<unsigned int> m_tag_ghost_sendbuf; //!< Buffer for sending particle tags
@@ -214,35 +191,40 @@ class PYBIND11_EXPORT CommunicatorGPU : public Communicator
     GPUVector<Scalar4> m_vel_ghost_sendbuf; //<! Buffer for sending ghost velocities
     GPUVector<Scalar4> m_vel_ghost_recvbuf; //<! Buffer for receiving ghost velocities
 
-    GPUVector<Scalar> m_charge_ghost_sendbuf; //!< Buffer for sending ghost charges
-    GPUVector<Scalar> m_charge_ghost_recvbuf; //!< Buffer for sending ghost charges
+    GPUVector<Scalar> m_density_ghost_sendbuf; //!< Buffer for sending ghost densities
+    GPUVector<Scalar> m_density_ghost_recvbuf; //!< Buffer for receiving ghost densities
 
-    GPUVector<Scalar> m_diameter_ghost_sendbuf; //!< Buffer for sending ghost charges
-    GPUVector<Scalar> m_diameter_ghost_recvbuf; //!< Buffer for sending ghost charges
+    GPUVector<Scalar> m_pressure_ghost_sendbuf; //!< Buffer for sending ghost pressures
+    GPUVector<Scalar> m_pressure_ghost_recvbuf; //!< Buffer for receiving ghost pressures
 
-    GPUVector<unsigned int> m_body_ghost_sendbuf; //!< Buffer for sending ghost bodys
-    GPUVector<unsigned int> m_body_ghost_recvbuf; //!< Buffer for sending ghost bodys
+    GPUVector<Scalar> m_energy_ghost_sendbuf; //!< Buffer for sending ghost energies
+    GPUVector<Scalar> m_energy_ghost_recvbuf; //!< Buffer for receiving ghost energies
+
+    GPUVector<Scalar3> m_aux1_ghost_sendbuf; //!< Buffer for sending ghost auxiliary 1
+    GPUVector<Scalar3> m_aux1_ghost_recvbuf; //!< Buffer for receiving ghost auxiliary 1
+
+    GPUVector<Scalar3> m_aux2_ghost_sendbuf; //!< Buffer for sending ghost auxiliary 2
+    GPUVector<Scalar3> m_aux2_ghost_recvbuf; //!< Buffer for receiving ghost auxiliary 2
+
+    GPUVector<Scalar3> m_aux3_ghost_sendbuf; //!< Buffer for sending ghost auxiliary 3
+    GPUVector<Scalar3> m_aux3_ghost_recvbuf; //!< Buffer for receiving ghost auxiliary 3
+
+    GPUVector<Scalar3> m_aux4_ghost_sendbuf; //!< Buffer for sending ghost auxiliary 4
+    GPUVector<Scalar3> m_aux4_ghost_recvbuf; //!< Buffer for receiving ghost auxiliary 4
+
+    GPUVector<unsigned int> m_body_ghost_sendbuf; //!< Buffer for sending ghost body ids
+    GPUVector<unsigned int> m_body_ghost_recvbuf; //!< Buffer for receiving ghost body ids
 
     GPUVector<int3> m_image_ghost_sendbuf; //!< Buffer for sending ghost images
-    GPUVector<int3> m_image_ghost_recvbuf; //!< Buffer for sending ghost images
+    GPUVector<int3> m_image_ghost_recvbuf; //!< Buffer for receiving ghost images
 
-    GPUVector<Scalar4> m_orientation_ghost_sendbuf; //<! Buffer for sending ghost orientations
-    GPUVector<Scalar4> m_orientation_ghost_recvbuf; //<! Buffer for receiving ghost orientations
+    GPUVector<Scalar> m_slength_ghost_sendbuf; //!< Buffer for sending ghost smoothing lengths
+    GPUVector<Scalar> m_slength_ghost_recvbuf; //!< Buffer for receiving ghost smoothing lengths
 
-    GPUVector<Scalar4> m_netforce_ghost_sendbuf; //!< Send buffer for netforce
-    GPUVector<Scalar4> m_netforce_ghost_recvbuf; //!< Recv buffer for netforce
-
-    GPUVector<Scalar4> m_nettorque_ghost_sendbuf; //!< Send buffer for nettorque
-    GPUVector<Scalar4> m_nettorque_ghost_recvbuf; //!< Recv buffer for nettorque
-
-    GPUVector<Scalar> m_netvirial_ghost_sendbuf; //!< Send buffer for netvirial
-    GPUVector<Scalar> m_netvirial_ghost_recvbuf; //!< Recv buffer for netvirial
-
-    GPUVector<Scalar4> m_angmom_ghost_sendbuf; //<! Buffer for sending ghost angular momentum
-    GPUVector<Scalar4> m_angmom_ghost_recvbuf; //<! Buffer for receiving ghost angular momentum
-
-    GPUVector<Scalar3> m_inertia_ghost_sendbuf; //<! Buffer for sending ghost moment of inertia
-    GPUVector<Scalar3> m_inertia_ghost_recvbuf; //<! Buffer for receiving ghost moment of inertia
+    GPUVector<Scalar4> m_netforce_ghost_sendbuf;   //!< Send buffer for netforce
+    GPUVector<Scalar4> m_netforce_ghost_recvbuf;   //!< Recv buffer for netforce
+    GPUVector<Scalar4> m_netratedpe_ghost_sendbuf; //!< Send buffer for net rate of DPE
+    GPUVector<Scalar4> m_netratedpe_ghost_recvbuf; //!< Recv buffer for net rate of DPE
 
     GPUVector<unsigned int> m_ghost_begin; //!< Begin index for every stage and neighbor in send buf
     GPUVector<unsigned int> m_ghost_end;   //!< Begin index for every and neighbor in send buf

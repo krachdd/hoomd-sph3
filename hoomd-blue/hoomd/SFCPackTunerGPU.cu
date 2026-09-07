@@ -132,6 +132,8 @@ void gpu_generate_sorted_order(unsigned int N,
     // Sort particles
     if (N)
         {
+        // Clear any sticky CUDA error from the prior binning kernel before calling Thrust.
+        hipGetLastError();
         thrust::device_ptr<unsigned int> particle_bins(d_particle_bins);
         thrust::device_ptr<unsigned int> sorted_order(d_sorted_order);
 #ifdef __HIP_PLATFORM_HCC__
@@ -145,7 +147,7 @@ void gpu_generate_sorted_order(unsigned int N,
         }
     }
 
-//! Kernel to apply sorted order
+//! Kernel to apply sorted order (SPH field set)
 __global__ void gpu_apply_sorted_order_kernel(unsigned int N,
                                               unsigned int n_ghost,
                                               const unsigned int* d_sorted_order,
@@ -153,31 +155,36 @@ __global__ void gpu_apply_sorted_order_kernel(unsigned int N,
                                               Scalar4* d_pos_alt,
                                               const Scalar4* d_vel,
                                               Scalar4* d_vel_alt,
+                                              const Scalar* d_density,
+                                              Scalar* d_density_alt,
+                                              const Scalar* d_pressure,
+                                              Scalar* d_pressure_alt,
+                                              const Scalar* d_energy,
+                                              Scalar* d_energy_alt,
+                                              const Scalar3* d_aux1,
+                                              Scalar3* d_aux1_alt,
+                                              const Scalar3* d_aux2,
+                                              Scalar3* d_aux2_alt,
+                                              const Scalar3* d_aux3,
+                                              Scalar3* d_aux3_alt,
+                                              const Scalar3* d_aux4,
+                                              Scalar3* d_aux4_alt,
+                                              const Scalar* d_slength,
+                                              Scalar* d_slength_alt,
                                               const Scalar3* d_accel,
                                               Scalar3* d_accel_alt,
-                                              const Scalar* d_charge,
-                                              Scalar* d_charge_alt,
-                                              const Scalar* d_diameter,
-                                              Scalar* d_diameter_alt,
+                                              const Scalar3* d_dpedt,
+                                              Scalar3* d_dpedt_alt,
                                               const int3* d_image,
                                               int3* d_image_alt,
                                               const unsigned int* d_body,
                                               unsigned int* d_body_alt,
                                               const unsigned int* d_tag,
                                               unsigned int* d_tag_alt,
-                                              const Scalar4* d_orientation,
-                                              Scalar4* d_orientation_alt,
-                                              const Scalar4* d_angmom,
-                                              Scalar4* d_angmom_alt,
-                                              const Scalar3* d_inertia,
-                                              Scalar3* d_inertia_alt,
-                                              const Scalar* d_net_virial,
-                                              Scalar* d_net_virial_alt,
-                                              size_t virial_pitch,
                                               const Scalar4* d_net_force,
                                               Scalar4* d_net_force_alt,
-                                              const Scalar4* d_net_torque,
-                                              Scalar4* d_net_torque_alt,
+                                              const Scalar4* d_net_ratedpe,
+                                              Scalar4* d_net_ratedpe_alt,
                                               unsigned int* d_rtag)
     {
     unsigned int idx = blockIdx.x * blockDim.x + threadIdx.x;
@@ -189,26 +196,24 @@ __global__ void gpu_apply_sorted_order_kernel(unsigned int N,
     unsigned int old_idx = (idx < N ? d_sorted_order[idx] : idx);
 
     // permute and copy over particle data
-    d_pos_alt[idx] = d_pos[old_idx];
-    d_vel_alt[idx] = d_vel[old_idx];
-    d_accel_alt[idx] = d_accel[old_idx];
-    d_charge_alt[idx] = d_charge[old_idx];
-    d_diameter_alt[idx] = d_diameter[old_idx];
-    d_image_alt[idx] = d_image[old_idx];
-    d_body_alt[idx] = d_body[old_idx];
-    unsigned int tag = d_tag[old_idx];
-    d_tag_alt[idx] = tag;
-    d_orientation_alt[idx] = d_orientation[old_idx];
-    d_angmom_alt[idx] = d_angmom[old_idx];
-    d_inertia_alt[idx] = d_inertia[old_idx];
-    d_net_virial_alt[0 * virial_pitch + idx] = d_net_virial[0 * virial_pitch + old_idx];
-    d_net_virial_alt[1 * virial_pitch + idx] = d_net_virial[1 * virial_pitch + old_idx];
-    d_net_virial_alt[2 * virial_pitch + idx] = d_net_virial[2 * virial_pitch + old_idx];
-    d_net_virial_alt[3 * virial_pitch + idx] = d_net_virial[3 * virial_pitch + old_idx];
-    d_net_virial_alt[4 * virial_pitch + idx] = d_net_virial[4 * virial_pitch + old_idx];
-    d_net_virial_alt[5 * virial_pitch + idx] = d_net_virial[5 * virial_pitch + old_idx];
-    d_net_force_alt[idx] = d_net_force[old_idx];
-    d_net_torque_alt[idx] = d_net_torque[old_idx];
+    d_pos_alt[idx]         = d_pos[old_idx];
+    d_vel_alt[idx]         = d_vel[old_idx];
+    d_density_alt[idx]     = d_density[old_idx];
+    d_pressure_alt[idx]    = d_pressure[old_idx];
+    d_energy_alt[idx]      = d_energy[old_idx];
+    d_aux1_alt[idx]        = d_aux1[old_idx];
+    d_aux2_alt[idx]        = d_aux2[old_idx];
+    d_aux3_alt[idx]        = d_aux3[old_idx];
+    d_aux4_alt[idx]        = d_aux4[old_idx];
+    d_slength_alt[idx]     = d_slength[old_idx];
+    d_accel_alt[idx]       = d_accel[old_idx];
+    d_dpedt_alt[idx]       = d_dpedt[old_idx];
+    d_image_alt[idx]       = d_image[old_idx];
+    d_body_alt[idx]        = d_body[old_idx];
+    unsigned int tag       = d_tag[old_idx];
+    d_tag_alt[idx]         = tag;
+    d_net_force_alt[idx]   = d_net_force[old_idx];
+    d_net_ratedpe_alt[idx] = d_net_ratedpe[old_idx];
 
     if (idx < N)
         {
@@ -224,31 +229,36 @@ void gpu_apply_sorted_order(unsigned int N,
                             Scalar4* d_pos_alt,
                             const Scalar4* d_vel,
                             Scalar4* d_vel_alt,
+                            const Scalar* d_density,
+                            Scalar* d_density_alt,
+                            const Scalar* d_pressure,
+                            Scalar* d_pressure_alt,
+                            const Scalar* d_energy,
+                            Scalar* d_energy_alt,
+                            const Scalar3* d_aux1,
+                            Scalar3* d_aux1_alt,
+                            const Scalar3* d_aux2,
+                            Scalar3* d_aux2_alt,
+                            const Scalar3* d_aux3,
+                            Scalar3* d_aux3_alt,
+                            const Scalar3* d_aux4,
+                            Scalar3* d_aux4_alt,
+                            const Scalar* d_slength,
+                            Scalar* d_slength_alt,
                             const Scalar3* d_accel,
                             Scalar3* d_accel_alt,
-                            const Scalar* d_charge,
-                            Scalar* d_charge_alt,
-                            const Scalar* d_diameter,
-                            Scalar* d_diameter_alt,
+                            const Scalar3* d_dpedt,
+                            Scalar3* d_dpedt_alt,
                             const int3* d_image,
                             int3* d_image_alt,
                             const unsigned int* d_body,
                             unsigned int* d_body_alt,
                             const unsigned int* d_tag,
                             unsigned int* d_tag_alt,
-                            const Scalar4* d_orientation,
-                            Scalar4* d_orientation_alt,
-                            const Scalar4* d_angmom,
-                            Scalar4* d_angmom_alt,
-                            const Scalar3* d_inertia,
-                            Scalar3* d_inertia_alt,
-                            const Scalar* d_net_virial,
-                            Scalar* d_net_virial_alt,
-                            size_t virial_pitch,
                             const Scalar4* d_net_force,
                             Scalar4* d_net_force_alt,
-                            const Scalar4* d_net_torque,
-                            Scalar4* d_net_torque_alt,
+                            const Scalar4* d_net_ratedpe,
+                            Scalar4* d_net_ratedpe_alt,
                             unsigned int* d_rtag)
     {
     unsigned int block_size = 256;
@@ -266,31 +276,36 @@ void gpu_apply_sorted_order(unsigned int N,
                        d_pos_alt,
                        d_vel,
                        d_vel_alt,
+                       d_density,
+                       d_density_alt,
+                       d_pressure,
+                       d_pressure_alt,
+                       d_energy,
+                       d_energy_alt,
+                       d_aux1,
+                       d_aux1_alt,
+                       d_aux2,
+                       d_aux2_alt,
+                       d_aux3,
+                       d_aux3_alt,
+                       d_aux4,
+                       d_aux4_alt,
+                       d_slength,
+                       d_slength_alt,
                        d_accel,
                        d_accel_alt,
-                       d_charge,
-                       d_charge_alt,
-                       d_diameter,
-                       d_diameter_alt,
+                       d_dpedt,
+                       d_dpedt_alt,
                        d_image,
                        d_image_alt,
                        d_body,
                        d_body_alt,
                        d_tag,
                        d_tag_alt,
-                       d_orientation,
-                       d_orientation_alt,
-                       d_angmom,
-                       d_angmom_alt,
-                       d_inertia,
-                       d_inertia_alt,
-                       d_net_virial,
-                       d_net_virial_alt,
-                       virial_pitch,
                        d_net_force,
                        d_net_force_alt,
-                       d_net_torque,
-                       d_net_torque_alt,
+                       d_net_ratedpe,
+                       d_net_ratedpe_alt,
                        d_rtag);
     }
 

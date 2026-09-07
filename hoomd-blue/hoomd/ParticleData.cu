@@ -4,7 +4,7 @@
 #include "ParticleData.cuh"
 
 /*! \file ParticleData.cu
-    \brief ImplementsGPU kernel code and data structure functions used by ParticleData
+    \brief Implements GPU kernel code and data structure functions used by ParticleData
 */
 
 #ifdef ENABLE_MPI
@@ -23,37 +23,42 @@ namespace hoomd
     {
 namespace kernel
     {
-//! Kernel to partition particle data
+//! Kernel to partition particle data (SPH version)
 __global__ void gpu_scatter_particle_data_kernel(const unsigned int nwork,
                                                  const Scalar4* d_pos,
                                                  const Scalar4* d_vel,
+                                                 const Scalar* d_density,
+                                                 const Scalar* d_pressure,
+                                                 const Scalar* d_energy,
+                                                 const Scalar3* d_aux1,
+                                                 const Scalar3* d_aux2,
+                                                 const Scalar3* d_aux3,
+                                                 const Scalar3* d_aux4,
+                                                 const Scalar* d_slength,
                                                  const Scalar3* d_accel,
-                                                 const Scalar* d_charge,
-                                                 const Scalar* d_diameter,
+                                                 const Scalar3* d_dpedt,
                                                  const int3* d_image,
                                                  const unsigned int* d_body,
-                                                 const Scalar4* d_orientation,
-                                                 const Scalar4* d_angmom,
-                                                 const Scalar3* d_inertia,
                                                  const Scalar4* d_net_force,
-                                                 const Scalar4* d_net_torque,
-                                                 const Scalar* d_net_virial,
-                                                 unsigned int net_virial_pitch,
+                                                 const Scalar4* d_net_ratedpe,
                                                  const unsigned int* d_tag,
                                                  unsigned int* d_rtag,
                                                  Scalar4* d_pos_alt,
                                                  Scalar4* d_vel_alt,
+                                                 Scalar* d_density_alt,
+                                                 Scalar* d_pressure_alt,
+                                                 Scalar* d_energy_alt,
+                                                 Scalar3* d_aux1_alt,
+                                                 Scalar3* d_aux2_alt,
+                                                 Scalar3* d_aux3_alt,
+                                                 Scalar3* d_aux4_alt,
+                                                 Scalar* d_slength_alt,
                                                  Scalar3* d_accel_alt,
-                                                 Scalar* d_charge_alt,
-                                                 Scalar* d_diameter_alt,
+                                                 Scalar3* d_dpedt_alt,
                                                  int3* d_image_alt,
                                                  unsigned int* d_body_alt,
-                                                 Scalar4* d_orientation_alt,
-                                                 Scalar4* d_angmom_alt,
-                                                 Scalar3* d_inertia_alt,
                                                  Scalar4* d_net_force_alt,
-                                                 Scalar4* d_net_torque_alt,
-                                                 Scalar* d_net_virial_alt,
+                                                 Scalar4* d_net_ratedpe_alt,
                                                  unsigned int* d_tag_alt,
                                                  detail::pdata_element* d_out,
                                                  unsigned int* d_comm_flags,
@@ -72,21 +77,23 @@ __global__ void gpu_scatter_particle_data_kernel(const unsigned int nwork,
     if (remove)
         {
         detail::pdata_element p;
-        p.pos = d_pos[idx];
-        p.vel = d_vel[idx];
-        p.accel = d_accel[idx];
-        p.charge = d_charge[idx];
-        p.diameter = d_diameter[idx];
-        p.image = d_image[idx];
-        p.body = d_body[idx];
-        p.orientation = d_orientation[idx];
-        p.angmom = d_angmom[idx];
-        p.inertia = d_inertia[idx];
-        p.net_force = d_net_force[idx];
-        p.net_torque = d_net_torque[idx];
-        for (unsigned int j = 0; j < 6; ++j)
-            p.net_virial[j] = d_net_virial[j * net_virial_pitch + idx];
-        p.tag = d_tag[idx];
+        p.pos         = d_pos[idx];
+        p.vel         = d_vel[idx];
+        p.density     = d_density[idx];
+        p.pressure    = d_pressure[idx];
+        p.energy      = d_energy[idx];
+        p.aux1        = d_aux1[idx];
+        p.aux2        = d_aux2[idx];
+        p.aux3        = d_aux3[idx];
+        p.aux4        = d_aux4[idx];
+        p.slength     = d_slength[idx];
+        p.accel       = d_accel[idx];
+        p.dpedt       = d_dpedt[idx];
+        p.image       = d_image[idx];
+        p.body        = d_body[idx];
+        p.net_force   = d_net_force[idx];
+        p.net_ratedpe = d_net_ratedpe[idx];
+        p.tag         = d_tag[idx];
         d_out[scan_remove] = p;
         d_comm_flags_out[scan_remove] = d_comm_flags[idx];
 
@@ -98,21 +105,22 @@ __global__ void gpu_scatter_particle_data_kernel(const unsigned int nwork,
         }
     else
         {
-        d_pos_alt[scan_keep] = d_pos[idx];
-        d_vel_alt[scan_keep] = d_vel[idx];
-        d_accel_alt[scan_keep] = d_accel[idx];
-        d_charge_alt[scan_keep] = d_charge[idx];
-        d_diameter_alt[scan_keep] = d_diameter[idx];
-        d_image_alt[scan_keep] = d_image[idx];
-        d_body_alt[scan_keep] = d_body[idx];
-        d_orientation_alt[scan_keep] = d_orientation[idx];
-        d_angmom_alt[scan_keep] = d_angmom[idx];
-        d_inertia_alt[scan_keep] = d_inertia[idx];
-        d_net_force_alt[scan_keep] = d_net_force[idx];
-        d_net_torque_alt[scan_keep] = d_net_torque[idx];
-        for (unsigned int j = 0; j < 6; ++j)
-            d_net_virial_alt[j * net_virial_pitch + scan_keep]
-                = d_net_virial[j * net_virial_pitch + idx];
+        d_pos_alt[scan_keep]         = d_pos[idx];
+        d_vel_alt[scan_keep]         = d_vel[idx];
+        d_density_alt[scan_keep]     = d_density[idx];
+        d_pressure_alt[scan_keep]    = d_pressure[idx];
+        d_energy_alt[scan_keep]      = d_energy[idx];
+        d_aux1_alt[scan_keep]        = d_aux1[idx];
+        d_aux2_alt[scan_keep]        = d_aux2[idx];
+        d_aux3_alt[scan_keep]        = d_aux3[idx];
+        d_aux4_alt[scan_keep]        = d_aux4[idx];
+        d_slength_alt[scan_keep]     = d_slength[idx];
+        d_accel_alt[scan_keep]       = d_accel[idx];
+        d_dpedt_alt[scan_keep]       = d_dpedt[idx];
+        d_image_alt[scan_keep]       = d_image[idx];
+        d_body_alt[scan_keep]        = d_body[idx];
+        d_net_force_alt[scan_keep]   = d_net_force[idx];
+        d_net_ratedpe_alt[scan_keep] = d_net_ratedpe[idx];
         unsigned int tag = d_tag[idx];
         d_tag_alt[scan_keep] = tag;
 
@@ -131,71 +139,41 @@ gpu_select_sent_particles(unsigned int N, unsigned int* d_comm_flags, unsigned i
     d_tmp[idx] = d_comm_flags[idx] ? 1 : 0;
     }
 
-/*! \param N Number of local particles
-    \param d_pos Device array of particle positions
-    \param d_vel Device array of particle velocities
-    \param d_accel Device array of particle accelerations
-    \param d_charge Device array of particle charges
-    \param d_diameter Device array of particle diameters
-    \param d_image Device array of particle images
-    \param d_body Device array of particle body tags
-    \param d_orientation Device array of particle orientations
-    \param d_angmom Device array of particle angular momenta
-    \param d_inertia Device array of particle moments of inertia
-    \param d_net_force Net force
-    \param d_net_torque Net torque
-    \param d_net_virial Net virial
-    \param net_virial_pitch Pitch of net virial array
-    \param d_tag Device array of particle tags
-    \param d_rtag Device array for reverse-lookup table
-    \param d_pos_alt Device array of particle positions (output)
-    \param d_vel_alt Device array of particle velocities (output)
-    \param d_accel_alt Device array of particle accelerations (output)
-    \param d_charge_alt Device array of particle charges (output)
-    \param d_diameter_alt Device array of particle diameters (output)
-    \param d_image_alt Device array of particle images (output)
-    \param d_body_alt Device array of particle body tags (output)
-    \param d_orientation_alt Device array of particle orientations (output)
-    \param d_angmom_alt Device array of particle angular momenta (output)
-    \param d_inertia Device array of particle moments of inertia (output)
-    \param d_net_force Net force (output)
-    \param d_net_torque Net torque (output)
-    \param d_net_virial Net virial (output)
-    \param d_out Output array for packed particle data
-    \param max_n_out Maximum number of elements to write to output array
-
-    \returns Number of elements marked for removal
- */
 unsigned int gpu_pdata_remove(const unsigned int N,
                               const Scalar4* d_pos,
                               const Scalar4* d_vel,
+                              const Scalar* d_density,
+                              const Scalar* d_pressure,
+                              const Scalar* d_energy,
+                              const Scalar3* d_aux1,
+                              const Scalar3* d_aux2,
+                              const Scalar3* d_aux3,
+                              const Scalar3* d_aux4,
+                              const Scalar* d_slength,
                               const Scalar3* d_accel,
-                              const Scalar* d_charge,
-                              const Scalar* d_diameter,
+                              const Scalar3* d_dpedt,
                               const int3* d_image,
                               const unsigned int* d_body,
-                              const Scalar4* d_orientation,
-                              const Scalar4* d_angmom,
-                              const Scalar3* d_inertia,
                               const Scalar4* d_net_force,
-                              const Scalar4* d_net_torque,
-                              const Scalar* d_net_virial,
-                              unsigned int net_virial_pitch,
+                              const Scalar4* d_net_ratedpe,
                               const unsigned int* d_tag,
                               unsigned int* d_rtag,
                               Scalar4* d_pos_alt,
                               Scalar4* d_vel_alt,
+                              Scalar* d_density_alt,
+                              Scalar* d_pressure_alt,
+                              Scalar* d_energy_alt,
+                              Scalar3* d_aux1_alt,
+                              Scalar3* d_aux2_alt,
+                              Scalar3* d_aux3_alt,
+                              Scalar3* d_aux4_alt,
+                              Scalar* d_slength_alt,
                               Scalar3* d_accel_alt,
-                              Scalar* d_charge_alt,
-                              Scalar* d_diameter_alt,
+                              Scalar3* d_dpedt_alt,
                               int3* d_image_alt,
                               unsigned int* d_body_alt,
-                              Scalar4* d_orientation_alt,
-                              Scalar4* d_angmom_alt,
-                              Scalar3* d_inertia_alt,
                               Scalar4* d_net_force_alt,
-                              Scalar4* d_net_torque_alt,
-                              Scalar* d_net_virial_alt,
+                              Scalar4* d_net_ratedpe_alt,
                               unsigned int* d_tag_alt,
                               detail::pdata_element* d_out,
                               unsigned int* d_comm_flags,
@@ -207,43 +185,25 @@ unsigned int gpu_pdata_remove(const unsigned int N,
     if (!N)
         return 0;
 
-    assert(d_pos);
-    assert(d_vel);
-    assert(d_accel);
-    assert(d_charge);
-    assert(d_diameter);
-    assert(d_image);
-    assert(d_body);
-    assert(d_orientation);
-    assert(d_angmom);
-    assert(d_inertia);
-    assert(d_net_force);
-    assert(d_net_torque);
-    assert(d_net_virial);
-    assert(d_tag);
-    assert(d_rtag);
-    assert(d_pos_alt);
-    assert(d_vel_alt);
-    assert(d_accel_alt);
-    assert(d_charge_alt);
-    assert(d_diameter_alt);
-    assert(d_image_alt);
-    assert(d_body_alt);
-    assert(d_orientation_alt);
-    assert(d_angmom_alt);
-    assert(d_inertia_alt);
-    assert(d_net_force_alt);
-    assert(d_net_torque_alt);
-    assert(d_net_virial_alt);
+    assert(d_pos);       assert(d_vel);
+    assert(d_density);   assert(d_pressure);  assert(d_energy);
+    assert(d_aux1);      assert(d_aux2);       assert(d_aux3);      assert(d_aux4);
+    assert(d_slength);   assert(d_accel);      assert(d_dpedt);
+    assert(d_image);     assert(d_body);
+    assert(d_net_force); assert(d_net_ratedpe);
+    assert(d_tag);       assert(d_rtag);
+    assert(d_pos_alt);   assert(d_vel_alt);
+    assert(d_density_alt); assert(d_pressure_alt); assert(d_energy_alt);
+    assert(d_aux1_alt);  assert(d_aux2_alt);   assert(d_aux3_alt);  assert(d_aux4_alt);
+    assert(d_slength_alt); assert(d_accel_alt);  assert(d_dpedt_alt);
+    assert(d_image_alt); assert(d_body_alt);
+    assert(d_net_force_alt); assert(d_net_ratedpe_alt);
     assert(d_tag_alt);
     assert(d_out);
-    assert(d_comm_flags);
-    assert(d_comm_flags_out);
-    assert(d_tmp);
+    assert(d_comm_flags); assert(d_comm_flags_out); assert(d_tmp);
 
     unsigned int n_out;
 
-    // partition particle data into local and removed particles
     unsigned int block_size = 256;
     unsigned int n_blocks = N / block_size + 1;
 
@@ -257,21 +217,19 @@ unsigned int gpu_pdata_remove(const unsigned int N,
                        d_comm_flags,
                        d_tmp);
 
-    // perform a scan over the array of ones and zeroes
+    // perform an exclusive prefix sum
     void* d_temp_storage = NULL;
     size_t temp_storage_bytes = 0;
 
-    // determine size of temporary storage
     unsigned int* d_scan = alloc.getTemporaryBuffer<unsigned int>(N);
     assert(d_scan);
 
     hipcub::DeviceScan::ExclusiveSum(d_temp_storage, temp_storage_bytes, d_tmp, d_scan, N);
-
     d_temp_storage = alloc.getTemporaryBuffer<char>(temp_storage_bytes);
     hipcub::DeviceScan::ExclusiveSum(d_temp_storage, temp_storage_bytes, d_tmp, d_scan, N);
     alloc.deallocate((char*)d_temp_storage);
 
-    // determine total number of sent particles
+    // total number of removed particles
     d_temp_storage = NULL;
     temp_storage_bytes = 0;
     unsigned int* d_n_out = (unsigned int*)alloc.getTemporaryBuffer<unsigned int>(1);
@@ -283,13 +241,10 @@ unsigned int gpu_pdata_remove(const unsigned int N,
     hipMemcpy(&n_out, d_n_out, sizeof(unsigned int), hipMemcpyDeviceToHost);
     alloc.deallocate((char*)d_n_out);
 
-    // Don't write past end of buffer
     if (n_out <= max_n_out)
         {
         unsigned int nwork = N;
-
-        unsigned int block_size = 256;
-        unsigned int n_blocks = nwork / block_size + 1;
+        n_blocks = nwork / block_size + 1;
 
         hipLaunchKernelGGL(gpu_scatter_particle_data_kernel,
                            dim3(n_blocks),
@@ -297,46 +252,26 @@ unsigned int gpu_pdata_remove(const unsigned int N,
                            0,
                            0,
                            nwork,
-                           d_pos,
-                           d_vel,
-                           d_accel,
-                           d_charge,
-                           d_diameter,
-                           d_image,
-                           d_body,
-                           d_orientation,
-                           d_angmom,
-                           d_inertia,
-                           d_net_force,
-                           d_net_torque,
-                           d_net_virial,
-                           net_virial_pitch,
-                           d_tag,
-                           d_rtag,
-                           d_pos_alt,
-                           d_vel_alt,
-                           d_accel_alt,
-                           d_charge_alt,
-                           d_diameter_alt,
-                           d_image_alt,
-                           d_body_alt,
-                           d_orientation_alt,
-                           d_angmom_alt,
-                           d_inertia_alt,
-                           d_net_force_alt,
-                           d_net_torque_alt,
-                           d_net_virial_alt,
+                           d_pos, d_vel,
+                           d_density, d_pressure, d_energy,
+                           d_aux1, d_aux2, d_aux3, d_aux4,
+                           d_slength, d_accel, d_dpedt,
+                           d_image, d_body,
+                           d_net_force, d_net_ratedpe,
+                           d_tag, d_rtag,
+                           d_pos_alt, d_vel_alt,
+                           d_density_alt, d_pressure_alt, d_energy_alt,
+                           d_aux1_alt, d_aux2_alt, d_aux3_alt, d_aux4_alt,
+                           d_slength_alt, d_accel_alt, d_dpedt_alt,
+                           d_image_alt, d_body_alt,
+                           d_net_force_alt, d_net_ratedpe_alt,
                            d_tag_alt,
                            d_out,
-                           d_comm_flags,
-                           d_comm_flags_out,
+                           d_comm_flags, d_comm_flags_out,
                            d_scan);
         }
 
-    // free temp buf
     alloc.deallocate((char*)d_scan);
-
-    // return elements written to output stream
     return n_out;
     }
 
@@ -344,18 +279,20 @@ __global__ void gpu_pdata_add_particles_kernel(unsigned int old_nparticles,
                                                unsigned int num_add_ptls,
                                                Scalar4* d_pos,
                                                Scalar4* d_vel,
+                                               Scalar* d_density,
+                                               Scalar* d_pressure,
+                                               Scalar* d_energy,
+                                               Scalar3* d_aux1,
+                                               Scalar3* d_aux2,
+                                               Scalar3* d_aux3,
+                                               Scalar3* d_aux4,
+                                               Scalar* d_slength,
                                                Scalar3* d_accel,
-                                               Scalar* d_charge,
-                                               Scalar* d_diameter,
+                                               Scalar3* d_dpedt,
                                                int3* d_image,
                                                unsigned int* d_body,
-                                               Scalar4* d_orientation,
-                                               Scalar4* d_angmom,
-                                               Scalar3* d_inertia,
                                                Scalar4* d_net_force,
-                                               Scalar4* d_net_torque,
-                                               Scalar* d_net_virial,
-                                               unsigned int net_virial_pitch,
+                                               Scalar4* d_net_ratedpe,
                                                unsigned int* d_tag,
                                                unsigned int* d_rtag,
                                                const detail::pdata_element* d_in,
@@ -367,111 +304,78 @@ __global__ void gpu_pdata_add_particles_kernel(unsigned int old_nparticles,
         return;
 
     detail::pdata_element p = d_in[idx];
-
     unsigned int add_idx = old_nparticles + idx;
-    d_pos[add_idx] = p.pos;
-    d_vel[add_idx] = p.vel;
-    d_accel[add_idx] = p.accel;
-    d_charge[add_idx] = p.charge;
-    d_diameter[add_idx] = p.diameter;
-    d_image[add_idx] = p.image;
-    d_body[add_idx] = p.body;
-    d_orientation[add_idx] = p.orientation;
-    d_angmom[add_idx] = p.angmom;
-    d_inertia[add_idx] = p.inertia;
-    d_net_force[add_idx] = p.net_force;
-    d_net_torque[add_idx] = p.net_torque;
-    for (unsigned int j = 0; j < 6; ++j)
-        d_net_virial[j * net_virial_pitch + add_idx] = p.net_virial[j];
-    d_tag[add_idx] = p.tag;
-    d_rtag[p.tag] = add_idx;
-    d_comm_flags[add_idx] = 0;
+
+    d_pos[add_idx]         = p.pos;
+    d_vel[add_idx]         = p.vel;
+    d_density[add_idx]     = p.density;
+    d_pressure[add_idx]    = p.pressure;
+    d_energy[add_idx]      = p.energy;
+    d_aux1[add_idx]        = p.aux1;
+    d_aux2[add_idx]        = p.aux2;
+    d_aux3[add_idx]        = p.aux3;
+    d_aux4[add_idx]        = p.aux4;
+    d_slength[add_idx]     = p.slength;
+    d_accel[add_idx]       = p.accel;
+    d_dpedt[add_idx]       = p.dpedt;
+    d_image[add_idx]       = p.image;
+    d_body[add_idx]        = p.body;
+    d_net_force[add_idx]   = p.net_force;
+    d_net_ratedpe[add_idx] = p.net_ratedpe;
+    d_tag[add_idx]         = p.tag;
+    d_rtag[p.tag]          = add_idx;
+    d_comm_flags[add_idx]  = 0;
     }
 
-/*! \param old_nparticles old local particle count
-    \param num_add_ptls Number of particles in input array
-    \param d_pos Device array of particle positions
-    \param d_vel Device iarray of particle velocities
-    \param d_accel Device array of particle accelerations
-    \param d_charge Device array of particle charges
-    \param d_diameter Device array of particle diameters
-    \param d_image Device array of particle images
-    \param d_body Device array of particle body tags
-    \param d_orientation Device array of particle orientations
-    \param d_angmom Device array of particle angular momenta
-    \param d_inertia Device array of particle moments of inertia
-    \param d_net_force Net force
-    \param d_net_torque Net torque
-    \param d_net_virial Net virial
-    \param d_tag Device array of particle tags
-    \param d_rtag Device array for reverse-lookup table
-    \param d_in Device array of packed input particle data
-    \param d_comm_flags Device array of communication flags (pdata)
-*/
 void gpu_pdata_add_particles(const unsigned int old_nparticles,
                              const unsigned int num_add_ptls,
                              Scalar4* d_pos,
                              Scalar4* d_vel,
+                             Scalar* d_density,
+                             Scalar* d_pressure,
+                             Scalar* d_energy,
+                             Scalar3* d_aux1,
+                             Scalar3* d_aux2,
+                             Scalar3* d_aux3,
+                             Scalar3* d_aux4,
+                             Scalar* d_slength,
                              Scalar3* d_accel,
-                             Scalar* d_charge,
-                             Scalar* d_diameter,
+                             Scalar3* d_dpedt,
                              int3* d_image,
                              unsigned int* d_body,
-                             Scalar4* d_orientation,
-                             Scalar4* d_angmom,
-                             Scalar3* d_inertia,
                              Scalar4* d_net_force,
-                             Scalar4* d_net_torque,
-                             Scalar* d_net_virial,
-                             unsigned int net_virial_pitch,
+                             Scalar4* d_net_ratedpe,
                              unsigned int* d_tag,
                              unsigned int* d_rtag,
                              const detail::pdata_element* d_in,
                              unsigned int* d_comm_flags)
     {
-    assert(d_pos);
-    assert(d_vel);
-    assert(d_accel);
-    assert(d_charge);
-    assert(d_diameter);
-    assert(d_image);
-    assert(d_body);
-    assert(d_orientation);
-    assert(d_angmom);
-    assert(d_inertia);
-    assert(d_net_force);
-    assert(d_net_torque);
-    assert(d_net_virial);
-    assert(d_tag);
-    assert(d_rtag);
-    assert(d_in);
+    assert(d_pos); assert(d_vel);
+    assert(d_density); assert(d_pressure); assert(d_energy);
+    assert(d_aux1); assert(d_aux2); assert(d_aux3); assert(d_aux4);
+    assert(d_slength); assert(d_accel); assert(d_dpedt);
+    assert(d_image); assert(d_body);
+    assert(d_net_force); assert(d_net_ratedpe);
+    assert(d_tag); assert(d_rtag); assert(d_in); assert(d_comm_flags);
 
-    unsigned int block_size = 256;
-    unsigned int n_blocks = num_add_ptls / block_size + 1;
+    if (!num_add_ptls)
+        return;
 
+    const int block_size = 256;
     hipLaunchKernelGGL(gpu_pdata_add_particles_kernel,
-                       dim3(n_blocks),
+                       dim3(num_add_ptls / block_size + 1),
                        dim3(block_size),
                        0,
                        0,
                        old_nparticles,
                        num_add_ptls,
-                       d_pos,
-                       d_vel,
-                       d_accel,
-                       d_charge,
-                       d_diameter,
-                       d_image,
-                       d_body,
-                       d_orientation,
-                       d_angmom,
-                       d_inertia,
-                       d_net_force,
-                       d_net_torque,
-                       d_net_virial,
-                       net_virial_pitch,
-                       d_tag,
-                       d_rtag,
+                       d_pos, d_vel,
+                       d_density, d_pressure, d_energy,
+                       d_aux1, d_aux2, d_aux3, d_aux4,
+                       d_slength, d_accel, d_dpedt,
+                       d_image, d_body,
+                       d_net_force, d_net_ratedpe,
+                       d_tag, d_rtag,
                        d_in,
                        d_comm_flags);
     }

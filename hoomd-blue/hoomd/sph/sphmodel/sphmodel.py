@@ -208,14 +208,13 @@ class SinglePhaseFlow(SPHModel):
         if isinstance(self._simulation.device, hoomd.device.CPU):
             spf_cls = getattr(_sph, self._cpp_SPFclass_name)
         else:
-            raise RuntimeError(
-                "The hoomd.sph component is CPU-only: no GPU kernels are "
-                "compiled. Construct the simulation with hoomd.device.CPU().")
+            gpu_name = self._cpp_SPFclass_name.replace("_", "GPU_", 1)
+            spf_cls = getattr(_sph, gpu_name)
 
         # check that some Particles are defined
         if self._simulation.state._cpp_sys_def.getParticleData().getNGlobal() == 0:
             self._simulation.device._cpp_msg.warning("No particles are defined.\n")
-        
+
         # This should never happen, but leaving it in case the logic for adding
         # missed some edge case.
         if self.nlist._attached and self._simulation != self.nlist._simulation:
@@ -238,7 +237,7 @@ class SinglePhaseFlow(SPHModel):
         # Set Kernel specific Kappa in cpp-Nlist
         self.kernel.setNeighborList(self.nlist)
 
-        self._cpp_obj = spf_cls(cpp_sys_def, cpp_kernel, cpp_eos, cpp_nlist, cpp_fluidgroup, 
+        self._cpp_obj = spf_cls(cpp_sys_def, cpp_kernel, cpp_eos, cpp_nlist, cpp_fluidgroup,
                                 cpp_solidgroup, self.cpp_densitymethod, self.cpp_viscositymethod)
 
         # Set kernel parameters
@@ -683,9 +682,8 @@ class SinglePhaseFlowGDGD(SPHModel):
         if isinstance(self._simulation.device, hoomd.device.CPU):
             spf_cls = getattr(_sph, self._cpp_SPFclass_name)
         else:
-            raise RuntimeError(
-                "The hoomd.sph component is CPU-only: no GPU kernels are "
-                "compiled. Construct the simulation with hoomd.device.CPU().")
+            gpu_name = self._cpp_SPFclass_name.replace("_", "GPU_", 1)
+            spf_cls = getattr(_sph, gpu_name)
 
         if self._simulation.state._cpp_sys_def.getParticleData().getNGlobal() == 0:
             self._simulation.device._cpp_msg.warning("No particles are defined.\n")
@@ -1468,9 +1466,9 @@ class SinglePhaseFlowFS(SPHModel):
         if isinstance(self._simulation.device, hoomd.device.CPU):
             spf_cls = getattr(_sph, self._cpp_SPFclass_name)
         else:
-            raise RuntimeError(
-                "The hoomd.sph component is CPU-only: no GPU kernels are "
-                "compiled. Construct the simulation with hoomd.device.CPU().")
+            gpu_name = self._cpp_SPFclass_name.replace("_", "GPU_", 1)
+            spf_cls = getattr(_sph, gpu_name)
+
 
         if self._simulation.state._cpp_sys_def.getParticleData().getNGlobal() == 0:
             self._simulation.device._cpp_msg.warning("No particles are defined.\n")
@@ -1837,9 +1835,8 @@ class TwoPhaseFlow(SPHModel):
         if isinstance(self._simulation.device, hoomd.device.CPU):
             tpf_cls = getattr(_sph, self._cpp_TPFclass_name)
         else:
-            raise RuntimeError(
-                "The hoomd.sph component is CPU-only: no GPU kernels are "
-                "compiled. Construct the simulation with hoomd.device.CPU().")
+            gpu_name = self._cpp_TPFclass_name.replace("_", "GPU_", 1)
+            tpf_cls = getattr(_sph, gpu_name)
 
         # check that some Particles are defined
         if self._simulation.state._cpp_sys_def.getParticleData().getNGlobal() == 0:

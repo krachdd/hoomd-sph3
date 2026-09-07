@@ -59,6 +59,7 @@ hipError_t gpu_compute_nlist_binned(unsigned int* d_nlist,
                                     bool use_index,
                                     const hipDeviceProp_t& devprop);
 
+
     } // end namespace kernel
     } // end namespace nsearch
     } // end namespace hoomd

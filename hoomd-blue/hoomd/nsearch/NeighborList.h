@@ -639,9 +639,6 @@ class PYBIND11_EXPORT NeighborList : public Compute
     //! Add an exclusion for every 1,4 pair
     void addOneFourExclusionsFromTopology();
 
-#ifdef ENABLE_HIP
-    GPUPartition m_last_gpu_partition; //!< The partition at the time of the last memory hints
-#endif
     
     };
 

@@ -3978,9 +3978,9 @@ void ParticleData::removeParticlesGPU(GPUVector<detail::pdata_element>& out,
         ArrayHandle<Scalar4> d_net_force_alt(m_net_force_alt,
                                              access_location::device,
                                              access_mode::overwrite);
-        ArrayHandle<Scalar4> d_net__alt(m_net_ratedpe_alt,
-                                             access_location::device,
-                                             access_mode::overwrite);
+        ArrayHandle<Scalar4> d_net_ratedpe_alt(m_net_ratedpe_alt,
+                                               access_location::device,
+                                               access_mode::overwrite);
         //                                       access_location::device,
         //                                       access_mode::overwrite);
         //                                      access_location::device,
@@ -4009,8 +4009,6 @@ void ParticleData::removeParticlesGPU(GPUVector<detail::pdata_element>& out,
 
             // get temporary buffer
             ScopedAllocation<unsigned int> d_tmp(m_exec_conf->getCachedAllocatorManaged(), getN());
-
-            m_exec_conf->beginMultiGPU();
 
             n_out = kernel::gpu_pdata_remove(getN(),
                                              d_pos.data,
@@ -4042,8 +4040,6 @@ void ParticleData::removeParticlesGPU(GPUVector<detail::pdata_element>& out,
                                              d_rtag.data,
                                              d_pos_alt.data,
                                              d_vel_alt.data,
-                                             d_vel_alt.data,
-                                             // d_dpe_alt.data,
                                              d_density_alt.data,
                                              d_pressure_alt.data,
                                              d_energy_alt.data,
@@ -4054,25 +4050,17 @@ void ParticleData::removeParticlesGPU(GPUVector<detail::pdata_element>& out,
                                              d_slength_alt.data,
                                              d_accel_alt.data,
                                              d_dpedt_alt.data,
-                                             // d_charge_alt.data,
-                                             // d_diameter_alt.data,
                                              d_image_alt.data,
                                              d_body_alt.data,
-                                             // d_orientation_alt.data,
-                                             // d_angmom_alt.data,
-                                             // d_inertia_alt.data,
                                              d_net_force_alt.data,
                                              d_net_ratedpe_alt.data,
-                                             // d_net_torque_alt.data,
-                                             // d_net_virial_alt.data,
                                              d_tag_alt.data,
                                              d_out.data,
                                              d_comm_flags.data,
                                              d_comm_flags_out.data,
                                              max_n_out,
                                              d_tmp.data,
-                                             m_exec_conf->getCachedAllocatorManaged(),
-                                             m_gpu_partition);
+                                             m_exec_conf->getCachedAllocatorManaged());
 
             if (m_exec_conf->isCUDAErrorCheckingEnabled())
                 CHECK_CUDA_ERROR();

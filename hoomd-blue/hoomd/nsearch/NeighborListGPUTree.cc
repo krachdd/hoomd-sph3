@@ -490,7 +490,6 @@ void NeighborListGPUTree::traverseTree()
     ArrayHandle<unsigned int> d_body(m_pdata->getBodies(),
                                      access_location::device,
                                      access_mode::read);
-    ArrayHandle<Scalar> d_diam(m_pdata->getDiameters(), access_location::device, access_mode::read);
     ArrayHandle<unsigned int> d_traverse_order(m_traverse_order,
                                                access_location::device,
                                                access_mode::read);
@@ -531,8 +530,6 @@ void NeighborListGPUTree::traverseTree()
                 {
                 rcut += m_r_buff;
                 rlist = rcut;
-                if (m_diameter_shift)
-                    rlist += m_d_max - Scalar(1.0);
                 }
             else
                 {

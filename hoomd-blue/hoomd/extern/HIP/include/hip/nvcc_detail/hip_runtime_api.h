@@ -565,14 +565,11 @@ inline static hipError_t hipChooseDevice(int* device, const hipDeviceProp_t* pro
     cdprop.regsPerBlock = prop->regsPerBlock;
     cdprop.warpSize = prop->warpSize;
     cdprop.maxThreadsPerBlock = prop->maxThreadsPerBlock;
-    cdprop.clockRate = prop->clockRate;
     cdprop.totalConstMem = prop->totalConstMem;
     cdprop.multiProcessorCount = prop->multiProcessorCount;
     cdprop.l2CacheSize = prop->l2CacheSize;
     cdprop.maxThreadsPerMultiProcessor = prop->maxThreadsPerMultiProcessor;
-    cdprop.computeMode = prop->computeMode;
     cdprop.canMapHostMemory = prop->canMapHostMemory;
-    cdprop.memoryClockRate = prop->memoryClockRate;
     cdprop.memoryBusWidth = prop->memoryBusWidth;
     return hipCUDAErrorTohipError(cudaChooseDevice(device, &cdprop));
 }
@@ -841,8 +838,6 @@ inline static hipError_t hipGetDeviceProperties(hipDeviceProp_t* p_prop, int dev
         p_prop->maxThreadsDim[i] = cdprop.maxThreadsDim[i];
         p_prop->maxGridSize[i] = cdprop.maxGridSize[i];
     }
-    p_prop->clockRate = cdprop.clockRate;
-    p_prop->memoryClockRate = cdprop.memoryClockRate;
     p_prop->memoryBusWidth = cdprop.memoryBusWidth;
     p_prop->totalConstMem = cdprop.totalConstMem;
     p_prop->major = cdprop.major;
@@ -850,8 +845,7 @@ inline static hipError_t hipGetDeviceProperties(hipDeviceProp_t* p_prop, int dev
     p_prop->multiProcessorCount = cdprop.multiProcessorCount;
     p_prop->l2CacheSize = cdprop.l2CacheSize;
     p_prop->maxThreadsPerMultiProcessor = cdprop.maxThreadsPerMultiProcessor;
-    p_prop->computeMode = cdprop.computeMode;
-    p_prop->clockInstructionRate = cdprop.clockRate; // Same as clock-rate:
+    p_prop->clockInstructionRate = 0; // clockRate removed in CUDA 12+
 
     int ccVers = p_prop->major * 100 + p_prop->minor * 10;
     p_prop->arch.hasGlobalInt32Atomics = (ccVers >= 110);
@@ -882,7 +876,7 @@ inline static hipError_t hipGetDeviceProperties(hipDeviceProp_t* p_prop, int dev
     p_prop->gcnArch = 0; // Not a GCN arch
     p_prop->integrated = cdprop.integrated;
     p_prop->cooperativeLaunch = cdprop.cooperativeLaunch;
-    p_prop->cooperativeMultiDeviceLaunch = cdprop.cooperativeMultiDeviceLaunch;
+    p_prop->cooperativeMultiDeviceLaunch = 0; // removed in CUDA 12+
 
     p_prop->maxTexture1D    = cdprop.maxTexture1D;
     p_prop->maxTexture2D[0] = cdprop.maxTexture2D[0];
@@ -893,7 +887,7 @@ inline static hipError_t hipGetDeviceProperties(hipDeviceProp_t* p_prop, int dev
 
     p_prop->memPitch                 = cdprop.memPitch;
     p_prop->textureAlignment         = cdprop.textureAlignment;
-    p_prop->kernelExecTimeoutEnabled = cdprop.kernelExecTimeoutEnabled;
+    p_prop->kernelExecTimeoutEnabled = 0; // removed in CUDA 12+
     p_prop->ECCEnabled               = cdprop.ECCEnabled;
     p_prop->tccDriver                = cdprop.tccDriver;
 
@@ -1222,7 +1216,7 @@ inline static hipError_t hipEventQuery(hipEvent_t event) {
 }
 
 inline static hipError_t hipCtxCreate(hipCtx_t* ctx, unsigned int flags, hipDevice_t device) {
-    return hipCUResultTohipError(cuCtxCreate(ctx, flags, device));
+    return hipCUResultTohipError(cuCtxCreate(ctx, NULL, flags, device));
 }
 
 inline static hipError_t hipCtxDestroy(hipCtx_t ctx) {

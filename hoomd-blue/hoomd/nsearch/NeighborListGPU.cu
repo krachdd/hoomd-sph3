@@ -15,6 +15,7 @@
 #pragma GCC diagnostic ignored "-Wconversion"
 #include <thrust/device_ptr.h>
 #include <thrust/scan.h>
+#include <thrust/execution_policy.h>
 #pragma GCC diagnostic pop
 
 namespace hoomd
@@ -407,7 +408,8 @@ hipError_t gpu_nlist_build_head_list(size_t* d_head_list,
                                      const Scalar4* d_pos,
                                      const unsigned int N,
                                      const unsigned int ntypes,
-                                     const unsigned int block_size)
+                                     const unsigned int block_size,
+                                     CachedAllocator& alloc)
     {
     unsigned int max_block_size;
     hipFuncAttributes attr;
@@ -429,8 +431,10 @@ hipError_t gpu_nlist_build_head_list(size_t* d_head_list,
                        N,
                        ntypes);
 
+    // Clear any sticky CUDA error before using Thrust (e.g. from a prior overflow kernel).
+    hipGetLastError();
     thrust::device_ptr<size_t> t_head_list = thrust::device_pointer_cast(d_head_list);
-    thrust::exclusive_scan(t_head_list, t_head_list + N, t_head_list);
+    thrust::exclusive_scan(thrust::cuda::par(alloc), t_head_list, t_head_list + N, t_head_list);
 
     hipLaunchKernelGGL((gpu_nlist_get_nlist_size_kernel),
                        dim3(1),

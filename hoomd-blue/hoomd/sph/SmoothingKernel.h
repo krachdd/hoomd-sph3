@@ -117,6 +117,12 @@ struct PYBIND11_EXPORT SmoothingKernel
         //! Get kernel kappa
         Scalar getKernelKappa();
 
+        //! Get kernel normalisation constant alpha
+        Scalar getAlpha() { return m_alpha; }
+
+        //! Get kernel self-density contribution factor
+        Scalar getSelfDensity() { return m_self_density; }
+
         //! Return kernel self density
         /*! \param h Smoothing length
         */

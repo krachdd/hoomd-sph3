@@ -67,7 +67,8 @@ class SinglePhaseFlowBasicProperties(Compute):
         self._filter = filter
 
     def _attach_hook(self):
-        if isinstance(self._simulation.device, hoomd.device.CPU):
+        if isinstance(self._simulation.device, hoomd.device.CPU) or \
+                not hasattr(_sph, 'ComputeSPFBasicPropertiesGPU'):
             spfbasic_cls = _sph.ComputeSPFBasicProperties
         else:
             spfbasic_cls = _sph.ComputeSPFBasicPropertiesGPU

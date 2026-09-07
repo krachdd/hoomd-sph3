@@ -218,7 +218,7 @@ class PYBIND11_EXPORT SinglePhaseFlowFS : public SinglePhaseFlowTV<KT_, SET_>
          *  \pre  Density and smoothing lengths are up to date.
          *  \post aux2 and aux4.x are ready for compute_curvature().
          */
-        void detect_freesurface(uint64_t timestep);
+        virtual void detect_freesurface(uint64_t timestep);
 
         // ── Step 2: compute curvature ─────────────────────────────────────────
         /*! Compute mean curvature \f$\kappa_i = (1/V_i) \sum_j V_j (\hat{n}_j - \hat{n}_i) \cdot \nabla W_{ij}\f$.
@@ -232,7 +232,7 @@ class PYBIND11_EXPORT SinglePhaseFlowFS : public SinglePhaseFlowTV<KT_, SET_>
          *        ghost-particle normals are available.
          *  \post aux4.y is ready for forcecomputation().
          */
-        void compute_curvature(uint64_t timestep);
+        virtual void compute_curvature(uint64_t timestep);
 
         // ── Step 3: free-surface pressure clamping ────────────────────────────
         /*! Clamp pressure of free-surface particles to \f$P \geq 0\f$.
@@ -241,7 +241,7 @@ class PYBIND11_EXPORT SinglePhaseFlowFS : public SinglePhaseFlowTV<KT_, SET_>
          *  truncation near the surface.  Applied only to particles with
          *  \f$\lambda_i <\f$ m_fs_threshold.
          */
-        void apply_freesurface_pressure(uint64_t timestep);
+        virtual void apply_freesurface_pressure(uint64_t timestep);
 
         // ── Step 4: force loop with CSF surface tension ───────────────────────
         /*! TV force loop extended with CSF surface tension.

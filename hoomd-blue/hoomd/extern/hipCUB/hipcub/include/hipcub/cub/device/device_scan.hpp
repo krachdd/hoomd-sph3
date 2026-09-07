@@ -52,11 +52,12 @@ public:
                             hipStream_t stream = 0,
                             bool debug_synchronous = false)
     {
+        (void)debug_synchronous;
         return hipCUDAErrorTohipError(
             ::cub::DeviceScan::InclusiveSum(
                 d_temp_storage, temp_storage_bytes,
                 d_in, d_out, num_items,
-                stream, debug_synchronous
+                stream
             )
         );
     }
@@ -76,11 +77,12 @@ public:
                              hipStream_t stream = 0,
                              bool debug_synchronous = false)
     {
+        (void)debug_synchronous;
         return hipCUDAErrorTohipError(
             ::cub::DeviceScan::InclusiveScan(
                 d_temp_storage, temp_storage_bytes,
                 d_in, d_out, scan_op, num_items,
-                stream, debug_synchronous
+                stream
             )
         );
     }
@@ -98,11 +100,12 @@ public:
                             hipStream_t stream = 0,
                             bool debug_synchronous = false)
     {
+        (void)debug_synchronous;
         return hipCUDAErrorTohipError(
             ::cub::DeviceScan::ExclusiveSum(
                 d_temp_storage, temp_storage_bytes,
                 d_in, d_out, num_items,
-                stream, debug_synchronous
+                stream
             )
         );
     }
@@ -124,11 +127,12 @@ public:
                              hipStream_t stream = 0,
                              bool debug_synchronous = false)
     {
+        (void)debug_synchronous;
         return hipCUDAErrorTohipError(
             ::cub::DeviceScan::ExclusiveScan(
                 d_temp_storage, temp_storage_bytes,
                 d_in, d_out, scan_op, init_value, num_items,
-                stream, debug_synchronous
+                stream
             )
         );
     }
