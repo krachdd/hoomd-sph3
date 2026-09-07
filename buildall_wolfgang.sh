@@ -30,6 +30,11 @@ export CC=$(which gcc)
 export CXX=$(which g++)
 export CUDACXX=$(which nvcc)
 export CUDAHOSTCXX=$CXX
+# The conda Open MPI wrappers (mpicc/mpicxx) are configured for the conda
+# compiler x86_64-conda-linux-gnu-cc, which is not installed in the sph3 env.
+# Open MPI honours OMPI_CC/OMPI_CXX, so route the wrappers to the module gcc.
+export OMPI_CC=$CC
+export OMPI_CXX=$CXX
 
 # CUDA architectures to compile for: A100 = sm_80.
 # Add ";90" for H100 or ";75" for Turing cards if the binary must run there too.
@@ -39,7 +44,8 @@ NJOBS=${NJOBS:-16}
 
 echo "nvcc:  $(nvcc --version | tail -1)"
 echo "gcc:   $($CXX --version | head -1)"
-echo "mpicc: $(which mpicc)  ($(mpicc --version | head -1))"
+echo "mpicc: $(which mpicc)  -> $(mpicc --version | head -1)"
+mpicc --version >/dev/null 2>&1 || { echo "mpicc wrapper is not working (check OMPI_CC / conda env sph3 active)"; exit 1; }
 echo "CUDA_ARCH_LIST=$CUDA_ARCH_LIST"
 
 # ── Dependencies (pgsd, gsd) ───────────────────────────────────────────────
