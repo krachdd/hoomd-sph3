@@ -375,6 +375,25 @@ void TwoPhaseFlowTVGPU<KT_, SET1_, SET2_>::compute_surfaceforce(uint64_t timeste
         m_csf_buf, 256, this->m_exec_conf);
     }
 
+
+template<SmoothingKernelType KT_, StateEquationType SET1_, StateEquationType SET2_>
+void TwoPhaseFlowTVGPU<KT_, SET1_, SET2_>::compute_particle_shift(uint64_t timestep)
+    {
+    this->m_exec_conf->msg->notice(7) << "TwoPhaseFlowTVGPU::compute_particle_shift" << endl;
+    SPHShiftParams sp;
+    sp.A = this->m_shift_A;
+    sp.R = this->m_shift_R;
+    sp.n = this->m_shift_n;
+    sp.interface_condition = this->m_shift_interface_condition ? 1 : 0;
+    sp.c1 = this->m_c1;
+    sp.c2 = this->m_c2;
+    sp.N_local = this->m_pdata->getN();
+    gpu_csf_compute_particle_shift<KT_>(
+        this->m_pdata, this->m_nlist, this->m_fluidgroup, this->m_type_property_map,
+        make_kparams(), sp, this->m_density_method == DENSITYCONTINUITY,
+        m_csf_buf, 256, this->m_exec_conf);
+    }
+
 // =========================================================================
 // forcecomputation — TV two-phase force kernel
 // =========================================================================

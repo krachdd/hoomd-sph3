@@ -68,8 +68,70 @@ struct SPHCSFParams
     Scalar beta_adh;       //!< wall-adhesion calibration coefficient (SPH_BETA_ADH)
     };
 
+/*! POD parameters of delta+-SPH particle shifting (Sun et al. 2017). */
+struct SPHShiftParams
+    {
+    Scalar       A;                   //!< shift amplitude
+    Scalar       R;                   //!< enhancement coefficient
+    unsigned int n;                   //!< enhancement exponent
+    int          interface_condition; //!< 1: project out the interface-normal component
+    Scalar       c1;                  //!< speed of sound fluid 1 (Mach scaling)
+    Scalar       c2;                  //!< speed of sound fluid 2
+    unsigned int N_local;             //!< ghost slots (>= N_local) carry zero shift
+    };
+
 namespace kernel
 {
+
+//! Shift pass 1: shift vector of every fluid-group particle -> d_shift
+template<SmoothingKernelType KT_>
+hipError_t gpu_sph_2pf_shift_pass1(
+    unsigned int          group_size,
+    const unsigned int*   d_index_array,
+    const Scalar4*        d_pos,
+    const Scalar4*        d_vel,
+    const Scalar*         d_density,
+    const Scalar*         d_h,
+    const Scalar3*        d_fn,
+    Scalar3*              d_shift,
+    const unsigned int*   d_n_neigh,
+    const unsigned int*   d_nlist,
+    const size_t*         d_head_list,
+    const unsigned int*   d_type_property_map,
+    BoxDim                box,
+    SPHKernelDevParams    kp,
+    SPHShiftParams        sp,
+    unsigned int          block_size);
+
+//! Shift pass 2 (DENSITYCONTINUITY): ALE density correction from pre-shift densities -> d_drho
+template<SmoothingKernelType KT_>
+hipError_t gpu_sph_2pf_shift_pass2(
+    unsigned int          group_size,
+    const unsigned int*   d_index_array,
+    const Scalar4*        d_pos,
+    const Scalar4*        d_vel,
+    const Scalar*         d_density,
+    const Scalar*         d_h,
+    const Scalar3*        d_shift,
+    Scalar*               d_drho,
+    const unsigned int*   d_n_neigh,
+    const unsigned int*   d_nlist,
+    const size_t*         d_head_list,
+    BoxDim                box,
+    SPHKernelDevParams    kp,
+    unsigned int          block_size);
+
+//! Shift pass 3: apply shifts (+ density correction if d_drho != nullptr), wrap with the local box
+hipError_t gpu_sph_2pf_shift_pass3(
+    unsigned int          group_size,
+    const unsigned int*   d_index_array,
+    Scalar4*              d_pos,
+    int3*                 d_image,
+    Scalar*               d_density,
+    const Scalar3*        d_shift,
+    const Scalar*         d_drho,
+    BoxDim                local_box,
+    unsigned int          block_size);
 
 //! Raw colour gradients for ALL local particles (aux2 = solid normal, aux3 = fluid normal)
 template<SmoothingKernelType KT_>

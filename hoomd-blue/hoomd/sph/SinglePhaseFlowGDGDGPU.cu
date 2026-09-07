@@ -245,6 +245,7 @@ hipError_t gpu_sph_gdgd_forcecomputation(
     unsigned int          block_size)
     {
     if (group_size == 0) return hipSuccess;
+    block_size = sph_clamp_block_size((const void*)(gpu_sph_gdgd_forcecomputation_kernel<KT_, SET_>), block_size);
     dim3 grid((group_size + block_size - 1) / block_size, 1, 1);
     dim3 threads(block_size, 1, 1);
     hipLaunchKernelGGL((gpu_sph_gdgd_forcecomputation_kernel<KT_, SET_>),

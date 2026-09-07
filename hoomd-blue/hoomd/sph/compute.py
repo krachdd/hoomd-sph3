@@ -147,7 +147,10 @@ class SolidProperties(Compute):
         self._filter = filter
 
     def _attach_hook(self):
-        if isinstance(self._simulation.device, hoomd.device.CPU):
+        # No GPU kernel for this compute yet: the CPU implementation works on
+        # a GPU device too (host ArrayHandles), so fall back instead of failing.
+        if isinstance(self._simulation.device, hoomd.device.CPU) or \
+                not hasattr(_sph, 'ComputeSolidPropertiesGPU'):
             spfbasic_cls = _sph.ComputeSolidProperties
         else:
             spfbasic_cls = _sph.ComputeSolidPropertiesGPU

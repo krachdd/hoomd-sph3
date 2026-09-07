@@ -1216,7 +1216,12 @@ inline static hipError_t hipEventQuery(hipEvent_t event) {
 }
 
 inline static hipError_t hipCtxCreate(hipCtx_t* ctx, unsigned int flags, hipDevice_t device) {
+#if (CUDA_VERSION >= 13000)
+    // CUDA 13 changed cuCtxCreate to take a CUctxCreateParams* (v4 API)
     return hipCUResultTohipError(cuCtxCreate(ctx, NULL, flags, device));
+#else
+    return hipCUResultTohipError(cuCtxCreate(ctx, flags, device));
+#endif
 }
 
 inline static hipError_t hipCtxDestroy(hipCtx_t ctx) {

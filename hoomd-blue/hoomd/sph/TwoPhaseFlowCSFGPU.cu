@@ -173,6 +173,7 @@ hipError_t gpu_sph_2pf_colorgradient_raw(
     BoxDim box, SPHKernelDevParams kp, SPHCSFParams cp, unsigned int block_size)
     {
     if (N_local == 0) return hipSuccess;
+    block_size = sph_clamp_block_size((const void*)(gpu_sph_2pf_colorgradient_raw_kernel<KT_>), block_size);
     dim3 grid((N_local + block_size - 1) / block_size, 1, 1);
     dim3 threads(block_size, 1, 1);
     hipLaunchKernelGGL((gpu_sph_2pf_colorgradient_raw_kernel<KT_>), grid, threads, 0, 0,
@@ -263,6 +264,7 @@ hipError_t gpu_sph_2pf_normal_smooth(
     SPHKernelDevParams kp, unsigned int block_size)
     {
     if (group_size == 0) return hipSuccess;
+    block_size = sph_clamp_block_size((const void*)(gpu_sph_2pf_normal_smooth_kernel<KT_>), block_size);
     dim3 grid((group_size + block_size - 1) / block_size, 1, 1);
     dim3 threads(block_size, 1, 1);
     hipLaunchKernelGGL((gpu_sph_2pf_normal_smooth_kernel<KT_>), grid, threads, 0, 0,
@@ -290,6 +292,7 @@ hipError_t gpu_sph_2pf_copy_group(
     const Scalar3* d_src, Scalar3* d_dst, unsigned int block_size)
     {
     if (group_size == 0) return hipSuccess;
+    block_size = sph_clamp_block_size((const void*)gpu_sph_2pf_copy_group_kernel, block_size);
     dim3 grid((group_size + block_size - 1) / block_size, 1, 1);
     dim3 threads(block_size, 1, 1);
     hipLaunchKernelGGL(gpu_sph_2pf_copy_group_kernel, grid, threads, 0, 0,
@@ -379,6 +382,7 @@ hipError_t gpu_sph_2pf_wall_blend(
     SPHKernelDevParams kp, SPHCSFParams cp, unsigned int block_size)
     {
     if (group_size == 0) return hipSuccess;
+    block_size = sph_clamp_block_size((const void*)(gpu_sph_2pf_wall_blend_kernel<KT_>), block_size);
     dim3 grid((group_size + block_size - 1) / block_size, 1, 1);
     dim3 threads(block_size, 1, 1);
     hipLaunchKernelGGL((gpu_sph_2pf_wall_blend_kernel<KT_>), grid, threads, 0, 0,
@@ -415,6 +419,7 @@ hipError_t gpu_sph_2pf_csf_pass1(
     SPHKernelDevParams kp, unsigned int block_size)
     {
     if (N_total == 0) return hipSuccess;
+    block_size = sph_clamp_block_size((const void*)gpu_sph_2pf_csf_pass1_kernel, block_size);
     dim3 grid((N_total + block_size - 1) / block_size, 1, 1);
     dim3 threads(block_size, 1, 1);
     hipLaunchKernelGGL(gpu_sph_2pf_csf_pass1_kernel, grid, threads, 0, 0,
@@ -497,6 +502,7 @@ hipError_t gpu_sph_2pf_csf_pass2(
     BoxDim box, SPHKernelDevParams kp, SPHCSFParams cp, unsigned int block_size)
     {
     if (group_size == 0) return hipSuccess;
+    block_size = sph_clamp_block_size((const void*)(gpu_sph_2pf_csf_pass2_kernel<KT_>), block_size);
     dim3 grid((group_size + block_size - 1) / block_size, 1, 1);
     dim3 threads(block_size, 1, 1);
     hipLaunchKernelGGL((gpu_sph_2pf_csf_pass2_kernel<KT_>), grid, threads, 0, 0,
@@ -576,11 +582,236 @@ hipError_t gpu_sph_2pf_wall_adhesion(
     SPHCSFParams cp, unsigned int block_size)
     {
     if (group_size == 0) return hipSuccess;
+    block_size = sph_clamp_block_size((const void*)(gpu_sph_2pf_wall_adhesion_kernel<KT_>), block_size);
     dim3 grid((group_size + block_size - 1) / block_size, 1, 1);
     dim3 threads(block_size, 1, 1);
     hipLaunchKernelGGL((gpu_sph_2pf_wall_adhesion_kernel<KT_>), grid, threads, 0, 0,
                        group_size, d_index_array, d_pos, d_vel, d_density, d_h, d_sf,
                        d_n_neigh, d_nlist, d_head_list, d_type_property_map, box, kp, cp);
+    return hipSuccess;
+    }
+
+
+// =========================================================================
+// delta+-SPH particle shifting (Sun et al. 2017) -- mirrors
+// TwoPhaseFlow::compute_particle_shift() pass by pass
+// =========================================================================
+
+template<SmoothingKernelType KT_>
+__global__ void gpu_sph_2pf_shift_pass1_kernel(
+    unsigned int          group_size,
+    const unsigned int*   d_index_array,
+    const Scalar4*        d_pos,
+    const Scalar4*        d_vel,
+    const Scalar*         d_density,
+    const Scalar*         d_h,
+    const Scalar3*        d_fn,
+    Scalar3*              d_shift,
+    const unsigned int*   d_n_neigh,
+    const unsigned int*   d_nlist,
+    const size_t*         d_head_list,
+    const unsigned int*   d_type_property_map,
+    BoxDim                box,
+    SPHKernelDevParams    kp,
+    SPHShiftParams        sp)
+    {
+    unsigned int group_idx = blockIdx.x * blockDim.x + threadIdx.x;
+    if (group_idx >= group_size) return;
+    unsigned int i = d_index_array[group_idx];
+
+    const Scalar eps      = Scalar(1e-10);
+    const Scalar eps_norm = Scalar(1e-6);
+
+    Scalar4 posi = d_pos[i];
+    Scalar4 veli = d_vel[i];
+    Scalar3 pi   = sph_scalar3(posi);
+    Scalar  hi   = kp.const_slength ? kp.ch : d_h[i];
+    // W_ref: kernel at the approximate initial spacing dp ~ 0.5 h
+    Scalar w_ref = sph_wij<KT_>(kp.alpha, hi, Scalar(0.5) * hi);
+    if (w_ref < eps) w_ref = eps;
+
+    Scalar3 grad_sum = make_scalar3(Scalar(0), Scalar(0), Scalar(0));
+    size_t       myHead = d_head_list[i];
+    unsigned int size   = d_n_neigh[i];
+    for (unsigned int j = 0; j < size; j++)
+        {
+        unsigned int k = d_nlist[myHead + j];
+        // solid dummies participate (they close the kernel support at walls);
+        // guard against marked-removed solids with zero density
+        Scalar mk   = d_vel[k].w;
+        Scalar rhok = d_density[k];
+        if (rhok < Scalar(1e-12)) continue;
+        Scalar hk   = kp.const_slength ? kp.ch : d_h[k];
+        Scalar Vk   = mk / rhok;
+        Scalar4 posk = d_pos[k];
+        Scalar3 dx  = box.minImage(make_scalar3(pi.x - posk.x, pi.y - posk.y, pi.z - posk.z));
+        Scalar  rsq = dot(dx, dx);
+        if (rsq > kp.rcutsq) continue;
+        Scalar r      = sqrt(rsq);
+        Scalar meanh  = Scalar(0.5) * (hi + hk);
+        Scalar dwdr   = sph_dwijdr<KT_>(kp.alpha, meanh, r);
+        Scalar wij    = sph_wij<KT_>(kp.alpha, meanh, r);
+        Scalar dwdr_r = (r > Scalar(1e-8) * meanh) ? dwdr / r : Scalar(0);
+        // enhancement factor [1 + R (W_ij/W_ref)^n]
+        Scalar ratio = wij / w_ref;
+        Scalar Rpow  = Scalar(1);
+        for (unsigned int q = 0; q < sp.n; q++) Rpow *= ratio;
+        Scalar enhance = Scalar(1) + sp.R * Rpow;
+        Scalar c = enhance * Vk * dwdr_r;
+        grad_sum.x += c * dx.x;
+        grad_sum.y += c * dx.y;
+        grad_sum.z += c * dx.z;
+        }
+
+    // delta r_i = -A Ma_i (2 h_i)^2 sum_j [...] V_j grad W_ij
+    Scalar ci    = sph_checkfluid1(d_type_property_map, posi.w) ? sp.c1 : sp.c2;
+    Scalar vmagi = sqrt(veli.x * veli.x + veli.y * veli.y + veli.z * veli.z);
+    Scalar coeff = -sp.A * (vmagi / ci) * Scalar(4.0) * hi * hi;
+    Scalar3 dr = make_scalar3(coeff * grad_sum.x, coeff * grad_sum.y, coeff * grad_sum.z);
+
+    // interface condition: remove the component normal to the fluid-fluid interface
+    if (sp.interface_condition)
+        {
+        Scalar3 fn_i = d_fn[i];
+        Scalar fn_mag = sqrt(dot(fn_i, fn_i));
+        if (fn_mag > eps_norm)
+            {
+            Scalar inv = Scalar(1) / fn_mag;
+            Scalar3 nh = make_scalar3(fn_i.x * inv, fn_i.y * inv, fn_i.z * inv);
+            Scalar dr_n = dot(dr, nh);
+            dr.x -= dr_n * nh.x; dr.y -= dr_n * nh.y; dr.z -= dr_n * nh.z;
+            }
+        }
+
+    // NaN-safe magnitude cap at 0.1 h_i
+    Scalar drmag2 = dot(dr, dr);
+    const Scalar drcap = Scalar(0.1) * hi;
+    if (!isfinite(drmag2))
+        dr = make_scalar3(Scalar(0), Scalar(0), Scalar(0));
+    else if (drmag2 > drcap * drcap)
+        {
+        Scalar rescale = drcap / sqrt(drmag2);
+        dr.x *= rescale; dr.y *= rescale; dr.z *= rescale;
+        }
+    d_shift[i] = dr;
+    }
+
+template<SmoothingKernelType KT_>
+hipError_t gpu_sph_2pf_shift_pass1(
+    unsigned int group_size, const unsigned int* d_index_array, const Scalar4* d_pos,
+    const Scalar4* d_vel, const Scalar* d_density, const Scalar* d_h, const Scalar3* d_fn,
+    Scalar3* d_shift, const unsigned int* d_n_neigh, const unsigned int* d_nlist,
+    const size_t* d_head_list, const unsigned int* d_type_property_map, BoxDim box,
+    SPHKernelDevParams kp, SPHShiftParams sp, unsigned int block_size)
+    {
+    if (group_size == 0) return hipSuccess;
+    block_size = sph_clamp_block_size((const void*)(gpu_sph_2pf_shift_pass1_kernel<KT_>), block_size);
+    dim3 grid((group_size + block_size - 1) / block_size, 1, 1);
+    dim3 threads(block_size, 1, 1);
+    hipLaunchKernelGGL((gpu_sph_2pf_shift_pass1_kernel<KT_>), grid, threads, 0, 0,
+                       group_size, d_index_array, d_pos, d_vel, d_density, d_h, d_fn, d_shift,
+                       d_n_neigh, d_nlist, d_head_list, d_type_property_map, box, kp, sp);
+    return hipSuccess;
+    }
+
+template<SmoothingKernelType KT_>
+__global__ void gpu_sph_2pf_shift_pass2_kernel(
+    unsigned int          group_size,
+    const unsigned int*   d_index_array,
+    const Scalar4*        d_pos,
+    const Scalar4*        d_vel,
+    const Scalar*         d_density,
+    const Scalar*         d_h,
+    const Scalar3*        d_shift,
+    Scalar*               d_drho,
+    const unsigned int*   d_n_neigh,
+    const unsigned int*   d_nlist,
+    const size_t*         d_head_list,
+    BoxDim                box,
+    SPHKernelDevParams    kp)
+    {
+    unsigned int group_idx = blockIdx.x * blockDim.x + threadIdx.x;
+    if (group_idx >= group_size) return;
+    unsigned int i = d_index_array[group_idx];
+
+    Scalar3 pi   = sph_scalar3(d_pos[i]);
+    Scalar  hi   = kp.const_slength ? kp.ch : d_h[i];
+    Scalar  rhoi = d_density[i];
+    Scalar3 dri  = d_shift[i];
+    Scalar delta_rho = Scalar(0);
+
+    size_t       myHead = d_head_list[i];
+    unsigned int size   = d_n_neigh[i];
+    for (unsigned int j = 0; j < size; j++)
+        {
+        unsigned int k = d_nlist[myHead + j];
+        Scalar mk   = d_vel[k].w;
+        Scalar rhok = d_density[k];
+        if (rhok < Scalar(1e-12)) continue;
+        Scalar hk   = kp.const_slength ? kp.ch : d_h[k];
+        Scalar Vk   = mk / rhok;
+        Scalar4 posk = d_pos[k];
+        Scalar3 dx  = box.minImage(make_scalar3(pi.x - posk.x, pi.y - posk.y, pi.z - posk.z));
+        Scalar  rsq = dot(dx, dx);
+        if (rsq > kp.rcutsq) continue;
+        Scalar r      = sqrt(rsq);
+        Scalar meanh  = Scalar(0.5) * (hi + hk);
+        Scalar dwdr   = sph_dwijdr<KT_>(kp.alpha, meanh, r);
+        Scalar dwdr_r = (r > Scalar(1e-8) * meanh) ? dwdr / r : Scalar(0);
+        // ghost / solid slots carry a zero shift in d_shift
+        Scalar3 drk = d_shift[k];
+        Scalar3 ddr = make_scalar3(dri.x - drk.x, dri.y - drk.y, dri.z - drk.z);
+        delta_rho += rhoi * Vk * dwdr_r * dot(ddr, dx);
+        }
+    d_drho[i] = delta_rho;
+    }
+
+template<SmoothingKernelType KT_>
+hipError_t gpu_sph_2pf_shift_pass2(
+    unsigned int group_size, const unsigned int* d_index_array, const Scalar4* d_pos,
+    const Scalar4* d_vel, const Scalar* d_density, const Scalar* d_h, const Scalar3* d_shift,
+    Scalar* d_drho, const unsigned int* d_n_neigh, const unsigned int* d_nlist,
+    const size_t* d_head_list, BoxDim box, SPHKernelDevParams kp, unsigned int block_size)
+    {
+    if (group_size == 0) return hipSuccess;
+    block_size = sph_clamp_block_size((const void*)(gpu_sph_2pf_shift_pass2_kernel<KT_>), block_size);
+    dim3 grid((group_size + block_size - 1) / block_size, 1, 1);
+    dim3 threads(block_size, 1, 1);
+    hipLaunchKernelGGL((gpu_sph_2pf_shift_pass2_kernel<KT_>), grid, threads, 0, 0,
+                       group_size, d_index_array, d_pos, d_vel, d_density, d_h, d_shift, d_drho,
+                       d_n_neigh, d_nlist, d_head_list, box, kp);
+    return hipSuccess;
+    }
+
+__global__ void gpu_sph_2pf_shift_pass3_kernel(
+    unsigned int group_size, const unsigned int* d_index_array, Scalar4* d_pos, int3* d_image,
+    Scalar* d_density, const Scalar3* d_shift, const Scalar* d_drho, BoxDim local_box)
+    {
+    unsigned int group_idx = blockIdx.x * blockDim.x + threadIdx.x;
+    if (group_idx >= group_size) return;
+    unsigned int i = d_index_array[group_idx];
+    Scalar4 p = d_pos[i];
+    Scalar3 dr = d_shift[i];
+    p.x += dr.x; p.y += dr.y; p.z += dr.z;
+    int3 img = d_image[i];
+    // local box: periodic only along non-decomposed directions (same as the integrators)
+    local_box.wrap(p, img);
+    d_pos[i]   = p;
+    d_image[i] = img;
+    if (d_drho) d_density[i] += d_drho[i];
+    }
+
+hipError_t gpu_sph_2pf_shift_pass3(
+    unsigned int group_size, const unsigned int* d_index_array, Scalar4* d_pos, int3* d_image,
+    Scalar* d_density, const Scalar3* d_shift, const Scalar* d_drho, BoxDim local_box,
+    unsigned int block_size)
+    {
+    if (group_size == 0) return hipSuccess;
+    block_size = sph_clamp_block_size((const void*)gpu_sph_2pf_shift_pass3_kernel, block_size);
+    dim3 grid((group_size + block_size - 1) / block_size, 1, 1);
+    dim3 threads(block_size, 1, 1);
+    hipLaunchKernelGGL(gpu_sph_2pf_shift_pass3_kernel, grid, threads, 0, 0,
+                       group_size, d_index_array, d_pos, d_image, d_density, d_shift, d_drho, local_box);
     return hipSuccess;
     }
 
@@ -609,7 +840,15 @@ hipError_t gpu_sph_2pf_wall_adhesion(
     template hipError_t gpu_sph_2pf_wall_adhesion<KT>( \
         unsigned int, const unsigned int*, const Scalar4*, const Scalar4*, const Scalar*, \
         const Scalar*, Scalar3*, const unsigned int*, const unsigned int*, const size_t*, \
-        const unsigned int*, BoxDim, SPHKernelDevParams, SPHCSFParams, unsigned int);
+        const unsigned int*, BoxDim, SPHKernelDevParams, SPHCSFParams, unsigned int); \
+    template hipError_t gpu_sph_2pf_shift_pass1<KT>( \
+        unsigned int, const unsigned int*, const Scalar4*, const Scalar4*, const Scalar*, \
+        const Scalar*, const Scalar3*, Scalar3*, const unsigned int*, const unsigned int*, \
+        const size_t*, const unsigned int*, BoxDim, SPHKernelDevParams, SPHShiftParams, unsigned int); \
+    template hipError_t gpu_sph_2pf_shift_pass2<KT>( \
+        unsigned int, const unsigned int*, const Scalar4*, const Scalar4*, const Scalar*, \
+        const Scalar*, const Scalar3*, Scalar*, const unsigned int*, const unsigned int*, \
+        const size_t*, BoxDim, SPHKernelDevParams, unsigned int);
 
 INST_CSF_GPU(wendlandc2)
 INST_CSF_GPU(wendlandc4)

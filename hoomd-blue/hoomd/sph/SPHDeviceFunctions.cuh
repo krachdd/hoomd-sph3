@@ -128,6 +128,25 @@ struct SPHNNViscParams
     int    model;    //!< NonNewtonianModel cast to int
     };
 
+
+// =========================================================================
+// Launch helper: clamp a requested block size to what the kernel can launch
+// (register-limited maxThreadsPerBlock).  The Autotuner scans block sizes up
+// to the device maximum (1024); kernels with high register usage fail with
+// "too many resources requested for launch" at the large sizes, which was
+// silently zeroing forces in the autotuning phase.
+// =========================================================================
+inline unsigned int sph_clamp_block_size(const void* kernel_func, unsigned int block_size,
+                                         unsigned int multiple = 32)
+    {
+    hipFuncAttributes attr;
+    if (hipFuncGetAttributes(&attr, kernel_func) == hipSuccess)
+        if ((unsigned int)attr.maxThreadsPerBlock < block_size)
+            block_size = (unsigned int)attr.maxThreadsPerBlock;
+    block_size = (block_size / multiple) * multiple;
+    return block_size == 0 ? multiple : block_size;
+    }
+
 namespace kernel
 {
 

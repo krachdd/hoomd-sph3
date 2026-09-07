@@ -66,6 +66,7 @@ hipError_t gpu_compute_constant_force_set_forces(const unsigned int group_size,
                                                  unsigned int block_size)
     {
     // setup the grid to run the kernel
+    block_size = sph_clamp_block_size((const void*)(gpu_compute_constant_force_set_forces_kernel), block_size);
     dim3 grid(group_size / block_size + 1, 1, 1);
     dim3 threads(block_size, 1, 1);
 

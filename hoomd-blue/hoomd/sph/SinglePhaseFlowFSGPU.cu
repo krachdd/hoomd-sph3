@@ -226,6 +226,7 @@ hipError_t gpu_sph_fs_detect_freesurface(
     unsigned int          block_size)
     {
     if (group_size == 0) return hipSuccess;
+    block_size = sph_clamp_block_size((const void*)(gpu_sph_fs_detect_freesurface_kernel<KT_, SET_>), block_size);
     dim3 grid((group_size + block_size - 1) / block_size, 1, 1);
     dim3 threads(block_size, 1, 1);
     hipLaunchKernelGGL((gpu_sph_fs_detect_freesurface_kernel<KT_, SET_>),
@@ -367,6 +368,7 @@ hipError_t gpu_sph_fs_compute_curvature(
     unsigned int          block_size)
     {
     if (group_size == 0) return hipSuccess;
+    block_size = sph_clamp_block_size((const void*)(gpu_sph_fs_compute_curvature_kernel<KT_, SET_>), block_size);
     dim3 grid((group_size + block_size - 1) / block_size, 1, 1);
     dim3 threads(block_size, 1, 1);
     hipLaunchKernelGGL((gpu_sph_fs_compute_curvature_kernel<KT_, SET_>),
@@ -406,6 +408,7 @@ hipError_t gpu_sph_fs_pressure_clamp(
     unsigned int          block_size)
     {
     if (group_size == 0) return hipSuccess;
+    block_size = sph_clamp_block_size((const void*)(gpu_sph_fs_pressure_clamp_kernel), block_size);
     dim3 grid((group_size + block_size - 1) / block_size, 1, 1);
     dim3 threads(block_size, 1, 1);
     hipLaunchKernelGGL(gpu_sph_fs_pressure_clamp_kernel,
@@ -767,6 +770,7 @@ hipError_t gpu_sph_fs_forcecomputation(
     unsigned int          block_size)
     {
     if (group_size == 0) return hipSuccess;
+    block_size = sph_clamp_block_size((const void*)(gpu_sph_fs_forcecomputation_kernel<KT_, SET_>), block_size);
     dim3 grid((group_size + block_size - 1) / block_size, 1, 1);
     dim3 threads(block_size, 1, 1);
     hipLaunchKernelGGL((gpu_sph_fs_forcecomputation_kernel<KT_, SET_>),

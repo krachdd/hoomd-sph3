@@ -66,7 +66,12 @@ ap.add_argument("--m_gd", type=float, default=3.0,
                 help="regularization sharpness m*gdot_c; dt_Fourier ~ 1/(mu_p + tau_y*m)")
 args = ap.parse_args()
 
-device = hoomd.device.CPU(notice_level=1)
+# SPH_DEVICE=gpu runs the whole two-phase model on one GPU (single rank);
+# default stays the CPU/MPI path.
+if os.environ.get("SPH_DEVICE", "cpu").lower() == "gpu":
+    device = hoomd.device.GPU(notice_level=1)
+else:
+    device = hoomd.device.CPU(notice_level=1)
 
 # Fractured-MPI-world guard: if hoomd is not linked against the MPI that
 # launched this job, MPI_Init falls back to a singleton world and EVERY
@@ -108,6 +113,8 @@ g_crit = tau_y / (rho0 * r_t) if tau_y > 0 else 0.0
 Y      = tau_y * r_t / sigma
 
 label    = f"tauy{tau_y:g}_g{gx:g}_sig{sigma:g}_m{args.m_gd:g}"
+if isinstance(device, hoomd.device.GPU):
+    label += "_gpu"
 dumpname = initfile.replace("_init.gsd", f"_{label}_run.gsd")
 logname  = initfile.replace("_init.gsd", f"_{label}_run.log")
 

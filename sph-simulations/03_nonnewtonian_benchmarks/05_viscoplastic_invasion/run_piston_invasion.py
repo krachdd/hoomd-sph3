@@ -59,7 +59,12 @@ from hoomd import sph
 import gsd.hoomd
 import sph_helper
 
-device = hoomd.device.CPU(notice_level=1)
+# SPH_DEVICE=gpu runs the whole two-phase model on one GPU (single rank);
+# default stays the CPU/MPI path.
+if os.environ.get("SPH_DEVICE", "cpu").lower() == "gpu":
+    device = hoomd.device.GPU(notice_level=1)
+else:
+    device = hoomd.device.CPU(notice_level=1)
 
 # Fractured-MPI-world guard: if hoomd is not linked against the MPI that
 # launched this job, MPI_Init falls back to a singleton world and EVERY
@@ -118,6 +123,8 @@ Ca = mu1 * U_p / sigma
 Bn = tau_y * r_t / (mu_p * U_p) if tau_y > 0 else 0.0
 
 label    = f"tauy{tau_y:g}_Up{U_p:g}_sig{sigma:g}_m{args.m_gd:g}"
+if isinstance(device, hoomd.device.GPU):
+    label += "_gpu"
 dumpname = initfile.replace("_init.gsd", f"_{label}_run.gsd")
 logname  = initfile.replace("_init.gsd", f"_{label}_run.log")
 

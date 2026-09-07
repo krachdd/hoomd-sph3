@@ -2682,23 +2682,24 @@ void TwoPhaseFlow<KT_, SET1_, SET2_>::compute_particle_shift(uint64_t timestep)
     // Ghost neighbor j gets $\delta r_j = 0$ (conservative approximation).
     if (m_density_method == DENSITYCONTINUITY)
         {
-        // NOTE: deliberately NOT OpenMP-parallelized. This loop writes
-        // h_density[i] while also reading neighbor densities h_density[k]
-        // for the volume V_k — a cross-iteration read/write overlap.
+        // All corrections are evaluated from the PRE-shift densities (V_k uses
+        // the neighbor density before any correction) and applied afterwards.
+        // This is order-independent, parallel-safe and identical to the GPU
+        // path; the former in-place sequential loop depended on the particle
+        // ordering because it read densities already corrected for earlier i.
+        std::vector<Scalar> delta_rho_vec(fluid_size, Scalar(0));
+        #pragma omp parallel for
         for (unsigned int group_idx = 0; group_idx < fluid_size; group_idx++)
             {
-            unsigned int i = this->m_fluidgroup->getMemberIndex(group_idx);
-
+            unsigned int i = h_members_omp14.data[group_idx];
             Scalar hi   = m_const_slength ? m_ch : h_h.data[i];
             Scalar rhoi = h_density.data[i];
             unsigned int n_neigh = h_n_neigh.data[i];
             size_t       head    = h_head_list.data[i];
             Scalar delta_rho = Scalar(0);
-
             for (unsigned int neigh_idx = 0; neigh_idx < n_neigh; neigh_idx++)
                 {
                 unsigned int k = h_nlist_arr.data[head + neigh_idx];
-
                 // Solid neighbors participate with delta r_k = 0 (stationary);
                 // consistent with their inclusion in the PASS 1 support closure.
                 Scalar mk   = h_velocity.data[k].w;
@@ -2706,33 +2707,31 @@ void TwoPhaseFlow<KT_, SET1_, SET2_>::compute_particle_shift(uint64_t timestep)
                 if (rhok < Scalar(1e-12)) continue;
                 Scalar hk   = m_const_slength ? m_ch : h_h.data[k];
                 Scalar Vk   = mk / rhok;
-
                 Scalar3 dx;
                 dx.x = h_pos.data[i].x - h_pos.data[k].x;
                 dx.y = h_pos.data[i].y - h_pos.data[k].y;
                 dx.z = h_pos.data[i].z - h_pos.data[k].z;
                 dx = box.minImage(dx);
-
                 Scalar rsq = dx.x*dx.x + dx.y*dx.y + dx.z*dx.z;
                 if (rsq > m_rcutsq) continue;
                 Scalar r = sqrt(rsq);
-
                 Scalar meanh  = Scalar(0.5)*(hi + hk);
                 Scalar dwdr   = this->m_skernel->dwijdr(meanh, r);
                 Scalar dwdr_r = (r > Scalar(1e-8)*meanh) ? dwdr/r : Scalar(0);
-
                 // $\delta r_i - \delta r_k$; ghost particles (k >= N_local) get $\delta r_k = 0$
                 Scalar3 ddr;
                 ddr.x = shift_vec[i].x - (k < N_local ? shift_vec[k].x : Scalar(0));
                 ddr.y = shift_vec[i].y - (k < N_local ? shift_vec[k].y : Scalar(0));
                 ddr.z = shift_vec[i].z - (k < N_local ? shift_vec[k].z : Scalar(0));
-
                 delta_rho += rhoi * Vk * (ddr.x*dwdr_r*dx.x +
                                           ddr.y*dwdr_r*dx.y +
                                           ddr.z*dwdr_r*dx.z);
                 }
-            h_density.data[i] += delta_rho;
+            delta_rho_vec[group_idx] = delta_rho;
             }
+        #pragma omp parallel for
+        for (unsigned int group_idx = 0; group_idx < fluid_size; group_idx++)
+            h_density.data[h_members_omp14.data[group_idx]] += delta_rho_vec[group_idx];
         } // end PASS 2
 
     } // ── end scope: read handles released ──────────────────────────────────────

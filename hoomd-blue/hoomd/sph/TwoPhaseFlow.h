@@ -634,7 +634,7 @@ class PYBIND11_EXPORT TwoPhaseFlow : public SPHBaseClass<KT_, SET1_>
          * \post Fluid particle positions updated by \f$\delta r_i\f$.
          * \post For DENSITYCONTINUITY: h_density corrected by ALE remapping term.
          */
-        void compute_particle_shift(uint64_t timestep);
+        virtual void compute_particle_shift(uint64_t timestep);
 
         /*! Helper function to apply Shepard density filter
         * \post Fluid particle densities are recomputed based on the Shepard renormalization

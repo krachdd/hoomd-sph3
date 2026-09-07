@@ -69,15 +69,20 @@ struct CSFGPUBuffers
     GPUArray<Scalar3>      fn_smooth; //!< smoothed fluid normals (N_total)
     GPUArray<Scalar3>      nhat;      //!< unit normals of reliable slots (N_total)
     GPUArray<unsigned int> rel;       //!< reliability flags (N_total)
+    GPUArray<Scalar3>      shift;     //!< particle shift vectors (N_total, ghosts zero)
+    GPUArray<Scalar>       drho;      //!< ALE density correction (N_total)
 
     CSFGPUBuffers(std::shared_ptr<const ExecutionConfiguration> exec_conf)
-        : fn_smooth(1, exec_conf), nhat(1, exec_conf), rel(1, exec_conf) { }
+        : fn_smooth(1, exec_conf), nhat(1, exec_conf), rel(1, exec_conf),
+          shift(1, exec_conf), drho(1, exec_conf) { }
 
     void ensure(unsigned int n)
         {
         if (fn_smooth.getNumElements() < n) fn_smooth.resize(n);
         if (nhat.getNumElements()      < n) nhat.resize(n);
         if (rel.getNumElements()       < n) rel.resize(n);
+        if (shift.getNumElements()     < n) shift.resize(n);
+        if (drho.getNumElements()      < n) drho.resize(n);
         }
     };
 
@@ -228,6 +233,77 @@ void gpu_csf_compute_surfaceforce(std::shared_ptr<ParticleData>          pdata,
             d_n_neigh.data, d_nlist.data, d_head_list.data, d_type_map.data, box, kp, cp, block_size);
         if (error_check) csf_check_cuda_error(exec_conf);
         }
+    }
+
+/*! GPU equivalent of TwoPhaseFlow::compute_particle_shift() (delta+-SPH,
+ *  Sun et al. 2017): pass 1 shift vectors, pass 2 ALE density correction
+ *  (DENSITYCONTINUITY, evaluated from the pre-shift densities), pass 3 apply
+ *  and wrap with the local box.
+ *  \pre aux3 holds ghost-synced fluid-fluid normals.
+ */
+template<SmoothingKernelType KT_>
+void gpu_csf_compute_particle_shift(std::shared_ptr<ParticleData>          pdata,
+                                    std::shared_ptr<nsearch::NeighborList> nlist,
+                                    std::shared_ptr<ParticleGroup>         fluidgroup,
+                                    const GPUArray<unsigned int>&          type_property_map,
+                                    const SPHKernelDevParams&              kp,
+                                    const SPHShiftParams&                  sp,
+                                    bool                                   density_continuity,
+                                    CSFGPUBuffers&                         buf,
+                                    unsigned int                           block_size,
+                                    std::shared_ptr<const ExecutionConfiguration> exec_conf)
+    {
+    const bool error_check = exec_conf->isCUDAErrorCheckingEnabled();
+    const BoxDim box       = pdata->getGlobalBox();
+    const BoxDim local_box = pdata->getBox();
+    const unsigned int N_total = pdata->getN() + pdata->getNGhosts();
+    const unsigned int group_size = fluidgroup->getNumMembers();
+    buf.ensure(N_total);
+
+    { // pass 1 + 2: read-only particle data
+    ArrayHandle<Scalar4> d_pos(pdata->getPositions(), access_location::device, access_mode::read);
+    ArrayHandle<Scalar4> d_vel(pdata->getVelocities(), access_location::device, access_mode::read);
+    ArrayHandle<Scalar>  d_density(pdata->getDensities(), access_location::device, access_mode::read);
+    ArrayHandle<Scalar>  d_h(pdata->getSlengths(), access_location::device, access_mode::read);
+    ArrayHandle<Scalar3> d_fn(pdata->getAuxiliaries3(), access_location::device, access_mode::read);
+    ArrayHandle<unsigned int> d_n_neigh(nlist->getNNeighArray(), access_location::device, access_mode::read);
+    ArrayHandle<unsigned int> d_nlist(nlist->getNListArray(), access_location::device, access_mode::read);
+    ArrayHandle<size_t>  d_head_list(nlist->getHeadList(), access_location::device, access_mode::read);
+    ArrayHandle<unsigned int> d_index(fluidgroup->getIndexArray(), access_location::device, access_mode::read);
+    ArrayHandle<unsigned int> d_type_map(type_property_map, access_location::device, access_mode::read);
+    ArrayHandle<Scalar3> d_shift(buf.shift, access_location::device, access_mode::overwrite);
+    ArrayHandle<Scalar>  d_drho(buf.drho, access_location::device, access_mode::overwrite);
+
+    hipMemset(d_shift.data, 0, sizeof(Scalar3) * buf.shift.getNumElements());
+
+    kernel::gpu_sph_2pf_shift_pass1<KT_>(
+        group_size, d_index.data, d_pos.data, d_vel.data, d_density.data, d_h.data, d_fn.data,
+        d_shift.data, d_n_neigh.data, d_nlist.data, d_head_list.data, d_type_map.data,
+        box, kp, sp, block_size);
+    if (error_check) csf_check_cuda_error(exec_conf);
+
+    if (density_continuity)
+        {
+        kernel::gpu_sph_2pf_shift_pass2<KT_>(
+            group_size, d_index.data, d_pos.data, d_vel.data, d_density.data, d_h.data,
+            d_shift.data, d_drho.data, d_n_neigh.data, d_nlist.data, d_head_list.data,
+            box, kp, block_size);
+        if (error_check) csf_check_cuda_error(exec_conf);
+        }
+    }
+
+    { // pass 3: apply
+    ArrayHandle<Scalar4> d_pos(pdata->getPositions(), access_location::device, access_mode::readwrite);
+    ArrayHandle<int3>    d_image(pdata->getImages(), access_location::device, access_mode::readwrite);
+    ArrayHandle<Scalar>  d_density(pdata->getDensities(), access_location::device, access_mode::readwrite);
+    ArrayHandle<unsigned int> d_index(fluidgroup->getIndexArray(), access_location::device, access_mode::read);
+    ArrayHandle<Scalar3> d_shift(buf.shift, access_location::device, access_mode::read);
+    ArrayHandle<Scalar>  d_drho(buf.drho, access_location::device, access_mode::read);
+    kernel::gpu_sph_2pf_shift_pass3(
+        group_size, d_index.data, d_pos.data, d_image.data, d_density.data, d_shift.data,
+        density_continuity ? d_drho.data : nullptr, local_box, block_size);
+    if (error_check) csf_check_cuda_error(exec_conf);
+    }
     }
 
 } // namespace sph
