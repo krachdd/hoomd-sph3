@@ -67,11 +67,15 @@ ap.add_argument("--out", type=str, default=None)
 ap.add_argument("--resA_mm", type=float, default=12.0, help="invader reservoir length [mm]")
 ap.add_argument("--resB_mm", type=float, default=12.6, help="defender reservoir length [mm]")
 ap.add_argument("--no-piston", dest="piston", action="store_false")
+ap.add_argument("--disorder", type=float, default=0.0,
+                help="cylinder-radius disorder: R_i = R*exp(u), u ~ U(-d, d) (0 = regular lattice)")
+ap.add_argument("--seed", type=int, default=1, help="RNG seed for the radius disorder")
 args = ap.parse_args()
 
 U_p, res = args.U_p, args.res
-out = args.out or (f"piston_domain_res{res}_init.gsd" if args.piston
-                   else f"bodyforce_domain_res{res}_init.gsd")
+dis_tag = f"_d{args.disorder:g}_s{args.seed}" if args.disorder > 0 else ""
+out = args.out or (f"piston_domain_res{res}{dis_tag}_init.gsd" if args.piston
+                   else f"bodyforce_domain_res{res}{dis_tag}_init.gsd")
 
 # ─── Geometry parameters (units of dx) ──────────────────────────────────────
 # The PHYSICAL domain is fixed; `res` sets the throat resolution in particles
@@ -127,12 +131,21 @@ for c in range(n_cols):
         centers.append((cx, cy))
 
 in_matrix = (x >= x_resA1) & (x < x_mat1)
-for cx, cy in centers:
+# Throat disorder (Lenormand-type heterogeneity): log-uniform radius
+# perturbation per cylinder, mean-preserving in log R. With d = 0 the
+# lattice is regular and every throat has the same entry/yield threshold.
+rng = np.random.default_rng(args.seed)
+radii = (R * np.exp(rng.uniform(-args.disorder, args.disorder, size=len(centers)))
+         if args.disorder > 0 else np.full(len(centers), R))
+for (cx, cy), Ri in zip(centers, radii):
     dxx = x - cx
     dyy = y - cy
     dyy -= Ly * np.round(dyy / Ly)                    # periodic y
-    grain = in_matrix & (dxx*dxx + dyy*dyy < R*R)
+    grain = in_matrix & (dxx*dxx + dyy*dyy < Ri*Ri)
     typeid[grain] = 2                                 # S
+if args.disorder > 0:
+    print(f"  radius disorder d={args.disorder:g} seed={args.seed}: R in [{radii.min()*1e3:.3f}, {radii.max()*1e3:.3f}] mm, "
+          f"min throat {(a - 2*radii.max())*1e3:.3f} mm ({(a - 2*radii.max())/dx:.1f} dx)")
 
 nA = int((typeid == 0).sum()); nB = int((typeid == 1).sum())
 nS = int((typeid == 2).sum()); nP = int((typeid == 3).sum())

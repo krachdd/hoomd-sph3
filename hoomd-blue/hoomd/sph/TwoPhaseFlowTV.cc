@@ -640,6 +640,15 @@ void TwoPhaseFlowTV<KT_, SET1_, SET2_>::computeForces(uint64_t timestep)
     this->update_ghost_aux123(timestep);
 #endif
 
+    // Extra normal-relaxation sweeps (activateNormalRelaxation), see TwoPhaseFlow::computeForces
+    for (unsigned int relax_r = 1; relax_r < this->m_normal_relax_iters; relax_r++)
+        {
+        this->relax_normals_once(timestep);
+#ifdef ENABLE_MPI
+        this->update_ghost_aux123(timestep);
+#endif
+        }
+
     // $\delta^+$-SPH particle shifting (Sun et al. 2017).
     // Uses aux3 (fluid-fluid normals) which are correctly in place here.
     if ( this->m_particle_shifting )

@@ -116,29 +116,29 @@ inline SPHCSFParams make_csfparams(ColorGradientMethod cg_method, Scalar omega, 
     return cp;
     }
 
-/*! GPU equivalent of TwoPhaseFlow::compute_colorgradients():
- *  aux2 = solid normals, aux3 = smoothed + wall-blended fluid normals.
+/*! GPU equivalent of TwoPhaseFlow::relax_normals_once(): one Shepard
+ *  smoothing pass of the fluid normals (aux3) + prescribed-contact-angle
+ *  wall blend.  \pre aux2/aux3 populated for this timestep.
  */
 template<SmoothingKernelType KT_>
-void gpu_csf_compute_colorgradients(std::shared_ptr<ParticleData>          pdata,
-                                    std::shared_ptr<nsearch::NeighborList> nlist,
-                                    std::shared_ptr<ParticleGroup>         fluidgroup,
-                                    const GPUArray<unsigned int>&          type_property_map,
-                                    const SPHKernelDevParams&              kp,
-                                    const SPHCSFParams&                    cp,
-                                    CSFGPUBuffers&                         buf,
-                                    unsigned int                           block_size,
-                                    std::shared_ptr<const ExecutionConfiguration> exec_conf)
+void gpu_csf_relax_normals_once(std::shared_ptr<ParticleData>          pdata,
+                                std::shared_ptr<nsearch::NeighborList> nlist,
+                                std::shared_ptr<ParticleGroup>         fluidgroup,
+                                const GPUArray<unsigned int>&          type_property_map,
+                                const SPHKernelDevParams&              kp,
+                                const SPHCSFParams&                    cp,
+                                CSFGPUBuffers&                         buf,
+                                unsigned int                           block_size,
+                                std::shared_ptr<const ExecutionConfiguration> exec_conf)
     {
     const bool error_check = exec_conf->isCUDAErrorCheckingEnabled();
     const BoxDim box = pdata->getGlobalBox();
-    const unsigned int N_local = pdata->getN();
-    const unsigned int N_total = N_local + pdata->getNGhosts();
+    const unsigned int N_total = pdata->getN() + pdata->getNGhosts();
     const unsigned int group_size = fluidgroup->getNumMembers();
     buf.ensure(N_total);
 
-    ArrayHandle<Scalar3> d_sn(pdata->getAuxiliaries2(), access_location::device, access_mode::overwrite);
-    ArrayHandle<Scalar3> d_fn(pdata->getAuxiliaries3(), access_location::device, access_mode::overwrite);
+    ArrayHandle<Scalar3> d_sn(pdata->getAuxiliaries2(), access_location::device, access_mode::read);
+    ArrayHandle<Scalar3> d_fn(pdata->getAuxiliaries3(), access_location::device, access_mode::readwrite);
     ArrayHandle<Scalar4> d_pos(pdata->getPositions(), access_location::device, access_mode::read);
     ArrayHandle<Scalar4> d_vel(pdata->getVelocities(), access_location::device, access_mode::read);
     ArrayHandle<Scalar>  d_density(pdata->getDensities(), access_location::device, access_mode::read);
@@ -149,15 +149,6 @@ void gpu_csf_compute_colorgradients(std::shared_ptr<ParticleData>          pdata
     ArrayHandle<unsigned int> d_index(fluidgroup->getIndexArray(), access_location::device, access_mode::read);
     ArrayHandle<unsigned int> d_type_map(type_property_map, access_location::device, access_mode::read);
     ArrayHandle<Scalar3> d_fn_smooth(buf.fn_smooth, access_location::device, access_mode::overwrite);
-
-    // zero (incl. ghost slots, filled later by the ghost exchange)
-    hipMemset(d_sn.data, 0, sizeof(Scalar3) * pdata->getAuxiliaries2().getNumElements());
-    hipMemset(d_fn.data, 0, sizeof(Scalar3) * pdata->getAuxiliaries3().getNumElements());
-
-    kernel::gpu_sph_2pf_colorgradient_raw<KT_>(
-        N_local, d_pos.data, d_vel.data, d_density.data, d_h.data, d_sn.data, d_fn.data,
-        d_n_neigh.data, d_nlist.data, d_head_list.data, d_type_map.data, box, kp, cp, block_size);
-    if (error_check) csf_check_cuda_error(exec_conf);
 
     kernel::gpu_sph_2pf_normal_smooth<KT_>(
         group_size, d_index.data, d_pos.data, d_vel.data, d_density.data, d_h.data,
@@ -176,6 +167,51 @@ void gpu_csf_compute_colorgradients(std::shared_ptr<ParticleData>          pdata
             d_n_neigh.data, d_nlist.data, d_head_list.data, d_type_map.data, box, kp, cp, block_size);
         if (error_check) csf_check_cuda_error(exec_conf);
         }
+    }
+
+/*! GPU equivalent of TwoPhaseFlow::compute_colorgradients(): raw colour
+ *  gradients for all local particles (aux2 = solid normals, aux3 = fluid
+ *  normals) followed by one relaxation sweep.
+ */
+template<SmoothingKernelType KT_>
+void gpu_csf_compute_colorgradients(std::shared_ptr<ParticleData>          pdata,
+                                    std::shared_ptr<nsearch::NeighborList> nlist,
+                                    std::shared_ptr<ParticleGroup>         fluidgroup,
+                                    const GPUArray<unsigned int>&          type_property_map,
+                                    const SPHKernelDevParams&              kp,
+                                    const SPHCSFParams&                    cp,
+                                    CSFGPUBuffers&                         buf,
+                                    unsigned int                           block_size,
+                                    std::shared_ptr<const ExecutionConfiguration> exec_conf)
+    {
+    const bool error_check = exec_conf->isCUDAErrorCheckingEnabled();
+    const BoxDim box = pdata->getGlobalBox();
+    const unsigned int N_local = pdata->getN();
+
+    { // raw gradients
+    ArrayHandle<Scalar3> d_sn(pdata->getAuxiliaries2(), access_location::device, access_mode::overwrite);
+    ArrayHandle<Scalar3> d_fn(pdata->getAuxiliaries3(), access_location::device, access_mode::overwrite);
+    ArrayHandle<Scalar4> d_pos(pdata->getPositions(), access_location::device, access_mode::read);
+    ArrayHandle<Scalar4> d_vel(pdata->getVelocities(), access_location::device, access_mode::read);
+    ArrayHandle<Scalar>  d_density(pdata->getDensities(), access_location::device, access_mode::read);
+    ArrayHandle<Scalar>  d_h(pdata->getSlengths(), access_location::device, access_mode::read);
+    ArrayHandle<unsigned int> d_n_neigh(nlist->getNNeighArray(), access_location::device, access_mode::read);
+    ArrayHandle<unsigned int> d_nlist(nlist->getNListArray(), access_location::device, access_mode::read);
+    ArrayHandle<size_t>  d_head_list(nlist->getHeadList(), access_location::device, access_mode::read);
+    ArrayHandle<unsigned int> d_type_map(type_property_map, access_location::device, access_mode::read);
+
+    // zero (incl. ghost slots, filled later by the ghost exchange)
+    hipMemset(d_sn.data, 0, sizeof(Scalar3) * pdata->getAuxiliaries2().getNumElements());
+    hipMemset(d_fn.data, 0, sizeof(Scalar3) * pdata->getAuxiliaries3().getNumElements());
+
+    kernel::gpu_sph_2pf_colorgradient_raw<KT_>(
+        N_local, d_pos.data, d_vel.data, d_density.data, d_h.data, d_sn.data, d_fn.data,
+        d_n_neigh.data, d_nlist.data, d_head_list.data, d_type_map.data, box, kp, cp, block_size);
+    if (error_check) csf_check_cuda_error(exec_conf);
+    }
+
+    gpu_csf_relax_normals_once<KT_>(pdata, nlist, fluidgroup, type_property_map, kp, cp, buf,
+                                    block_size, exec_conf);
     }
 
 /*! GPU equivalent of TwoPhaseFlow::compute_surfaceforce(): aux4 = surface
@@ -304,6 +340,39 @@ void gpu_csf_compute_particle_shift(std::shared_ptr<ParticleData>          pdata
         density_continuity ? d_drho.data : nullptr, local_box, block_size);
     if (error_check) csf_check_cuda_error(exec_conf);
     }
+    }
+
+/*! GPU equivalent of TwoPhaseFlow::compute_strain_rate(): per-particle
+ *  gamma_dot into the energy array for the fluid group.
+ */
+template<SmoothingKernelType KT_>
+void gpu_csf_compute_strain_rate(std::shared_ptr<ParticleData>          pdata,
+                                 std::shared_ptr<nsearch::NeighborList> nlist,
+                                 std::shared_ptr<ParticleGroup>         fluidgroup,
+                                 const GPUArray<unsigned int>&          type_property_map,
+                                 const SPHKernelDevParams&              kp,
+                                 unsigned int                           block_size,
+                                 std::shared_ptr<const ExecutionConfiguration> exec_conf)
+    {
+    const bool error_check = exec_conf->isCUDAErrorCheckingEnabled();
+    const BoxDim box = pdata->getGlobalBox();
+    const unsigned int group_size = fluidgroup->getNumMembers();
+    ArrayHandle<Scalar>  d_energy(pdata->getEnergies(), access_location::device, access_mode::readwrite);
+    ArrayHandle<Scalar4> d_pos(pdata->getPositions(), access_location::device, access_mode::read);
+    ArrayHandle<Scalar4> d_vel(pdata->getVelocities(), access_location::device, access_mode::read);
+    ArrayHandle<Scalar3> d_vf(pdata->getAuxiliaries1(), access_location::device, access_mode::read);
+    ArrayHandle<Scalar>  d_density(pdata->getDensities(), access_location::device, access_mode::read);
+    ArrayHandle<Scalar>  d_h(pdata->getSlengths(), access_location::device, access_mode::read);
+    ArrayHandle<unsigned int> d_n_neigh(nlist->getNNeighArray(), access_location::device, access_mode::read);
+    ArrayHandle<unsigned int> d_nlist(nlist->getNListArray(), access_location::device, access_mode::read);
+    ArrayHandle<size_t>  d_head_list(nlist->getHeadList(), access_location::device, access_mode::read);
+    ArrayHandle<unsigned int> d_index(fluidgroup->getIndexArray(), access_location::device, access_mode::read);
+    ArrayHandle<unsigned int> d_type_map(type_property_map, access_location::device, access_mode::read);
+    kernel::gpu_sph_2pf_strain_rate<KT_>(
+        group_size, d_index.data, d_pos.data, d_vel.data, d_vf.data, d_density.data, d_h.data,
+        d_energy.data, d_n_neigh.data, d_nlist.data, d_head_list.data, d_type_map.data,
+        box, kp, block_size);
+    if (error_check) csf_check_cuda_error(exec_conf);
     }
 
 } // namespace sph

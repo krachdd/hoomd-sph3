@@ -815,6 +815,123 @@ hipError_t gpu_sph_2pf_shift_pass3(
     return hipSuccess;
     }
 
+
+// =========================================================================
+// Per-particle shear rate gamma_dot = sqrt(2 D:D) -- mirrors
+// TwoPhaseFlow::compute_strain_rate(): L-matrix renormalized velocity
+// gradient over all neighbors (solids via their fictitious velocity),
+// stored in the energy array.
+// =========================================================================
+
+template<SmoothingKernelType KT_>
+__global__ void gpu_sph_2pf_strain_rate_kernel(
+    unsigned int          group_size,
+    const unsigned int*   d_index_array,
+    const Scalar4*        d_pos,
+    const Scalar4*        d_vel,
+    const Scalar3*        d_vf,
+    const Scalar*         d_density,
+    const Scalar*         d_h,
+    Scalar*               d_energy,
+    const unsigned int*   d_n_neigh,
+    const unsigned int*   d_nlist,
+    const size_t*         d_head_list,
+    const unsigned int*   d_type_property_map,
+    BoxDim                box,
+    SPHKernelDevParams    kp)
+    {
+    unsigned int group_idx = blockIdx.x * blockDim.x + threadIdx.x;
+    if (group_idx >= group_size) return;
+    unsigned int i = d_index_array[group_idx];
+
+    Scalar4 posi = d_pos[i]; Scalar4 veli = d_vel[i];
+    Scalar3 pi = make_scalar3(posi.x, posi.y, posi.z);
+    Scalar3 vi = make_scalar3(veli.x, veli.y, veli.z);
+    Scalar  hi = kp.const_slength ? kp.ch : d_h[i];
+
+    Scalar A[9] = {0,0,0, 0,0,0, 0,0,0};
+    Scalar bx[3] = {0,0,0}, by[3] = {0,0,0}, bz[3] = {0,0,0};
+
+    size_t       myHead = d_head_list[i];
+    unsigned int size   = d_n_neigh[i];
+    for (unsigned int j = 0; j < size; j++)
+        {
+        unsigned int k = d_nlist[myHead + j];
+        Scalar4 velk = d_vel[k];
+        Scalar mk = velk.w;
+        if (mk < Scalar(0)) continue;               // solid marked for removal
+        Scalar4 posk = d_pos[k];
+        Scalar3 dx  = box.minImage(make_scalar3(pi.x - posk.x, pi.y - posk.y, pi.z - posk.z));
+        Scalar  rsq = dot(dx, dx);
+        if (kp.const_slength && rsq > kp.rcutsq) continue;
+        Scalar3 vj;
+        if (sph_checksolid(d_type_property_map, posk.w))
+            { Scalar3 vfk = d_vf[k]; vj = make_scalar3(vfk.x, vfk.y, vfk.z); }
+        else
+            vj = make_scalar3(velk.x, velk.y, velk.z);
+        Scalar r      = sqrt(rsq);
+        Scalar meanh  = kp.const_slength ? kp.ch : Scalar(0.5) * (hi + d_h[k]);
+        Scalar dwdr   = sph_dwijdr<KT_>(kp.alpha, meanh, r);
+        Scalar dwdr_r = (r > Scalar(1e-8) * meanh) ? dwdr / r : Scalar(0);
+        Scalar Vk = mk / d_density[k];
+        Scalar3 gW = make_scalar3(dwdr_r * dx.x, dwdr_r * dx.y, dwdr_r * dx.z);
+        Scalar c = -Vk;
+        A[0] += c*gW.x*dx.x; A[1] += c*gW.x*dx.y; A[2] += c*gW.x*dx.z;
+        A[3] += c*gW.y*dx.x; A[4] += c*gW.y*dx.y; A[5] += c*gW.y*dx.z;
+        A[6] += c*gW.z*dx.x; A[7] += c*gW.z*dx.y; A[8] += c*gW.z*dx.z;
+        Scalar3 dv = make_scalar3(vj.x - vi.x, vj.y - vi.y, vj.z - vi.z);
+        bx[0] += Vk*dv.x*gW.x; bx[1] += Vk*dv.x*gW.y; bx[2] += Vk*dv.x*gW.z;
+        by[0] += Vk*dv.y*gW.x; by[1] += Vk*dv.y*gW.y; by[2] += Vk*dv.y*gW.z;
+        bz[0] += Vk*dv.z*gW.x; bz[1] += Vk*dv.z*gW.y; bz[2] += Vk*dv.z*gW.z;
+        }
+
+    Scalar det = A[0]*(A[4]*A[8]-A[5]*A[7]) - A[1]*(A[3]*A[8]-A[5]*A[6]) + A[2]*(A[3]*A[7]-A[4]*A[6]);
+    Scalar M[9];
+    if (fabs(det) > Scalar(0.01))
+        {
+        Scalar invdet = Scalar(1.0) / det;
+        Scalar Ainv[9];
+        Ainv[0] = invdet*(A[4]*A[8]-A[5]*A[7]); Ainv[1] = invdet*(A[2]*A[7]-A[1]*A[8]); Ainv[2] = invdet*(A[1]*A[5]-A[2]*A[4]);
+        Ainv[3] = invdet*(A[5]*A[6]-A[3]*A[8]); Ainv[4] = invdet*(A[0]*A[8]-A[2]*A[6]); Ainv[5] = invdet*(A[2]*A[3]-A[0]*A[5]);
+        Ainv[6] = invdet*(A[3]*A[7]-A[4]*A[6]); Ainv[7] = invdet*(A[1]*A[6]-A[0]*A[7]); Ainv[8] = invdet*(A[0]*A[4]-A[1]*A[3]);
+        for (int a = 0; a < 3; a++)
+            {
+            const Scalar* b = (a == 0) ? bx : ((a == 1) ? by : bz);
+            M[3*a+0] = Ainv[0]*b[0] + Ainv[1]*b[1] + Ainv[2]*b[2];
+            M[3*a+1] = Ainv[3]*b[0] + Ainv[4]*b[1] + Ainv[5]*b[2];
+            M[3*a+2] = Ainv[6]*b[0] + Ainv[7]*b[1] + Ainv[8]*b[2];
+            }
+        }
+    else
+        {
+        M[0]=bx[0]; M[1]=bx[1]; M[2]=bx[2];
+        M[3]=by[0]; M[4]=by[1]; M[5]=by[2];
+        M[6]=bz[0]; M[7]=bz[1]; M[8]=bz[2];
+        }
+    Scalar Dxx = M[0], Dyy = M[4], Dzz = M[8];
+    Scalar Dxy = Scalar(0.5)*(M[1]+M[3]), Dxz = Scalar(0.5)*(M[2]+M[6]), Dyz = Scalar(0.5)*(M[5]+M[7]);
+    Scalar DD = Dxx*Dxx + Dyy*Dyy + Dzz*Dzz + Scalar(2)*(Dxy*Dxy + Dxz*Dxz + Dyz*Dyz);
+    d_energy[i] = sqrt(Scalar(2)*DD);
+    }
+
+template<SmoothingKernelType KT_>
+hipError_t gpu_sph_2pf_strain_rate(
+    unsigned int group_size, const unsigned int* d_index_array, const Scalar4* d_pos,
+    const Scalar4* d_vel, const Scalar3* d_vf, const Scalar* d_density, const Scalar* d_h,
+    Scalar* d_energy, const unsigned int* d_n_neigh, const unsigned int* d_nlist,
+    const size_t* d_head_list, const unsigned int* d_type_property_map, BoxDim box,
+    SPHKernelDevParams kp, unsigned int block_size)
+    {
+    if (group_size == 0) return hipSuccess;
+    block_size = sph_clamp_block_size((const void*)(gpu_sph_2pf_strain_rate_kernel<KT_>), block_size);
+    dim3 grid((group_size + block_size - 1) / block_size, 1, 1);
+    dim3 threads(block_size, 1, 1);
+    hipLaunchKernelGGL((gpu_sph_2pf_strain_rate_kernel<KT_>), grid, threads, 0, 0,
+                       group_size, d_index_array, d_pos, d_vel, d_vf, d_density, d_h, d_energy,
+                       d_n_neigh, d_nlist, d_head_list, d_type_property_map, box, kp);
+    return hipSuccess;
+    }
+
 // =========================================================================
 // Explicit instantiations (kernel type only)
 // =========================================================================
@@ -845,6 +962,10 @@ hipError_t gpu_sph_2pf_shift_pass3(
         unsigned int, const unsigned int*, const Scalar4*, const Scalar4*, const Scalar*, \
         const Scalar*, const Scalar3*, Scalar3*, const unsigned int*, const unsigned int*, \
         const size_t*, const unsigned int*, BoxDim, SPHKernelDevParams, SPHShiftParams, unsigned int); \
+    template hipError_t gpu_sph_2pf_strain_rate<KT>( \
+        unsigned int, const unsigned int*, const Scalar4*, const Scalar4*, const Scalar3*, \
+        const Scalar*, const Scalar*, Scalar*, const unsigned int*, const unsigned int*, \
+        const size_t*, const unsigned int*, BoxDim, SPHKernelDevParams, unsigned int); \
     template hipError_t gpu_sph_2pf_shift_pass2<KT>( \
         unsigned int, const unsigned int*, const Scalar4*, const Scalar4*, const Scalar*, \
         const Scalar*, const Scalar3*, Scalar*, const unsigned int*, const unsigned int*, \

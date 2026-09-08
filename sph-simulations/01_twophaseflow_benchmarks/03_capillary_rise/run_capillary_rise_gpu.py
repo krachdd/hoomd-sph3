@@ -128,8 +128,14 @@ theta_rad = np.radians(theta_deg)
 # ─── File names ───────────────────────────────────────────────────────────────
 dt_string = datetime.now().strftime("%Y-%m-%d-%H-%M-%S")
 base      = filename.replace('_init.gsd', '')
-logname   = f'{base}_case{case_id}_theta{int(theta_deg):03d}_gpu_run.log'
-dumpname  = f'{base}_case{case_id}_theta{int(theta_deg):03d}_gpu_run.gsd'
+_tag = ('_gpu_K' + os.environ.get('SPH_NORMAL_RELAX_ITERS', '1')
+        + ('_cip' if os.environ.get('SPH_CIP', '0') == '1' else '')
+        + ('_noav' if os.environ.get('SPH_AV', '1') == '0' else '')
+        + (('_a' + os.environ['SPH_AV_ALPHA']) if 'SPH_AV_ALPHA' in os.environ else '')
+        + (('_cf' + os.environ['SPH_CFACTOR']) if 'SPH_CFACTOR' in os.environ else '')
+        + '_n%d_run' % steps)
+logname   = f'{base}_case{case_id}_theta{int(theta_deg):03d}' + _tag + '.log'
+dumpname  = f'{base}_case{case_id}_theta{int(theta_deg):03d}' + _tag + '.gsd'
 
 sim.create_state_from_gsd(filename=filename)
 
@@ -198,10 +204,17 @@ model.sigma12          = sigma
 model.omega            = theta_deg      # contact angle [°] at solid–liquid interface
 model.gy               = gy             # gravity in −y direction
 model.damp             = 2000           # body-force ramp steps (does not affect steady state)
-model.artificialviscosity = True
-model.alpha            = 0.2
+# SPH_AV=0 switches Monaghan artificial viscosity off (creeping flow: the
+# physical viscosity is sufficient; AV adds ~rho*alpha*c*h/8 ~ 0.2 Pa s here).
+model.artificialviscosity = os.environ.get('SPH_AV', '1') != '0'
+model.alpha            = float(os.environ.get('SPH_AV_ALPHA', '0.2'))   # Monaghan AV linear coefficient
 model.beta             = 0.0
 model.densitydiffusion = False
+# Normal-relaxation sweeps per step (curvature bottleneck study); K=1 = original.
+normal_relax_iters = int(os.environ.get('SPH_NORMAL_RELAX_ITERS', '1'))
+# Consistent interface pressure (Hu & Adams 2009) on cross-phase pairs.
+use_cip = os.environ.get('SPH_CIP', '0') == '1'
+model.consistent_interface_pressure = use_cip
 
 # ─── Speed of sound & timestep ───────────────────────────────────────────────
 maximum_smoothing_length = sph_helper.set_max_sl(sim, device, model)
@@ -216,8 +229,10 @@ if device.communicator.rank == 0:
     print(f'  Phase W speed of sound: {c1:.4f} m/s  ({cond1})')
     print(f'  Phase N speed of sound: {c2:.4f} m/s  ({cond2})')
 
+cfactor_used = float(os.environ.get('SPH_CFACTOR', '10.0'))
 sph_helper.update_min_c0_tpf(device, model, c1, c2,
-                              mode='plain', lref=R_cap, uref=U_ref, cfactor=10.0)
+                              mode='plain', lref=R_cap, uref=U_ref,
+                              cfactor=cfactor_used)   # sound-speed safety factor
 
 dt, dt_cond = model.compute_dt(
     LREF=R_cap, UREF=U_ref, DX=dx, DRHO=drho,
@@ -245,6 +260,13 @@ integrator.methods.append(vvbW)
 integrator.methods.append(vvbN)
 integrator.forces.append(model)
 sim.operations.integrator = integrator
+if normal_relax_iters > 1:
+    sim.run(0)                                   # attach, then configure the C++ model
+    model.activateNormalRelaxation(normal_relax_iters)
+    if device.communicator.rank == 0:
+        print(f'  Normal relaxation: {normal_relax_iters} sweeps per step')
+if use_cip and device.communicator.rank == 0:
+    print('  Consistent interface pressure: ON')
 
 # ─── Output ──────────────────────────────────────────────────────────────────
 gsd_period = max(1, steps // 200)
@@ -342,9 +364,9 @@ if device.communicator.rank == 0:
         write_header = not os.path.isfile(summary_file)
         with open(summary_file, 'a') as sf:
             if write_header:
-                sf.write('# case_id  theta_deg  h_Jurin[m]  h_meas[m]  err_pct  sigma  mu1\n')
+                sf.write('# case_id  theta_deg  h_Jurin[m]  h_meas[m]  err_pct  sigma  mu1  K_relax  cip  steps  av  alpha  cfactor\n')
             sf.write(f'{case_id:8d}  {theta_deg:9.1f}  {h_Jurin:10.4e}  '
-                     f'{h_meas:10.4e}  {rel_err:8.2f}  {sigma:6.4f}  {mu1:.4f}\n')
+                     f'{h_meas:10.4e}  {rel_err:8.2f}  {sigma:6.4f}  {mu1:.4f}  {normal_relax_iters:d}  {int(use_cip):d}  {steps:d}  {int(model.artificialviscosity):d}  {model.alpha:g}  {cfactor_used:g}\n')
         print(f'  Summary appended to: {summary_file}')
     else:
         print(f'  WARNING: too few W particles inside ({n_W_inside}) or '

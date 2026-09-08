@@ -2058,6 +2058,15 @@ class TwoPhaseFlow(SPHModel):
     def deactivateShepardRenormalization(self):
         self._cpp_obj.deactivateShepardRenormalization()
 
+    def activateNormalRelaxation(self, iters=5):
+        """Extra Shepard-smoothing + contact-angle wall-blend sweeps of the
+        interface normal per timestep (iters >= 1; 1 = original behavior)."""
+        self.normal_relax_iters = iters.item() if isinstance(iters, np.generic) else iters
+        self._cpp_obj.activateNormalRelaxation(int(iters))
+
+    def deactivateNormalRelaxation(self):
+        self._cpp_obj.deactivateNormalRelaxation()
+
     def computeSolidForces(self):
         self._cpp_obj.computeSolidForces()
 

@@ -396,6 +396,23 @@ class PYBIND11_EXPORT TwoPhaseFlow : public SPHBaseClass<KT_, SET1_>
          */
         void activateShepardRenormalization(unsigned int shepardfreq);
 
+        /*! Do extra Shepard-smoothing + wall-blend sweeps of the fluid-fluid
+         * interface normal (aux3) within each timestep, before curvature and
+         * force are computed. A single sweep per step propagates the wall's
+         * prescribed-contact-angle condition only about one kernel radius per
+         * step, so the interior curvature of a confined meniscus builds up
+         * far too slowly; extra sweeps reuse the step's neighbor list.
+         * \param iters Total number of relaxation sweeps per timestep
+         *              (>= 1; 1 reproduces the original single-pass behavior)
+         */
+        void activateNormalRelaxation(unsigned int iters);
+
+        //! Back to the original single-pass-per-timestep behavior
+        void deactivateNormalRelaxation()
+            {
+            m_normal_relax_iters = 1;
+            }
+
         /*! Turn Shepard type density reinitialization off.
          */
         void deactivateShepardRenormalization()
@@ -539,6 +556,7 @@ class PYBIND11_EXPORT TwoPhaseFlow : public SPHBaseClass<KT_, SET1_>
         Scalar m_riemann_beta; //!< Riemann dissipation: scaling coefficient \f$\beta_R\f$ (Zhang et al. 2017)
         Scalar m_ddiff; //!< Diffusion coefficient for Molteni type density diffusion
         unsigned int m_shepardfreq; //!< Time step frequency for Shepard reinitialization
+        unsigned int m_normal_relax_iters; //!< Normal smoothing+wall-blend sweeps per timestep (default 1)
 
         // Non-Newtonian rheology for fluid 1
         NonNewtonianModel m_nn_model1;
@@ -619,7 +637,7 @@ class PYBIND11_EXPORT TwoPhaseFlow : public SPHBaseClass<KT_, SET1_>
          * \pre Fictitious solid velocities (aux1, including ghosts) up-to-date
          * \post gamma_dot of all fluid particles stored in the energy array
          */
-        void compute_strain_rate(uint64_t timestep);
+        virtual void compute_strain_rate(uint64_t timestep);
 
         /*! Helper function to compute particle concentration gradient for Fickian shifting
          * within the CSF computation
@@ -646,6 +664,15 @@ class PYBIND11_EXPORT TwoPhaseFlow : public SPHBaseClass<KT_, SET1_>
         * \post Fluid color gradient vectors are stored in aux3
         */
         virtual void compute_colorgradients(uint64_t timestep);
+
+        /*! One Shepard-smoothing pass of the fluid-fluid normals (aux3) plus
+         * the prescribed-contact-angle wall blend. Called once from
+         * compute_colorgradients() and m_normal_relax_iters-1 more times from
+         * computeForces() (with a ghost re-sync of aux3 in between).
+         * \pre aux2 (solid normal) and aux3 (raw or previously relaxed fluid
+         *      normal) are populated for this timestep. \post aux3 updated.
+         */
+        virtual void relax_normals_once(uint64_t timestep);
 
         /*! Helper function to compute interfacial surface force field
         * \pre Normal vector field have been computed and communicated

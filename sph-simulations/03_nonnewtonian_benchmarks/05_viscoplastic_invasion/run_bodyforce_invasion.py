@@ -62,6 +62,11 @@ ap.add_argument("--vcap", type=float, default=1.0,
                 help="velocity limiter cap [m/s] (no U_p scale here)")
 ap.add_argument("--damp", type=int, default=1000,
                 help="body-force ramp-up steps (model.damp)")
+ap.add_argument("--mu_p", type=float, default=0.1,
+                help="defender plastic/base viscosity [Pa s] (viscosity ratio M = mu1/mu_p)")
+ap.add_argument("--dt_scale", type=float, default=1.0,
+                help="multiply the computed time step by this factor (<1 = safer); "
+                     "the step budget is divided by it so the physical time is unchanged")
 ap.add_argument("--m_gd", type=float, default=3.0,
                 help="regularization sharpness m*gdot_c; dt_Fourier ~ 1/(mu_p + tau_y*m)")
 args = ap.parse_args()
@@ -99,7 +104,7 @@ dx      = 2.0e-4 * 8.0 / res
 r_t     = (res / 2.0) * dx  # half of the res-dx throat = 0.8 mm at any res
 rho0    = 1000.0
 mu1     = 0.1               # invader
-mu_p    = 0.1               # defender plastic/base viscosity
+mu_p    = args.mu_p         # defender plastic/base viscosity (default 0.1 -> M = 1)
 sigma   = args.sigma
 omega   = 90.0
 drho    = 0.01
@@ -113,6 +118,10 @@ g_crit = tau_y / (rho0 * r_t) if tau_y > 0 else 0.0
 Y      = tau_y * r_t / sigma
 
 label    = f"tauy{tau_y:g}_g{gx:g}_sig{sigma:g}_m{args.m_gd:g}"
+if args.dt_scale != 1.0:
+    label += f"_dts{args.dt_scale:g}"
+if args.mu_p != 0.1:
+    label += f"_mup{args.mu_p:g}"
 if isinstance(device, hoomd.device.GPU):
     label += "_gpu"
 dumpname = initfile.replace("_init.gsd", f"_{label}_run.gsd")
@@ -169,8 +178,11 @@ if device.communicator.rank == 0:
 dt, dt_cond = model.compute_dt(
     LREF=sim.state.box.Lx, UREF=U_ref, DX=dx, DRHO=drho, H=max_sl,
     MU1=mu1, MU2=mu_max2, RHO01=rho0, RHO02=rho0, SIGMA12=sigma)
+if args.dt_scale != 1.0:
+    dt *= args.dt_scale
+    dt_cond = list(dt_cond) + [f"dt_scale={args.dt_scale:g}"]
 
-steps = args.steps
+steps = int(np.ceil(args.steps / args.dt_scale))   # same physical time budget
 if device.communicator.rank == 0:
     print(f"   dt={dt:.3e} s ({dt_cond})  steps={steps}  t_sim={steps*dt:.4f} s")
 

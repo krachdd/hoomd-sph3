@@ -90,6 +90,7 @@ TwoPhaseFlow<KT_, SET1_, SET2_>::TwoPhaseFlow(std::shared_ptr<SystemDefinition> 
         m_avbeta = Scalar(0.0);
         m_ddiff = Scalar(0.0);
         m_shepardfreq = 1;
+        m_normal_relax_iters = 1;
 
         m_omega_adv = Scalar(180);
         m_omega_rec = Scalar(0);
@@ -205,6 +206,18 @@ void TwoPhaseFlow<KT_, SET1_, SET2_>::activateShepardRenormalization(unsigned in
             }
         m_shepard_renormalization = true;
         m_shepardfreq = shepardfreq;
+    }
+
+
+template<SmoothingKernelType KT_, StateEquationType SET1_, StateEquationType SET2_>
+void TwoPhaseFlow<KT_, SET1_, SET2_>::activateNormalRelaxation(unsigned int iters)
+    {
+    if (iters == 0)
+        {
+        this->m_exec_conf->msg->error() << "sph.models.TwoPhaseFlow: normal relaxation iteration count has to be a positive integer" << std::endl;
+        throw std::runtime_error("Error initializing TwoPhaseFlow.");
+        }
+    m_normal_relax_iters = iters;
     }
 
 
@@ -1428,6 +1441,8 @@ void TwoPhaseFlow<KT_, SET1_, SET2_>::compute_colorgradients(uint64_t timestep)
     {
     this->m_exec_conf->msg->notice(7) << "Computing TwoPhaseFlow::Normals/ColorGradient" << std::endl;
 
+    { // raw-gradient scope: all handles are released before relax_normals_once()
+      // re-acquires aux2/aux3 (GPUArray allows one live handle per array)
     // Grab handles for particle and neighbor data
     ArrayHandle<Scalar3> h_sn(this->m_pdata->getAuxiliaries2(), access_location::host,access_mode::readwrite);
     ArrayHandle<Scalar3> h_fn(this->m_pdata->getAuxiliaries3(), access_location::host,access_mode::readwrite);
@@ -1609,6 +1624,32 @@ void TwoPhaseFlow<KT_, SET1_, SET2_>::compute_colorgradients(uint64_t timestep)
             }
 
         } // End of particle loop
+    } // end raw-gradient scope
+
+    // Smooth the raw gradients and apply the wall blend once; extra sweeps
+    // (activateNormalRelaxation) are issued by computeForces().
+    relax_normals_once(timestep);
+    } // End compute colorgradients
+
+
+/*! One Shepard-smoothing pass of the fluid-fluid normals + wall blend
+ */
+template<SmoothingKernelType KT_, StateEquationType SET1_, StateEquationType SET2_>
+void TwoPhaseFlow<KT_, SET1_, SET2_>::relax_normals_once(uint64_t timestep)
+    {
+    this->m_exec_conf->msg->notice(7) << "Computing TwoPhaseFlow::Normal relaxation sweep" << std::endl;
+
+    ArrayHandle<Scalar3> h_sn(this->m_pdata->getAuxiliaries2(), access_location::host,access_mode::read);
+    ArrayHandle<Scalar3> h_fn(this->m_pdata->getAuxiliaries3(), access_location::host,access_mode::readwrite);
+    ArrayHandle<Scalar4> h_pos(this->m_pdata->getPositions(), access_location::host, access_mode::read);
+    ArrayHandle<Scalar>  h_density(this->m_pdata->getDensities(), access_location::host, access_mode::read);
+    ArrayHandle<Scalar>  h_h(this->m_pdata->getSlengths(), access_location::host, access_mode::read);
+    ArrayHandle<Scalar4> h_velocity(this->m_pdata->getVelocities(), access_location::host, access_mode::read);
+    ArrayHandle<unsigned int> h_n_neigh(this->m_nlist->getNNeighArray(), access_location::host, access_mode::read);
+    ArrayHandle<unsigned int> h_nlist(this->m_nlist->getNListArray(), access_location::host, access_mode::read);
+    ArrayHandle<size_t> h_head_list(this->m_nlist->getHeadList(), access_location::host, access_mode::read);
+    ArrayHandle<unsigned int> h_type_property_map(this->m_type_property_map, access_location::host, access_mode::read);
+    const BoxDim& box = this->m_pdata->getGlobalBox();
 
     // Normal smoothing pass (Adami et al. 2010):
     // Smooth raw color gradients by Shepard-renormalized weighted average of neighbor normals.
@@ -1789,7 +1830,7 @@ void TwoPhaseFlow<KT_, SET1_, SET2_>::compute_colorgradients(uint64_t timestep)
             }
         }
 
-    } // End compute colorgradients
+    } // End relax_normals_once
 
 
 
@@ -2443,6 +2484,17 @@ void TwoPhaseFlow<KT_, SET1_, SET2_>::computeForces(uint64_t timestep)
     update_ghost_aux123(timestep);
 #endif
 
+    // Extra normal-relaxation sweeps (activateNormalRelaxation), default off
+    // (m_normal_relax_iters == 1). Each sweep needs its own ghost re-sync so
+    // particles near a decomposition boundary smooth against current data.
+    for (unsigned int relax_r = 1; relax_r < m_normal_relax_iters; relax_r++)
+        {
+        relax_normals_once(timestep);
+#ifdef ENABLE_MPI
+        update_ghost_aux123(timestep);
+#endif
+        }
+
     // $\delta^+$-SPH particle shifting (Sun et al. 2017).
     // Interface normals in aux3 must be up-to-date before calling.
     // No forced neighbor-list rebuild: shifts are far below the nlist buffer
@@ -2988,6 +3040,8 @@ void export_TwoPhaseFlow(pybind11::module& m, std::string name)
         .def("deactivateDensityDiffusion", &TwoPhaseFlow<KT_, SET1_, SET2_>::deactivateDensityDiffusion)
         .def("activateShepardRenormalization", &TwoPhaseFlow<KT_, SET1_, SET2_>::activateShepardRenormalization)
         .def("deactivateShepardRenormalization", &TwoPhaseFlow<KT_, SET1_, SET2_>::deactivateShepardRenormalization)
+        .def("activateNormalRelaxation", &TwoPhaseFlow<KT_, SET1_, SET2_>::activateNormalRelaxation)
+        .def("deactivateNormalRelaxation", &TwoPhaseFlow<KT_, SET1_, SET2_>::deactivateNormalRelaxation)
         .def("activateDensityReinitialization", &TwoPhaseFlow<KT_, SET1_, SET2_>::activateDensityReinitialization)
         .def("deactivateDensityReinitialization", &TwoPhaseFlow<KT_, SET1_, SET2_>::deactivateDensityReinitialization)
         .def("activateFickianShifting", &TwoPhaseFlow<KT_, SET1_, SET2_>::activateFickianShifting)

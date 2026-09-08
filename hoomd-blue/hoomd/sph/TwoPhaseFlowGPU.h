@@ -93,6 +93,8 @@ class PYBIND11_EXPORT TwoPhaseFlowGPU : public TwoPhaseFlow<KT_, SET1_, SET2_>
         virtual void compute_pressure(uint64_t timestep)       override;
         virtual void compute_noslip(uint64_t timestep)         override;
         virtual void compute_colorgradients(uint64_t timestep) override;
+        virtual void relax_normals_once(uint64_t timestep)    override;
+        virtual void compute_strain_rate(uint64_t timestep)   override;
         virtual void compute_surfaceforce(uint64_t timestep)   override;
         virtual void compute_particle_shift(uint64_t timestep) override;
         virtual void forcecomputation(uint64_t timestep)       override;

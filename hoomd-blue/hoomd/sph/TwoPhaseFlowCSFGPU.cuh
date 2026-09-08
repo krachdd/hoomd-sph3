@@ -83,6 +83,25 @@ struct SPHShiftParams
 namespace kernel
 {
 
+//! Per-particle frame-invariant shear rate gamma_dot = sqrt(2 D:D) -> d_energy (fluid group)
+template<SmoothingKernelType KT_>
+hipError_t gpu_sph_2pf_strain_rate(
+    unsigned int          group_size,
+    const unsigned int*   d_index_array,
+    const Scalar4*        d_pos,
+    const Scalar4*        d_vel,
+    const Scalar3*        d_vf,
+    const Scalar*         d_density,
+    const Scalar*         d_h,
+    Scalar*               d_energy,
+    const unsigned int*   d_n_neigh,
+    const unsigned int*   d_nlist,
+    const size_t*         d_head_list,
+    const unsigned int*   d_type_property_map,
+    BoxDim                box,
+    SPHKernelDevParams    kp,
+    unsigned int          block_size);
+
 //! Shift pass 1: shift vector of every fluid-group particle -> d_shift
 template<SmoothingKernelType KT_>
 hipError_t gpu_sph_2pf_shift_pass1(

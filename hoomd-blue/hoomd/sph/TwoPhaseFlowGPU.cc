@@ -398,6 +398,27 @@ void TwoPhaseFlowGPU<KT_, SET1_, SET2_>::compute_particle_shift(uint64_t timeste
         m_csf_buf, 256, this->m_exec_conf);
     }
 
+
+template<SmoothingKernelType KT_, StateEquationType SET1_, StateEquationType SET2_>
+void TwoPhaseFlowGPU<KT_, SET1_, SET2_>::relax_normals_once(uint64_t timestep)
+    {
+    this->m_exec_conf->msg->notice(7) << "TwoPhaseFlowGPU::relax_normals_once" << endl;
+    gpu_csf_relax_normals_once<KT_>(
+        this->m_pdata, this->m_nlist, this->m_fluidgroup, this->m_type_property_map,
+        make_kparams(), make_csfparams(this->m_colorgradient_method, this->m_omega, this->m_sigma12),
+        m_csf_buf, 256, this->m_exec_conf);
+    }
+
+
+template<SmoothingKernelType KT_, StateEquationType SET1_, StateEquationType SET2_>
+void TwoPhaseFlowGPU<KT_, SET1_, SET2_>::compute_strain_rate(uint64_t timestep)
+    {
+    this->m_exec_conf->msg->notice(7) << "TwoPhaseFlowGPU::compute_strain_rate" << endl;
+    gpu_csf_compute_strain_rate<KT_>(
+        this->m_pdata, this->m_nlist, this->m_fluidgroup, this->m_type_property_map,
+        make_kparams(), 256, this->m_exec_conf);
+    }
+
 // =========================================================================
 // forcecomputation — two-phase pressure + viscosity + surface force
 // =========================================================================
