@@ -1,36 +1,34 @@
-"""
-Copyright (c) 2025-2026 David Krach, Daniel Rostan.
-All rights reserved.
+# Copyright (c) 2025-2026 David Krach, Daniel Rostan.
+# All rights reserved.
+#
+# Redistribution and use in source and binary forms, with or without
+# modification, are permitted provided that the following conditions are met:
+#
+# 1. Redistributions of source code must retain the above copyright notice,
+#    this list of conditions and the following disclaimer.
+#
+# 2. Redistributions in binary form must reproduce the above copyright notice,
+#    this list of conditions and the following disclaimer in the documentation
+#    and/or other materials provided with the distribution.
+#
+# 3. Neither the name of the copyright holder nor the names of its contributors
+#    may be used to endorse or promote products derived from this software without
+#    specific prior written permission.
+#
+# THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND
+# ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED
+# WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE
+# DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT HOLDER OR CONTRIBUTORS BE LIABLE FOR
+# ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES
+# (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES;
+# LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON
+# ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
+# (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
+# SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+#
+# maintainer: dkrach, david.krach@mib.uni-stuttgart.de
 
-Redistribution and use in source and binary forms, with or without
-modification, are permitted provided that the following conditions are met:
-
-1. Redistributions of source code must retain the above copyright notice,
-   this list of conditions and the following disclaimer.
-
-2. Redistributions in binary form must reproduce the above copyright notice,
-   this list of conditions and the following disclaimer in the documentation
-   and/or other materials provided with the distribution.
-
-3. Neither the name of the copyright holder nor the names of its contributors
-   may be used to endorse or promote products derived from this software without
-   specific prior written permission.
-
-THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND
-ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED
-WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE
-DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT HOLDER OR CONTRIBUTORS BE LIABLE FOR
-ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES
-(INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES;
-LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON
-ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
-(INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
-SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
-
-maintainer: dkrach, david.krach@mib.uni-stuttgart.de
-
-
-SPH Momentum interaction forces."""
+"""Implement the SPH flow models."""
 
 import copy
 import warnings
@@ -46,8 +44,11 @@ from hoomd.data.typeconverter import OnlyFrom, nonnegative_real
 from itertools import combinations_with_replacement
 
 class SPHModel(force.Force):
-    r""" Base class for all SPH Models
+    r"""Base class for all SPH models.
 
+    Note:
+        Use one of the subclasses. Users should not instantiate `SPHModel`
+        directly.
     """
 
     # Module where the C++ class is defined. Reassign this when developing an
@@ -143,7 +144,29 @@ class SPHModel(force.Force):
 
 
 class SinglePhaseFlow(SPHModel):
-    R""" SinglePhaseFlow solver
+    R"""Weakly compressible single-phase flow.
+
+    Args:
+        kernel: Smoothing kernel from `hoomd.sph.kernel`.
+        eos: Equation of state from `hoomd.sph.eos`.
+        nlist (hoomd.nsearch.nlist.NeighborList): Neighbor list.
+        fluidgroup_filter (hoomd.filter.filter_like): Fluid particles.
+        solidgroup_filter (hoomd.filter.filter_like): Solid (boundary)
+            particles.
+        densitymethod (str): ``'SUMMATION'`` or ``'CONTINUITY'``.
+        viscositymethod (str): ``'HARMONICAVERAGE'``.
+
+    Example::
+
+        model = hoomd.sph.sphmodel.SinglePhaseFlow(
+            kernel=hoomd.sph.kernel.WendlandC4(),
+            eos=eos,
+            nlist=nlist,
+            fluidgroup_filter=hoomd.filter.Type(["F"]),
+            solidgroup_filter=hoomd.filter.Type(["S"]),
+            densitymethod="SUMMATION")
+        model.mu = 0.01
+        model.gx = 0.1
     """
     DENSITYMETHODS = {"SUMMATION":_sph.PhaseFlowDensityMethod.DENSITYSUMMATION,
                       "CONTINUITY":_sph.PhaseFlowDensityMethod.DENSITYCONTINUITY}
@@ -810,7 +833,7 @@ class SinglePhaseFlowGDGD(SPHModel):
         self._param_dict.__setattr__("params_set", True)
 
     def setGDGDParams(self, kappa_s, beta_s, scalar_ref, boussinesq=False):
-        """Set GDGD scalar-transport parameters.
+        r"""Set GDGD scalar-transport parameters.
 
         Parameters
         ----------
@@ -952,7 +975,21 @@ class SinglePhaseFlowGDGD(SPHModel):
 
 
 class SinglePhaseFlowTV(SPHModel):
-    R""" SinglePhaseFlow solver
+    R"""Single-phase flow with the transport-velocity formulation.
+
+    Uses the transport-velocity formulation of Adami et al. (2013) to keep
+    the particle distribution regular. Integrate it with
+    `hoomd.sph.methods.KickDriftKickTV`.
+
+    Args:
+        kernel: Smoothing kernel from `hoomd.sph.kernel`.
+        eos: Equation of state from `hoomd.sph.eos`.
+        nlist (hoomd.nsearch.nlist.NeighborList): Neighbor list.
+        fluidgroup_filter (hoomd.filter.filter_like): Fluid particles.
+        solidgroup_filter (hoomd.filter.filter_like): Solid (boundary)
+            particles.
+        densitymethod (str): ``'SUMMATION'`` or ``'CONTINUITY'``.
+        viscositymethod (str): ``'HARMONICAVERAGE'``.
     """
     DENSITYMETHODS = {"SUMMATION":_sph.PhaseFlowDensityMethod.DENSITYSUMMATION,
                       "CONTINUITY":_sph.PhaseFlowDensityMethod.DENSITYCONTINUITY}
@@ -1594,7 +1631,7 @@ class SinglePhaseFlowFS(SPHModel):
         self._param_dict.__setattr__("params_set", True)
 
     def setFSParams(self, sigma, fs_threshold, contact_angle):
-        """Set free-surface parameters.
+        r"""Set free-surface parameters.
 
         Parameters
         ----------
@@ -1749,7 +1786,20 @@ class SinglePhaseFlowFS(SPHModel):
 
 
 class TwoPhaseFlow(SPHModel):
-    R""" TwoPhaseFlow solver
+    R"""Two immiscible fluids with surface tension.
+
+    Args:
+        kernel: Smoothing kernel from `hoomd.sph.kernel`.
+        eos1: Equation of state of fluid 1 from `hoomd.sph.eos`.
+        eos2: Equation of state of fluid 2 from `hoomd.sph.eos`.
+        nlist (hoomd.nsearch.nlist.NeighborList): Neighbor list.
+        fluidgroup1_filter (hoomd.filter.filter_like): Particles of fluid 1.
+        fluidgroup2_filter (hoomd.filter.filter_like): Particles of fluid 2.
+        solidgroup_filter (hoomd.filter.filter_like): Solid (boundary)
+            particles.
+        densitymethod (str): ``'SUMMATION'`` or ``'CONTINUITY'``.
+        viscositymethod (str): ``'HARMONICAVERAGE'``.
+        colorgradientmethod (str): ``'DENSITYRATIO'`` or ``'NUMBERDENSITY'``.
     """
     DENSITYMETHODS = {'SUMMATION':_sph.PhaseFlowDensityMethod.DENSITYSUMMATION,
                       'CONTINUITY':_sph.PhaseFlowDensityMethod.DENSITYCONTINUITY}

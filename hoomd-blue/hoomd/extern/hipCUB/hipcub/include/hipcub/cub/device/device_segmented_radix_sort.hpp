@@ -63,7 +63,7 @@ struct DeviceSegmentedRadixSort
                 num_items, num_segments,
                 d_begin_offsets, d_end_offsets,
                 begin_bit, end_bit,
-                stream, debug_synchronous
+                stream
             )
         );
     }
@@ -90,7 +90,7 @@ struct DeviceSegmentedRadixSort
                 num_items, num_segments,
                 d_begin_offsets, d_end_offsets,
                 begin_bit, end_bit,
-                stream, debug_synchronous
+                stream
             )
         );
     }
@@ -120,7 +120,7 @@ struct DeviceSegmentedRadixSort
                 num_items, num_segments,
                 d_begin_offsets, d_end_offsets,
                 begin_bit, end_bit,
-                stream, debug_synchronous
+                stream
             )
         );
     }
@@ -147,7 +147,7 @@ struct DeviceSegmentedRadixSort
                 num_items, num_segments,
                 d_begin_offsets, d_end_offsets,
                 begin_bit, end_bit,
-                stream, debug_synchronous
+                stream
             )
         );
     }
@@ -174,7 +174,7 @@ struct DeviceSegmentedRadixSort
                 num_items, num_segments,
                 d_begin_offsets, d_end_offsets,
                 begin_bit, end_bit,
-                stream, debug_synchronous
+                stream
             )
         );
     }
@@ -200,7 +200,7 @@ struct DeviceSegmentedRadixSort
                 num_items, num_segments,
                 d_begin_offsets, d_end_offsets,
                 begin_bit, end_bit,
-                stream, debug_synchronous
+                stream
             )
         );
     }
@@ -227,7 +227,7 @@ struct DeviceSegmentedRadixSort
                 num_items, num_segments,
                 d_begin_offsets, d_end_offsets,
                 begin_bit, end_bit,
-                stream, debug_synchronous
+                stream
             )
         );
     }
@@ -253,7 +253,7 @@ struct DeviceSegmentedRadixSort
                 num_items, num_segments,
                 d_begin_offsets, d_end_offsets,
                 begin_bit, end_bit,
-                stream, debug_synchronous
+                stream
             )
         );
     }

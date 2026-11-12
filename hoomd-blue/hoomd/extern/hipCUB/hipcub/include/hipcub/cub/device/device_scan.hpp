@@ -56,7 +56,7 @@ public:
             ::cub::DeviceScan::InclusiveSum(
                 d_temp_storage, temp_storage_bytes,
                 d_in, d_out, num_items,
-                stream, debug_synchronous
+                stream
             )
         );
     }
@@ -80,7 +80,7 @@ public:
             ::cub::DeviceScan::InclusiveScan(
                 d_temp_storage, temp_storage_bytes,
                 d_in, d_out, scan_op, num_items,
-                stream, debug_synchronous
+                stream
             )
         );
     }
@@ -102,7 +102,7 @@ public:
             ::cub::DeviceScan::ExclusiveSum(
                 d_temp_storage, temp_storage_bytes,
                 d_in, d_out, num_items,
-                stream, debug_synchronous
+                stream
             )
         );
     }
@@ -128,7 +128,7 @@ public:
             ::cub::DeviceScan::ExclusiveScan(
                 d_temp_storage, temp_storage_bytes,
                 d_in, d_out, scan_op, init_value, num_items,
-                stream, debug_synchronous
+                stream
             )
         );
     }

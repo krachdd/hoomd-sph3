@@ -1,4 +1,4 @@
-# Copyright (c) 2009-2025 The Regents of the University of Michigan.
+# Copyright (c) 2009-2026 The Regents of the University of Michigan.
 # Part of HOOMD-blue, released under the BSD 3-Clause License.
 
 """Use the `Logger` class to collect loggable quantities (e.g. kinetic temperature,
@@ -7,9 +7,9 @@ backend such as `hoomd.write.GSD` or `hoomd.write.Table` to write the logged
 values to a file.
 
 See Also:
-    Tutorial: :doc:`/tutorial/02-Logging/00-index`
+    `HOOMD-blue tutorial: Logging <https://hoomd-blue.readthedocs.io/en/stable/tutorial/02-Logging/00-index.html>`__
 
-    Tutorial: :doc:`/tutorial/04-Custom-Actions-In-Python/00-index`
+    `HOOMD-blue tutorial: Custom Actions In Python <https://hoomd-blue.readthedocs.io/en/stable/tutorial/04-Custom-Actions-In-Python/00-index.html>`__
 
 .. invisible-code-block: python
 
@@ -265,10 +265,10 @@ class _LoggerQuantity:
         if user_name is None:
             namespace = self.namespace
         else:
-            namespace = self.namespace[:-1] + (user_name,)
+            namespace = (*self.namespace[:-1], user_name)
         yield (*namespace, self.name)
         for i in count(start=1, step=1):
-            yield namespace[:-1] + (namespace[-1] + "_" + str(i), self.name)
+            yield (*namespace[:-1], namespace[-1] + "_" + str(i), self.name)
 
     def update_cls(self, cls):
         """Allow updating the class/namespace of the object.
@@ -452,7 +452,7 @@ def log(
         classes as they already use this metaclass.
 
     See Also:
-        Tutorial: :doc:`/tutorial/04-Custom-Actions-In-Python/00-index`
+        `HOOMD-blue tutorial: Custom Actions In Python <https://hoomd-blue.readthedocs.io/en/stable/tutorial/04-Custom-Actions-In-Python/00-index.html>`__
     """
 
     def helper(func):
@@ -927,7 +927,7 @@ def modify_namespace(cls, namespace=None):
     """Modify a class's namespace to a manually assigned one.
 
     Args:
-        cls (type or tuple[str]): The class to modify the namespace of or the
+        cls (``type`` or tuple[str]): The class to modify the namespace of or the
             namespace itself. When passing a namespace (a tuple of strings), the
             function can be used as a decorator.
         namespace (`tuple` [`str` ], optional): The namespace to change the

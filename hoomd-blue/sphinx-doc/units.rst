@@ -1,6 +1,12 @@
 Units
 +++++
 
+.. note::
+
+    The SPH examples in ``sph-simulations/`` use SI units: meters, kilograms,
+    and seconds. Densities are then in :math:`\mathrm{kg/m^3}`, pressures in
+    Pa, and dynamic viscosities in :math:`\mathrm{Pa\,s}`.
+
 HOOMD-blue does not adopt a particular system of units, nor does it offer a variety of systems
 to choose from. Instead, it follows a self-consistent system of units where all derived units
 (e.g. force) are defined in terms of base units (e.g. energy / length). To adopt a system of units
@@ -67,10 +73,10 @@ Example base and derived units for common MD unit systems.
      - atomic mass unit
      - atomic mass unit
    * - :math:`[\mathrm{area}]`
-     - :math:`\mathrm{Å}^2`
+     - :math:`\text{\AA}^2`
      - :math:`\mathrm{nm}^2`
    * - :math:`[\mathrm{volume}]`
-     - :math:`\mathrm{Å}^3`
+     - :math:`\text{\AA}^3`
      - :math:`\mathrm{nm}^3`
    * - :math:`[\mathrm{time}]`
      - `48.8882129 fs <https://www.wolframalpha.com/input/?i=angstrom+*+amu%5E%281%2F2%29+*+%28kcal%2FAvogadro+number%29%5E%28%E2%88%921%2F2%29>`__

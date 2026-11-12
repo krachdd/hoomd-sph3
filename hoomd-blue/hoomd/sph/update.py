@@ -1,11 +1,9 @@
-"""----------------------------------------------------------
-Copyright (c) 2025-2026 David Krach, Daniel Rostan.
-All rights reserved. BSD-3-Clause license, see repository LICENSE.
+# Copyright (c) 2025-2026 David Krach, Daniel Rostan.
+# All rights reserved. BSD-3-Clause license, see repository LICENSE.
+#
+# maintainer: dkrach, david.krach@mib.uni-stuttgart.de
 
-maintainer: dkrach, david.krach@mib.uni-stuttgart.de
------------------------------------------------------------
-
-Adaptive time step control for SPH simulations.
+"""Adaptive time step control for SPH simulations.
 
 Example::
 

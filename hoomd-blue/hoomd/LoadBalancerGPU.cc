@@ -1,4 +1,4 @@
-// Copyright (c) 2009-2025 The Regents of the University of Michigan.
+// Copyright (c) 2009-2026 The Regents of the University of Michigan.
 // Part of HOOMD-blue, released under the BSD 3-Clause License.
 
 /*! \file LoadBalancerGPU.cc
@@ -99,7 +99,7 @@ void LoadBalancerGPU::countParticlesOffRank(std::map<unsigned int, unsigned int>
         // copy just the subset of particles that are off rank on the device into host memory
         // this can save substantially on the memcpy if there are many particles on a rank
         off_rank.resize(n_off_rank);
-        hipMemcpy(&off_rank[0],
+        hipMemcpy(off_rank.data(),
                   d_off_ranks.data,
                   sizeof(unsigned int) * n_off_rank,
                   hipMemcpyDeviceToHost);

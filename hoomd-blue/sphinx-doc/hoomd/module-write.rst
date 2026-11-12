@@ -3,7 +3,7 @@ write
 
 .. automodule:: hoomd.write
    :members:
-   :exclude-members: Burst,CustomWriter,DCD,GSD,HDF5Log,Table
+   :exclude-members: Burst,CustomWriter,GSD,HDF5Log,PGSD,Table
 
 .. rubric:: Classes
 
@@ -12,7 +12,7 @@ write
 
     write/burst
     write/customwriter
-    write/dcd
     write/gsd
     write/hdf5log
+    write/pgsd
     write/table

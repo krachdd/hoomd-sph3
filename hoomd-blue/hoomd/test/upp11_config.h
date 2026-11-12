@@ -1,4 +1,4 @@
-// Copyright (c) 2009-2025 The Regents of the University of Michigan.
+// Copyright (c) 2009-2026 The Regents of the University of Michigan.
 // Part of HOOMD-blue, released under the BSD 3-Clause License.
 
 /*! \file upp11_config.h
@@ -110,9 +110,9 @@
               && (std::abs((a) - (b)) <= ((c) * std::abs(b))))
 #define CHECK_SMALL(a, c) UP_ASSERT(std::abs(a) < c)
 //! Helper macro for checking if two numbers are close
-#define MY_CHECK_CLOSE(a, b, c)                            \
-    UP_ASSERT((std::abs((a) - (b)) <= ((c) * std::abs(a))) \
-              && (std::abs((a) - (b)) <= ((c) * std::abs(b))))
+#define MY_CHECK_CLOSE(a, b, tolerance) \
+    UP_ASSERT(std::abs((a) - (b))       \
+              <= std::max({(tolerance) * std::abs(a), (tolerance) * std::abs(a), (tolerance)}))
 //! Helper macro for checking if a number is small
 #define MY_CHECK_SMALL(a, c) CHECK_SMALL(a, hoomd::Scalar(c))
 //! Need a simple define for checking two values which are unsigned

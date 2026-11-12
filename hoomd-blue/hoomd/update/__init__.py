@@ -1,4 +1,4 @@
-# Copyright (c) 2009-2025 The Regents of the University of Michigan.
+# Copyright (c) 2009-2026 The Regents of the University of Michigan.
 # Part of HOOMD-blue, released under the BSD 3-Clause License.
 
 """`Updater` operations modify the simulation state when they act.
@@ -8,7 +8,7 @@ See Also:
 
     `hoomd.Simulation`
 
-    Tutorial: :doc:`/tutorial/00-Introducing-HOOMD-blue/00-index`
+    `HOOMD-blue tutorial: Introducing HOOMD-blue <https://hoomd-blue.readthedocs.io/en/stable/tutorial/00-Introducing-HOOMD-blue/00-index.html>`__
 """
 
 from hoomd.update.box_resize import BoxResize

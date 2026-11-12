@@ -47,11 +47,11 @@ class NeighborListLocalAccess(_NeighborListLocalAccessBase):
     are stored twice, once in each domain rank.
 
     Attributes:
-        head_list ((N_particles,) `hoomd.data.array` of ``unsigned long``):
+        head_list ((N_particles,) `hoomd.data.HOOMDArray` of ``unsigned long``):
             Local head list.
-        n_neigh ((N_particles,) `hoomd.data.array` of ``unsigned int``):
+        n_neigh ((N_particles,) `hoomd.data.HOOMDArray` of ``unsigned int``):
             Number of neighbors.
-        nlist ((...) `hoomd.data.array` of ``unsigned int``):
+        nlist ((...) `hoomd.data.HOOMDArray` of ``unsigned int``):
             Raw neighbor list data.
         half_nlist (``bool``):
             Convenience property to check if the storage mode is 'half'.

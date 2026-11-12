@@ -101,6 +101,7 @@ typedef int hipLaunchParm;
 
 #define HIP_DYNAMIC_SHARED_ATTRIBUTE
 
+#ifndef CUDA_ARCH
 #ifdef __HIP_DEVICE_COMPILE__
 #define abort()                                                                                    \
     { asm("trap;"); }
@@ -111,6 +112,7 @@ typedef int hipLaunchParm;
             abort();                                                                               \
         }                                                                                          \
     }
+#endif
 #endif
 
 #define __clock() clock()

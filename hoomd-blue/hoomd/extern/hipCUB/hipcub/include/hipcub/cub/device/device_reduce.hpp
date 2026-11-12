@@ -61,7 +61,7 @@ public:
                 d_temp_storage, temp_storage_bytes,
                 d_in, d_out, num_items,
                 reduction_op, init,
-                stream, debug_synchronous
+                stream
             )
         );
     }
@@ -83,7 +83,7 @@ public:
             ::cub::DeviceReduce::Sum(
                 d_temp_storage, temp_storage_bytes,
                 d_in, d_out, num_items,
-                stream, debug_synchronous
+                stream
             )
         );
     }
@@ -105,7 +105,7 @@ public:
             ::cub::DeviceReduce::Min(
                 d_temp_storage, temp_storage_bytes,
                 d_in, d_out, num_items,
-                stream, debug_synchronous
+                stream
             )
         );
     }
@@ -127,7 +127,7 @@ public:
             ::cub::DeviceReduce::ArgMin(
                 d_temp_storage, temp_storage_bytes,
                 d_in, d_out, num_items,
-                stream, debug_synchronous
+                stream
             )
         );
     }
@@ -149,7 +149,7 @@ public:
             ::cub::DeviceReduce::Max(
                 d_temp_storage, temp_storage_bytes,
                 d_in, d_out, num_items,
-                stream, debug_synchronous
+                stream
             )
         );
     }
@@ -171,7 +171,7 @@ public:
             ::cub::DeviceReduce::ArgMax(
                 d_temp_storage, temp_storage_bytes,
                 d_in, d_out, num_items,
-                stream, debug_synchronous
+                stream
             )
         );
     }
@@ -203,7 +203,7 @@ public:
                 d_keys_in, d_unique_out,
                 d_values_in, d_aggregates_out,
                 d_num_runs_out, reduction_op, num_items,
-                stream, debug_synchronous
+                stream
             )
         );
     }

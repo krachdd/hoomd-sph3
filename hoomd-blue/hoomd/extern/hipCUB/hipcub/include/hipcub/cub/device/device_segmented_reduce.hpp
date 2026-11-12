@@ -64,7 +64,7 @@ struct DeviceSegmentedReduce
                 d_in, d_out, num_segments,
                 d_begin_offsets, d_end_offsets,
                 reduction_op, initial_value,
-                stream, debug_synchronous
+                stream
             )
         );
     }
@@ -90,7 +90,7 @@ struct DeviceSegmentedReduce
                 d_temp_storage, temp_storage_bytes,
                 d_in, d_out, num_segments,
                 d_begin_offsets, d_end_offsets,
-                stream, debug_synchronous
+                stream
             )
         );
     }
@@ -116,7 +116,7 @@ struct DeviceSegmentedReduce
                 d_temp_storage, temp_storage_bytes,
                 d_in, d_out, num_segments,
                 d_begin_offsets, d_end_offsets,
-                stream, debug_synchronous
+                stream
             )
         );
     }
@@ -142,7 +142,7 @@ struct DeviceSegmentedReduce
                 d_temp_storage, temp_storage_bytes,
                 d_in, d_out, num_segments,
                 d_begin_offsets, d_end_offsets,
-                stream, debug_synchronous
+                stream
             )
         );
     }
@@ -168,7 +168,7 @@ struct DeviceSegmentedReduce
                 d_temp_storage, temp_storage_bytes,
                 d_in, d_out, num_segments,
                 d_begin_offsets, d_end_offsets,
-                stream, debug_synchronous
+                stream
             )
         );
     }
@@ -194,7 +194,7 @@ struct DeviceSegmentedReduce
                 d_temp_storage, temp_storage_bytes,
                 d_in, d_out, num_segments,
                 d_begin_offsets, d_end_offsets,
-                stream, debug_synchronous
+                stream
             )
         );
     }

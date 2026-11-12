@@ -18,7 +18,6 @@ hoomd
     hoomd/module-error
     hoomd/module-filter
     hoomd/module-logging
-    hoomd/module-mesh
     hoomd/module-operation
     hoomd/module-trigger
     hoomd/module-tune

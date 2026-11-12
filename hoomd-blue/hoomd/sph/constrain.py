@@ -1,17 +1,12 @@
 # Copyright (c) 2009-2025 The Regents of the University of Michigan.
 # Part of HOOMD-blue, released under the BSD 3-Clause License.
 
-"""Constraint force classes apply forces and the resulting virial to particles that
-force classes apply forces and the resulting virial to particles that
-enforce specific constraints on the positions of the particles. The constraint
-is satisfied at all times, so there is no potential energy associated with the
-constraint.
+"""Constraints.
 
-Each constraint removes a number of degrees of freedom from the system.
-`hoomd.md.compute.ThermodynamicQuantities` accounts for these lost degrees of
-freedom when computing kinetic temperature and pressure. See
-`hoomd.State.update_group_dof` for details on when the degrees of freedom for a
-group are calculated.
+Constraint force classes apply forces and the resulting virial to particles
+that enforce specific constraints on the positions of the particles. The
+constraint is satisfied at all times, so there is no potential energy associated
+with the constraint.
 
 Warning:
     Do not apply multiple constraint class instances to the same particle. Each
@@ -88,7 +83,7 @@ class Distance(Constraint):
     + 2 \\delta t`, so the scheme is self-correcting and avoids drifts.
 
     Add an instance of `Distance` to the integrator constraints list
-    `hoomd.md.Integrator.constraints` to apply the force during the simulation.
+    `hoomd.sph.Integrator.constraints` to apply the force during the simulation.
 
     Warning:
         In MPI simulations, it is an error when molecules defined by constraints

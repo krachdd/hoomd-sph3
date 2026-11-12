@@ -1,3 +1,4 @@
+// Copyright (c) 2009-2026 The Regents of the University of Michigan.
 // Part of HOOMD-blue, released under the BSD 3-Clause License.
 
 #include "GSDDumpWriter.h"
@@ -55,14 +56,20 @@ GSDDumpWriter::GSDDumpWriter(std::shared_ptr<SystemDefinition> sysdef,
                              const std::string& fname,
                              std::shared_ptr<ParticleGroup> group,
                              std::string mode,
-                             bool truncate)
-    : Analyzer(sysdef, trigger), m_fname(fname), m_mode(mode), m_truncate(truncate), m_group(group)
+                             bool truncate,
+                             std::string precision)
+    : Analyzer(sysdef, trigger), m_fname(fname), m_mode(mode), m_truncate(truncate),
+      m_precision(precision), m_group(group)
     {
     m_exec_conf->msg->notice(5) << "Constructing GSDDumpWriter: " << m_fname << " " << mode << " "
                                 << truncate << endl;
     if (mode != "wb" && mode != "xb" && mode != "ab")
         {
         throw std::invalid_argument("Invalid GSD file mode: " + mode);
+        }
+    if (precision != "single" && precision != "double")
+        {
+        throw std::invalid_argument("Invalid precision: " + precision);
         }
     m_log_writer = pybind11::none();
 
@@ -236,6 +243,8 @@ void GSDDumpWriter::setDynamic(pybind11::object dynamic)
 
 void GSDDumpWriter::flush()
     {
+    m_last_flush_time = m_exec_conf->getMPIConfig()->getWalltime();
+
     if (m_exec_conf->isRoot())
         {
         m_exec_conf->msg->notice(5) << "GSD: flush gsd file " << m_fname << endl;
@@ -252,10 +261,6 @@ void GSDDumpWriter::setMaximumWriteBufferSize(uint64_t size)
         {
         int retval = gsd_set_maximum_write_buffer_size(&m_handle, size);
         GSDUtils::checkError(retval, m_fname);
-
-        // Scale the index buffer entires to write with the write buffer.
-        retval = gsd_set_index_entries_to_buffer(&m_handle, size / 256);
-        GSDUtils::checkError(retval, m_fname);
         }
     }
 
@@ -271,6 +276,16 @@ uint64_t GSDDumpWriter::getMaximumWriteBufferSize()
         }
     }
 
+void GSDDumpWriter::setAutoFlushPeriod(double period)
+    {
+    m_auto_flush_period = period;
+    }
+
+double GSDDumpWriter::getAutoFlushPeriod()
+    {
+    return m_auto_flush_period;
+    }
+
 //! Initializes the output file for writing
 void GSDDumpWriter::initFileIO()
     {
@@ -281,8 +296,8 @@ void GSDDumpWriter::initFileIO()
             {
             ostringstream o;
             o << "HOOMD-blue " << HOOMD_VERSION;
-
             m_exec_conf->msg->notice(3) << "GSD: create or overwrite gsd file " << m_fname << endl;
+
             int retval = gsd_create_and_open(&m_handle,
                                              m_fname.c_str(),
                                              o.str().c_str(),
@@ -387,6 +402,12 @@ void GSDDumpWriter::analyze(uint64_t timestep)
     populateLocalFrame(m_local_frame, timestep);
     auto log_data = getLogData();
     write(m_local_frame, log_data);
+
+    if (m_exec_conf->getMPIConfig()->getWalltime() > m_last_flush_time + m_auto_flush_period)
+        {
+        m_exec_conf->msg->notice(5) << "GSD: auto flush at step " << timestep << endl;
+        flush();
+        }
     }
 
 void GSDDumpWriter::write(GSDDumpWriter::GSDFrame& frame, pybind11::dict log_data)
@@ -454,7 +475,7 @@ void GSDDumpWriter::writeTypeMapping(std::string chunk, std::vector<std::string>
                                      type_mapping.size(),
                                      max_len,
                                      0,
-                                     (void*)&types[0]);
+                                     (void*)types.data());
         GSDUtils::checkError(retval, m_fname);
         }
     }
@@ -492,20 +513,41 @@ void GSDDumpWriter::writeFrameHeader(const GSDDumpWriter::GSDFrame& frame)
     if (m_nframes == 0 || m_dynamic[gsd_flag::configuration_box])
         {
         m_exec_conf->msg->notice(10) << "GSD: writing configuration/box" << endl;
-        float box_a[6];
-        box_a[0] = (float)frame.global_box.getL().x;
-        box_a[1] = (float)frame.global_box.getL().y;
-        box_a[2] = (float)frame.global_box.getL().z;
-        box_a[3] = (float)frame.global_box.getTiltFactorXY();
-        box_a[4] = (float)frame.global_box.getTiltFactorXZ();
-        box_a[5] = (float)frame.global_box.getTiltFactorYZ();
-        retval = gsd_write_chunk(&m_handle,
-                                 "configuration/box",
-                                 GSD_TYPE_FLOAT,
-                                 6,
-                                 1,
-                                 0,
-                                 (void*)box_a);
+
+        if (m_precision == "double")
+            {
+            double box_a[6];
+            box_a[0] = frame.global_box.getL().x;
+            box_a[1] = frame.global_box.getL().y;
+            box_a[2] = frame.global_box.getL().z;
+            box_a[3] = frame.global_box.getTiltFactorXY();
+            box_a[4] = frame.global_box.getTiltFactorXZ();
+            box_a[5] = frame.global_box.getTiltFactorYZ();
+            retval = gsd_write_chunk(&m_handle,
+                                     "configuration/box",
+                                     GSD_TYPE_DOUBLE,
+                                     6,
+                                     1,
+                                     0,
+                                     (void*)box_a);
+            }
+        else
+            {
+            float box_a[6];
+            box_a[0] = (float)frame.global_box.getL().x;
+            box_a[1] = (float)frame.global_box.getL().y;
+            box_a[2] = (float)frame.global_box.getL().z;
+            box_a[3] = (float)frame.global_box.getTiltFactorXY();
+            box_a[4] = (float)frame.global_box.getTiltFactorXZ();
+            box_a[5] = (float)frame.global_box.getTiltFactorYZ();
+            retval = gsd_write_chunk(&m_handle,
+                                     "configuration/box",
+                                     GSD_TYPE_FLOAT,
+                                     6,
+                                     1,
+                                     0,
+                                     (void*)box_a);
+            }
         GSDUtils::checkError(retval, m_fname);
         }
 
@@ -518,7 +560,79 @@ void GSDDumpWriter::writeFrameHeader(const GSDDumpWriter::GSDFrame& frame)
         }
     }
 
-/*! Writes the data chunks typeid, mass, body in
+/// Helper to write float/double chunks with precision handling
+void GSDDumpWriter::writeFloatDoubleChunk(
+    const std::string& name,
+    const std::vector<double>& data,
+    uint32_t N,
+    uint32_t M) // number of components (1 for scalar, 3 for vec3, etc)
+    {
+    int retval;
+    if (m_precision == "double")
+        {
+        retval = gsd_write_chunk(&m_handle,
+                                 name.c_str(),
+                                 GSD_TYPE_DOUBLE,
+                                 N,
+                                 M,
+                                 0,
+                                 (void*)data.data());
+        }
+    else
+        {
+        m_float_buffer.resize(data.size());
+        for (size_t i = 0; i < data.size(); i++)
+            {
+            m_float_buffer[i] = static_cast<float>(data[i]);
+            }
+        retval = gsd_write_chunk(&m_handle,
+                                 name.c_str(),
+                                 GSD_TYPE_FLOAT,
+                                 N,
+                                 M,
+                                 0,
+                                 (void*)m_float_buffer.data());
+        }
+    GSDUtils::checkError(retval, m_fname);
+    }
+
+/// Helper to write vec3 chunks with precision handling
+void GSDDumpWriter::writeVec3FloatDoubleChunk(const std::string& name,
+                                              const std::vector<vec3<double>>& data,
+                                              uint32_t N)
+    {
+    int retval;
+    if (m_precision == "double")
+        {
+        retval = gsd_write_chunk(&m_handle,
+                                 name.c_str(),
+                                 GSD_TYPE_DOUBLE,
+                                 N,
+                                 3,
+                                 0,
+                                 (void*)data.data());
+        }
+    else
+        {
+        m_float_buffer.resize(data.size() * 3);
+        for (size_t i = 0; i < data.size(); i++)
+            {
+            m_float_buffer[i * 3 + 0] = static_cast<float>(data[i].x);
+            m_float_buffer[i * 3 + 1] = static_cast<float>(data[i].y);
+            m_float_buffer[i * 3 + 2] = static_cast<float>(data[i].z);
+            }
+        retval = gsd_write_chunk(&m_handle,
+                                 name.c_str(),
+                                 GSD_TYPE_FLOAT,
+                                 N,
+                                 3,
+                                 0,
+                                 (void*)m_float_buffer.data());
+        }
+    GSDUtils::checkError(retval, m_fname);
+    }
+
+/*! Writes the data chunks types, typeid, mass, charge, diameter, body, moment_inertia in
    particles/.
 */
 void GSDDumpWriter::writeAttributes(const GSDDumpWriter::GSDFrame& frame)
@@ -554,14 +668,9 @@ void GSDDumpWriter::writeAttributes(const GSDDumpWriter::GSDFrame& frame)
         assert(frame.particle_data.mass.size() == N);
 
         m_exec_conf->msg->notice(10) << "GSD: writing particles/mass" << endl;
-        retval = gsd_write_chunk(&m_handle,
-                                 "particles/mass",
-                                 GSD_TYPE_FLOAT,
-                                 N,
-                                 1,
-                                 0,
-                                 (void*)frame.particle_data.mass.data());
-        GSDUtils::checkError(retval, m_fname);
+
+        writeFloatDoubleChunk("particles/mass", frame.particle_data.mass, N, 1);
+
         if (m_nframes == 0)
             m_nondefault["particles/mass"] = true;
         }
@@ -571,14 +680,7 @@ void GSDDumpWriter::writeAttributes(const GSDDumpWriter::GSDFrame& frame)
         assert(frame.particle_data.slength.size() == N);
 
         m_exec_conf->msg->notice(10) << "GSD: writing particles/slength" << endl;
-        retval = gsd_write_chunk(&m_handle,
-                                 "particles/slength",
-                                 GSD_TYPE_FLOAT,
-                                 N,
-                                 1,
-                                 0,
-                                 (void*)frame.particle_data.slength.data());
-        GSDUtils::checkError(retval, m_fname);
+        writeFloatDoubleChunk("particles/slength", frame.particle_data.slength, N, 1);
         if (m_nframes == 0)
             m_nondefault["particles/slength"] = true;
         }
@@ -594,6 +696,7 @@ void GSDDumpWriter::writeAttributes(const GSDDumpWriter::GSDFrame& frame)
         assert(frame.particle_data.body.size() == N);
 
         m_exec_conf->msg->notice(10) << "GSD: writing particles/body" << endl;
+
         retval = gsd_write_chunk(&m_handle,
                                  "particles/body",
                                  GSD_TYPE_INT32,
@@ -602,6 +705,7 @@ void GSDDumpWriter::writeAttributes(const GSDDumpWriter::GSDFrame& frame)
                                  0,
                                  (void*)frame.particle_data.body.data());
         GSDUtils::checkError(retval, m_fname);
+
         if (m_nframes == 0)
             m_nondefault["particles/body"] = true;
         }
@@ -626,14 +730,8 @@ void GSDDumpWriter::writeProperties(const GSDDumpWriter::GSDFrame& frame)
         assert(frame.particle_data.pos.size() == N);
 
         m_exec_conf->msg->notice(10) << "GSD: writing particles/position" << endl;
-        retval = gsd_write_chunk(&m_handle,
-                                 "particles/position",
-                                 GSD_TYPE_FLOAT,
-                                 N,
-                                 3,
-                                 0,
-                                 (void*)frame.particle_data.pos.data());
-        GSDUtils::checkError(retval, m_fname);
+        writeVec3FloatDoubleChunk("particles/position", frame.particle_data.pos, N);
+
         if (m_nframes == 0)
             m_nondefault["particles/position"] = true;
         }
@@ -643,14 +741,7 @@ void GSDDumpWriter::writeProperties(const GSDDumpWriter::GSDFrame& frame)
         assert(frame.particle_data.density.size() == N);
 
         m_exec_conf->msg->notice(10) << "GSD: writing particles/density" << endl;
-        retval = gsd_write_chunk(&m_handle,
-                                 "particles/density",
-                                 GSD_TYPE_FLOAT,
-                                 N,
-                                 1,
-                                 0,
-                                 (void*)frame.particle_data.density.data());
-        GSDUtils::checkError(retval, m_fname);
+        writeFloatDoubleChunk("particles/density", frame.particle_data.density, N, 1);
         if (m_nframes == 0)
             m_nondefault["particles/density"] = true;
         }
@@ -660,14 +751,7 @@ void GSDDumpWriter::writeProperties(const GSDDumpWriter::GSDFrame& frame)
         assert(frame.particle_data.pressure.size() == N);
 
         m_exec_conf->msg->notice(10) << "GSD: writing particles/pressure" << endl;
-        retval = gsd_write_chunk(&m_handle,
-                                 "particles/pressure",
-                                 GSD_TYPE_FLOAT,
-                                 N,
-                                 1,
-                                 0,
-                                 (void*)frame.particle_data.pressure.data());
-        GSDUtils::checkError(retval, m_fname);
+        writeFloatDoubleChunk("particles/pressure", frame.particle_data.pressure, N, 1);
         if (m_nframes == 0)
             m_nondefault["particles/pressure"] = true;
         }
@@ -677,14 +761,7 @@ void GSDDumpWriter::writeProperties(const GSDDumpWriter::GSDFrame& frame)
         assert(frame.particle_data.energy.size() == N);
 
         m_exec_conf->msg->notice(10) << "GSD: writing particles/energy" << endl;
-        retval = gsd_write_chunk(&m_handle,
-                                 "particles/energy",
-                                 GSD_TYPE_FLOAT,
-                                 N,
-                                 1,
-                                 0,
-                                 (void*)frame.particle_data.energy.data());
-        GSDUtils::checkError(retval, m_fname);
+        writeFloatDoubleChunk("particles/energy", frame.particle_data.energy, N, 1);
         if (m_nframes == 0)
             m_nondefault["particles/energy"] = true;
         }
@@ -708,16 +785,12 @@ void GSDDumpWriter::writeMomenta(const GSDDumpWriter::GSDFrame& frame)
         assert(frame.particle_data.vel.size() == N);
 
         m_exec_conf->msg->notice(10) << "GSD: writing particles/velocity" << endl;
-        retval = gsd_write_chunk(&m_handle,
-                                 "particles/velocity",
-                                 GSD_TYPE_FLOAT,
-                                 N,
-                                 3,
-                                 0,
-                                 (void*)frame.particle_data.vel.data());
-        GSDUtils::checkError(retval, m_fname);
+        writeVec3FloatDoubleChunk("particles/velocity", frame.particle_data.vel, N);
+
         if (m_nframes == 0)
+            {
             m_nondefault["particles/velocity"] = true;
+            }
         }
 
     if (frame.particle_data.aux1.size() != 0)
@@ -725,14 +798,7 @@ void GSDDumpWriter::writeMomenta(const GSDDumpWriter::GSDFrame& frame)
         assert(frame.particle_data.aux1.size() == N);
 
         m_exec_conf->msg->notice(10) << "GSD: writing particles/auxiliary1" << endl;
-        retval = gsd_write_chunk(&m_handle,
-                                 "particles/auxiliary1",
-                                 GSD_TYPE_FLOAT,
-                                 N,
-                                 3,
-                                 0,
-                                 (void*)frame.particle_data.aux1.data());
-        GSDUtils::checkError(retval, m_fname);
+        writeVec3FloatDoubleChunk("particles/auxiliary1", frame.particle_data.aux1, N);
         if (m_nframes == 0)
             m_nondefault["particles/auxiliary1"] = true;
         }
@@ -742,14 +808,7 @@ void GSDDumpWriter::writeMomenta(const GSDDumpWriter::GSDFrame& frame)
         assert(frame.particle_data.aux2.size() == N);
 
         m_exec_conf->msg->notice(10) << "GSD: writing particles/auxiliary2" << endl;
-        retval = gsd_write_chunk(&m_handle,
-                                 "particles/auxiliary2",
-                                 GSD_TYPE_FLOAT,
-                                 N,
-                                 3,
-                                 0,
-                                 (void*)frame.particle_data.aux2.data());
-        GSDUtils::checkError(retval, m_fname);
+        writeVec3FloatDoubleChunk("particles/auxiliary2", frame.particle_data.aux2, N);
         if (m_nframes == 0)
             m_nondefault["particles/auxiliary2"] = true;
         }
@@ -759,14 +818,7 @@ void GSDDumpWriter::writeMomenta(const GSDDumpWriter::GSDFrame& frame)
         assert(frame.particle_data.aux3.size() == N);
 
         m_exec_conf->msg->notice(10) << "GSD: writing particles/auxiliary3" << endl;
-        retval = gsd_write_chunk(&m_handle,
-                                 "particles/auxiliary3",
-                                 GSD_TYPE_FLOAT,
-                                 N,
-                                 3,
-                                 0,
-                                 (void*)frame.particle_data.aux3.data());
-        GSDUtils::checkError(retval, m_fname);
+        writeVec3FloatDoubleChunk("particles/auxiliary3", frame.particle_data.aux3, N);
         if (m_nframes == 0)
             m_nondefault["particles/auxiliary3"] = true;
         }
@@ -776,14 +828,7 @@ void GSDDumpWriter::writeMomenta(const GSDDumpWriter::GSDFrame& frame)
         assert(frame.particle_data.aux4.size() == N);
 
         m_exec_conf->msg->notice(10) << "GSD: writing particles/auxiliary4" << endl;
-        retval = gsd_write_chunk(&m_handle,
-                                 "particles/auxiliary4",
-                                 GSD_TYPE_FLOAT,
-                                 N,
-                                 3,
-                                 0,
-                                 (void*)frame.particle_data.aux4.data());
-        GSDUtils::checkError(retval, m_fname);
+        writeVec3FloatDoubleChunk("particles/auxiliary4", frame.particle_data.aux4, N);
         if (m_nframes == 0)
             m_nondefault["particles/auxiliary4"] = true;
         }
@@ -902,19 +947,7 @@ void GSDDumpWriter::writeTopology(BondData::Snapshot& bond,
 
         m_exec_conf->msg->notice(10) << "GSD: writing constraints/value" << endl;
             {
-            std::vector<float> data(N);
-            data.reserve(1); //! make sure we allocate
-            for (unsigned int i = 0; i < N; i++)
-                data[i] = float(constraint.val[i]);
-
-            retval = gsd_write_chunk(&m_handle,
-                                     "constraints/value",
-                                     GSD_TYPE_FLOAT,
-                                     N,
-                                     1,
-                                     0,
-                                     (void*)&data[0]);
-            GSDUtils::checkError(retval, m_fname);
+            writeFloatDoubleChunk("constraints/value", constraint.val, N, 1);
             }
 
         m_exec_conf->msg->notice(10) << "GSD: writing constraints/group" << endl;
@@ -1118,6 +1151,9 @@ void GSDDumpWriter::populateLocalFrame(GSDDumpWriter::GSDFrame& frame, uint64_t 
         ArrayHandle<Scalar4> h_postype(m_pdata->getPositions(),
                                        access_location::host,
                                        access_mode::read);
+        ArrayHandle<Scalar4> h_veltype(m_pdata->getVelocities(),
+                                       access_location::host,
+                                       access_mode::read);
         ArrayHandle<int3> h_image(m_pdata->getImages(), access_location::host, access_mode::read);
 
         if (m_dynamic[gsd_flag::particles_position] || m_nframes == 0)
@@ -1137,6 +1173,7 @@ void GSDDumpWriter::populateLocalFrame(GSDDumpWriter::GSDFrame& frame, uint64_t 
             {
             vec3<Scalar> position
                 = vec3<Scalar>(h_postype.data[index]) - vec3<Scalar>(m_pdata->getOrigin());
+            vec3<Scalar> velocity = vec3<Scalar>(h_veltype.data[index]);
             unsigned int type = __scalar_as_int(h_postype.data[index].w);
             int3 image = make_int3(0, 0, 0);
 
@@ -1145,7 +1182,7 @@ void GSDDumpWriter::populateLocalFrame(GSDDumpWriter::GSDFrame& frame, uint64_t 
                 image = h_image.data[index];
                 }
 
-            frame.global_box.wrap(position, image);
+            frame.global_box.wrap(position, velocity, image);
 
             if (m_dynamic[gsd_flag::particles_position] || m_nframes == 0)
                 {
@@ -1154,7 +1191,7 @@ void GSDDumpWriter::populateLocalFrame(GSDDumpWriter::GSDFrame& frame, uint64_t 
                     all_default[gsd_flag::particles_position] = false;
                     }
 
-                frame.particle_data.pos.push_back(vec3<float>(position));
+                frame.particle_data.pos.push_back(vec3<double>(position));
                 }
 
             if (m_dynamic[gsd_flag::particles_image] || m_nframes == 0)
@@ -1206,10 +1243,11 @@ void GSDDumpWriter::populateLocalFrame(GSDDumpWriter::GSDFrame& frame, uint64_t 
 
         for (unsigned int index : m_index)
             {
-            vec3<float> velocity = vec3<float>(static_cast<float>(h_velocity_mass.data[index].x),
-                                               static_cast<float>(h_velocity_mass.data[index].y),
-                                               static_cast<float>(h_velocity_mass.data[index].z));
-            float mass = static_cast<float>(h_velocity_mass.data[index].w);
+            vec3<double> velocity
+                = vec3<double>(static_cast<double>(h_velocity_mass.data[index].x),
+                               static_cast<double>(h_velocity_mass.data[index].y),
+                               static_cast<double>(h_velocity_mass.data[index].z));
+            double mass = static_cast<double>(h_velocity_mass.data[index].w);
 
             if (m_dynamic[gsd_flag::particles_mass] || m_nframes == 0)
                 {
@@ -1223,7 +1261,7 @@ void GSDDumpWriter::populateLocalFrame(GSDDumpWriter::GSDFrame& frame, uint64_t 
 
             if (m_dynamic[gsd_flag::particles_velocity] || m_nframes == 0)
                 {
-                if (velocity != vec3<float>(0, 0, 0))
+                if (velocity != vec3<double>(0, 0, 0))
                     {
                     all_default[gsd_flag::particles_velocity] = false;
                     }
@@ -1251,8 +1289,8 @@ void GSDDumpWriter::populateLocalFrame(GSDDumpWriter::GSDFrame& frame, uint64_t 
 
         for (unsigned int index : m_index)
             {
-            float slength = static_cast<float>(h_slength.data[index]);
-            if (slength != 0.0f)
+            double slength = static_cast<double>(h_slength.data[index]);
+            if (slength != 0.0)
                 {
                 all_default[gsd_flag::particles_slength] = false;
                 }
@@ -1271,8 +1309,8 @@ void GSDDumpWriter::populateLocalFrame(GSDDumpWriter::GSDFrame& frame, uint64_t 
 
         for (unsigned int index : m_index)
             {
-            float density = static_cast<float>(h_density.data[index]);
-            if (density != 0.0f)
+            double density = static_cast<double>(h_density.data[index]);
+            if (density != 0.0)
                 {
                 all_default[gsd_flag::particles_density] = false;
                 }
@@ -1291,8 +1329,8 @@ void GSDDumpWriter::populateLocalFrame(GSDDumpWriter::GSDFrame& frame, uint64_t 
 
         for (unsigned int index : m_index)
             {
-            float pressure = static_cast<float>(h_pressure.data[index]);
-            if (pressure != 0.0f)
+            double pressure = static_cast<double>(h_pressure.data[index]);
+            if (pressure != 0.0)
                 {
                 all_default[gsd_flag::particles_pressure] = false;
                 }
@@ -1311,8 +1349,8 @@ void GSDDumpWriter::populateLocalFrame(GSDDumpWriter::GSDFrame& frame, uint64_t 
 
         for (unsigned int index : m_index)
             {
-            float energy = static_cast<float>(h_energy.data[index]);
-            if (energy != 0.0f)
+            double energy = static_cast<double>(h_energy.data[index]);
+            if (energy != 0.0)
                 {
                 all_default[gsd_flag::particles_energy] = false;
                 }
@@ -1331,9 +1369,9 @@ void GSDDumpWriter::populateLocalFrame(GSDDumpWriter::GSDFrame& frame, uint64_t 
 
         for (unsigned int index : m_index)
             {
-            vec3<float> aux1 = vec3<float>(h_aux1.data[index]);
+            vec3<double> aux1 = vec3<double>(h_aux1.data[index]);
 
-            if (aux1 != vec3<float>(0, 0, 0))
+            if (aux1 != vec3<double>(0, 0, 0))
                 {
                 all_default[gsd_flag::particles_aux1] = false;
                 }
@@ -1352,9 +1390,9 @@ void GSDDumpWriter::populateLocalFrame(GSDDumpWriter::GSDFrame& frame, uint64_t 
 
         for (unsigned int index : m_index)
             {
-            vec3<float> aux2 = vec3<float>(h_aux2.data[index]);
+            vec3<double> aux2 = vec3<double>(h_aux2.data[index]);
 
-            if (aux2 != vec3<float>(0, 0, 0))
+            if (aux2 != vec3<double>(0, 0, 0))
                 {
                 all_default[gsd_flag::particles_aux2] = false;
                 }
@@ -1373,9 +1411,9 @@ void GSDDumpWriter::populateLocalFrame(GSDDumpWriter::GSDFrame& frame, uint64_t 
 
         for (unsigned int index : m_index)
             {
-            vec3<float> aux3 = vec3<float>(h_aux3.data[index]);
+            vec3<double> aux3 = vec3<double>(h_aux3.data[index]);
 
-            if (aux3 != vec3<float>(0, 0, 0))
+            if (aux3 != vec3<double>(0, 0, 0))
                 {
                 all_default[gsd_flag::particles_aux3] = false;
                 }
@@ -1395,9 +1433,9 @@ void GSDDumpWriter::populateLocalFrame(GSDDumpWriter::GSDFrame& frame, uint64_t 
 
         for (unsigned int index : m_index)
             {
-            vec3<float> aux4 = vec3<float>(h_aux4.data[index]);
+            vec3<double> aux4 = vec3<double>(h_aux4.data[index]);
 
-            if (aux4 != vec3<float>(0, 0, 0))
+            if (aux4 != vec3<double>(0, 0, 0))
                 {
                 all_default[gsd_flag::particles_aux4] = false;
                 }
@@ -1717,7 +1755,8 @@ void export_GSDDumpWriter(pybind11::module& m)
                             std::string,
                             std::shared_ptr<ParticleGroup>,
                             std::string,
-                            bool>())
+                            bool,
+                            std::string>())
         .def_property("log_writer", &GSDDumpWriter::getLogWriter, &GSDDumpWriter::setLogWriter)
         .def_property_readonly("filename", &GSDDumpWriter::getFilename)
         .def_property_readonly("mode", &GSDDumpWriter::getMode)
@@ -1729,10 +1768,14 @@ void export_GSDDumpWriter(pybind11::module& m)
         .def_property("write_diameter",
                       &GSDDumpWriter::getWriteDiameter,
                       &GSDDumpWriter::setWriteDiameter)
+        .def_property("precision", &GSDDumpWriter::getPrecision, &GSDDumpWriter::setPrecision)
         .def("flush", &GSDDumpWriter::flush)
         .def_property("maximum_write_buffer_size",
                       &GSDDumpWriter::getMaximumWriteBufferSize,
-                      &GSDDumpWriter::setMaximumWriteBufferSize);
+                      &GSDDumpWriter::setMaximumWriteBufferSize)
+        .def_property("auto_flush_period",
+                      &GSDDumpWriter::getAutoFlushPeriod,
+                      &GSDDumpWriter::setAutoFlushPeriod);
     }
 
     } // end namespace detail

@@ -58,7 +58,7 @@ struct DeviceRadixSort
                 d_keys_in, d_keys_out,
                 d_values_in, d_values_out, num_items,
                 begin_bit, end_bit,
-                stream, debug_synchronous
+                stream
             )
         );
     }
@@ -80,7 +80,7 @@ struct DeviceRadixSort
                 d_temp_storage, temp_storage_bytes,
                 d_keys, d_values, num_items,
                 begin_bit, end_bit,
-                stream, debug_synchronous
+                stream
             )
         );
     }
@@ -105,7 +105,7 @@ struct DeviceRadixSort
                 d_keys_in, d_keys_out,
                 d_values_in, d_values_out, num_items,
                 begin_bit, end_bit,
-                stream, debug_synchronous
+                stream
             )
         );
 
@@ -128,7 +128,7 @@ struct DeviceRadixSort
                 d_temp_storage, temp_storage_bytes,
                 d_keys, d_values, num_items,
                 begin_bit, end_bit,
-                stream, debug_synchronous
+                stream
             )
         );
     }
@@ -150,7 +150,7 @@ struct DeviceRadixSort
                 d_temp_storage, temp_storage_bytes,
                 d_keys_in, d_keys_out, num_items,
                 begin_bit, end_bit,
-                stream, debug_synchronous
+                stream
             )
         );
     }
@@ -171,7 +171,7 @@ struct DeviceRadixSort
                 d_temp_storage, temp_storage_bytes,
                 d_keys, num_items,
                 begin_bit, end_bit,
-                stream, debug_synchronous
+                stream
             )
         );
     }
@@ -193,7 +193,7 @@ struct DeviceRadixSort
                 d_temp_storage, temp_storage_bytes,
                 d_keys_in, d_keys_out, num_items,
                 begin_bit, end_bit,
-                stream, debug_synchronous
+                stream
             )
         );
     }
@@ -214,7 +214,7 @@ struct DeviceRadixSort
                 d_temp_storage, temp_storage_bytes,
                 d_keys, num_items,
                 begin_bit, end_bit,
-                stream, debug_synchronous
+                stream
             )
         );
     }

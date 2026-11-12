@@ -1,4 +1,4 @@
-# Copyright (c) 2009-2025 The Regents of the University of Michigan.
+# Copyright (c) 2009-2026 The Regents of the University of Michigan.
 # Part of HOOMD-blue, released under the BSD 3-Clause License.
 
 """Generate one .rst file for each module and class in the HOOMD-blue public API.
@@ -13,7 +13,8 @@ import inspect
 import os
 from pathlib import Path
 
-TOPLEVEL = ["hpmc", "mpcd", "md"]
+# Packages documented at the top level of the API docs, not under `hoomd`.
+TOPLEVEL = ["sph", "nsearch"]
 exit_value = 0
 
 
@@ -134,7 +135,16 @@ if __name__ == "__main__":
 
     os.environ["SPHINX"] = "1"
 
-    import hoomd
+    from sphinx.ext.autodoc.mock import mock
+
+    # Mock the generated and compiled modules so that this script runs on the
+    # source tree. hoomd.sph and hoomd.nsearch are not imported by `hoomd`.
+    with mock(["hoomd.version_config", "hoomd.sph._sph", "hoomd.nsearch._nsearch"]):
+        import hoomd
+        import hoomd.nsearch
+        import hoomd.sph
 
     generate_module_rst(doc_dir / "hoomd", hoomd)
+    for name in TOPLEVEL:
+        generate_module_rst(doc_dir / "hoomd" / name, getattr(hoomd, name))
     sys.exit(exit_value)

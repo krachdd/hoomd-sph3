@@ -5,7 +5,6 @@ Getting started
     :maxdepth: 1
 
     features
-    installation
     building
-    components
+    examples
     citing
