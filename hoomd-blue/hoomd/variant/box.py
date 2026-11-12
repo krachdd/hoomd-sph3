@@ -1,4 +1,4 @@
-# Copyright (c) 2009-2025 The Regents of the University of Michigan.
+# Copyright (c) 2009-2026 The Regents of the University of Michigan.
 # Part of HOOMD-blue, released under the BSD 3-Clause License.
 
 """Implement variants that return box parameters as a function of time."""
@@ -40,7 +40,6 @@ class BoxVariant(_hoomd.VectorVariantBox):
     """
 
     _doc_inherited = """
-    ----------
 
     **Members inherited from**
     `BoxVariant <hoomd.variant.box.BoxVariant>`:
@@ -72,8 +71,6 @@ class Constant(_hoomd.VectorVariantBoxConstant, BoxVariant):
     all time steps.
 
     {inherited}
-
-    ----------
 
     **Members defined in** `Constant`:
     """
@@ -120,12 +117,12 @@ class Interpolate(_hoomd.VectorVariantBoxInterpolate, BoxVariant):
     .. math::
 
         \\begin{align*}
-        L_{x}' &= \\lambda L_{2x} + (1 - \\lambda) L_{1x} \\\\
-        L_{y}' &= \\lambda L_{2y} + (1 - \\lambda) L_{1y} \\\\
-        L_{z}' &= \\lambda L_{2z} + (1 - \\lambda) L_{1z} \\\\
-        xy' &= \\lambda xy_{2} + (1 - \\lambda) xy_{1} \\\\
-        xz' &= \\lambda xz_{2} + (1 - \\lambda) xz_{1} \\\\
-        yz' &= \\lambda yz_{2} + (1 - \\lambda) yz_{1} \\\\
+        L_{x}' &= \\lambda L_{fx} + (1 - \\lambda) L_{ix} \\\\
+        L_{y}' &= \\lambda L_{fy} + (1 - \\lambda) L_{iy} \\\\
+        L_{z}' &= \\lambda L_{fz} + (1 - \\lambda) L_{iz} \\\\
+        xy' &= \\lambda xy_{f} + (1 - \\lambda) xy_{i} \\\\
+        xz' &= \\lambda xz_{f} + (1 - \\lambda) xz_{i} \\\\
+        yz' &= \\lambda yz_{f} + (1 - \\lambda) yz_{i} \\\\
         \\end{align*}
 
     Where ``initial_box`` is :math:`(L_{ix}, L_{iy}, L_{iz}, xy_i, xz_i, yz_i)`,
@@ -134,8 +131,6 @@ class Interpolate(_hoomd.VectorVariantBoxInterpolate, BoxVariant):
     is the timestep, and :math:`f(t)` is given by `variant`.
 
     {inherited}
-
-    ----------
 
     **Members defined in** `Interpolate`:
 
@@ -218,8 +213,6 @@ class InverseVolumeRamp(_hoomd.VectorVariantBoxInverseVolumeRamp, BoxVariant):
     t_{\\mathrm{start}}}`.
 
     {inherited}
-
-    ----------
 
     **Members defined in** `InverseVolumeRamp`:
 

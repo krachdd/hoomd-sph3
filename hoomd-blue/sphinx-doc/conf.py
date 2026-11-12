@@ -1,4 +1,4 @@
-# Copyright (c) 2009-2025 The Regents of the University of Michigan.
+# Copyright (c) 2009-2026 The Regents of the University of Michigan.
 # Part of HOOMD-blue, released under the BSD 3-Clause License.
 
 """Sphinx configuration."""
@@ -30,15 +30,20 @@ extensions = [
     "sphinx.ext.napoleon",
     "sphinx.ext.intersphinx",
     "sphinx.ext.todo",
+    "sphinx_inline_tabs",
 ]
 
 if find_spec("sphinxcontrib.katex") is not None:
     extensions.append("sphinxcontrib.katex")
+
+    html_css_files = ["fix-katex.css"]
 else:
     extensions.append("sphinx.ext.mathjax")
 
-if os.getenv("READTHEDOCS"):
+if find_spec("sphinx_copybutton") is not None:
     extensions.append("sphinx_copybutton")
+
+if os.getenv("READTHEDOCS"):
     extensions.append("notfound.extension")
     extensions.append("sphinxcontrib.googleanalytics")
     googleanalytics_id = "G-ZR0DNZD21E"
@@ -66,11 +71,8 @@ autodoc_typehints_format = "short"
 autodoc_mock_imports = [
     "hoomd._hoomd",
     "hoomd.version_config",
-    "hoomd.md._md",
-    "hoomd.metal._metal",
-    "hoomd.mpcd._mpcd",
-    "hoomd.minimize._minimize",
-    "hoomd.hpmc._hpmc",
+    "hoomd.sph._sph",
+    "hoomd.nsearch._nsearch",
 ]
 
 templates_path = ["_templates"]
@@ -80,13 +82,16 @@ source_suffix = ".rst"
 
 master_doc = "index"
 
-project = "HOOMD-blue"
+project = "hoomd-sph3"
 year = datetime.date.today().year
-copyright = f"2009-{year} The Regents of the University of Michigan"
-author = "The Regents of the University of Michigan"
+copyright = (
+    f"2025-{year} David Krach, Daniel Rostan (SPH); "
+    f"2009-{year} The Regents of the University of Michigan (HOOMD-blue)"
+)
+author = "David Krach, Daniel Rostan"
 
-version = "5.2.0"
-release = "5.2.0"
+version = "7.2.2"
+release = "7.2.2"
 
 language = "en"
 
@@ -97,6 +102,8 @@ pygments_dark_style = "native"
 
 todo_include_todos = False
 
+# version and release refer to the bundled HOOMD-blue.
+html_title = f"hoomd-sph3 (HOOMD-blue {release})"
 html_theme = "furo"
 html_static_path = ["_static"]
 html_logo = "hoomdblue-logo-vertical.svg"
@@ -115,7 +122,7 @@ html_theme_options = {
 }
 html_favicon = "hoomdblue-logo-favicon.svg"
 
-IGNORE_MODULES = ["hoomd._hoomd"]
+IGNORE_MODULES = ["hoomd._hoomd", "hoomd.sph._sph", "hoomd.nsearch._nsearch"]
 IGNORE_CLASSES = []
 
 copybutton_prompt_text = "$ "

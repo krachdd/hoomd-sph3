@@ -1,4 +1,4 @@
-# Copyright (c) 2009-2025 The Regents of the University of Michigan.
+# Copyright (c) 2009-2026 The Regents of the University of Michigan.
 # Part of HOOMD-blue, released under the BSD 3-Clause License.
 
 """When compiled without MPI support, `Communicator` acts as if there is one MPI
@@ -13,9 +13,9 @@ implement workflows with multiple simulations that communicate using ``mpi4py``
 calls in user code (e.g. genetic algorithms, umbrella sampling).
 
 See Also:
-    :doc:`/tutorial/03-Parallel-Simulations-With-MPI/00-index`
+    `HOOMD-blue tutorial: Parallel Simulations With MPI <https://hoomd-blue.readthedocs.io/en/stable/tutorial/03-Parallel-Simulations-With-MPI/00-index.html>`__
 
-    :doc:`/tutorial/05-Organizing-and-Executing-Simulations/00-index`
+    `HOOMD-blue tutorial: Organizing and Executing Simulations <https://hoomd-blue.readthedocs.io/en/stable/tutorial/05-Organizing-and-Executing-Simulations/00-index.html>`__
 
 .. invisible-code-block: python
 
@@ -68,7 +68,8 @@ class Communicator(object):
         if ranks_per_partition is not None:
             if not hoomd.version.mpi_enabled:
                 raise RuntimeError(
-                    "The ranks_per_partition option is only available in MPI.\n"
+                    "The ranks_per_partition option is only available when"
+                    "HOOMD-blue is compiled with MPI support.\n"
                 )
 
         mpi_available = hoomd.version.mpi_enabled

@@ -62,7 +62,7 @@ public:
                 d_in,
                 d_unique_out, d_counts_out, d_num_runs_out,
                 num_items,
-                stream, debug_synchronous
+                stream
             )
         );
     }
@@ -90,7 +90,7 @@ public:
                 d_in,
                 d_offsets_out, d_lengths_out, d_num_runs_out,
                 num_items,
-                stream, debug_synchronous
+                stream
             )
         );
     }

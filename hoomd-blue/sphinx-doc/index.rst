@@ -1,128 +1,97 @@
 ==========
-HOOMD-blue
+hoomd-sph3
 ==========
 
-.. only:: html
+**hoomd-sph3** is a smoothed particle hydrodynamics (SPH) solver built on
+`HOOMD-blue <https://hoomd-blue.readthedocs.io/>`_ 7.2.2. It solves the weakly
+compressible Navier-Stokes equations for single-phase, two-phase, free-surface,
+non-Newtonian, and density-gradient-driven flows. Simulations are set up and
+controlled from Python and run on CPUs with MPI domain decomposition and OpenMP
+threading.
 
-    |Citing-HOOMD|
-    |conda-forge|
-    |conda-forge-Downloads|
-    |GitHub Actions|
-    |Contributors|
-    |License|
-
-
-    .. |Citing-HOOMD| image:: https://img.shields.io/badge/cite-hoomd-blue.svg
-        :target: https://hoomd-blue.readthedocs.io/en/latest/citing.html
-    .. |conda-forge| image:: https://img.shields.io/conda/vn/conda-forge/hoomd.svg?style=flat
-        :target: https://anaconda.org/conda-forge/hoomd
-    .. |conda-forge-Downloads| image:: https://img.shields.io/conda/dn/conda-forge/hoomd.svg?style=flat
-        :target: https://anaconda.org/conda-forge/hoomd
-    .. |GitHub Actions| image:: https://github.com/glotzerlab/hoomd-blue/actions/workflows/test.yaml/badge.svg?branch=trunk-patch
-        :target: https://github.com/glotzerlab/hoomd-blue/actions/workflows/test.yaml
-    .. |Contributors| image:: https://img.shields.io/github/contributors-anon/glotzerlab/hoomd-blue.svg?style=flat
-        :target: https://hoomd-blue.readthedocs.io/en/latest/credits.html
-    .. |License| image:: https://img.shields.io/badge/license-BSD--3--Clause-green.svg
-        :target: https://hoomd-blue.readthedocs.io/en/latest/license.html
-
-**HOOMD-blue** is a Python package that runs simulations of particle systems on CPUs and GPUs. It
-performs hard particle Monte Carlo simulations of a variety of shape classes and molecular dynamics
-simulations of particles with a range of pair, bond, angle, and other potentials. Many features are
-targeted at the soft matter research community, though the code is general and capable of many
-types of particle simulations.
+The SPH solver lives in `hoomd.sph`, the neighbor search in `hoomd.nsearch`.
+The HOOMD-blue core (`hoomd`) provides the simulation state, particle
+filters, triggers, logging, and file output. The molecular dynamics, hard
+particle Monte Carlo, and MPCD packages of HOOMD-blue are not part of this
+build.
 
 Resources
 =========
 
-- `GitHub Repository <https://github.com/glotzerlab/hoomd-blue>`_:
-  Source code and issue tracker.
-- :doc:`Citing HOOMD-blue </citing>`:
-  How to cite the code.
-- :doc:`Installation guide </installation>`:
-  Instructions for installing **HOOMD-blue** binaries.
+- `GitHub repository <https://github.com/krachdd/hoomd-sph3>`_:
+  Source code, benchmark cases, and issue tracker.
 - :doc:`Compilation guide </building>`:
-  Instructions for compiling **HOOMD-blue**.
-- `HOOMD-blue discussion board <https://github.com/glotzerlab/hoomd-blue/discussions/>`_:
-  Ask the **HOOMD-blue** user community for help.
-- `HOOMD-blue website <https://glotzerlab.engin.umich.edu/hoomd-blue/>`_:
-  Additional information and publications.
-- `HOOMD-blue benchmark scripts <https://github.com/glotzerlab/hoomd-benchmarks>`_:
-  Scripts to evaluate the performance of HOOMD-blue simulations.
-- `HOOMD-blue validation tests <https://github.com/glotzerlab/hoomd-validation>`_:
-  Scripts to validate that HOOMD-blue performs accurate simulations.
+  Instructions for compiling **hoomd-sph3** and its I/O libraries.
+- :doc:`Example simulations </examples>`:
+  The benchmark cases in ``sph-simulations/``.
+- `HOOMD-blue documentation <https://hoomd-blue.readthedocs.io/>`_:
+  The upstream documentation of the core simulation engine.
 
-Related tools
-=============
+Example script
+==============
 
-- `freud <https://freud.readthedocs.io/>`_:
-  Analyze HOOMD-blue simulation results with the **freud** Python library.
-- `signac <https://signac.readthedocs.io/>`_:
-  Manage your workflow with **signac**.
-- `Molecular Simulation Design Framework (MoSDeF)`_ tools:
-
-  - `mbuild`_: Assemble reusable components into complex molecular systems.
-  - `foyer`_: Perform atom-typing and define classical molecular modeling force fields.
-  - `gmso`_: A flexible and mutable data structure for chemical topologies that writes HOOMD-blue formats.
-
-.. _Molecular Simulation Design Framework (MoSDeF): https://mosdef.org/
-.. _mbuild: https://mbuild.mosdef.org/
-.. _foyer: https://foyer.mosdef.org/
-.. _gmso: https://gmso.mosdef.org/
-
-Example scripts
-===============
-
-These examples demonstrate some of the Python API.
-
-Hard particle Monte Carlo:
+Poiseuille flow through a tube. The initial configuration ``tube_init.gsd``
+holds fluid (type ``F``) and wall (type ``S``) particles on a lattice with
+spacing ``dx``; ``create_input_geometries_tube.py`` in
+``sph-simulations/00_singlephaseflow_benchmarks/01_poiseuille`` creates it.
 
 .. code:: python
 
     import hoomd
+    import hoomd.sph
 
-    mc = hoomd.hpmc.integrate.ConvexPolyhedron()
-    mc.shape['octahedron'] = dict(vertices=[
-        (-0.5, 0, 0),
-        (0.5, 0, 0),
-        (0, -0.5, 0),
-        (0, 0.5, 0),
-        (0, 0, -0.5),
-        (0, 0, 0.5),
-    ])
+    dx = 1e-4             # particle spacing [m]
+    rho0 = 1000.0         # rest density [kg/m^3]
+    viscosity = 0.01      # dynamic viscosity [Pa s]
+    fx = 0.1              # body force [m/s^2]
 
-    cpu = hoomd.device.CPU()
-    sim = hoomd.Simulation(device=cpu, seed=20)
-    sim.operations.integrator = mc
-    # The tutorial describes how to construct an initial configuration 'init.gsd'.
-    sim.create_state_from_gsd(filename='init.gsd')
+    sim = hoomd.Simulation(device=hoomd.device.CPU())
+    sim.create_state_from_gsd(filename='tube_init.gsd')
 
-    sim.run(1e5)
+    kernel = hoomd.sph.kernel.WendlandC4()
+    nlist = hoomd.nsearch.nlist.Cell(buffer=0.1 * dx,
+                                     rebuild_check_delay=1,
+                                     kappa=kernel.Kappa())
+    eos = hoomd.sph.eos.Tait()
+    eos.set_params(rho0, 0.01)
 
-Molecular dynamics:
+    model = hoomd.sph.sphmodel.SinglePhaseFlow(
+        kernel=kernel,
+        eos=eos,
+        nlist=nlist,
+        fluidgroup_filter=hoomd.filter.Type(['F']),
+        solidgroup_filter=hoomd.filter.Type(['S']),
+        densitymethod='SUMMATION')
+    model.mu = viscosity
+    model.gx = fx
+    # Largest smoothing length in the initial configuration; it sets the
+    # neighbor list cutoff (kappa * max_sl).
+    h = hoomd.sph.kernel.OptimalH['WendlandC4'] * dx
+    model.max_sl = h
 
-.. code:: python
+    # Set the speed of sound and the time step from the flow parameters.
+    lref = 1e-3
+    uref = fx * lref**2 / (4 * viscosity / rho0)
+    model.compute_speedofsound(LREF=lref, UREF=uref, DX=dx, DRHO=0.01, H=h,
+                               MU=viscosity, RHO0=rho0)
+    dt, _ = model.compute_dt(LREF=lref, UREF=uref, DX=dx, DRHO=0.01, H=h,
+                             MU=viscosity, RHO0=rho0)
 
-    import hoomd
-
-    cell = hoomd.md.nlist.Cell(buffer=0.4)
-    lj = hoomd.md.pair.LJ(nlist=cell)
-    lj.params[('A', 'A')] = dict(epsilon=1, sigma=1)
-    lj.r_cut[('A', 'A')] = 2.5
-
-    integrator = hoomd.md.Integrator(dt=0.005)
-    integrator.forces.append(lj)
-    bussi = hoomd.md.methods.thermostats.Bussi(kT=1.5)
-    nvt = hoomd.md.methods.ConstantVolume(filter=hoomd.filter.All(), thermostat=bussi)
-    integrator.methods.append(nvt)
-
-    gpu = hoomd.device.GPU()
-    sim = hoomd.Simulation(device=gpu)
+    integrator = hoomd.sph.Integrator(dt=dt)
+    integrator.methods.append(hoomd.sph.methods.VelocityVerletBasic(
+        filter=hoomd.filter.Type(['F']), densitymethod='SUMMATION'))
+    integrator.forces.append(model)
     sim.operations.integrator = integrator
-    # The tutorial describes how to construct an initial configuration 'init.gsd'.
-    sim.create_state_from_gsd(filename='init.gsd')
-    sim.state.thermalize_particle_momenta(filter=hoomd.filter.All(), kT=1.5)
 
-    sim.run(1e5)
+    sim.operations.writers.append(hoomd.write.GSD(
+        filename='tube_run.gsd', trigger=hoomd.trigger.Periodic(100),
+        mode='wb', dynamic=['property', 'momentum']))
+
+    sim.run(10000)
+
+The benchmark scripts in ``sph-simulations/`` read the maximum smoothing length
+from the initial configuration with ``helper_modules/sph_helper.py`` and convert the output to VTU files for ParaView with
+``helper_modules/gsd2vtu``. See :doc:`examples`.
 
 .. rubric::
     Contents
@@ -132,17 +101,14 @@ Molecular dynamics:
     :caption: Guides
 
     getting-started
-    tutorials
-    how-to
 
 .. toctree::
    :maxdepth: 1
    :caption: Python API
 
+   hoomd/module-sph
+   hoomd/module-nsearch
    module-hoomd
-   hoomd/module-hpmc
-   hoomd/module-md
-   hoomd/module-mpcd
 
 .. toctree::
    :maxdepth: 2

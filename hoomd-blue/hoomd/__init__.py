@@ -1,4 +1,4 @@
-# Copyright (c) 2009-2025 The Regents of the University of Michigan.
+# Copyright (c) 2009-2026 The Regents of the University of Michigan.
 # Part of HOOMD-blue, released under the BSD 3-Clause License.
 
 """HOOMD-blue python package.
@@ -22,26 +22,17 @@ used to construct a simulation include:
 See the table of contents or the modules section for a full list of classes,
 methods, and variables in the API.
 
-`hoomd` also contains subpackages that implement specific types of simulations:
-
-* `hoomd.hpmc` - Hard particle Monte Carlo.
-* `hoomd.md` - Molecular dynamics.
+In hoomd-sph3, the SPH solver is implemented in `hoomd.sph` and the neighbor
+search in `hoomd.nsearch`. The molecular dynamics and hard particle Monte Carlo
+packages of HOOMD-blue are not included.
 
 See Also:
-    Tutorial: :doc:`/tutorial/00-Introducing-HOOMD-blue/00-index`
-
-.. rubric:: Signal handling
-
-On import, `hoomd` installs a ``SIGTERM`` signal handler that calls `sys.exit`
-so that open gsd files have a chance to flush write buffers
-(`hoomd.write.GSD.flush`) when a user's process is terminated. Use
-`signal.signal` to adjust this behavior as needed.
+    `HOOMD-blue tutorial: Introducing HOOMD-blue <https://hoomd-blue.readthedocs.io/en/stable/tutorial/00-Introducing-HOOMD-blue/00-index.html>`__
 """
 
 import sys
 import pathlib
 import os
-import signal
 
 __all__ = []
 
@@ -100,22 +91,12 @@ _default_excepthook = sys.excepthook
 
 def _hoomd_sys_excepthook(type, value, traceback):
     """Override Python's excepthook to abort MPI runs."""
-    write.gsd._flush_open_gsd_writers()
     _default_excepthook(type, value, traceback)
     sys.stderr.flush()
     _hoomd.abort_mpi(communicator._current_communicator.cpp_mpi_conf, 1)
 
 
 sys.excepthook = _hoomd_sys_excepthook
-
-# Install a SIGTERM handler that gracefully exits, allowing open files to flush
-# buffered writes and close. Catch ValueError and pass as there is no way to
-# determine if this is the main interpreter running the main thread prior to
-# the call.
-try:
-    signal.signal(signal.SIGTERM, lambda n, f: sys.exit(1))
-except ValueError:
-    pass
 
 __all__ = [
     "Box",

@@ -1,4 +1,4 @@
-# Copyright (c) 2009-2025 The Regents of the University of Michigan.
+# Copyright (c) 2009-2026 The Regents of the University of Michigan.
 # Part of HOOMD-blue, released under the BSD 3-Clause License.
 
 """Implement Snapshot.
@@ -364,7 +364,7 @@ class Snapshot:
     ### PGSD ---
     @classmethod
     def from_pgsd_frame(cls, pgsd_snap, communicator):
-        """Constructs a `hoomd.Snapshot` from a `pgsd.hoomd.Frame` object.
+        """Constructs a `hoomd.Snapshot` from a ``pgsd.hoomd.Frame`` object.
 
         Args:
             pgsd_snap (pgsd.hoomd.Frame): The pgsd frame to convert to a

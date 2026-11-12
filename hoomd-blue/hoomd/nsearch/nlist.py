@@ -1,16 +1,15 @@
 # Copyright (c) 2009-2025 The Regents of the University of Michigan.
 # Part of HOOMD-blue, released under the BSD 3-Clause License.
 
-r"""Pair forces (`hoomd.md.pair`) use neighbor list data structures to find
-(`hoomd.md.pair`) use neighbor list data structures to find
+r"""SPH models (`hoomd.sph.sphmodel`) use neighbor list data structures to find
 neighboring particle pairs (those within a distance of :math:`r_\mathrm{cut}`)
-efficiently. HOOMD-blue provides a several types of neighbor list construction
-algorithms that you can select from: `Cell`, `Tree`, and `Stencil`.
+efficiently. Select one of the neighbor list construction algorithms: `Cell`,
+`Tree`, and `Stencil`.
 
-Multiple pair force objects can share a single neighbor list, or use independent
-neighbor list objects. When neighbor lists are shared, they find neighbors
-within the the maximum :math:`r_{\mathrm{cut},i,j}` over the associated pair
-potentials.
+The SPH model sets the cutoff radius to :math:`\kappa h_\mathrm{max}`, where
+:math:`\kappa` is the support factor of the smoothing kernel (the ``kappa``
+argument of the neighbor list) and :math:`h_\mathrm{max}` the largest smoothing
+length.
 
 .. rubric:: Buffer distance
 
@@ -30,7 +29,7 @@ Note:
 
     Set the buffer too small and the neighbor list will need to be updated
     often, slowing simulation performance. Set the buffer too large, and
-    `hoomd.md.pair.Pair` will need to needlessly calculate many non-interacting
+    the SPH model will need to needlessly calculate many non-interacting
     particle pairs and slow the simulation. There is an optimal value for
     `NeighborList.buffer` between the two extremes that provides the best
     performance.
@@ -39,13 +38,11 @@ Note:
 
 The `NeighborList.r_cut` attribute can be used to set the base cutoff distance
 for neighbor list queries. The actual cutoff distance is always the maximum
-:math:`r_{\mathrm{cut},i,j}` of the base cutoff and associated pair potentials.
-
-Note:
-    This attribute is particularly useful for implementing custom pair forces in
-    Python.
+:math:`r_{\mathrm{cut},i,j}` of the base cutoff and the cutoff required by the
+SPH model.
 
 Attention:
+    Users should only set this attribute when utilizing the accessor APIs,
     `pair_list <NeighborList.pair_list>`,
     `local_pair_list <NeighborList.local_pair_list>`,
     `cpu_local_nlist_arrays <NeighborList.cpu_local_nlist_arrays>`, or
@@ -59,14 +56,11 @@ be excluded from the list, even if they are within the cutoff.
 `NeighborList.exclusions` is a tuple of strings that enable one more more types
 of exclusions. The valid exclusion types are:
 
-* ``'angle'``: Exclude the first and third particles in each angle.
 * ``'body'``: Exclude particles that belong to the same rigid body.
 * ``'bond'``: Exclude particles that are directly bonded together.
 * ``'meshbond'``: Exclude particles that are bonded together via a mesh.
 * ``'constraint'``: Exclude particles that have a distance constraint applied
   between them.
-* ``'dihedral'``: Exclude the first and fourth particles in each dihedral.
-* ``'special_pair'``: Exclude particles that are part of a special pair.
 * ``'1-3'``: Exclude particles *i* and *k* whenever there is a bond (i,j) and
   a bond (j,k).
 * ``'1-4'``: Exclude particles *i* and *m* whenever there are bonds (i,j),
@@ -99,6 +93,8 @@ class NeighborList(Compute):
         rebuild_check_delay (int): How often to attempt to rebuild the neighbor
             list.
         check_dist (bool): Flag to enable / disable distance checking.
+        kappa (float): Support factor of the smoothing kernel; the cutoff
+            radius is ``kappa`` times the smoothing length.
         mesh (Mesh): mesh data structure (optional)
         default_r_cut (float): Default cutoff distance :math:`[\mathrm{length}]`
             (optional).
@@ -145,13 +141,13 @@ class NeighborList(Compute):
 
     @property
     def cpu_local_nlist_arrays(self):
-        """hoomd.md.data.NeighborListLocalAccess: Expose nlist arrays on the \
+        """hoomd.sph.data.NeighborListLocalAccess: Expose nlist arrays on the \
         CPU.
 
         Provides direct acces to the neighbor list arrays on the cpu. All data
         is MPI rank-local.
 
-        The `hoomd.md.data.NeighborListLocalAccess` object exposes the internal
+        The ``hoomd.sph.data.NeighborListLocalAccess`` object exposes the internal
         data representation to efficently iterate over the neighbor list.
 
         Note:
@@ -178,13 +174,13 @@ class NeighborList(Compute):
 
     @property
     def gpu_local_nlist_arrays(self):
-        """hoomd.md.data.NeighborListLocalAccessGPU: Expose nlist arrays on \
+        """hoomd.sph.data.NeighborListLocalAccessGPU: Expose nlist arrays on \
         the GPU.
 
         Provides direct access to the neighbor list arrays on the gpu. All data
         is MPI rank-local.
 
-        The `hoomd.md.data.NeighborListLocalAccessGPU` object exposes the
+        The ``hoomd.sph.data.NeighborListLocalAccessGPU`` object exposes the
         internal data representation to efficently iterate over the neighbor
         list.
 
@@ -342,7 +338,7 @@ class Cell(NeighborList):
     is usually the best option for most users when the asymmetry between the
     largest and smallest cutoff radius is less than 2:1.
 
-    .. image:: cell_list.png
+    .. image:: /cell_list.png
         :width: 250 px
         :align: center
         :alt: Cell list schematic
@@ -436,7 +432,7 @@ class Stencil(NeighborList):
     cutoff radius (`P.J. in't Veld et al. 2008
     <http://dx.doi.org/10.1016/j.cpc.2008.03.005>`_):
 
-    .. image:: stencil_schematic.png
+    .. image:: /stencil_schematic.png
         :width: 300 px
         :align: center
         :alt: Stenciled cell list schematic
@@ -527,7 +523,7 @@ class Tree(NeighborList):
     per type.) The user should carefully benchmark neighbor list build times to
     select the appropriate neighbor list construction type.
 
-    .. image:: tree_schematic.png
+    .. image:: /tree_schematic.png
         :width: 400 px
         :align: center
         :alt: BVH tree schematic

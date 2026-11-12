@@ -10,7 +10,7 @@ To build the **HOOMD-blue** from source:
 
    .. code-block:: bash
 
-       micromamba install cmake eigen git python numpy pybind11
+       micromamba install cmake eigen git ninja numpy pybind11 python
 
 2. `Obtain the source`_:
 
@@ -80,13 +80,13 @@ Install the required dependencies:
 
 .. code-block:: bash
 
-   micromamba install cmake eigen git python numpy pybind11
+   micromamba install cmake eigen git ninja numpy pybind11 python
 
 Install additional packages needed to run the unit tests:
 
 .. code-block:: bash
 
-   micromamba install pytest
+   micromamba install pytest rowan
 
 Install additional packages needed to build the documentation:
 
@@ -237,8 +237,7 @@ Other option changes take effect at any time:
 - ``HOOMD_GPU_PLATFORM`` - Choose either ``CUDA`` or ``HIP`` as a GPU backend (default: ``CUDA``).
 - ``HOOMD_SHORTREAL_SIZE`` - Size in bits of the ``ShortReal`` type (default: ``32``).
 
-  - When set to ``32``, perform force computations, overlap checks, and other local calculations
-    in single precision.
+  - When set to ``32``, perform HPMC overlap checks in single precision.
   - When set to ``64``, perform **all** calculations in double precision.
 
 - ``HOOMD_LONGREAL_SIZE`` - Size in bits of the ``LongReal`` type (default: ``64``).

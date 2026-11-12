@@ -61,7 +61,7 @@ public:
                 d_temp_storage, temp_storage_bytes,
                 d_in, d_flags,
                 d_out, d_num_selected_out, num_items,
-                stream, debug_synchronous
+                stream
             )
         );
     }
@@ -88,7 +88,7 @@ public:
                 d_temp_storage, temp_storage_bytes,
                 d_in, d_out, d_num_selected_out,
                 num_items, select_op,
-                stream, debug_synchronous
+                stream
             )
         );
     }
@@ -112,7 +112,7 @@ public:
             ::cub::DeviceSelect::Unique(
                 d_temp_storage, temp_storage_bytes,
                 d_in, d_out, d_num_selected_out, num_items,
-                stream, debug_synchronous
+                stream
             )
         );
     }

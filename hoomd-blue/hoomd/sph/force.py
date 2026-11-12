@@ -115,7 +115,7 @@ class Force(Compute):
         virial data of the particles in the system on the cpu through a context
         manager. All data is MPI rank-local.
 
-        The `hoomd.sph.data.ForceLocalAccess` object returned by this property
+        The ``hoomd.sph.data.ForceLocalAccess`` object returned by this property
         has four arrays through which one can modify the force data:
 
         Note:
@@ -146,7 +146,7 @@ class Force(Compute):
         virial data of the particles in the system on the gpu through a context
         manager. All data is MPI rank-local.
 
-        The `hoomd.sph.data.ForceLocalAccessGPU` object returned by this property
+        The ``hoomd.sph.data.ForceLocalAccessGPU`` object returned by this property
         has four arrays through which one can modify the force data:
 
         Note:

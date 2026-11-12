@@ -63,7 +63,7 @@ struct DeviceHistogram
                 d_histogram,
                 num_levels, lower_level, upper_level,
                 num_samples,
-                stream, debug_synchronous
+                stream
             )
         );
     }
@@ -95,7 +95,7 @@ struct DeviceHistogram
                 d_histogram,
                 num_levels, lower_level, upper_level,
                 num_row_samples, num_rows, row_stride_bytes,
-                stream, debug_synchronous
+                stream
             )
         );
     }
@@ -127,7 +127,7 @@ struct DeviceHistogram
                 d_histogram,
                 num_levels, lower_level, upper_level,
                 num_pixels,
-                stream, debug_synchronous
+                stream
             )
         );
     }
@@ -161,7 +161,7 @@ struct DeviceHistogram
                 d_histogram,
                 num_levels, lower_level, upper_level,
                 num_row_pixels, num_rows, row_stride_bytes,
-                stream, debug_synchronous
+                stream
             )
         );
     }
@@ -190,7 +190,7 @@ struct DeviceHistogram
                 d_histogram,
                 num_levels, d_levels,
                 num_samples,
-                stream, debug_synchronous
+                stream
             )
         );
     }
@@ -221,7 +221,7 @@ struct DeviceHistogram
                 d_histogram,
                 num_levels, d_levels,
                 num_row_samples, num_rows, row_stride_bytes,
-                stream, debug_synchronous
+                stream
             )
         );
     }
@@ -252,7 +252,7 @@ struct DeviceHistogram
                 d_histogram,
                 num_levels, d_levels,
                 num_pixels,
-                stream, debug_synchronous
+                stream
             )
         );
     }
@@ -285,7 +285,7 @@ struct DeviceHistogram
                 d_histogram,
                 num_levels, d_levels,
                 num_row_pixels, num_rows, row_stride_bytes,
-                stream, debug_synchronous
+                stream
             )
         );
     }

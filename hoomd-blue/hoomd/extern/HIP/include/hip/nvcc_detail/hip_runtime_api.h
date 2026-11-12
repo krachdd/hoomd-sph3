@@ -233,12 +233,6 @@ inline static hipError_t hipCUDAErrorTohipError(cudaError_t cuError) {
             return hipSuccess;
         case cudaErrorProfilerDisabled:
             return hipErrorProfilerDisabled;
-        case cudaErrorProfilerNotInitialized:
-            return hipErrorProfilerNotInitialized;
-        case cudaErrorProfilerAlreadyStarted:
-            return hipErrorProfilerAlreadyStarted;
-        case cudaErrorProfilerAlreadyStopped:
-            return hipErrorProfilerAlreadyStopped;
         case cudaErrorInsufficientDriver:
             return hipErrorInsufficientDriver;
         case cudaErrorUnsupportedLimit:
@@ -267,8 +261,6 @@ inline static hipError_t hipCUDAErrorTohipError(cudaError_t cuError) {
             return hipErrorInitializationError;
         case cudaErrorLaunchFailure:
             return hipErrorLaunchFailure;
-        case cudaErrorPriorLaunchFailure:
-            return hipErrorPriorLaunchFailure;
         case cudaErrorLaunchOutOfResources:
             return hipErrorLaunchOutOfResources;
         case cudaErrorInvalidDeviceFunction:
@@ -279,8 +271,6 @@ inline static hipError_t hipCUDAErrorTohipError(cudaError_t cuError) {
             return hipErrorInvalidDevice;
         case cudaErrorInvalidValue:
             return hipErrorInvalidValue;
-        case cudaErrorInvalidDevicePointer:
-            return hipErrorInvalidDevicePointer;
         case cudaErrorInvalidMemcpyDirection:
             return hipErrorInvalidMemcpyDirection;
         case cudaErrorUnknown:
@@ -350,8 +340,6 @@ inline static cudaError_t hipErrorToCudaError(hipError_t hError) {
             return cudaErrorInvalidDevice;
         case hipErrorInvalidMemcpyDirection:
             return cudaErrorInvalidMemcpyDirection;
-        case hipErrorInvalidDevicePointer:
-            return cudaErrorInvalidDevicePointer;
         case hipErrorInitializationError:
             return cudaErrorInitializationError;
         case hipErrorNoDevice:

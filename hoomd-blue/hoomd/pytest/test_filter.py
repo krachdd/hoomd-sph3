@@ -1,4 +1,4 @@
-# Copyright (c) 2009-2025 The Regents of the University of Michigan.
+# Copyright (c) 2009-2026 The Regents of the University of Michigan.
 # Part of HOOMD-blue, released under the BSD 3-Clause License.
 
 import pytest
@@ -250,7 +250,7 @@ _constructor_args = [
 
 @pytest.mark.parametrize(
     "constructor, args",
-    zip(_filter_classes, _constructor_args),
+    list(zip(_filter_classes, _constructor_args)),
     ids=lambda x: None if isinstance(x, tuple) else x.__name__,
 )
 def test_pickling(constructor, args):
